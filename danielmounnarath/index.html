@@ -1,23 +1,111 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Luggage Tag - Daniel Mounnarath</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Information - Daniel Mounnarath</title>
     <style>
-        h1   {color: red; font-size: 24px; font-family: Arial}
-        p    {color: black; font-size: 16px; font-family: Arial}
-        body {color: blue; font-size: 16px; font-family: Arial}
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            color: #333;
+            background-color: #fff;
+        }
+        h1 {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .info {
+            margin: 12px 0;
+        }
+        .label {
+            font-weight: bold;
+        }
+        a {
+            color: #0066cc;
+        }
+        .message {
+            margin-top: 20px;
+            font-style: italic;
+        }
+        hr {
+            margin: 40px 0;
+            border: none;
+            border-top: 1px solid #ccc;
+        }
+        .chinese-section {
+            font-family: Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 10px;
+                max-width: 100%;
+            }
+            a {
+                color: #333;
+                text-decoration: none;
+            }
+            a[href^="mailto:"]::after {
+                content: " (" attr(href) ")";
+                font-size: 0.9em;
+            }
+            a[href^="tel:"]::after {
+                content: "";
+            }
+        }
     </style>
 </head>
 <body>
+    <h1>Contact Information</h1>
+    <div class="info">
+        <span class="label">First Name:</span> Daniel
+    </div>
+    <div class="info">
+        <span class="label">Surname:</span> Mounnarath
+    </div>
+    <div class="info">
+        <span class="label">Email:</span> <a href="mailto:d.mounnarath@gmail.com">d.mounnarath@gmail.com</a>
+    </div>
+    <div class="info">
+        <span class="label">Mobile:</span> <a href="tel:+61432644581">+61 432 644 581</a>
+    </div>
+    <div class="info">
+        <span class="label">Home Country:</span> Australia
+    </div>
+    <div class="info">
+        <span class="label">Destination Details:</span> Australia
+    </div>
+    <p class="message">If found please contact me using the above details. Thank you.</p>
 
-    <h1>Luggage Tag</h1>
-    If found please contact me ...
-    <P>
-    Name: Daniel Mounnarath<br>
-    Email: d.mounnarath@gmail.com<br>
-    Mobile: +61 432644581<br>
-    Home Country: AUSTRALIA
-    </p>
+    <hr>
 
+    <section lang="zh" class="chinese-section">
+        <h1>联系信息</h1>
+        <div class="info">
+            <span class="label">名字：</span> Daniel
+        </div>
+        <div class="info">
+            <span class="label">姓氏：</span> Mounnarath
+        </div>
+        <div class="info">
+            <span class="label">电子邮件：</span> <a href="mailto:d.mounnarath@gmail.com">d.mounnarath@gmail.com</a>
+        </div>
+        <div class="info">
+            <span class="label">手机：</span> <a href="tel:+61432644581">+61 432 644 581</a>
+        </div>
+        <div class="info">
+            <span class="label">所属国家：</span> 澳大利亚
+        </div>
+        <div class="info">
+            <span class="label">目的地详情：</span> 澳大利亚
+        </div>
+        <p class="message">如拾获，请通过以上联系方式与我联系。谢谢。</p>
+    </section>
 </body>
 </html>
