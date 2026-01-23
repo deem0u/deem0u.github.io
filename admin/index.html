@@ -122,7 +122,6 @@
         <div class="tabs">
           <button class="tab active" data-tab="manage">Manage Users</button>
           <button class="tab" data-tab="edit">Edit Pages</button>
-          <button class="tab" data-tab="send">Send Links</button>
         </div>
 
         <div id="tab-manage" class="tab-content active">
@@ -225,16 +224,6 @@
           </div>
         </div>
 
-        <div id="tab-send" class="tab-content">
-          <div class="alert alert-info show mb-6">
-            <div class="alert-content">Click <strong>Email Link</strong> to open your email app with a pre-written message containing the user's personal edit link.</div>
-          </div>
-          <div class="search-wrapper mb-4">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="search-send" class="search-input" placeholder="Search users..." oninput="filterUsers('send')">
-          </div>
-          <div id="list-send" class="user-list"></div>
-        </div>
       </div>
     </main>
   </div>
@@ -387,7 +376,7 @@ function populateUI() {
   const sel = document.getElementById('page-select');
   sel.innerHTML = '<option value="">Choose a user to edit...</option>';
   pages.sort().forEach(f => { const u = userInfo[f] || {}; sel.innerHTML += `<option value="${f}">${u.firstName ? u.firstName + ' ' + u.surname : f}</option>`; });
-  renderList('manage'); renderList('send');
+  renderList('manage');
 }
 
 function getInitials(u) { return u.firstName && u.surname ? (u.firstName[0] + u.surname[0]).toUpperCase() : (u.folder ? u.folder[0].toUpperCase() : '?'); }
@@ -395,12 +384,27 @@ function getInitials(u) { return u.firstName && u.surname ? (u.firstName[0] + u.
 function renderList(t) {
   const c = document.getElementById(`list-${t}`), s = document.getElementById(`search-${t}`).value.toLowerCase();
   let fl = pages.filter(f => { const u = userInfo[f] || {}; return `${f} ${u.firstName||''} ${u.surname||''} ${u.email||''}`.toLowerCase().includes(s); }).sort();
-  if (t === 'send') fl = fl.filter(f => editKeys[f]);
   if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }
   c.innerHTML = fl.map(f => {
     const u = userInfo[f] || { firstName: '', surname: '', email: '', folder: f }, hk = !!editKeys[f], nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
-    if (t === 'manage') return `<div class="user-item"><div class="user-avatar">${getInitials(u)}</div><div class="user-details"><div class="user-name">${nm} ${hk ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">No access</span>'}</div><div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div></div><div class="user-actions">${!hk ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Generate</button>` : `<button class="btn btn-warning btn-sm" onclick="confirmRegenerate('${f}')">Regenerate</button><button class="btn btn-secondary btn-sm" onclick="confirmRemove('${f}')">Revoke</button>`}<button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete</button></div></div>`;
-    return `<div class="user-item"><div class="user-avatar">${getInitials(u)}</div><div class="user-details"><div class="user-name">${nm}</div><div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div></div><div class="user-actions">${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Email Link</a>` : ''}<button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy</button></div></div>`;
+    return `<div class="user-item">
+      <div class="user-avatar">${getInitials(u)}</div>
+      <div class="user-details">
+        <div class="user-name">${nm} ${hk ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">No access</span>'}</div>
+        <div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div>
+      </div>
+      <div class="user-actions">
+        <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-ghost btn-sm" title="View contact page">View</a>
+        <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')" title="Edit contact info">Edit</button>
+        ${!hk 
+          ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')" title="Generate edit access">Generate Key</button>` 
+          : `${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm" title="Email edit link">Email Link</a>` : ''}
+             <button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)" title="Copy edit link">Copy Link</button>
+             <button class="btn btn-warning btn-sm" onclick="confirmRegenerate('${f}')" title="Generate new key">Regenerate</button>
+             <button class="btn btn-secondary btn-sm" onclick="confirmRemove('${f}')" title="Revoke edit access">Revoke</button>`}
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')" title="Delete user">Delete</button>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -541,9 +545,33 @@ function generateHTML() {
 }
 
 function generateMailto(u, f) {
-  const l = `${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`, s = 'Your Contact Page Edit Link';
-  const b = `Hi ${u.firstName},\n\nYou can update your contact information using this link:\n\n${l}\n\nHow to update:\n1. Click the link\n2. Make changes\n3. Click Save\n\nPlease keep this link private.\n\nBest regards`;
-  return `mailto:${u.email}?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
+  const editLink = `${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`;
+  const viewLink = `${PAGES_URL}${f}/`;
+  const subject = 'Your Digital Contact Information Page';
+  const body = `Hi ${u.firstName},
+
+Your digital contact information page has been set up and is now live. You can view it here:
+
+${viewLink}
+
+If you need to update your contact details, you can do so using your personalised edit link:
+
+${editLink}
+
+IMPORTANT: This link is unique to you. Please keep it safe and do not share it with anyone else, as they would be able to access and edit your contact page.
+
+To update your information:
+1. Click the edit link above or copy and paste it into your browser
+2. Make your the required changes in the form
+3. Click "Save Changes"
+4. Your updates will be reflected on your contact page within 1-2 minutes
+
+If you wish to have your contact page deleted, please reply to this email and let me know.
+
+Kind regards,
+Dan M;
+
+  return `mailto:${u.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function copyLink(f, btn) {
