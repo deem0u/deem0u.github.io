@@ -717,18 +717,45 @@ function editUser(f) {
 async function loadPage() {
   currentFolder = document.getElementById('page-select').value;
   const card = document.getElementById('editor-card');
+  const newUserCard = document.getElementById('new-user-card');
   if (!currentFolder) { card.classList.add('hidden'); return; }
-  try { const r = await fetch(`${API}/api/page/${currentFolder}`, { headers: { 'X-Admin-Key': adminKey } }); if (!r.ok) throw 0; const d = await r.json(); currentSha = d.sha; fillForm(d.content); document.getElementById('view-page-link').href = `${PAGES_URL}${currentFolder}/`; card.classList.remove('hidden'); }
+  
+  // Hide new user form if open
+  newUserCard.classList.add('hidden');
+  
+  try { 
+    const r = await fetch(`${API}/api/page/${currentFolder}`, { headers: { 'X-Admin-Key': adminKey } }); 
+    if (!r.ok) throw 0; 
+    const d = await r.json(); 
+    currentSha = d.sha; 
+    fillForm(d.content); 
+    document.getElementById('view-page-link').href = `${PAGES_URL}${currentFolder}/`; 
+    card.classList.remove('hidden'); 
+    hideAlert('alert-editor');
+  }
   catch { showAlert('alert-editor', 'Failed to load', 'error'); }
 }
 
 function fillForm(h) {
-  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
-  const gl = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>.*?<a[^>]*>([^<]+)</a>`, 's')); return m ? m[1].trim() : ''; };
-  document.getElementById('first-name').value = g('Name'); document.getElementById('surname').value = g('Surname');
-  document.getElementById('email').value = gl('Email'); document.getElementById('mobile').value = gl('Mobile');
+  // New HTML structure: <span class="label">Name</span><span class="value">John</span>
+  const g = l => { 
+    const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value">([^<]+)</span>`)); 
+    return m ? m[1].trim() : ''; 
+  };
+  // For links: <span class="label">Email</span><span class="value"><a href="...">email@example.com</a></span>
+  const gl = l => { 
+    const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
+    return m ? m[1].trim() : ''; 
+  };
+  
+  document.getElementById('first-name').value = g('Name'); 
+  document.getElementById('surname').value = g('Surname');
+  document.getElementById('email').value = gl('Email'); 
+  document.getElementById('mobile').value = gl('Mobile');
   document.getElementById('home-country').value = g('Home Country');
-  const dm = h.match(/<span class="label">Destination Details:<\/span>\s*<br>([^<]*)<br>([^<]*)<br>([^<]*)/);
+  
+  // Destination details: <div class="dest-details"><span>Name</span><span>Phone</span><span>Email</span></div>
+  const dm = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
   document.getElementById('dest-name').value = dm ? dm[1].trim() : '';
   document.getElementById('dest-phone').value = dm ? dm[2].trim() : '';
   document.getElementById('dest-email').value = dm ? dm[3].trim() : '';
@@ -741,7 +768,12 @@ async function handleSave(e) {
     const c = generateHTML();
     const r = await fetch(`${API}/api/page/${currentFolder}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ content: c, sha: currentSha }) });
     const d = await r.json();
-    if (r.ok) { currentSha = d.sha; userInfo[currentFolder] = { firstName: document.getElementById('first-name').value.trim(), surname: document.getElementById('surname').value.trim(), email: document.getElementById('email').value.trim(), folder: currentFolder }; populateUI(); showAlert('alert-editor', `Saved. <a href="${d.url}" target="_blank">View →</a>`, 'success'); }
+    if (r.ok) { 
+      currentSha = d.sha; 
+      userInfo[currentFolder] = { firstName: document.getElementById('first-name').value.trim(), surname: document.getElementById('surname').value.trim(), email: document.getElementById('email').value.trim(), folder: currentFolder }; 
+      populateUI(); 
+      showAlert('alert-editor', 'Changes saved successfully! Use the "View Page" link above to see your updates.', 'success'); 
+    }
     else showAlert('alert-editor', d.error, 'error');
   } catch { showAlert('alert-editor', 'Error', 'error'); }
   finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
