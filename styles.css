@@ -235,6 +235,9 @@ body {
   background: var(--white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+}
+
+.card-overflow-hidden {
   overflow: hidden;
 }
 
@@ -406,7 +409,7 @@ body {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  z-index: 100;
+  z-index: 1000;
   max-height: 320px;
   overflow: hidden;
   display: none;
