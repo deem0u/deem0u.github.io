@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Your Contact Information</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1a1a1a;
+            --paper: #faf8f5;
+            --accent: #c45a3b;
+            --accent-soft: #e8d5cf;
+            --border: #d4d0c8;
+            --muted: #8a8680;
+            --success: #2d6a4f;
+            --error: #9d2c2c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Instrument Sans', sans-serif;
+            background: var(--paper);
+            color: var(--ink);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        header {
+            margin-bottom: 48px;
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.5rem;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--muted);
+        }
+
+        /* Auth Section */
+        .auth-section {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 40px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .auth-section.hidden {
+            display: none;
+        }
+
+        .auth-section p {
+            margin-bottom: 24px;
+            color: var(--muted);
+        }
+
+        .key-input-group {
+            display: flex;
+            gap: 12px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .key-input-group input {
+            flex: 1;
+        }
+
+        /* Editor Section */
+        .editor-section {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 40px;
+            position: relative;
+            display: none;
+        }
+
+        .editor-section.visible {
+            display: block;
+        }
+
+        .editor-section::before {
+            content: 'YOUR CONTACT DETAILS';
+            position: absolute;
+            top: -10px;
+            left: 24px;
+            background: var(--paper);
+            padding: 0 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, var(--accent-soft) 0%, #f5ebe7 100%);
+            padding: 20px 24px;
+            margin: -40px -40px 32px -40px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .welcome-banner h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.3rem;
+            font-weight: 400;
+        }
+
+        .welcome-banner p {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            color: var(--ink);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"] {
+            width: 100%;
+            padding: 14px 16px;
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--ink);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .destination-fields {
+            background: var(--paper);
+            padding: 24px;
+            margin-top: 8px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .destination-fields .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Buttons */
+        .btn {
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 14px 32px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: var(--ink);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background: var(--muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--ink);
+            background: var(--ink);
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Status Messages */
+        .status {
+            padding: 16px 20px;
+            margin-top: 20px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            border-left: 3px solid var(--success);
+            color: var(--success);
+        }
+
+        .status.error {
+            background: #fdeaea;
+            border-left: 3px solid var(--error);
+            color: var(--error);
+        }
+
+        .status.loading {
+            background: #f0f0f0;
+            border-left: 3px solid var(--muted);
+            color: var(--ink);
+        }
+
+        .status a {
+            color: inherit;
+            font-weight: 600;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--muted);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .two-col {
+                grid-template-columns: 1fr;
+            }
+
+            .key-input-group {
+                flex-direction: column;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Update Your Contact Info</h1>
+            <p class="subtitle">Make changes to your personal contact page</p>
+        </header>
+
+        <!-- Authentication Section -->
+        <section class="auth-section" id="auth-section">
+            <p>Enter your personal edit key to access your contact page.</p>
+            <div class="key-input-group">
+                <input type="password" id="edit-key" placeholder="Your edit key">
+                <button class="btn btn-primary" onclick="authenticate()">Access</button>
+            </div>
+            <div id="auth-status" class="status"></div>
+        </section>
+
+        <!-- Editor Section -->
+        <section class="editor-section" id="editor-section">
+            <div class="welcome-banner">
+                <h2>Welcome, <span id="user-name">User</span></h2>
+                <p>Update your information below and save to publish changes.</p>
+            </div>
+
+            <form id="contact-form">
+                <div class="two-col">
+                    <div class="form-group">
+                        <label for="first-name">First Name</label>
+                        <input type="text" id="first-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="surname">Surname</label>
+                        <input type="text" id="surname" required>
+                    </div>
+                </div>
+
+                <div class="two-col">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mobile">Mobile Number</label>
+                        <input type="tel" id="mobile" placeholder="+61 xxx xxx xxx" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="home-country">Home Country</label>
+                    <input type="text" id="home-country" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Destination Details</label>
+                    <div class="destination-fields">
+                        <div class="form-group">
+                            <label for="dest-name">Location Name</label>
+                            <input type="text" id="dest-name" placeholder="Hotel/Resort name and location">
+                        </div>
+                        <div class="form-group">
+                            <label for="dest-phone">Phone</label>
+                            <input type="tel" id="dest-phone" placeholder="+62 xxx xxx xxxx">
+                        </div>
+                        <div class="form-group">
+                            <label for="dest-email">Email</label>
+                            <input type="email" id="dest-email" placeholder="contact@example.com">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" id="save-btn">Save & Publish</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset Changes</button>
+                </div>
+            </form>
+
+            <div id="editor-status" class="status"></div>
+        </section>
+
+        <footer class="footer">
+            <p>Changes are published immediately after saving.</p>
+        </footer>
+    </div>
+
+    <script>
+        // ===========================================
+        // CONFIGURATION - UPDATE THIS URL
+        // ===========================================
+        const API_BASE_URL = 'https://contact-page-editor.char-siu-bao-f29.workers.dev';
+        // ===========================================
+
+        // State
+        let currentFolder = null;
+        let currentSha = null;
+        let editKey = null;
+
+        // Get folder from URL path or query parameter
+        function getFolderFromURL() {
+            // Check URL path: /edit/foldername/
+            const pathMatch = window.location.pathname.match(/\/edit\/([^\/]+)/);
+            if (pathMatch) {
+                return pathMatch[1];
+            }
+            
+            // Check query parameter: ?folder=foldername
+            const params = new URLSearchParams(window.location.search);
+            return params.get('folder');
+        }
+
+        // Get pre-filled key from URL if present
+        function getKeyFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('key');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            currentFolder = getFolderFromURL();
+            
+            // Pre-fill key if in URL
+            const urlKey = getKeyFromURL();
+            if (urlKey) {
+                document.getElementById('edit-key').value = urlKey;
+                // Auto-authenticate if both folder and key are present
+                if (currentFolder) {
+                    authenticate();
+                }
+            }
+
+            // Handle Enter key on edit key input
+            document.getElementById('edit-key').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    authenticate();
+                }
+            });
+
+            // Form submission
+            document.getElementById('contact-form').addEventListener('submit', handleSubmit);
+        });
+
+        function showStatus(elementId, message, type) {
+            const status = document.getElementById(elementId);
+            status.className = `status show ${type}`;
+            status.innerHTML = message;
+        }
+
+        function hideStatus(elementId) {
+            document.getElementById(elementId).className = 'status';
+        }
+
+        async function authenticate() {
+            editKey = document.getElementById('edit-key').value.trim();
+            
+            if (!editKey) {
+                showStatus('auth-status', 'Please enter your edit key.', 'error');
+                return;
+            }
+
+            if (!currentFolder) {
+                showStatus('auth-status', 'No page specified. Please check the URL.', 'error');
+                return;
+            }
+
+            showStatus('auth-status', '<span class="loader"></span> Verifying...', 'loading');
+
+            try {
+                // Try to fetch the page - this will validate the key
+                const response = await fetch(`${API_BASE_URL}/api/page/${currentFolder}`, {
+                    headers: {
+                        'X-Edit-Key': editKey
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showStatus('auth-status', 'Invalid edit key. Please try again.', 'error');
+                    } else {
+                        const error = await response.json();
+                        showStatus('auth-status', `Error: ${error.error}`, 'error');
+                    }
+                    return;
+                }
+
+                const data = await response.json();
+                currentSha = data.sha;
+
+                // Parse and fill form
+                parseAndFillForm(data.content);
+
+                // Show editor, hide auth
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('editor-section').classList.add('visible');
+
+                // Update welcome message
+                const firstName = document.getElementById('first-name').value;
+                document.getElementById('user-name').textContent = firstName || currentFolder;
+
+            } catch (error) {
+                showStatus('auth-status', `Connection error: ${error.message}`, 'error');
+            }
+        }
+
+        function parseAndFillForm(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            function getFieldValue(labelText) {
+                const infoDivs = doc.querySelectorAll('.info');
+                for (const div of infoDivs) {
+                    const label = div.querySelector('.label');
+                    if (label && label.textContent.includes(labelText)) {
+                        const clone = div.cloneNode(true);
+                        clone.querySelector('.label')?.remove();
+                        const link = div.querySelector('a');
+                        if (link) {
+                            return link.textContent.trim();
+                        }
+                        return clone.textContent.trim();
+                    }
+                }
+                return '';
+            }
+
+            document.getElementById('first-name').value = getFieldValue('Name:');
+            document.getElementById('surname').value = getFieldValue('Surname:');
+            document.getElementById('email').value = getFieldValue('Email:');
+            document.getElementById('mobile').value = getFieldValue('Mobile:');
+            document.getElementById('home-country').value = getFieldValue('Home Country:');
+
+            // Parse destination
+            const infoDivs = doc.querySelectorAll('.info');
+            for (const div of infoDivs) {
+                const label = div.querySelector('.label');
+                if (label && label.textContent.includes('Destination')) {
+                    const html = div.innerHTML;
+                    const lines = html.split('<br>').map(line => {
+                        const temp = document.createElement('div');
+                        temp.innerHTML = line;
+                        return temp.textContent.trim();
+                    }).filter(line => line && !line.includes('Destination'));
+                    
+                    if (lines.length >= 1) document.getElementById('dest-name').value = lines[0] || '';
+                    if (lines.length >= 2) document.getElementById('dest-phone').value = lines[1] || '';
+                    if (lines.length >= 3) document.getElementById('dest-email').value = lines[2] || '';
+                    break;
+                }
+            }
+        }
+
+        function generateHTML() {
+            const firstName = document.getElementById('first-name').value.trim();
+            const surname = document.getElementById('surname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const mobile = document.getElementById('mobile').value.trim();
+            const homeCountry = document.getElementById('home-country').value.trim();
+            const destName = document.getElementById('dest-name').value.trim();
+            const destPhone = document.getElementById('dest-phone').value.trim();
+            const destEmail = document.getElementById('dest-email').value.trim();
+
+            const mobileLink = mobile.replace(/\s/g, '');
+
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Information - ${firstName} ${surname}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            color: #333;
+            background-color: #fff;
+        }
+        h1 {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .info {
+            margin: 12px 0;
+        }
+        .label {
+            font-weight: bold;
+        }
+        a {
+            color: #0066cc;
+        }
+        .message {
+            margin-top: 20px;
+            font-style: italic;
+        }
+        hr {
+            margin: 40px 0;
+            border: none;
+            border-top: 1px solid #ccc;
+        }
+        .chinese-section {
+            font-family: Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 10px;
+                max-width: 100%;
+            }
+            a {
+                color: #333;
+                text-decoration: none;
+            }
+            a[href^="mailto:"]::after {
+                content: " (" attr(href) ")";
+                font-size: 0.9em;
+            }
+            a[href^="tel:"]::after {
+                content: "";
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Contact Information</h1>
+    <div class="info">
+        <span class="label">Name:</span> ${firstName}
+    </div>
+    <div class="info">
+        <span class="label">Surname:</span> ${surname}
+    </div>
+    <div class="info">
+        <span class="label">Email:</span> <a href="mailto:${email}">${email}</a>
+    </div>
+    <div class="info">
+        <span class="label">Mobile:</span> <a href="tel:${mobileLink}">${mobile}</a>
+    </div>
+    <div class="info">
+        <span class="label">Home Country:</span> ${homeCountry}
+    </div>
+    <div class="info">
+        <span class="label">Destination Details:</span> <br>
+        ${destName} <br> 
+        ${destPhone} <br>
+        ${destEmail}
+    </div>
+
+    <hr>
+
+    <section lang="zh" class="chinese-section">
+        <h1>联系信息</h1>
+        <div class="info">
+            <span class="label">名字：</span> ${firstName}
+        </div>
+        <div class="info">
+            <span class="label">姓氏：</span> ${surname}
+        </div>
+        <div class="info">
+            <span class="label">电子邮件：</span> <a href="mailto:${email}">${email}</a>
+        </div>
+        <div class="info">
+            <span class="label">手机：</span> <a href="tel:${mobileLink}">${mobile}</a>
+        </div>
+        <div class="info">
+            <span class="label">所属国家：</span> ${homeCountry === 'Australia' ? '澳大利亚' : homeCountry}
+        </div>
+        <div class="info">
+            <span class="label">目的地详情：</span> <br>
+            ${destName} <br> 
+            ${destPhone} <br>
+            ${destEmail}
+        </div>
+    </section>
+</body>
+</html>`;
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            showStatus('editor-status', '<span class="loader"></span> Saving changes...', 'loading');
+
+            try {
+                const content = generateHTML();
+
+                const response = await fetch(`${API_BASE_URL}/api/page/${currentFolder}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Edit-Key': editKey
+                    },
+                    body: JSON.stringify({
+                        content,
+                        sha: currentSha
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || `Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                currentSha = data.sha;
+
+                // Update welcome name
+                document.getElementById('user-name').textContent = document.getElementById('first-name').value;
+
+                showStatus('editor-status', 
+                    `✓ Changes saved! <a href="${data.url}" target="_blank">View your page →</a><br>
+                    <span style="font-size: 0.85em; opacity: 0.8;">May take 1-2 minutes to update.</span>`,
+                    'success'
+                );
+
+            } catch (error) {
+                showStatus('editor-status', `Error: ${error.message}`, 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function resetForm() {
+            showStatus('editor-status', '<span class="loader"></span> Reloading...', 'loading');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/page/${currentFolder}`, {
+                    headers: {
+                        'X-Edit-Key': editKey
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to reload');
+                }
+
+                const data = await response.json();
+                currentSha = data.sha;
+                parseAndFillForm(data.content);
+                hideStatus('editor-status');
+
+            } catch (error) {
+                showStatus('editor-status', `Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
