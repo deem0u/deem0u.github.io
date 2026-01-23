@@ -121,7 +121,7 @@
       <div class="app-container">
         <div class="tabs">
           <button class="tab active" data-tab="manage">Manage Users</button>
-          <button class="tab" data-tab="edit">Edit Pages</button>
+          <button class="tab" data-tab="edit">Add/Edit Pages</button>
         </div>
 
         <div id="tab-manage" class="tab-content active">
@@ -144,9 +144,18 @@
             <div class="card-body" style="display: flex; gap: var(--space-4); align-items: flex-end; flex-wrap: wrap;">
               <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
                 <label class="form-label">Select Contact Page</label>
-                <select id="page-select" class="form-select" onchange="loadPage()">
-                  <option value="">Choose a user to edit...</option>
-                </select>
+                <div class="searchable-select" id="page-select-container">
+                  <button type="button" class="searchable-select-trigger" id="page-select-trigger" onclick="togglePageSelect()">
+                    <span id="page-select-text" class="searchable-select-placeholder">Choose a user to edit...</span>
+                  </button>
+                  <div class="searchable-select-dropdown" id="page-select-dropdown">
+                    <div class="searchable-select-search">
+                      <input type="text" id="page-select-search" placeholder="Search users..." oninput="filterPageOptions()">
+                    </div>
+                    <div class="searchable-select-options" id="page-select-options"></div>
+                  </div>
+                </div>
+                <input type="hidden" id="page-select" value="">
               </div>
               <button type="button" class="btn btn-success" onclick="showNewUserForm()">+ Add New User</button>
             </div>
@@ -388,11 +397,93 @@ function populateUI() {
   const wk = Object.keys(editKeys).filter(k => pages.includes(k)).length;
   document.getElementById('stat-total').textContent = pages.length;
   document.getElementById('stat-active').textContent = wk;
-  const sel = document.getElementById('page-select');
-  sel.innerHTML = '<option value="">Choose a user to edit...</option>';
-  pages.sort().forEach(f => { const u = userInfo[f] || {}; sel.innerHTML += `<option value="${f}">${u.firstName ? u.firstName + ' ' + u.surname : f}</option>`; });
+  populatePageSelect();
   renderList('manage');
 }
+
+function populatePageSelect() {
+  const options = document.getElementById('page-select-options');
+  const sorted = pages.slice().sort((a, b) => {
+    const uA = userInfo[a] || {}, uB = userInfo[b] || {};
+    const nameA = uA.firstName ? `${uA.firstName} ${uA.surname}` : a;
+    const nameB = uB.firstName ? `${uB.firstName} ${uB.surname}` : b;
+    return nameA.localeCompare(nameB);
+  });
+  
+  options.innerHTML = sorted.map(f => {
+    const u = userInfo[f] || {};
+    const name = u.firstName ? `${u.firstName} ${u.surname}` : f;
+    return `<div class="searchable-select-option" data-value="${f}" data-name="${name}" data-email="${u.email || ''}" onclick="selectPage('${f}')">${name} <span style="color: var(--color-text-muted); font-size: var(--text-xs);">(${f})</span></div>`;
+  }).join('');
+  
+  if (!sorted.length) {
+    options.innerHTML = '<div class="searchable-select-empty">No users found</div>';
+  }
+}
+
+function togglePageSelect() {
+  const dropdown = document.getElementById('page-select-dropdown');
+  const isOpen = dropdown.classList.contains('show');
+  
+  // Close all other dropdowns first
+  document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
+  
+  if (!isOpen) {
+    dropdown.classList.add('show');
+    document.getElementById('page-select-search').value = '';
+    filterPageOptions();
+    document.getElementById('page-select-search').focus();
+  }
+}
+
+function filterPageOptions() {
+  const search = document.getElementById('page-select-search').value.toLowerCase();
+  const options = document.querySelectorAll('#page-select-options .searchable-select-option');
+  let hasVisible = false;
+  
+  options.forEach(opt => {
+    const name = opt.dataset.name.toLowerCase();
+    const value = opt.dataset.value.toLowerCase();
+    const email = opt.dataset.email.toLowerCase();
+    const match = name.includes(search) || value.includes(search) || email.includes(search);
+    opt.style.display = match ? '' : 'none';
+    if (match) hasVisible = true;
+  });
+  
+  // Show/hide empty state
+  let emptyEl = document.querySelector('#page-select-options .searchable-select-empty');
+  if (!hasVisible && !emptyEl) {
+    const el = document.createElement('div');
+    el.className = 'searchable-select-empty';
+    el.textContent = 'No users match your search';
+    document.getElementById('page-select-options').appendChild(el);
+  } else if (hasVisible && emptyEl) {
+    emptyEl.remove();
+  }
+}
+
+function selectPage(folder) {
+  document.getElementById('page-select').value = folder;
+  const u = userInfo[folder] || {};
+  const name = u.firstName ? `${u.firstName} ${u.surname}` : folder;
+  document.getElementById('page-select-text').textContent = name;
+  document.getElementById('page-select-text').classList.remove('searchable-select-placeholder');
+  document.getElementById('page-select-dropdown').classList.remove('show');
+  
+  // Update selected state
+  document.querySelectorAll('#page-select-options .searchable-select-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.dataset.value === folder);
+  });
+  
+  loadPage();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.searchable-select')) {
+    document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
+  }
+});
 
 function getInitials(u) { return u.firstName && u.surname ? (u.firstName[0] + u.surname[0]).toUpperCase() : (u.folder ? u.folder[0].toUpperCase() : '?'); }
 
@@ -537,7 +628,10 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${firstName} ${surname}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${firstName}</div><div class="info"><span class="label">Surname:</span> ${surname}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${email}">${email}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${mobileLink}">${mobile}</a></div><div class="info"><span class="label">Home Country:</span> ${homeCountry}</div><div class="info"><span class="label">Destination Details:</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${firstName}</div><div class="info"><span class="label">姓氏：</span> ${surname}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${email}">${email}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${mobileLink}">${mobile}</a></div><div class="info"><span class="label">所属国家：</span> ${homeCountry==='Australia'?'澳大利亚':homeCountry}</div><div class="info"><span class="label">目的地详情：</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div></section></body></html>`;
 }
 
-function editUser(f) { document.getElementById('page-select').value = f; switchTab('edit'); loadPage(); }
+function editUser(f) { 
+  selectPage(f);
+  switchTab('edit'); 
+}
 
 async function loadPage() {
   currentFolder = document.getElementById('page-select').value;
