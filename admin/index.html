@@ -142,15 +142,55 @@
 
         <div id="tab-edit" class="tab-content">
           <div class="card">
-            <div class="card-body">
-              <div class="form-group" style="margin-bottom: 0;">
+            <div class="card-body" style="display: flex; gap: var(--space-4); align-items: flex-end; flex-wrap: wrap;">
+              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
                 <label class="form-label">Select Contact Page</label>
                 <select id="page-select" class="form-select" onchange="loadPage()">
                   <option value="">Choose a user to edit...</option>
                 </select>
               </div>
+              <button type="button" class="btn btn-success" onclick="showNewUserForm()">+ Add New User</button>
             </div>
           </div>
+          
+          <!-- New User Form -->
+          <div id="new-user-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Add New Contact Page</span></div>
+            <div class="card-body">
+              <form id="new-user-form">
+                <div class="form-group">
+                  <label class="form-label">Folder Name</label>
+                  <input type="text" id="new-folder" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_-]+" required>
+                  <span class="form-hint">Used in the URL. Letters, numbers, hyphens only. Example: deem0u.github.io/<strong>john-smith</strong>/</span>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">First Name</label><input type="text" id="new-first-name" class="form-input" required></div>
+                  <div class="form-group"><label class="form-label">Surname</label><input type="text" id="new-surname" class="form-input" required></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-email" class="form-input" required></div>
+                  <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="new-mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
+                </div>
+                <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="new-home-country" class="form-input" value="Australia" required></div>
+                <div class="form-group">
+                  <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
+                  <div class="form-section">
+                    <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="new-dest-name" class="form-input"></div>
+                    <div class="form-row">
+                      <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="new-dest-phone" class="form-input"></div>
+                      <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-dest-email" class="form-input"></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="alert-new-user" class="alert"></div>
+                <div class="form-actions">
+                  <button type="submit" id="create-btn" class="btn btn-success">Create Contact Page</button>
+                  <button type="button" class="btn btn-secondary" onclick="hideNewUserForm()">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
           <div id="editor-card" class="card hidden">
             <div class="card-header"><span class="card-title">Edit Contact Information</span></div>
             <div class="card-body">
@@ -224,6 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('recovery-form-step1').addEventListener('submit', handleRecoveryStep1);
   document.getElementById('recovery-form-step2').addEventListener('submit', handleRecoveryStep2);
   document.getElementById('contact-form').addEventListener('submit', handleSave);
+  document.getElementById('new-user-form').addEventListener('submit', handleCreateUser);
   
   try {
     const res = await fetch(`${API}/api/setup/status`);
@@ -358,7 +399,7 @@ function renderList(t) {
   if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }
   c.innerHTML = fl.map(f => {
     const u = userInfo[f] || { firstName: '', surname: '', email: '', folder: f }, hk = !!editKeys[f], nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
-    if (t === 'manage') return `<div class="user-item"><div class="user-avatar">${getInitials(u)}</div><div class="user-details"><div class="user-name">${nm} ${hk ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">No access</span>'}</div><div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div></div><div class="user-actions">${!hk ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Generate</button>` : `<button class="btn btn-warning btn-sm" onclick="confirmRegenerate('${f}')">Regenerate</button><button class="btn btn-danger btn-sm" onclick="confirmRemove('${f}')">Remove</button>`}<button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit</button></div></div>`;
+    if (t === 'manage') return `<div class="user-item"><div class="user-avatar">${getInitials(u)}</div><div class="user-details"><div class="user-name">${nm} ${hk ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">No access</span>'}</div><div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div></div><div class="user-actions">${!hk ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Generate</button>` : `<button class="btn btn-warning btn-sm" onclick="confirmRegenerate('${f}')">Regenerate</button><button class="btn btn-secondary btn-sm" onclick="confirmRemove('${f}')">Revoke</button>`}<button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete</button></div></div>`;
     return `<div class="user-item"><div class="user-avatar">${getInitials(u)}</div><div class="user-details"><div class="user-name">${nm}</div><div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div></div><div class="user-actions">${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Email Link</a>` : ''}<button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy</button></div></div>`;
   }).join('');
 }
@@ -374,8 +415,89 @@ async function generateKey(f) {
 function confirmRegenerate(f) { showModal('Regenerate?', 'Their current link will stop working.', 'btn-warning', 'Regenerate', () => regenerateKey(f)); }
 async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; populateUI(); showAlert('alert-manage', 'New link created', 'success'); } } catch {} }
 
-function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-danger', 'Remove', () => removeKey(f)); }
+function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-warning', 'Revoke', () => removeKey(f)); }
 async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); delete editKeys[f]; populateUI(); showAlert('alert-manage', 'Access removed', 'success'); } catch {} }
+
+function confirmDeleteUser(f) {
+  const u = userInfo[f] || {};
+  const nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
+  showModal('Delete User?', `This will permanently delete ${nm}'s contact page. This cannot be undone.`, 'btn-danger', 'Delete', () => deleteUser(f));
+}
+
+async function deleteUser(f) {
+  showAlert('alert-manage', '<span class="spinner"></span> Deleting...', 'info');
+  try {
+    const r = await fetch(`${API}/api/page/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } });
+    if (r.ok) {
+      pages = pages.filter(p => p !== f);
+      delete userInfo[f];
+      delete editKeys[f];
+      populateUI();
+      showAlert('alert-manage', 'User deleted', 'success');
+    } else {
+      const d = await r.json();
+      showAlert('alert-manage', d.error || 'Failed to delete', 'error');
+    }
+  } catch { showAlert('alert-manage', 'Error', 'error'); }
+}
+
+function showNewUserForm() {
+  document.getElementById('new-user-card').classList.remove('hidden');
+  document.getElementById('editor-card').classList.add('hidden');
+  document.getElementById('page-select').value = '';
+  document.getElementById('new-folder').focus();
+}
+
+function hideNewUserForm() {
+  document.getElementById('new-user-card').classList.add('hidden');
+  document.getElementById('new-user-form').reset();
+  hideAlert('alert-new-user');
+}
+
+async function handleCreateUser(e) {
+  e.preventDefault();
+  const btn = document.getElementById('create-btn');
+  const folder = document.getElementById('new-folder').value.trim().toLowerCase();
+  
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
+  
+  try {
+    const content = generateNewUserHTML();
+    const r = await fetch(`${API}/api/page`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body: JSON.stringify({ folder, content })
+    });
+    const d = await r.json();
+    
+    if (r.ok) {
+      pages.push(folder);
+      userInfo[folder] = {
+        firstName: document.getElementById('new-first-name').value.trim(),
+        surname: document.getElementById('new-surname').value.trim(),
+        email: document.getElementById('new-email').value.trim(),
+        folder
+      };
+      populateUI();
+      hideNewUserForm();
+      showAlert('alert-manage', `Created ${folder}. <a href="${d.url}" target="_blank">View page →</a>`, 'success');
+      switchTab('manage');
+    } else {
+      showAlert('alert-new-user', d.error || 'Failed to create', 'error');
+    }
+  } catch { showAlert('alert-new-user', 'Error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Create Contact Page'; }
+}
+
+function generateNewUserHTML() {
+  const f = i => document.getElementById('new-' + i).value.trim();
+  const ml = f('mobile').replace(/\s/g, '');
+  return generatePageHTML(f('first-name'), f('surname'), f('email'), f('mobile'), ml, f('home-country'), f('dest-name'), f('dest-phone'), f('dest-email'));
+}
+
+function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCountry, destName, destPhone, destEmail) {
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${firstName} ${surname}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${firstName}</div><div class="info"><span class="label">Surname:</span> ${surname}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${email}">${email}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${mobileLink}">${mobile}</a></div><div class="info"><span class="label">Home Country:</span> ${homeCountry}</div><div class="info"><span class="label">Destination Details:</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${firstName}</div><div class="info"><span class="label">姓氏：</span> ${surname}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${email}">${email}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${mobileLink}">${mobile}</a></div><div class="info"><span class="label">所属国家：</span> ${homeCountry==='Australia'?'澳大利亚':homeCountry}</div><div class="info"><span class="label">目的地详情：</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div></section></body></html>`;
+}
 
 function editUser(f) { document.getElementById('page-select').value = f; switchTab('edit'); loadPage(); }
 
@@ -413,8 +535,9 @@ async function handleSave(e) {
 }
 
 function generateHTML() {
-  const f = i => document.getElementById(i).value.trim(), ml = f('mobile').replace(/\s/g, '');
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${f('first-name')} ${f('surname')}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${f('first-name')}</div><div class="info"><span class="label">Surname:</span> ${f('surname')}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">Home Country:</span> ${f('home-country')}</div><div class="info"><span class="label">Destination Details:</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${f('first-name')}</div><div class="info"><span class="label">姓氏：</span> ${f('surname')}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">所属国家：</span> ${f('home-country')==='Australia'?'澳大利亚':f('home-country')}</div><div class="info"><span class="label">目的地详情：</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div></section></body></html>`;
+  const f = i => document.getElementById(i).value.trim();
+  const ml = f('mobile').replace(/\s/g, '');
+  return generatePageHTML(f('first-name'), f('surname'), f('email'), f('mobile'), ml, f('home-country'), f('dest-name'), f('dest-phone'), f('dest-email'));
 }
 
 function generateMailto(u, f) {
