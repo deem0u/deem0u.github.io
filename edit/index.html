@@ -4,357 +4,170 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Update Your Contact Information</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
-
-<div class="page-container">
-  
-  <!-- Header -->
-  <header class="page-header">
-    <h1 class="page-title">Update Your Contact Info</h1>
-    <p class="page-subtitle">Edit your details and save to publish changes</p>
-  </header>
-
-  <!-- Auth Screen -->
-  <div id="auth-screen">
-    <div class="card">
-      <div class="card-header">Access Your Page</div>
-      
-      <p style="margin-bottom: 20px; color: var(--color-text-secondary); font-size: 14px;">
-        Enter your edit key to access your contact page. This key was provided to you via email.
-      </p>
-      
-      <form id="auth-form">
-        <div class="form-group">
-          <label class="form-label">Edit Key</label>
-          <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key" required>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <div class="app-logo-icon">C</div>
+          <span class="app-logo-text">Contact Editor</span>
         </div>
-        
-        <div class="btn-group">
-          <button type="submit" class="btn btn-primary">Access My Page</button>
+      </div>
+    </header>
+
+    <main id="screen-auth" class="app-centered">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Access Your Page</h1>
+          <p class="auth-subtitle">Enter your edit key to update your contact information</p>
         </div>
-      </form>
-      
-      <div id="auth-status" class="status"></div>
-    </div>
+        <form id="auth-form">
+          <div class="form-group">
+            <label class="form-label">Edit Key</label>
+            <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key" required>
+            <span class="form-hint">This was provided to you via email</span>
+          </div>
+          <div id="auth-alert" class="alert"></div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Continue</button>
+        </form>
+      </div>
+    </main>
+
+    <main id="screen-editor" class="app-main hidden">
+      <div class="app-container">
+        <div class="card" style="background: var(--blue-50); border-color: var(--blue-100); margin-bottom: var(--space-6);">
+          <div class="card-body" style="padding: var(--space-4) var(--space-5);">
+            <p style="margin: 0; font-size: var(--text-sm); color: var(--blue-700);">
+              Welcome, <strong id="user-name">User</strong>. Update your information below and click Save.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Your Contact Details</span></div>
+          <div class="card-body">
+            <form id="contact-form">
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">First Name</label><input type="text" id="first-name" class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Surname</label><input type="text" id="surname" class="form-input" required></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
+              </div>
+              <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="home-country" class="form-input" required></div>
+              <div class="form-group">
+                <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
+                <div class="form-section">
+                  <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="dest-name" class="form-input"></div>
+                  <div class="form-row">
+                    <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="dest-phone" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Email</label><input type="email" id="dest-email" class="form-input"></div>
+                  </div>
+                </div>
+              </div>
+              <div id="editor-alert" class="alert"></div>
+              <div class="form-actions">
+                <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save Changes</button>
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
-
-  <!-- Editor Screen -->
-  <div id="editor-screen" style="display: none;">
-    
-    <!-- Welcome -->
-    <div class="card" style="background: var(--color-bg-secondary);">
-      <p style="margin: 0; font-size: 14px;">
-        Welcome, <strong id="user-name">User</strong>. Update your information below and click Save to publish.
-      </p>
-    </div>
-
-    <!-- Editor -->
-    <div class="card">
-      <div class="card-header">Your Contact Details</div>
-      
-      <form id="contact-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">First Name</label>
-            <input type="text" id="first-name" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Surname</label>
-            <input type="text" id="surname" class="form-input" required>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" id="email" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Mobile</label>
-            <input type="tel" id="mobile" class="form-input" placeholder="+61 xxx xxx xxx" required>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Home Country</label>
-          <input type="text" id="home-country" class="form-input" required>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Destination Details</label>
-          <div class="form-section">
-            <div class="form-group">
-              <label class="form-label">Location Name</label>
-              <input type="text" id="dest-name" class="form-input">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Phone</label>
-              <input type="tel" id="dest-phone" class="form-input">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="email" id="dest-email" class="form-input">
-            </div>
-          </div>
-        </div>
-
-        <div class="btn-group">
-          <button type="submit" class="btn btn-primary" id="save-btn">Save Changes</button>
-          <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
-        </div>
-      </form>
-      
-      <div id="editor-status" class="status"></div>
-    </div>
-
-  </div>
-
-</div>
 
 <script>
-// ===========================================
-// CONFIGURATION
-// ===========================================
-const API_URL = 'https://contact-page-editor.deem0u.workers.dev';
-// ===========================================
-
-// State
-let folder = null;
-let editKey = null;
-let currentSha = null;
-
-// ============ Initialization ============
+const API = 'https://contact-page-editor.deem0u.workers.dev';
+let folder = null, editKey = null, currentSha = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Get folder from URL
   const params = new URLSearchParams(window.location.search);
   folder = params.get('folder');
   const urlKey = params.get('key');
   
-  if (!folder) {
-    showStatus('auth-status', 'No page specified. Check your link.', 'error');
-    return;
-  }
+  if (!folder) { showAlert('auth-alert', 'Invalid link. Please check your email for the correct link.', 'error'); return; }
+  if (urlKey) { document.getElementById('edit-key').value = urlKey; authenticate(); }
   
-  // If key in URL, auto-authenticate
-  if (urlKey) {
-    document.getElementById('edit-key').value = urlKey;
-    authenticate();
-  }
-  
-  // Form handlers
-  document.getElementById('auth-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    authenticate();
-  });
-  
+  document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
   document.getElementById('contact-form').addEventListener('submit', handleSave);
 });
 
-// ============ Auth ============
-
 async function authenticate() {
   editKey = document.getElementById('edit-key').value.trim();
+  if (!editKey) { showAlert('auth-alert', 'Please enter your edit key', 'error'); return; }
   
-  if (!editKey) {
-    showStatus('auth-status', 'Please enter your edit key', 'error');
-    return;
-  }
-  
-  showStatus('auth-status', '<span class="loader"></span> Verifying...', 'loading');
+  showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
   
   try {
-    const res = await fetch(`${API_URL}/api/page/${folder}`, {
-      headers: { 'X-Edit-Key': editKey }
-    });
-    
-    if (!res.ok) {
-      showStatus('auth-status', 'Invalid edit key. Please check and try again.', 'error');
-      return;
-    }
+    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'X-Edit-Key': editKey } });
+    if (!res.ok) { showAlert('auth-alert', 'Invalid edit key. Please check and try again.', 'error'); return; }
     
     const data = await res.json();
     currentSha = data.sha;
-    
     fillForm(data.content);
     
-    // Update welcome name
-    const firstName = document.getElementById('first-name').value;
-    document.getElementById('user-name').textContent = firstName || folder;
-    
-    // Show editor
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('editor-screen').style.display = 'block';
-    
-  } catch (e) {
-    showStatus('auth-status', 'Connection error. Please try again.', 'error');
-  }
+    document.getElementById('user-name').textContent = document.getElementById('first-name').value || folder;
+    document.getElementById('screen-auth').classList.add('hidden');
+    document.getElementById('screen-editor').classList.remove('hidden');
+  } catch (e) { showAlert('auth-alert', 'Connection error. Please try again.', 'error'); }
 }
 
-// ============ Form ============
-
-function fillForm(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  
-  function getValue(label) {
-    const divs = doc.querySelectorAll('.info');
-    for (const div of divs) {
-      const lbl = div.querySelector('.label');
-      if (lbl && lbl.textContent.includes(label)) {
-        const link = div.querySelector('a');
-        if (link) return link.textContent.trim();
-        const clone = div.cloneNode(true);
-        clone.querySelector('.label')?.remove();
-        return clone.textContent.trim();
-      }
-    }
-    return '';
-  }
-  
-  document.getElementById('first-name').value = getValue('Name:');
-  document.getElementById('surname').value = getValue('Surname:');
-  document.getElementById('email').value = getValue('Email:');
-  document.getElementById('mobile').value = getValue('Mobile:');
-  document.getElementById('home-country').value = getValue('Home Country:');
-  
-  // Destination
-  const divs = doc.querySelectorAll('.info');
-  for (const div of divs) {
-    const lbl = div.querySelector('.label');
-    if (lbl && lbl.textContent.includes('Destination')) {
-      const lines = div.innerHTML.split('<br>').map(l => {
-        const temp = document.createElement('div');
-        temp.innerHTML = l;
-        return temp.textContent.trim();
-      }).filter(l => l && !l.includes('Destination'));
-      
-      document.getElementById('dest-name').value = lines[0] || '';
-      document.getElementById('dest-phone').value = lines[1] || '';
-      document.getElementById('dest-email').value = lines[2] || '';
-      break;
-    }
-  }
+function fillForm(h) {
+  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
+  const gl = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>.*?<a[^>]*>([^<]+)</a>`, 's')); return m ? m[1].trim() : ''; };
+  document.getElementById('first-name').value = g('Name');
+  document.getElementById('surname').value = g('Surname');
+  document.getElementById('email').value = gl('Email');
+  document.getElementById('mobile').value = gl('Mobile');
+  document.getElementById('home-country').value = g('Home Country');
+  const dm = h.match(/<span class="label">Destination Details:<\/span>\s*<br>([^<]*)<br>([^<]*)<br>([^<]*)/);
+  document.getElementById('dest-name').value = dm ? dm[1].trim() : '';
+  document.getElementById('dest-phone').value = dm ? dm[2].trim() : '';
+  document.getElementById('dest-email').value = dm ? dm[3].trim() : '';
 }
 
 async function resetForm() {
-  showStatus('editor-status', '<span class="loader"></span> Reloading...', 'loading');
-  
+  showAlert('editor-alert', '<span class="spinner"></span> Reloading...', 'info');
   try {
-    const res = await fetch(`${API_URL}/api/page/${folder}`, {
-      headers: { 'X-Edit-Key': editKey }
-    });
-    
-    if (res.ok) {
-      const data = await res.json();
-      currentSha = data.sha;
-      fillForm(data.content);
-      hideStatus('editor-status');
-    }
-  } catch (e) {
-    showStatus('editor-status', 'Failed to reload', 'error');
-  }
+    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'X-Edit-Key': editKey } });
+    if (res.ok) { const d = await res.json(); currentSha = d.sha; fillForm(d.content); hideAlert('editor-alert'); }
+  } catch (e) { showAlert('editor-alert', 'Failed to reload', 'error'); }
 }
 
 async function handleSave(e) {
   e.preventDefault();
-  
   const btn = document.getElementById('save-btn');
-  btn.disabled = true;
-  showStatus('editor-status', '<span class="loader"></span> Saving...', 'loading');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
   
   try {
     const content = generateHTML();
-    
-    const res = await fetch(`${API_URL}/api/page/${folder}`, {
+    const res = await fetch(`${API}/api/page/${folder}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Edit-Key': editKey
-      },
+      headers: { 'Content-Type': 'application/json', 'X-Edit-Key': editKey },
       body: JSON.stringify({ content, sha: currentSha })
     });
-    
     const data = await res.json();
     
     if (res.ok) {
       currentSha = data.sha;
       document.getElementById('user-name').textContent = document.getElementById('first-name').value;
-      showStatus('editor-status', `Changes saved! <a href="${data.url}" target="_blank">View your page →</a>`, 'success');
-    } else {
-      showStatus('editor-status', data.error || 'Failed to save', 'error');
-    }
-  } catch (e) {
-    showStatus('editor-status', 'Connection error', 'error');
-  } finally {
-    btn.disabled = false;
-  }
+      showAlert('editor-alert', `Changes saved! <a href="${data.url}" target="_blank">View your page →</a>`, 'success');
+    } else { showAlert('editor-alert', data.error || 'Failed to save', 'error'); }
+  } catch (e) { showAlert('editor-alert', 'Connection error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }
 
 function generateHTML() {
-  const firstName = document.getElementById('first-name').value.trim();
-  const surname = document.getElementById('surname').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const mobile = document.getElementById('mobile').value.trim();
-  const homeCountry = document.getElementById('home-country').value.trim();
-  const destName = document.getElementById('dest-name').value.trim();
-  const destPhone = document.getElementById('dest-phone').value.trim();
-  const destEmail = document.getElementById('dest-email').value.trim();
-  const mobileLink = mobile.replace(/\s/g, '');
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact Information - ${firstName} ${surname}</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 600px; margin: 40px auto; padding: 20px; color: #333; }
-    h1 { margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; font-size: 24px; }
-    .info { margin: 12px 0; }
-    .label { font-weight: 600; }
-    a { color: #0066cc; }
-    hr { margin: 40px 0; border: none; border-top: 1px solid #ddd; }
-    .chinese-section { font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "PingFang SC", sans-serif; }
-    @media print { body { margin: 0; padding: 10px; max-width: 100%; } a { color: #333; text-decoration: none; } }
-  </style>
-</head>
-<body>
-  <h1>Contact Information</h1>
-  <div class="info"><span class="label">Name:</span> ${firstName}</div>
-  <div class="info"><span class="label">Surname:</span> ${surname}</div>
-  <div class="info"><span class="label">Email:</span> <a href="mailto:${email}">${email}</a></div>
-  <div class="info"><span class="label">Mobile:</span> <a href="tel:${mobileLink}">${mobile}</a></div>
-  <div class="info"><span class="label">Home Country:</span> ${homeCountry}</div>
-  <div class="info"><span class="label">Destination Details:</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div>
-  <hr>
-  <section lang="zh" class="chinese-section">
-    <h1>联系信息</h1>
-    <div class="info"><span class="label">名字：</span> ${firstName}</div>
-    <div class="info"><span class="label">姓氏：</span> ${surname}</div>
-    <div class="info"><span class="label">电子邮件：</span> <a href="mailto:${email}">${email}</a></div>
-    <div class="info"><span class="label">手机：</span> <a href="tel:${mobileLink}">${mobile}</a></div>
-    <div class="info"><span class="label">所属国家：</span> ${homeCountry === 'Australia' ? '澳大利亚' : homeCountry}</div>
-    <div class="info"><span class="label">目的地详情：</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div>
-  </section>
-</body>
-</html>`;
+  const f = i => document.getElementById(i).value.trim(), ml = f('mobile').replace(/\s/g, '');
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${f('first-name')} ${f('surname')}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${f('first-name')}</div><div class="info"><span class="label">Surname:</span> ${f('surname')}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">Home Country:</span> ${f('home-country')}</div><div class="info"><span class="label">Destination Details:</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${f('first-name')}</div><div class="info"><span class="label">姓氏：</span> ${f('surname')}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">所属国家：</span> ${f('home-country')==='Australia'?'澳大利亚':f('home-country')}</div><div class="info"><span class="label">目的地详情：</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div></section></body></html>`;
 }
 
-// ============ Status ============
-
-function showStatus(id, message, type) {
-  const el = document.getElementById(id);
-  el.className = `status show status-${type}`;
-  el.innerHTML = message;
-}
-
-function hideStatus(id) {
-  document.getElementById(id).className = 'status';
-}
+function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
+function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 </script>
-
 </body>
 </html>
