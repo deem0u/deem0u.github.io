@@ -1,722 +1,1284 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact Editor — Admin</title>
-  <link rel="stylesheet" href="../styles.css">
-</head>
-<body>
-  <div class="app">
-    <header class="app-header">
-      <div class="app-header-inner">
-        <div class="app-logo">
-          <div class="app-logo-icon">C</div>
-          <span class="app-logo-text">Contact Editor</span>
-          <span class="app-logo-badge">Admin</span>
-        </div>
-        <button id="logout-btn" class="btn btn-ghost btn-sm hidden" onclick="logout()">Sign Out</button>
-      </div>
-    </header>
+/* 
+ * Contact Page Editor - Design System
+ * Clean, modern interface with clear visual hierarchy
+ */
 
-    <main id="screen-setup" class="app-centered hidden">
-      <div class="auth-card">
-        <div class="auth-header">
-          <h1 class="auth-title">Welcome</h1>
-          <p class="auth-subtitle">Set up your admin account to get started</p>
-        </div>
-        <form id="setup-form">
-          <div class="form-group">
-            <label class="form-label">Create Admin Password</label>
-            <input type="password" id="setup-key" class="form-input" placeholder="Minimum 8 characters" minlength="8" required>
-            <span class="form-hint">Choose a secure password you'll remember</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Recovery Email</label>
-            <input type="email" id="setup-email" class="form-input" placeholder="your@email.com" required>
-            <span class="form-hint">Used to recover your password if forgotten</span>
-          </div>
-          <div id="setup-alert" class="alert"></div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg">Complete Setup</button>
-        </form>
-      </div>
-    </main>
-
-    <main id="screen-login" class="app-centered">
-      <div class="auth-card">
-        <div class="auth-header">
-          <h1 class="auth-title">Sign In</h1>
-          <p class="auth-subtitle">Enter your admin password to continue</p>
-        </div>
-        <form id="login-form">
-          <div class="form-group">
-            <label class="form-label">Admin Password</label>
-            <input type="password" id="login-key" class="form-input" placeholder="Enter your password" required>
-          </div>
-          <div id="login-alert" class="alert"></div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
-          <div class="text-center mt-4">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="showScreen('recovery')">Forgot password?</button>
-          </div>
-        </form>
-      </div>
-    </main>
-
-    <main id="screen-recovery" class="app-centered hidden">
-      <div class="auth-card">
-        <div class="auth-header">
-          <h1 class="auth-title">Password Recovery</h1>
-          <p class="auth-subtitle" id="recovery-subtitle">Enter your recovery email to receive a verification code</p>
-        </div>
-        
-        <!-- Step 1: Enter email -->
-        <form id="recovery-form-step1">
-          <div class="form-group">
-            <label class="form-label">Recovery Email</label>
-            <input type="email" id="recovery-email" class="form-input" placeholder="your@email.com" required>
-          </div>
-          <div id="recovery-alert-1" class="alert"></div>
-          <button type="submit" id="recovery-submit-1" class="btn btn-primary btn-block btn-lg">Send Recovery Code</button>
-        </form>
-        
-        <!-- Step 2: Send email with code -->
-        <div id="recovery-step2" class="hidden">
-          <div class="alert alert-info show mb-4">
-            <div class="alert-content">Click the button below to send yourself the recovery code, then enter it here.</div>
-          </div>
-          <a id="recovery-mailto" href="#" class="btn btn-primary btn-block btn-lg mb-4" target="_blank">Open Email with Code</a>
-          <form id="recovery-form-step2">
-            <div class="form-group">
-              <label class="form-label">Enter 6-Digit Code</label>
-              <input type="text" id="recovery-code" class="form-input font-mono text-center" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required style="font-size: 1.5rem; letter-spacing: 0.5rem;">
-              <span class="form-hint">Code expires in 10 minutes</span>
-            </div>
-            <div id="recovery-alert-2" class="alert"></div>
-            <button type="submit" id="recovery-submit-2" class="btn btn-primary btn-block btn-lg">Verify Code</button>
-          </form>
-        </div>
-        
-        <!-- Step 3: Show password -->
-        <div id="recovery-step3" class="hidden">
-          <div class="alert alert-success show mb-4">
-            <div class="alert-content">Verification successful! Here's your password:</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Your Admin Password</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="recovered-key" class="form-input font-mono" readonly>
-              <button type="button" class="btn btn-secondary" onclick="copyRecoveredKey()">Copy</button>
-            </div>
-          </div>
-          <button type="button" class="btn btn-primary btn-block btn-lg mt-4" onclick="showScreen('login')">Back to Sign In</button>
-        </div>
-        
-        <div class="text-center mt-4" id="recovery-back-link">
-          <button type="button" class="btn btn-ghost btn-sm" onclick="resetRecovery(); showScreen('login')">← Back to Sign In</button>
-        </div>
-      </div>
-    </main>
-
-    <main id="screen-dashboard" class="app-main hidden">
-      <div class="app-container">
-        <div class="tabs">
-          <button class="tab active" data-tab="manage">Manage Users</button>
-          <button class="tab" data-tab="edit">Add/Edit Pages</button>
-        </div>
-
-        <div id="tab-manage" class="tab-content active">
-          <div class="user-list-header">
-            <div class="user-list-stats">
-              <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">users</span></div>
-              <div class="stat"><span class="stat-value" id="stat-active">0</span><span class="stat-label">with access</span></div>
-            </div>
-            <div class="search-wrapper">
-              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="search-manage" class="search-input" placeholder="Search users..." oninput="filterUsers('manage')">
-            </div>
-          </div>
-          <div id="alert-manage" class="alert"></div>
-          <div id="list-manage" class="user-list"></div>
-        </div>
-
-        <div id="tab-edit" class="tab-content">
-          <div class="card">
-            <div class="card-body" style="display: flex; gap: var(--space-4); align-items: flex-end; flex-wrap: wrap;">
-              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
-                <label class="form-label">Select Contact Page</label>
-                <div class="searchable-select" id="page-select-container">
-                  <button type="button" class="searchable-select-trigger" id="page-select-trigger" onclick="togglePageSelect()">
-                    <span id="page-select-text" class="searchable-select-placeholder">Choose a user to edit...</span>
-                  </button>
-                  <div class="searchable-select-dropdown" id="page-select-dropdown">
-                    <div class="searchable-select-search">
-                      <input type="text" id="page-select-search" placeholder="Search users..." oninput="filterPageOptions()">
-                    </div>
-                    <div class="searchable-select-options" id="page-select-options"></div>
-                  </div>
-                </div>
-                <input type="hidden" id="page-select" value="">
-              </div>
-              <button type="button" class="btn btn-success" onclick="showNewUserForm()">+ Add New User</button>
-            </div>
-          </div>
-          
-          <!-- New User Form -->
-          <div id="new-user-card" class="card hidden">
-            <div class="card-header"><span class="card-title">Add New Contact Page</span></div>
-            <div class="card-body">
-              <form id="new-user-form">
-                <div class="form-group">
-                  <label class="form-label">Folder Name</label>
-                  <input type="text" id="new-folder" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_-]+" required>
-                  <span class="form-hint">Used in the URL. Letters, numbers, hyphens only. Example: deem0u.github.io/<strong>john-smith</strong>/</span>
-                </div>
-                <div class="form-row">
-                  <div class="form-group"><label class="form-label">First Name</label><input type="text" id="new-first-name" class="form-input" required></div>
-                  <div class="form-group"><label class="form-label">Surname</label><input type="text" id="new-surname" class="form-input" required></div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-email" class="form-input" required></div>
-                  <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="new-mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
-                </div>
-                <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="new-home-country" class="form-input" value="Australia" required></div>
-                <div class="form-group">
-                  <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
-                  <div class="form-section">
-                    <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="new-dest-name" class="form-input"></div>
-                    <div class="form-row">
-                      <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="new-dest-phone" class="form-input"></div>
-                      <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-dest-email" class="form-input"></div>
-                    </div>
-                  </div>
-                </div>
-                <div id="alert-new-user" class="alert"></div>
-                <div class="form-actions">
-                  <button type="submit" id="create-btn" class="btn btn-success">Create Contact Page</button>
-                  <button type="button" class="btn btn-secondary" onclick="hideNewUserForm()">Cancel</button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <div id="editor-card" class="card hidden">
-            <div class="card-header"><span class="card-title">Edit Contact Information</span></div>
-            <div class="card-body">
-              <form id="contact-form">
-                <div class="form-row">
-                  <div class="form-group"><label class="form-label">First Name</label><input type="text" id="first-name" class="form-input" required></div>
-                  <div class="form-group"><label class="form-label">Surname</label><input type="text" id="surname" class="form-input" required></div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" required></div>
-                  <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
-                </div>
-                <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="home-country" class="form-input" required></div>
-                <div class="form-group">
-                  <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
-                  <div class="form-section">
-                    <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="dest-name" class="form-input"></div>
-                    <div class="form-row">
-                      <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="dest-phone" class="form-input"></div>
-                      <div class="form-group"><label class="form-label">Email</label><input type="email" id="dest-email" class="form-input"></div>
-                    </div>
-                  </div>
-                </div>
-                <div id="alert-editor" class="alert"></div>
-                <div class="form-actions">
-                  <button type="submit" id="save-btn" class="btn btn-primary">Save Changes</button>
-                  <button type="button" class="btn btn-secondary" onclick="loadPage()">Reset</button>
-                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost" style="margin-left: auto;">View Page →</a>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </main>
-  </div>
-
-  <div id="modal" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header"><h3 class="modal-title" id="modal-title">Confirm</h3></div>
-      <div class="modal-body"><p id="modal-message">Are you sure?</p></div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-        <button class="btn" id="modal-confirm">Confirm</button>
-      </div>
-    </div>
-  </div>
-
-<script>
-const API = 'https://contact-page-editor.deem0u.workers.dev';
-const EDITOR_URL = 'https://deem0u.github.io/edit/';
-const PAGES_URL = 'https://deem0u.github.io/';
-
-let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentSha = null, modalCallback = null;
-
-document.addEventListener('DOMContentLoaded', async () => {
-  // Attach all event listeners first
-  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
-  document.getElementById('setup-form').addEventListener('submit', handleSetup);
-  document.getElementById('login-form').addEventListener('submit', handleLogin);
-  document.getElementById('recovery-form-step1').addEventListener('submit', handleRecoveryStep1);
-  document.getElementById('recovery-form-step2').addEventListener('submit', handleRecoveryStep2);
-  document.getElementById('contact-form').addEventListener('submit', handleSave);
-  document.getElementById('new-user-form').addEventListener('submit', handleCreateUser);
+:root {
+  /* Colors - Refined palette */
+  --white: #ffffff;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
   
-  // Check setup status and authenticate
-  try {
-    const res = await fetch(`${API}/api/setup/status`);
-    if (!res.ok) throw new Error('API error');
-    const data = await res.json();
-    
-    if (!data.setup_complete) { 
-      showScreen('setup'); 
-    } else {
-      const saved = localStorage.getItem('admin_key');
-      if (saved && await verifyKey(saved)) { 
-        adminKey = saved; 
-        await loadDashboard(); 
-        showScreen('dashboard'); 
-      } else { 
-        localStorage.removeItem('admin_key'); 
-        showScreen('login'); 
-      }
-    }
-  } catch (e) { 
-    console.error('Init error:', e);
-    showScreen('login'); 
-    showAlert('login-alert', 'Unable to connect to server. Please check your connection and try again.', 'error'); 
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  
+  --amber-50: #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-600: #d97706;
+  --amber-700: #b45309;
+  
+  --red-50: #fef2f2;
+  --red-100: #fee2e2;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+
+  /* Semantic colors */
+  --color-bg: var(--white);
+  --color-bg-subtle: var(--gray-50);
+  --color-bg-muted: var(--gray-100);
+  --color-border: var(--gray-200);
+  --color-border-strong: var(--gray-300);
+  --color-text: var(--gray-900);
+  --color-text-secondary: var(--gray-600);
+  --color-text-muted: var(--gray-400);
+  --color-primary: var(--blue-600);
+  --color-primary-hover: var(--blue-700);
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, monospace;
+  
+  /* Font sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Borders & Shadows */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg-subtle);
+  min-height: 100vh;
+}
+
+/* ========================================
+   Layout
+   ======================================== */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-4) var(--space-6);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-header-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.app-logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.app-logo-text {
+  font-weight: 600;
+  font-size: var(--text-lg);
+  color: var(--color-text);
+}
+
+.app-logo-badge {
+  background: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  margin-left: var(--space-2);
+}
+
+.app-main {
+  flex: 1;
+  padding: var(--space-8) var(--space-6);
+}
+
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Centered layout for auth screens */
+.app-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  padding: var(--space-6);
+}
+
+.auth-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-8);
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.auth-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--blue-50);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+  color: var(--color-primary);
+}
+
+.auth-title {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.auth-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ========================================
+   Cards
+   ======================================== */
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.card + .card {
+  margin-top: var(--space-6);
+}
+
+.card-header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.card-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.card-body {
+  padding: var(--space-6);
+}
+
+.card-footer {
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-bg-subtle);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ========================================
+   Forms
+   ======================================== */
+
+.form-group {
+  margin-bottom: var(--space-5);
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.form-label-optional {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.form-hint {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  background: var(--white);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.form-input:hover,
+.form-select:hover {
+  border-color: var(--gray-400);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--blue-100);
+}
+
+.form-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.form-input-icon {
+  position: relative;
+}
+
+.form-input-icon .form-input {
+  padding-left: var(--space-10);
+}
+
+.form-input-icon svg {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  padding-right: var(--space-10);
+  cursor: pointer;
+}
+
+/* Searchable Select - matches .form-input styling */
+.searchable-select {
+  position: relative;
+}
+
+.searchable-select-trigger {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  padding-right: var(--space-10);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--white);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.searchable-select-trigger:hover {
+  border-color: var(--color-border-strong);
+}
+
+.searchable-select-trigger:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--blue-100);
+}
+
+.searchable-select-placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchable-select-value {
+  color: var(--color-text);
+}
+
+.searchable-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  max-height: 320px;
+  overflow: hidden;
+  display: none;
+}
+
+.searchable-select-dropdown.show {
+  display: block;
+}
+
+.searchable-select-search {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.searchable-select-search input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.searchable-select-search input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchable-select-search input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--blue-100);
+}
+
+.searchable-select-options {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.searchable-select-option {
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  transition: background var(--transition);
+}
+
+.searchable-select-option:hover {
+  background: var(--color-bg-subtle);
+}
+
+.searchable-select-option.selected {
+  background: var(--blue-50);
+  color: var(--blue-700);
+}
+
+.searchable-select-empty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.form-section {
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-top: var(--space-3);
+}
+
+.form-section-title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-4);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ========================================
+   Buttons
+   ======================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--blue-100);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-bg-subtle);
+  border-color: var(--gray-400);
+}
+
+.btn-success {
+  background: var(--green-600);
+  color: var(--white);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: var(--green-700);
+}
+
+.btn-warning {
+  background: var(--amber-600);
+  color: var(--white);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--amber-700);
+}
+
+.btn-danger {
+  background: var(--red-600);
+  color: var(--white);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--red-700);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.btn-lg {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-base);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-icon {
+  padding: var(--space-2);
+}
+
+.btn-icon.btn-sm {
+  padding: var(--space-1);
+}
+
+/* ========================================
+   Tabs
+   ======================================== */
+
+.tabs {
+  display: flex;
+  gap: var(--space-1);
+  background: var(--color-bg-muted);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-6);
+}
+
+.tab {
+  flex: 1;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tab.active {
+  background: var(--white);
+  color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ========================================
+   User List
+   ======================================== */
+
+.user-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.user-list-stats {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.stat-value {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.stat-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.search-wrapper {
+  position: relative;
+  max-width: 300px;
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-10);
+  font-size: var(--text-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--blue-100);
+}
+
+.search-icon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* User Card - New Layout */
+.user-card {
+  background: var(--white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.user-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-subtle);
+}
+
+.user-card-header .user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-card-header .user-name {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.user-card-header .user-meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.user-status {
+  flex-shrink: 0;
+}
+
+.user-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.action-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.action-row-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.action-row-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.action-row-buttons .btn {
+  white-space: nowrap;
+}
+
+.action-row-danger {
+  justify-content: flex-end;
+}
+
+.action-row-danger .action-row-label {
+  display: none;
+}
+
+.text-danger {
+  color: var(--red-600) !important;
+}
+
+.text-danger:hover {
+  color: var(--red-700) !important;
+  background: var(--red-50) !important;
+}
+
+/* Legacy action-group styles - remove after migration */
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.action-group-label {
+  display: none;
+}
+
+.action-group-danger {
+  margin-left: auto;
+}
+
+/* Legacy user-item for backwards compatibility */
+.user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  background: var(--white);
+  border: 1px solid var(--color-border);
+  margin-top: -1px;
+  gap: var(--space-4);
+  transition: background var(--transition);
+}
+
+.user-item:first-child {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.user-item:last-child {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.user-item:only-child {
+  border-radius: var(--radius-md);
+}
+
+.user-item:hover {
+  background: var(--color-bg-subtle);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--blue-100);
+  color: var(--blue-600);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.user-meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.user-folder {
+  font-family: var(--font-mono);
+  background: var(--color-bg-muted);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.user-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ========================================
+   Badges
+   ======================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  border-radius: var(--radius-full);
+}
+
+.badge-success {
+  background: var(--green-100);
+  color: var(--green-700);
+}
+
+.badge-warning {
+  background: var(--amber-100);
+  color: var(--amber-700);
+}
+
+.badge-error {
+  background: var(--red-100);
+  color: var(--red-700);
+}
+
+.badge-info {
+  background: var(--blue-100);
+  color: var(--blue-700);
+}
+
+/* ========================================
+   Alerts & Status
+   ======================================== */
+
+.alert {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  display: none;
+  margin-bottom: var(--space-4);
+}
+
+.alert.show {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  animation: slideIn 200ms ease;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-8px); 
   }
-});
-
-function showScreen(s) {
-  document.querySelectorAll('main').forEach(el => el.classList.add('hidden'));
-  document.getElementById(`screen-${s}`).classList.remove('hidden');
-  document.getElementById('logout-btn').classList.toggle('hidden', s !== 'dashboard');
-}
-
-function logout() { localStorage.removeItem('admin_key'); adminKey = null; showScreen('login'); }
-
-async function verifyKey(k) {
-  try { const r = await fetch(`${API}/api/auth`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: k }) }); return r.ok; }
-  catch { return false; }
-}
-
-async function handleSetup(e) {
-  e.preventDefault();
-  const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('setup-key').value, email = document.getElementById('setup-email').value;
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Setting up...';
-  try {
-    const r = await fetch(`${API}/api/setup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: key, adminEmail: email }) });
-    const d = await r.json();
-    if (r.ok) { adminKey = key; localStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
-    else { showAlert('setup-alert', d.error, 'error'); }
-  } catch (e) { showAlert('setup-alert', 'Connection error', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Complete Setup'; }
-}
-
-async function handleLogin(e) {
-  e.preventDefault();
-  const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('login-key').value;
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in...';
-  if (await verifyKey(key)) { adminKey = key; localStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
-  else { showAlert('login-alert', 'Invalid password', 'error'); }
-  btn.disabled = false; btn.textContent = 'Sign In';
-}
-
-let recoveryEmail = null;
-
-async function handleRecoveryStep1(e) {
-  e.preventDefault();
-  const btn = document.getElementById('recovery-submit-1');
-  recoveryEmail = document.getElementById('recovery-email').value;
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Sending...';
-  try {
-    const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail }) });
-    const d = await r.json();
-    if (r.ok && d.step === 'code_sent') {
-      document.getElementById('recovery-mailto').href = d.mailto;
-      document.getElementById('recovery-form-step1').classList.add('hidden');
-      document.getElementById('recovery-step2').classList.remove('hidden');
-      document.getElementById('recovery-subtitle').textContent = 'Check your email for the verification code';
-    } else { showAlert('recovery-alert-1', d.error, 'error'); }
-  } catch (e) { showAlert('recovery-alert-1', 'Connection error', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Send Recovery Code'; }
-}
-
-async function handleRecoveryStep2(e) {
-  e.preventDefault();
-  const btn = document.getElementById('recovery-submit-2');
-  const code = document.getElementById('recovery-code').value;
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Verifying...';
-  try {
-    const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail, code }) });
-    const d = await r.json();
-    if (r.ok && d.step === 'complete') {
-      document.getElementById('recovered-key').value = d.adminKey;
-      document.getElementById('recovery-step2').classList.add('hidden');
-      document.getElementById('recovery-step3').classList.remove('hidden');
-      document.getElementById('recovery-back-link').classList.add('hidden');
-      document.getElementById('recovery-subtitle').textContent = 'Password recovered successfully';
-    } else { showAlert('recovery-alert-2', d.error, 'error'); }
-  } catch (e) { showAlert('recovery-alert-2', 'Connection error', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Verify Code'; }
-}
-
-function resetRecovery() {
-  recoveryEmail = null;
-  document.getElementById('recovery-email').value = '';
-  document.getElementById('recovery-code').value = '';
-  document.getElementById('recovery-form-step1').classList.remove('hidden');
-  document.getElementById('recovery-step2').classList.add('hidden');
-  document.getElementById('recovery-step3').classList.add('hidden');
-  document.getElementById('recovery-back-link').classList.remove('hidden');
-  document.getElementById('recovery-subtitle').textContent = 'Enter your recovery email to receive a verification code';
-  hideAlert('recovery-alert-1');
-  hideAlert('recovery-alert-2');
-}
-
-function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert-2', 'Copied to clipboard!', 'success'); }
-
-async function loadDashboard() {
-  const [pR, kR] = await Promise.all([fetch(`${API}/api/pages`, { headers: { 'X-Admin-Key': adminKey } }), fetch(`${API}/api/keys`, { headers: { 'X-Admin-Key': adminKey } })]);
-  pages = (await pR.json()).pages || []; editKeys = (await kR.json()).editKeys || {};
-  await Promise.all(pages.map(async f => { try { const r = await fetch(`${API}/api/page/${f}`, { headers: { 'X-Admin-Key': adminKey } }); if (r.ok) { const d = await r.json(); userInfo[f] = { ...extractInfo(d.content), folder: f }; } } catch {} }));
-  populateUI();
-}
-
-function extractInfo(h) {
-  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
-  const em = h.match(/href="mailto:([^"]+)"/);
-  return { firstName: g('Name'), surname: g('Surname'), email: em ? em[1] : '' };
-}
-
-function populateUI() {
-  const wk = Object.keys(editKeys).filter(k => pages.includes(k)).length;
-  document.getElementById('stat-total').textContent = pages.length;
-  document.getElementById('stat-active').textContent = wk;
-  populatePageSelect();
-  renderList('manage');
-}
-
-function populatePageSelect() {
-  const options = document.getElementById('page-select-options');
-  const sorted = pages.slice().sort((a, b) => {
-    const uA = userInfo[a] || {}, uB = userInfo[b] || {};
-    const nameA = uA.firstName ? `${uA.firstName} ${uA.surname}` : a;
-    const nameB = uB.firstName ? `${uB.firstName} ${uB.surname}` : b;
-    return nameA.localeCompare(nameB);
-  });
-  
-  options.innerHTML = sorted.map(f => {
-    const u = userInfo[f] || {};
-    const name = u.firstName ? `${u.firstName} ${u.surname}` : f;
-    return `<div class="searchable-select-option" data-value="${f}" data-name="${name}" data-email="${u.email || ''}" onclick="selectPage('${f}')">${name} <span style="color: var(--color-text-muted); font-size: var(--text-xs);">(${f})</span></div>`;
-  }).join('');
-  
-  if (!sorted.length) {
-    options.innerHTML = '<div class="searchable-select-empty">No users found</div>';
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
   }
 }
 
-function togglePageSelect() {
-  const dropdown = document.getElementById('page-select-dropdown');
-  const isOpen = dropdown.classList.contains('show');
-  
-  // Close all other dropdowns first
-  document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
-  
-  if (!isOpen) {
-    dropdown.classList.add('show');
-    document.getElementById('page-select-search').value = '';
-    filterPageOptions();
-    document.getElementById('page-select-search').focus();
+.alert-success {
+  background: var(--green-50);
+  border: 1px solid var(--green-100);
+  color: var(--green-700);
+}
+
+.alert-error {
+  background: var(--red-50);
+  border: 1px solid var(--red-100);
+  color: var(--red-700);
+}
+
+.alert-warning {
+  background: var(--amber-50);
+  border: 1px solid var(--amber-100);
+  color: var(--amber-700);
+}
+
+.alert-info {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-100);
+  color: var(--blue-700);
+}
+
+.alert-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert a {
+  color: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+/* ========================================
+   Loading
+   ======================================== */
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-full);
+  animation: spin 600ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ========================================
+   Modal / Dialog
+   ======================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-6);
+  animation: fadeIn 150ms ease;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 400px;
+  animation: modalIn 200ms ease;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-function filterPageOptions() {
-  const search = document.getElementById('page-select-search').value.toLowerCase();
-  const options = document.querySelectorAll('#page-select-options .searchable-select-option');
-  let hasVisible = false;
+.modal-header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: var(--space-6);
+}
+
+.modal-body p {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.modal-footer {
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-bg-subtle);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ========================================
+   Empty State
+   ======================================== */
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+}
+
+.empty-state-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.empty-state-title {
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ========================================
+   Utilities
+   ======================================== */
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.font-mono { font-family: var(--font-mono); }
+.text-muted { color: var(--color-text-muted); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-sm { font-size: var(--text-sm); }
+.text-xs { font-size: var(--text-xs); }
+.mt-2 { margin-top: var(--space-2); }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+.hidden { display: none !important; }
+
+/* ========================================
+   Responsive
+   ======================================== */
+
+@media (max-width: 640px) {
+  .app-header {
+    padding: var(--space-3) var(--space-4);
+  }
   
-  options.forEach(opt => {
-    const name = opt.dataset.name.toLowerCase();
-    const value = opt.dataset.value.toLowerCase();
-    const email = opt.dataset.email.toLowerCase();
-    const match = name.includes(search) || value.includes(search) || email.includes(search);
-    opt.style.display = match ? '' : 'none';
-    if (match) hasVisible = true;
-  });
+  .app-main {
+    padding: var(--space-4);
+  }
   
-  // Show/hide empty state
-  let emptyEl = document.querySelector('#page-select-options .searchable-select-empty');
-  if (!hasVisible && !emptyEl) {
-    const el = document.createElement('div');
-    el.className = 'searchable-select-empty';
-    el.textContent = 'No users match your search';
-    document.getElementById('page-select-options').appendChild(el);
-  } else if (hasVisible && emptyEl) {
-    emptyEl.remove();
+  .auth-card {
+    padding: var(--space-6);
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .user-list-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .user-list-stats {
+    justify-content: space-between;
+  }
+  
+  .search-wrapper {
+    max-width: none;
+  }
+  
+  .user-card-header {
+    flex-wrap: wrap;
+  }
+  
+  .user-card-actions {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  
+  .action-group {
+    width: 100%;
+    padding-right: 0;
+    padding-bottom: var(--space-3);
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+  }
+  
+  .action-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .action-group-label {
+    width: 100%;
+    margin-bottom: var(--space-2);
+    margin-right: 0;
+  }
+  
+  .action-group-danger {
+    margin-left: 0;
+  }
+  
+  .action-group .btn {
+    flex: 1;
+  }
+  
+  .user-item {
+    flex-wrap: wrap;
+  }
+  
+  .user-actions {
+    width: 100%;
+    margin-top: var(--space-3);
+  }
+  
+  .user-actions .btn {
+    flex: 1;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
+  }
+  
+  .modal {
+    margin: var(--space-4);
+    max-width: none;
   }
 }
-
-function selectPage(folder) {
-  document.getElementById('page-select').value = folder;
-  const u = userInfo[folder] || {};
-  const name = u.firstName ? `${u.firstName} ${u.surname}` : folder;
-  document.getElementById('page-select-text').textContent = name;
-  document.getElementById('page-select-text').classList.remove('searchable-select-placeholder');
-  document.getElementById('page-select-dropdown').classList.remove('show');
-  
-  // Update selected state
-  document.querySelectorAll('#page-select-options .searchable-select-option').forEach(opt => {
-    opt.classList.toggle('selected', opt.dataset.value === folder);
-  });
-  
-  loadPage();
-}
-
-// Close dropdown when clicking outside
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.searchable-select')) {
-    document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
-  }
-});
-
-function getInitials(u) { return u.firstName && u.surname ? (u.firstName[0] + u.surname[0]).toUpperCase() : (u.folder ? u.folder[0].toUpperCase() : '?'); }
-
-function renderList(t) {
-  const c = document.getElementById(`list-${t}`), s = document.getElementById(`search-${t}`).value.toLowerCase();
-  let fl = pages.filter(f => { const u = userInfo[f] || {}; return `${f} ${u.firstName||''} ${u.surname||''} ${u.email||''}`.toLowerCase().includes(s); }).sort();
-  if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }
-  c.innerHTML = fl.map(f => {
-    const u = userInfo[f] || { firstName: '', surname: '', email: '', folder: f }, hk = !!editKeys[f], nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
-    return `<div class="user-card">
-      <div class="user-card-header">
-        <div class="user-avatar">${getInitials(u)}</div>
-        <div class="user-details">
-          <div class="user-name">${nm}</div>
-          <div class="user-meta">
-            <span>${u.email || 'No email'}</span>
-            <span class="user-folder">${f}</span>
-          </div>
-        </div>
-        <div class="user-status">
-          ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
-        </div>
-      </div>
-      <div class="user-card-actions">
-        <div class="action-group">
-          <span class="action-group-label">Page</span>
-          <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-secondary btn-sm">View Live Page</a>
-          <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit Content</button>
-        </div>
-        <div class="action-group">
-          <span class="action-group-label">Access</span>
-          ${!hk 
-            ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Grant Edit Access</button>` 
-            : `<button class="btn btn-warning btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>
-               <button class="btn btn-secondary btn-sm" onclick="confirmRegenerate('${f}')">Reset Link</button>`}
-        </div>
-        ${hk ? `<div class="action-group">
-          <span class="action-group-label">Share Link</span>
-          ${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
-          <button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
-        </div>` : ''}
-        <div class="action-group action-group-danger">
-          <button class="btn btn-ghost btn-sm text-danger" onclick="confirmDeleteUser('${f}')">Delete User</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function filterUsers(t) { renderList(t); }
-
-async function generateKey(f) {
-  showAlert('alert-manage', '<span class="spinner"></span> Generating...', 'info');
-  try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'POST', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; populateUI(); showAlert('alert-manage', `Access granted`, 'success'); } else showAlert('alert-manage', d.error, 'error'); }
-  catch { showAlert('alert-manage', 'Error', 'error'); }
-}
-
-function confirmRegenerate(f) { showModal('Regenerate?', 'Their current link will stop working.', 'btn-warning', 'Regenerate', () => regenerateKey(f)); }
-async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; populateUI(); showAlert('alert-manage', 'New link created', 'success'); } } catch {} }
-
-function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-warning', 'Revoke', () => removeKey(f)); }
-async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); delete editKeys[f]; populateUI(); showAlert('alert-manage', 'Access removed', 'success'); } catch {} }
-
-function confirmDeleteUser(f) {
-  const u = userInfo[f] || {};
-  const nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
-  showModal('Delete User?', `This will permanently delete ${nm}'s contact page. This cannot be undone.`, 'btn-danger', 'Delete', () => deleteUser(f));
-}
-
-async function deleteUser(f) {
-  showAlert('alert-manage', '<span class="spinner"></span> Deleting...', 'info');
-  try {
-    const r = await fetch(`${API}/api/page/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } });
-    if (r.ok) {
-      pages = pages.filter(p => p !== f);
-      delete userInfo[f];
-      delete editKeys[f];
-      populateUI();
-      showAlert('alert-manage', 'User deleted', 'success');
-    } else {
-      const d = await r.json();
-      showAlert('alert-manage', d.error || 'Failed to delete', 'error');
-    }
-  } catch { showAlert('alert-manage', 'Error', 'error'); }
-}
-
-function showNewUserForm() {
-  document.getElementById('new-user-card').classList.remove('hidden');
-  document.getElementById('editor-card').classList.add('hidden');
-  document.getElementById('page-select').value = '';
-  document.getElementById('new-folder').focus();
-}
-
-function hideNewUserForm() {
-  document.getElementById('new-user-card').classList.add('hidden');
-  document.getElementById('new-user-form').reset();
-  hideAlert('alert-new-user');
-}
-
-async function handleCreateUser(e) {
-  e.preventDefault();
-  const btn = document.getElementById('create-btn');
-  const folder = document.getElementById('new-folder').value.trim().toLowerCase();
-  
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
-  
-  try {
-    const content = generateNewUserHTML();
-    const r = await fetch(`${API}/api/page`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({ folder, content })
-    });
-    const d = await r.json();
-    
-    if (r.ok) {
-      pages.push(folder);
-      userInfo[folder] = {
-        firstName: document.getElementById('new-first-name').value.trim(),
-        surname: document.getElementById('new-surname').value.trim(),
-        email: document.getElementById('new-email').value.trim(),
-        folder
-      };
-      populateUI();
-      hideNewUserForm();
-      showAlert('alert-manage', `Created ${folder}. <a href="${d.url}" target="_blank">View page →</a>`, 'success');
-      switchTab('manage');
-    } else {
-      showAlert('alert-new-user', d.error || 'Failed to create', 'error');
-    }
-  } catch { showAlert('alert-new-user', 'Error', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Create Contact Page'; }
-}
-
-function generateNewUserHTML() {
-  const f = i => document.getElementById('new-' + i).value.trim();
-  const ml = f('mobile').replace(/\s/g, '');
-  return generatePageHTML(f('first-name'), f('surname'), f('email'), f('mobile'), ml, f('home-country'), f('dest-name'), f('dest-phone'), f('dest-email'));
-}
-
-function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCountry, destName, destPhone, destEmail) {
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${firstName} ${surname}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${firstName}</div><div class="info"><span class="label">Surname:</span> ${surname}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${email}">${email}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${mobileLink}">${mobile}</a></div><div class="info"><span class="label">Home Country:</span> ${homeCountry}</div><div class="info"><span class="label">Destination Details:</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${firstName}</div><div class="info"><span class="label">姓氏：</span> ${surname}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${email}">${email}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${mobileLink}">${mobile}</a></div><div class="info"><span class="label">所属国家：</span> ${homeCountry==='Australia'?'澳大利亚':homeCountry}</div><div class="info"><span class="label">目的地详情：</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div></section></body></html>`;
-}
-
-function editUser(f) { 
-  selectPage(f);
-  switchTab('edit'); 
-}
-
-async function loadPage() {
-  currentFolder = document.getElementById('page-select').value;
-  const card = document.getElementById('editor-card');
-  if (!currentFolder) { card.classList.add('hidden'); return; }
-  try { const r = await fetch(`${API}/api/page/${currentFolder}`, { headers: { 'X-Admin-Key': adminKey } }); if (!r.ok) throw 0; const d = await r.json(); currentSha = d.sha; fillForm(d.content); document.getElementById('view-page-link').href = `${PAGES_URL}${currentFolder}/`; card.classList.remove('hidden'); }
-  catch { showAlert('alert-editor', 'Failed to load', 'error'); }
-}
-
-function fillForm(h) {
-  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
-  const gl = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>.*?<a[^>]*>([^<]+)</a>`, 's')); return m ? m[1].trim() : ''; };
-  document.getElementById('first-name').value = g('Name'); document.getElementById('surname').value = g('Surname');
-  document.getElementById('email').value = gl('Email'); document.getElementById('mobile').value = gl('Mobile');
-  document.getElementById('home-country').value = g('Home Country');
-  const dm = h.match(/<span class="label">Destination Details:<\/span>\s*<br>([^<]*)<br>([^<]*)<br>([^<]*)/);
-  document.getElementById('dest-name').value = dm ? dm[1].trim() : '';
-  document.getElementById('dest-phone').value = dm ? dm[2].trim() : '';
-  document.getElementById('dest-email').value = dm ? dm[3].trim() : '';
-}
-
-async function handleSave(e) {
-  e.preventDefault(); const btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
-  try {
-    const c = generateHTML();
-    const r = await fetch(`${API}/api/page/${currentFolder}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ content: c, sha: currentSha }) });
-    const d = await r.json();
-    if (r.ok) { currentSha = d.sha; userInfo[currentFolder] = { firstName: document.getElementById('first-name').value.trim(), surname: document.getElementById('surname').value.trim(), email: document.getElementById('email').value.trim(), folder: currentFolder }; populateUI(); showAlert('alert-editor', `Saved. <a href="${d.url}" target="_blank">View →</a>`, 'success'); }
-    else showAlert('alert-editor', d.error, 'error');
-  } catch { showAlert('alert-editor', 'Error', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
-}
-
-function generateHTML() {
-  const f = i => document.getElementById(i).value.trim();
-  const ml = f('mobile').replace(/\s/g, '');
-  return generatePageHTML(f('first-name'), f('surname'), f('email'), f('mobile'), ml, f('home-country'), f('dest-name'), f('dest-phone'), f('dest-email'));
-}
-
-function generateMailto(u, f) {
-  const editLink = `${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`;
-  const viewLink = `${PAGES_URL}${f}/`;
-  const subject = 'Your Digital Contact Information Page';
-  const body = `Hi ${u.firstName},
-
-Your digital contact information page has been set up and is now live. You can view it here:
-
-${viewLink}
-
-If you need to update your contact details, you can do so using your personalised edit link:
-
-${editLink}
-
-IMPORTANT: This link is unique to you. Please keep it private and do not share it with anyone else, as they would be able to access and edit your contact page.
-
-How to update your information:
-1. Click the edit link above
-2. Make your changes in the form
-3. Click "Save Changes"
-4. Your updates will appear on your contact page within 1-2 minutes
-
-If you wish to have your contact page deleted, please reply to this email and let me know.
-
-Best regards,
-Daniel Mounnarath`;
-
-  return `mailto:${u.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-function copyLink(f, btn) {
-  navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
-    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-secondary');
-    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-secondary'); }, 2000);
-  });
-}
-
-function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); }
-
-function showModal(t, m, bc, bt, cb) { document.getElementById('modal-title').textContent = t; document.getElementById('modal-message').textContent = m; const b = document.getElementById('modal-confirm'); b.className = `btn ${bc}`; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
-function closeModal() { document.getElementById('modal').classList.remove('show'); modalCallback = null; }
-document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
-
-function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
-function hideAlert(id) { document.getElementById(id).className = 'alert'; }
-</script>
-</body>
-</html>
