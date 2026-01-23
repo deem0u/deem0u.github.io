@@ -66,28 +66,54 @@
       <div class="auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Password Recovery</h1>
-          <p class="auth-subtitle">Enter your recovery email to retrieve your password</p>
+          <p class="auth-subtitle" id="recovery-subtitle">Enter your recovery email to receive a verification code</p>
         </div>
-        <form id="recovery-form">
+        
+        <!-- Step 1: Enter email -->
+        <form id="recovery-form-step1">
           <div class="form-group">
             <label class="form-label">Recovery Email</label>
             <input type="email" id="recovery-email" class="form-input" placeholder="your@email.com" required>
           </div>
-          <div id="recovery-alert" class="alert"></div>
-          <div id="recovery-result" class="hidden">
+          <div id="recovery-alert-1" class="alert"></div>
+          <button type="submit" id="recovery-submit-1" class="btn btn-primary btn-block btn-lg">Send Recovery Code</button>
+        </form>
+        
+        <!-- Step 2: Send email with code -->
+        <div id="recovery-step2" class="hidden">
+          <div class="alert alert-info show mb-4">
+            <div class="alert-content">Click the button below to send yourself the recovery code, then enter it here.</div>
+          </div>
+          <a id="recovery-mailto" href="#" class="btn btn-primary btn-block btn-lg mb-4" target="_blank">Open Email with Code</a>
+          <form id="recovery-form-step2">
             <div class="form-group">
-              <label class="form-label">Your Admin Password</label>
-              <div style="display: flex; gap: 8px;">
-                <input type="text" id="recovered-key" class="form-input font-mono" readonly>
-                <button type="button" class="btn btn-secondary" onclick="copyRecoveredKey()">Copy</button>
-              </div>
+              <label class="form-label">Enter 6-Digit Code</label>
+              <input type="text" id="recovery-code" class="form-input font-mono text-center" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required style="font-size: 1.5rem; letter-spacing: 0.5rem;">
+              <span class="form-hint">Code expires in 10 minutes</span>
+            </div>
+            <div id="recovery-alert-2" class="alert"></div>
+            <button type="submit" id="recovery-submit-2" class="btn btn-primary btn-block btn-lg">Verify Code</button>
+          </form>
+        </div>
+        
+        <!-- Step 3: Show password -->
+        <div id="recovery-step3" class="hidden">
+          <div class="alert alert-success show mb-4">
+            <div class="alert-content">Verification successful! Here's your password:</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Your Admin Password</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="recovered-key" class="form-input font-mono" readonly>
+              <button type="button" class="btn btn-secondary" onclick="copyRecoveredKey()">Copy</button>
             </div>
           </div>
-          <button type="submit" id="recovery-submit" class="btn btn-primary btn-block btn-lg">Recover Password</button>
-          <div class="text-center mt-4">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="showScreen('login')">← Back to Sign In</button>
-          </div>
-        </form>
+          <button type="button" class="btn btn-primary btn-block btn-lg mt-4" onclick="showScreen('login')">Back to Sign In</button>
+        </div>
+        
+        <div class="text-center mt-4" id="recovery-back-link">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="resetRecovery(); showScreen('login')">← Back to Sign In</button>
+        </div>
       </div>
     </main>
 
@@ -195,7 +221,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
   document.getElementById('setup-form').addEventListener('submit', handleSetup);
   document.getElementById('login-form').addEventListener('submit', handleLogin);
-  document.getElementById('recovery-form').addEventListener('submit', handleRecovery);
+  document.getElementById('recovery-form-step1').addEventListener('submit', handleRecoveryStep1);
+  document.getElementById('recovery-form-step2').addEventListener('submit', handleRecoveryStep2);
   document.getElementById('contact-form').addEventListener('submit', handleSave);
   
   try {
@@ -245,20 +272,59 @@ async function handleLogin(e) {
   btn.disabled = false; btn.textContent = 'Sign In';
 }
 
-async function handleRecovery(e) {
+let recoveryEmail = null;
+
+async function handleRecoveryStep1(e) {
   e.preventDefault();
-  const btn = document.getElementById('recovery-submit'), email = document.getElementById('recovery-email').value;
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Checking...';
+  const btn = document.getElementById('recovery-submit-1');
+  recoveryEmail = document.getElementById('recovery-email').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Sending...';
   try {
-    const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail }) });
     const d = await r.json();
-    if (r.ok) { document.getElementById('recovered-key').value = d.adminKey; document.getElementById('recovery-result').classList.remove('hidden'); btn.classList.add('hidden'); hideAlert('recovery-alert'); }
-    else { showAlert('recovery-alert', d.error, 'error'); }
-  } catch (e) { showAlert('recovery-alert', 'Connection error', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Recover Password'; }
+    if (r.ok && d.step === 'code_sent') {
+      document.getElementById('recovery-mailto').href = d.mailto;
+      document.getElementById('recovery-form-step1').classList.add('hidden');
+      document.getElementById('recovery-step2').classList.remove('hidden');
+      document.getElementById('recovery-subtitle').textContent = 'Check your email for the verification code';
+    } else { showAlert('recovery-alert-1', d.error, 'error'); }
+  } catch (e) { showAlert('recovery-alert-1', 'Connection error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Send Recovery Code'; }
 }
 
-function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert', 'Copied!', 'success'); }
+async function handleRecoveryStep2(e) {
+  e.preventDefault();
+  const btn = document.getElementById('recovery-submit-2');
+  const code = document.getElementById('recovery-code').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Verifying...';
+  try {
+    const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail, code }) });
+    const d = await r.json();
+    if (r.ok && d.step === 'complete') {
+      document.getElementById('recovered-key').value = d.adminKey;
+      document.getElementById('recovery-step2').classList.add('hidden');
+      document.getElementById('recovery-step3').classList.remove('hidden');
+      document.getElementById('recovery-back-link').classList.add('hidden');
+      document.getElementById('recovery-subtitle').textContent = 'Password recovered successfully';
+    } else { showAlert('recovery-alert-2', d.error, 'error'); }
+  } catch (e) { showAlert('recovery-alert-2', 'Connection error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Verify Code'; }
+}
+
+function resetRecovery() {
+  recoveryEmail = null;
+  document.getElementById('recovery-email').value = '';
+  document.getElementById('recovery-code').value = '';
+  document.getElementById('recovery-form-step1').classList.remove('hidden');
+  document.getElementById('recovery-step2').classList.add('hidden');
+  document.getElementById('recovery-step3').classList.add('hidden');
+  document.getElementById('recovery-back-link').classList.remove('hidden');
+  document.getElementById('recovery-subtitle').textContent = 'Enter your recovery email to receive a verification code';
+  hideAlert('recovery-alert-1');
+  hideAlert('recovery-alert-2');
+}
+
+function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert-2', 'Copied to clipboard!', 'success'); }
 
 async function loadDashboard() {
   const [pR, kR] = await Promise.all([fetch(`${API}/api/pages`, { headers: { 'X-Admin-Key': adminKey } }), fetch(`${API}/api/keys`, { headers: { 'X-Admin-Key': adminKey } })]);
