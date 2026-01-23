@@ -388,7 +388,11 @@ async function loadDashboard() {
 }
 
 function extractInfo(h) {
-  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
+  // New HTML structure: <span class="label">Name</span><span class="value">John</span>
+  const g = l => { 
+    const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value">([^<]+)</span>`)); 
+    return m ? m[1].trim() : ''; 
+  };
   const em = h.match(/href="mailto:([^"]+)"/);
   return { firstName: g('Name'), surname: g('Surname'), email: em ? em[1] : '' };
 }
@@ -405,8 +409,8 @@ function populatePageSelect() {
   const options = document.getElementById('page-select-options');
   const sorted = pages.slice().sort((a, b) => {
     const uA = userInfo[a] || {}, uB = userInfo[b] || {};
-    const nameA = uA.firstName ? `${uA.firstName} ${uA.surname}` : a;
-    const nameB = uB.firstName ? `${uB.firstName} ${uB.surname}` : b;
+    const nameA = uA.firstName && uA.surname ? `${uA.firstName} ${uA.surname}` : a;
+    const nameB = uB.firstName && uB.surname ? `${uB.firstName} ${uB.surname}` : b;
     return nameA.localeCompare(nameB);
   });
   
@@ -476,9 +480,9 @@ function filterPageOptions() {
 function selectPage(folder) {
   document.getElementById('page-select').value = folder;
   const u = userInfo[folder] || {};
-  const name = u.firstName ? `${u.firstName} ${u.surname}` : folder;
+  const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : folder;
   const textEl = document.getElementById('page-select-text');
-  textEl.textContent = name;
+  textEl.textContent = displayName;
   textEl.classList.remove('searchable-select-placeholder');
   textEl.classList.add('searchable-select-value');
   document.getElementById('page-select-dropdown').classList.remove('show');
@@ -504,8 +508,8 @@ function renderList(t) {
   const c = document.getElementById(`list-${t}`), s = document.getElementById(`search-${t}`).value.toLowerCase();
   let fl = pages.filter(f => { const u = userInfo[f] || {}; return `${f} ${u.firstName||''} ${u.surname||''} ${u.email||''}`.toLowerCase().includes(s); }).sort((a, b) => {
     const uA = userInfo[a] || {}, uB = userInfo[b] || {};
-    const nameA = uA.firstName ? `${uA.firstName} ${uA.surname}` : a;
-    const nameB = uB.firstName ? `${uB.firstName} ${uB.surname}` : b;
+    const nameA = uA.firstName && uA.surname ? `${uA.firstName} ${uA.surname}` : a;
+    const nameB = uB.firstName && uB.surname ? `${uB.firstName} ${uB.surname}` : b;
     return nameA.localeCompare(nameB);
   });
   if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }
@@ -577,8 +581,8 @@ async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method
 
 function confirmDeleteUser(f) {
   const u = userInfo[f] || {};
-  const nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
-  showModal('Delete User?', `This will permanently delete ${nm}'s contact page. This cannot be undone.`, 'btn-danger', 'Delete', () => deleteUser(f));
+  const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
+  showModal('Delete User?', `This will permanently delete ${displayName}'s contact page. This cannot be undone.`, 'btn-danger', 'Delete', () => deleteUser(f));
 }
 
 async function deleteUser(f) {
@@ -782,7 +786,7 @@ async function handleSave(e) {
       currentSha = d.sha; 
       userInfo[currentFolder] = { firstName: document.getElementById('first-name').value.trim(), surname: document.getElementById('surname').value.trim(), email: document.getElementById('email').value.trim(), folder: currentFolder }; 
       populateUI(); 
-      showAlert('alert-editor', 'Changes saved successfully! Use the "View Page" link below to see your updates.', 'success'); 
+      showAlert('alert-editor', 'Changes saved successfully! Use the "View Page" link above to see your updates.', 'success'); 
     }
     else showAlert('alert-editor', d.error, 'error');
   } catch { showAlert('alert-editor', 'Error', 'error'); }
