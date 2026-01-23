@@ -423,12 +423,19 @@ function populatePageSelect() {
 
 function togglePageSelect() {
   const dropdown = document.getElementById('page-select-dropdown');
+  const trigger = document.getElementById('page-select-trigger');
   const isOpen = dropdown.classList.contains('show');
   
   // Close all other dropdowns first
   document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
   
   if (!isOpen) {
+    // Position the dropdown below the trigger
+    const rect = trigger.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.width = rect.width + 'px';
+    
     dropdown.classList.add('show');
     document.getElementById('page-select-search').value = '';
     filterPageOptions();
