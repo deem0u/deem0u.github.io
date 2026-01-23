@@ -133,14 +133,25 @@ async function authenticate() {
 }
 
 function fillForm(h) {
-  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
-  const gl = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>.*?<a[^>]*>([^<]+)</a>`, 's')); return m ? m[1].trim() : ''; };
+  // New HTML structure: <span class="label">Name</span><span class="value">John</span>
+  const g = l => { 
+    const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value">([^<]+)</span>`)); 
+    return m ? m[1].trim() : ''; 
+  };
+  // For links: <span class="label">Email</span><span class="value"><a href="...">email@example.com</a></span>
+  const gl = l => { 
+    const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
+    return m ? m[1].trim() : ''; 
+  };
+  
   document.getElementById('first-name').value = g('Name');
   document.getElementById('surname').value = g('Surname');
   document.getElementById('email').value = gl('Email');
   document.getElementById('mobile').value = gl('Mobile');
   document.getElementById('home-country').value = g('Home Country');
-  const dm = h.match(/<span class="label">Destination Details:<\/span>\s*<br>([^<]*)<br>([^<]*)<br>([^<]*)/);
+  
+  // Destination details: <div class="dest-details"><span>Name</span><span>Phone</span><span>Email</span></div>
+  const dm = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
   document.getElementById('dest-name').value = dm ? dm[1].trim() : '';
   document.getElementById('dest-phone').value = dm ? dm[2].trim() : '';
   document.getElementById('dest-email').value = dm ? dm[3].trim() : '';
