@@ -3,962 +3,375 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — Contact Page Editor</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Contact Editor — Admin</title>
+  <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
-
-<div class="page-container">
-  
-  <!-- Header -->
-  <header class="page-header">
-    <h1 class="page-title">Contact Page Editor</h1>
-    <p class="page-subtitle">Admin Dashboard</p>
-  </header>
-
-  <!-- Setup Screen (first-time only) -->
-  <div id="setup-screen" style="display: none;">
-    <div class="card">
-      <div class="card-header">First-Time Setup</div>
-      
-      <p style="margin-bottom: 20px; color: var(--color-text-secondary); font-size: 14px;">
-        Create your admin credentials. Your email is used for account recovery if you forget your admin key.
-      </p>
-      
-      <form id="setup-form">
-        <div class="form-group">
-          <label class="form-label">Admin Key
-            <span class="form-hint">Choose a password (min. 8 characters)</span>
-          </label>
-          <input type="password" id="setup-admin-key" class="form-input" placeholder="Enter admin key" minlength="8" required>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <div class="app-logo-icon">C</div>
+          <span class="app-logo-text">Contact Editor</span>
+          <span class="app-logo-badge">Admin</span>
         </div>
-        
-        <div class="form-group">
-          <label class="form-label">Recovery Email
-            <span class="form-hint">Used to recover your admin key if forgotten</span>
-          </label>
-          <input type="email" id="setup-email" class="form-input" placeholder="your@email.com" required>
-        </div>
-        
-        <div class="btn-group">
-          <button type="submit" class="btn btn-primary">Complete Setup</button>
-        </div>
-      </form>
-      
-      <div id="setup-status" class="status"></div>
-    </div>
-  </div>
-
-  <!-- Login Screen -->
-  <div id="login-screen" style="display: none;">
-    <div class="card">
-      <div class="card-header">Sign In</div>
-      
-      <form id="login-form">
-        <div class="form-group">
-          <label class="form-label">Admin Key</label>
-          <input type="password" id="login-admin-key" class="form-input" placeholder="Enter admin key" required>
-        </div>
-        
-        <div class="btn-group">
-          <button type="submit" class="btn btn-primary">Sign In</button>
-          <button type="button" class="btn btn-secondary" onclick="showRecovery()">Forgot Key?</button>
-        </div>
-      </form>
-      
-      <div id="login-status" class="status"></div>
-    </div>
-  </div>
-
-  <!-- Recovery Screen -->
-  <div id="recovery-screen" style="display: none;">
-    <div class="card">
-      <div class="card-header">Recover Admin Key</div>
-      
-      <p style="margin-bottom: 20px; color: var(--color-text-secondary); font-size: 14px;">
-        Enter the email address you used during setup to retrieve your admin key.
-      </p>
-      
-      <form id="recovery-form">
-        <div class="form-group">
-          <label class="form-label">Recovery Email</label>
-          <input type="email" id="recovery-email" class="form-input" placeholder="your@email.com" required>
-        </div>
-        
-        <div class="btn-group">
-          <button type="submit" class="btn btn-primary">Recover</button>
-          <button type="button" class="btn btn-secondary" onclick="showLogin()">Back to Login</button>
-        </div>
-      </form>
-      
-      <div id="recovery-status" class="status"></div>
-      
-      <div id="recovery-result" style="display: none; margin-top: 20px; padding: 16px; background: var(--color-success-bg); border-radius: var(--radius-sm);">
-        <p style="font-size: 13px; color: var(--color-success); margin-bottom: 8px;">Your admin key is:</p>
-        <code id="recovered-key" style="display: block; padding: 12px; background: white; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 14px; word-break: break-all;"></code>
-        <button class="btn btn-sm btn-secondary" style="margin-top: 12px;" onclick="showLogin()">Back to Login</button>
+        <button id="logout-btn" class="btn btn-ghost btn-sm hidden" onclick="logout()">Sign Out</button>
       </div>
-    </div>
-  </div>
+    </header>
 
-  <!-- Main Dashboard -->
-  <div id="main-dashboard" style="display: none;">
-    
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('manage')">Manage Users</button>
-      <button class="tab" onclick="switchTab('edit')">Edit Pages</button>
-      <button class="tab" onclick="switchTab('send')">Send Links</button>
-    </div>
-
-    <!-- Tab: Manage Users -->
-    <div id="tab-manage" class="tab-content active">
-      
-      <!-- Stats -->
-      <div class="stats-bar">
-        <div class="stat-item">
-          <span class="stat-value" id="stat-total">0</span>
-          <span class="stat-label">Total Users</span>
+    <main id="screen-setup" class="app-centered hidden">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Welcome</h1>
+          <p class="auth-subtitle">Set up your admin account to get started</p>
         </div>
-        <div class="stat-item">
-          <span class="stat-value" id="stat-with-key">0</span>
-          <span class="stat-label">With Edit Key</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-value" id="stat-without-key">0</span>
-          <span class="stat-label">Without Key</span>
-        </div>
-      </div>
-
-      <!-- Search -->
-      <div class="search-box">
-        <input type="text" id="manage-search" class="search-input" placeholder="Search users..." oninput="filterUsers('manage')">
-      </div>
-
-      <div id="manage-status" class="status"></div>
-      
-      <div id="manage-user-list" class="user-list">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-
-    <!-- Tab: Edit Pages -->
-    <div id="tab-edit" class="tab-content">
-      
-      <div class="card">
-        <div class="card-header">Select Page</div>
-        
-        <div class="form-group" style="margin-bottom: 0;">
-          <select id="page-select" class="form-select" onchange="loadPage()">
-            <option value="">— Choose a contact page —</option>
-          </select>
-        </div>
-        
-        <div id="selector-status" class="status"></div>
-      </div>
-
-      <div id="editor-card" class="card" style="display: none;">
-        <div class="card-header">Edit Contact Details</div>
-        
-        <form id="contact-form">
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">First Name</label>
-              <input type="text" id="first-name" class="form-input" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Surname</label>
-              <input type="text" id="surname" class="form-input" required>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="email" id="email" class="form-input" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Mobile</label>
-              <input type="tel" id="mobile" class="form-input" placeholder="+61 xxx xxx xxx" required>
-            </div>
-          </div>
-
+        <form id="setup-form">
           <div class="form-group">
-            <label class="form-label">Home Country</label>
-            <input type="text" id="home-country" class="form-input" required>
+            <label class="form-label">Create Admin Password</label>
+            <input type="password" id="setup-key" class="form-input" placeholder="Minimum 8 characters" minlength="8" required>
+            <span class="form-hint">Choose a secure password you'll remember</span>
           </div>
-
           <div class="form-group">
-            <label class="form-label">Destination Details</label>
-            <div class="form-section">
-              <div class="form-group">
-                <label class="form-label">Location Name</label>
-                <input type="text" id="dest-name" class="form-input">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Phone</label>
-                <input type="tel" id="dest-phone" class="form-input">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" id="dest-email" class="form-input">
-              </div>
-            </div>
+            <label class="form-label">Recovery Email</label>
+            <input type="email" id="setup-email" class="form-input" placeholder="your@email.com" required>
+            <span class="form-hint">Used to recover your password if forgotten</span>
           </div>
+          <div id="setup-alert" class="alert"></div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Complete Setup</button>
+        </form>
+      </div>
+    </main>
 
-          <div class="btn-group">
-            <button type="submit" class="btn btn-primary" id="save-btn">Save Changes</button>
-            <button type="button" class="btn btn-secondary" onclick="loadPage()">Reset</button>
+    <main id="screen-login" class="app-centered hidden">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Sign In</h1>
+          <p class="auth-subtitle">Enter your admin password to continue</p>
+        </div>
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label">Admin Password</label>
+            <input type="password" id="login-key" class="form-input" placeholder="Enter your password" required>
+          </div>
+          <div id="login-alert" class="alert"></div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+          <div class="text-center mt-4">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="showScreen('recovery')">Forgot password?</button>
           </div>
         </form>
-        
-        <div id="editor-status" class="status"></div>
       </div>
-    </div>
+    </main>
 
-    <!-- Tab: Send Links -->
-    <div id="tab-send" class="tab-content">
-      
-      <div class="info-box">
-        Click <strong>Email Link</strong> to open your email app with a pre-written message containing the user's edit link and instructions.
+    <main id="screen-recovery" class="app-centered hidden">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Password Recovery</h1>
+          <p class="auth-subtitle">Enter your recovery email to retrieve your password</p>
+        </div>
+        <form id="recovery-form">
+          <div class="form-group">
+            <label class="form-label">Recovery Email</label>
+            <input type="email" id="recovery-email" class="form-input" placeholder="your@email.com" required>
+          </div>
+          <div id="recovery-alert" class="alert"></div>
+          <div id="recovery-result" class="hidden">
+            <div class="form-group">
+              <label class="form-label">Your Admin Password</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="recovered-key" class="form-input font-mono" readonly>
+                <button type="button" class="btn btn-secondary" onclick="copyRecoveredKey()">Copy</button>
+              </div>
+            </div>
+          </div>
+          <button type="submit" id="recovery-submit" class="btn btn-primary btn-block btn-lg">Recover Password</button>
+          <div class="text-center mt-4">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="showScreen('login')">← Back to Sign In</button>
+          </div>
+        </form>
       </div>
+    </main>
 
-      <!-- Search -->
-      <div class="search-box">
-        <input type="text" id="send-search" class="search-input" placeholder="Search users..." oninput="filterUsers('send')">
+    <main id="screen-dashboard" class="app-main hidden">
+      <div class="app-container">
+        <div class="tabs">
+          <button class="tab active" data-tab="manage">Manage Users</button>
+          <button class="tab" data-tab="edit">Edit Pages</button>
+          <button class="tab" data-tab="send">Send Links</button>
+        </div>
+
+        <div id="tab-manage" class="tab-content active">
+          <div class="user-list-header">
+            <div class="user-list-stats">
+              <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">users</span></div>
+              <div class="stat"><span class="stat-value" id="stat-active">0</span><span class="stat-label">with access</span></div>
+            </div>
+            <div class="search-wrapper">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="search-manage" class="search-input" placeholder="Search users..." oninput="filterUsers('manage')">
+            </div>
+          </div>
+          <div id="alert-manage" class="alert"></div>
+          <div id="list-manage" class="user-list"></div>
+        </div>
+
+        <div id="tab-edit" class="tab-content">
+          <div class="card">
+            <div class="card-body">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Select Contact Page</label>
+                <select id="page-select" class="form-select" onchange="loadPage()">
+                  <option value="">Choose a user to edit...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div id="editor-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Edit Contact Information</span></div>
+            <div class="card-body">
+              <form id="contact-form">
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">First Name</label><input type="text" id="first-name" class="form-input" required></div>
+                  <div class="form-group"><label class="form-label">Surname</label><input type="text" id="surname" class="form-input" required></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" required></div>
+                  <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
+                </div>
+                <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="home-country" class="form-input" required></div>
+                <div class="form-group">
+                  <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
+                  <div class="form-section">
+                    <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="dest-name" class="form-input"></div>
+                    <div class="form-row">
+                      <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="dest-phone" class="form-input"></div>
+                      <div class="form-group"><label class="form-label">Email</label><input type="email" id="dest-email" class="form-input"></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="alert-editor" class="alert"></div>
+                <div class="form-actions">
+                  <button type="submit" id="save-btn" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" onclick="loadPage()">Reset</button>
+                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost" style="margin-left: auto;">View Page →</a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-send" class="tab-content">
+          <div class="alert alert-info show mb-6">
+            <div class="alert-content">Click <strong>Email Link</strong> to open your email app with a pre-written message containing the user's personal edit link.</div>
+          </div>
+          <div class="search-wrapper mb-4">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="search-send" class="search-input" placeholder="Search users..." oninput="filterUsers('send')">
+          </div>
+          <div id="list-send" class="user-list"></div>
+        </div>
       </div>
-
-      <div id="send-status" class="status"></div>
-      
-      <div id="send-user-list" class="user-list">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-
+    </main>
   </div>
 
-</div>
-
-<!-- Confirmation Dialog -->
-<div class="dialog-overlay" id="confirm-dialog">
-  <div class="dialog">
-    <h3 class="dialog-title" id="dialog-title">Confirm</h3>
-    <p class="dialog-message" id="dialog-message">Are you sure?</p>
-    <div class="dialog-actions">
-      <button class="btn btn-secondary btn-sm" onclick="closeDialog()">Cancel</button>
-      <button class="btn btn-danger btn-sm" id="dialog-confirm" onclick="confirmAction()">Confirm</button>
+  <div id="modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header"><h3 class="modal-title" id="modal-title">Confirm</h3></div>
+      <div class="modal-body"><p id="modal-message">Are you sure?</p></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn" id="modal-confirm">Confirm</button>
+      </div>
     </div>
   </div>
-</div>
 
 <script>
-// ===========================================
-// CONFIGURATION
-// ===========================================
-const API_URL = 'https://contact-page-editor.deem0u.workers.dev';
+const API = 'https://contact-page-editor.deem0u.workers.dev';
 const EDITOR_URL = 'https://deem0u.github.io/edit/';
 const PAGES_URL = 'https://deem0u.github.io/';
-// ===========================================
 
-// State
-let adminKey = null;
-let pages = [];
-let editKeys = {};
-let userInfo = {};
-let currentFolder = null;
-let currentSha = null;
-let pendingAction = null;
-
-// ============ Initialization ============
+let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentSha = null, modalCallback = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check setup status
-  try {
-    const res = await fetch(`${API_URL}/api/setup/status`);
-    const data = await res.json();
-    
-    if (!data.setup_complete) {
-      showScreen('setup');
-    } else {
-      // Check for saved key
-      const saved = localStorage.getItem('admin_key');
-      if (saved) {
-        adminKey = saved;
-        const valid = await verifyKey(adminKey);
-        if (valid) {
-          await loadDashboard();
-          showScreen('dashboard');
-        } else {
-          localStorage.removeItem('admin_key');
-          showScreen('login');
-        }
-      } else {
-        showScreen('login');
-      }
-    }
-  } catch (e) {
-    showScreen('login');
-    showStatus('login-status', 'Unable to connect to server', 'error');
-  }
-
-  // Form handlers
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
   document.getElementById('setup-form').addEventListener('submit', handleSetup);
   document.getElementById('login-form').addEventListener('submit', handleLogin);
   document.getElementById('recovery-form').addEventListener('submit', handleRecovery);
   document.getElementById('contact-form').addEventListener('submit', handleSave);
+  
+  try {
+    const res = await fetch(`${API}/api/setup/status`);
+    const data = await res.json();
+    if (!data.setup_complete) { showScreen('setup'); }
+    else {
+      const saved = localStorage.getItem('admin_key');
+      if (saved && await verifyKey(saved)) { adminKey = saved; await loadDashboard(); showScreen('dashboard'); }
+      else { localStorage.removeItem('admin_key'); showScreen('login'); }
+    }
+  } catch (e) { showScreen('login'); showAlert('login-alert', 'Unable to connect', 'error'); }
 });
 
-function showScreen(screen) {
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('recovery-screen').style.display = 'none';
-  document.getElementById('main-dashboard').style.display = 'none';
-  
-  if (screen === 'setup') document.getElementById('setup-screen').style.display = 'block';
-  if (screen === 'login') document.getElementById('login-screen').style.display = 'block';
-  if (screen === 'recovery') document.getElementById('recovery-screen').style.display = 'block';
-  if (screen === 'dashboard') document.getElementById('main-dashboard').style.display = 'block';
+function showScreen(s) {
+  document.querySelectorAll('main').forEach(el => el.classList.add('hidden'));
+  document.getElementById(`screen-${s}`).classList.remove('hidden');
+  document.getElementById('logout-btn').classList.toggle('hidden', s !== 'dashboard');
 }
 
-function showRecovery() {
-  showScreen('recovery');
-  document.getElementById('recovery-result').style.display = 'none';
-  hideStatus('recovery-status');
-}
+function logout() { localStorage.removeItem('admin_key'); adminKey = null; showScreen('login'); }
 
-function showLogin() {
-  showScreen('login');
-  hideStatus('login-status');
-}
-
-// ============ Auth ============
-
-async function verifyKey(key) {
-  try {
-    const res = await fetch(`${API_URL}/api/auth`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminKey: key })
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+async function verifyKey(k) {
+  try { const r = await fetch(`${API}/api/auth`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: k }) }); return r.ok; }
+  catch { return false; }
 }
 
 async function handleSetup(e) {
   e.preventDefault();
-  
-  const key = document.getElementById('setup-admin-key').value;
-  const email = document.getElementById('setup-email').value;
-  
-  showStatus('setup-status', '<span class="loader"></span> Setting up...', 'loading');
-  
+  const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('setup-key').value, email = document.getElementById('setup-email').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Setting up...';
   try {
-    const res = await fetch(`${API_URL}/api/setup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminKey: key, adminEmail: email })
-    });
-    
-    const data = await res.json();
-    
-    if (res.ok) {
-      adminKey = key;
-      localStorage.setItem('admin_key', key);
-      await loadDashboard();
-      showScreen('dashboard');
-    } else {
-      showStatus('setup-status', data.error, 'error');
-    }
-  } catch (e) {
-    showStatus('setup-status', 'Connection error', 'error');
-  }
+    const r = await fetch(`${API}/api/setup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: key, adminEmail: email }) });
+    const d = await r.json();
+    if (r.ok) { adminKey = key; localStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
+    else { showAlert('setup-alert', d.error, 'error'); }
+  } catch (e) { showAlert('setup-alert', 'Connection error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Complete Setup'; }
 }
 
 async function handleLogin(e) {
   e.preventDefault();
-  
-  const key = document.getElementById('login-admin-key').value;
-  
-  showStatus('login-status', '<span class="loader"></span> Signing in...', 'loading');
-  
-  const valid = await verifyKey(key);
-  
-  if (valid) {
-    adminKey = key;
-    localStorage.setItem('admin_key', key);
-    await loadDashboard();
-    showScreen('dashboard');
-  } else {
-    showStatus('login-status', 'Invalid admin key', 'error');
-  }
+  const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('login-key').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in...';
+  if (await verifyKey(key)) { adminKey = key; localStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
+  else { showAlert('login-alert', 'Invalid password', 'error'); }
+  btn.disabled = false; btn.textContent = 'Sign In';
 }
 
 async function handleRecovery(e) {
   e.preventDefault();
-  
-  const email = document.getElementById('recovery-email').value;
-  
-  showStatus('recovery-status', '<span class="loader"></span> Checking...', 'loading');
-  
+  const btn = document.getElementById('recovery-submit'), email = document.getElementById('recovery-email').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Checking...';
   try {
-    const res = await fetch(`${API_URL}/api/recover`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    
-    const data = await res.json();
-    
-    if (res.ok) {
-      hideStatus('recovery-status');
-      document.getElementById('recovered-key').textContent = data.adminKey;
-      document.getElementById('recovery-result').style.display = 'block';
-    } else {
-      showStatus('recovery-status', data.error, 'error');
-    }
-  } catch (e) {
-    showStatus('recovery-status', 'Connection error', 'error');
-  }
+    const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
+    const d = await r.json();
+    if (r.ok) { document.getElementById('recovered-key').value = d.adminKey; document.getElementById('recovery-result').classList.remove('hidden'); btn.classList.add('hidden'); hideAlert('recovery-alert'); }
+    else { showAlert('recovery-alert', d.error, 'error'); }
+  } catch (e) { showAlert('recovery-alert', 'Connection error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Recover Password'; }
 }
 
-// ============ Dashboard ============
+function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert', 'Copied!', 'success'); }
 
 async function loadDashboard() {
-  try {
-    // Load pages
-    const pagesRes = await fetch(`${API_URL}/api/pages`, {
-      headers: { 'X-Admin-Key': adminKey }
-    });
-    const pagesData = await pagesRes.json();
-    pages = pagesData.pages || [];
-    
-    // Load keys
-    const keysRes = await fetch(`${API_URL}/api/keys`, {
-      headers: { 'X-Admin-Key': adminKey }
-    });
-    const keysData = await keysRes.json();
-    editKeys = keysData.editKeys || {};
-    
-    // Load user info
-    await loadAllUserInfo();
-    
-    // Populate UI
-    populatePageSelect();
-    renderUserLists();
-    updateStats();
-    
-  } catch (e) {
-    console.error('Failed to load dashboard:', e);
-  }
+  const [pR, kR] = await Promise.all([fetch(`${API}/api/pages`, { headers: { 'X-Admin-Key': adminKey } }), fetch(`${API}/api/keys`, { headers: { 'X-Admin-Key': adminKey } })]);
+  pages = (await pR.json()).pages || []; editKeys = (await kR.json()).editKeys || {};
+  await Promise.all(pages.map(async f => { try { const r = await fetch(`${API}/api/page/${f}`, { headers: { 'X-Admin-Key': adminKey } }); if (r.ok) { const d = await r.json(); userInfo[f] = { ...extractInfo(d.content), folder: f }; } } catch {} }));
+  populateUI();
 }
 
-async function loadAllUserInfo() {
-  for (const folder of pages) {
-    try {
-      const res = await fetch(`${API_URL}/api/page/${folder}`, {
-        headers: { 'X-Admin-Key': adminKey }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        userInfo[folder] = extractUserInfo(data.content);
-        userInfo[folder].folder = folder;
-      }
-    } catch (e) {}
-  }
+function extractInfo(h) {
+  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
+  const em = h.match(/href="mailto:([^"]+)"/);
+  return { firstName: g('Name'), surname: g('Surname'), email: em ? em[1] : '' };
 }
 
-function extractUserInfo(html) {
-  const info = { firstName: '', surname: '', email: '' };
-  
-  const nameMatch = html.match(/<span class="label">Name:<\/span>\s*([^<]+)/);
-  if (nameMatch) info.firstName = nameMatch[1].trim();
-  
-  const surnameMatch = html.match(/<span class="label">Surname:<\/span>\s*([^<]+)/);
-  if (surnameMatch) info.surname = surnameMatch[1].trim();
-  
-  const emailMatch = html.match(/href="mailto:([^"]+)"/);
-  if (emailMatch) info.email = emailMatch[1].trim();
-  
-  return info;
-}
-
-function populatePageSelect() {
-  const select = document.getElementById('page-select');
-  select.innerHTML = '<option value="">— Choose a contact page —</option>';
-  
-  pages.sort().forEach(folder => {
-    const user = userInfo[folder] || {};
-    const label = user.firstName ? `${user.firstName} ${user.surname} (${folder})` : folder;
-    const option = document.createElement('option');
-    option.value = folder;
-    option.textContent = label;
-    select.appendChild(option);
-  });
-}
-
-function updateStats() {
-  const withKey = Object.keys(editKeys).length;
-  const withoutKey = pages.length - withKey;
-  
+function populateUI() {
+  const wk = Object.keys(editKeys).filter(k => pages.includes(k)).length;
   document.getElementById('stat-total').textContent = pages.length;
-  document.getElementById('stat-with-key').textContent = withKey;
-  document.getElementById('stat-without-key').textContent = withoutKey;
+  document.getElementById('stat-active').textContent = wk;
+  const sel = document.getElementById('page-select');
+  sel.innerHTML = '<option value="">Choose a user to edit...</option>';
+  pages.sort().forEach(f => { const u = userInfo[f] || {}; sel.innerHTML += `<option value="${f}">${u.firstName ? u.firstName + ' ' + u.surname : f}</option>`; });
+  renderList('manage'); renderList('send');
 }
 
-// ============ User Lists ============
+function getInitials(u) { return u.firstName && u.surname ? (u.firstName[0] + u.surname[0]).toUpperCase() : (u.folder ? u.folder[0].toUpperCase() : '?'); }
 
-function renderUserLists() {
-  renderManageList();
-  renderSendList();
-}
-
-function renderManageList(filter = '') {
-  const container = document.getElementById('manage-user-list');
-  const filtered = filterUserList(filter);
-  
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="empty-state">No users found</div>';
-    return;
-  }
-  
-  container.innerHTML = filtered.map(folder => {
-    const user = userInfo[folder] || { firstName: folder, surname: '', email: '' };
-    const hasKey = editKeys.hasOwnProperty(folder);
-    
-    return `
-      <div class="user-item" data-folder="${folder}">
-        <div class="user-details">
-          <div class="user-name">
-            ${user.firstName} ${user.surname}
-            ${hasKey 
-              ? '<span class="badge badge-success">Has Key</span>' 
-              : '<span class="badge badge-warning">No Key</span>'}
-          </div>
-          <div class="user-email">${user.email || 'No email'}</div>
-          <span class="user-folder">${folder}</span>
-        </div>
-        <div class="user-actions">
-          ${!hasKey ? `
-            <button class="btn btn-success btn-sm" onclick="generateKey('${folder}')">Generate Key</button>
-          ` : `
-            <button class="btn btn-warning btn-sm" onclick="confirmRegenerate('${folder}')">Regenerate</button>
-            <button class="btn btn-danger btn-sm" onclick="confirmRemove('${folder}')">Remove</button>
-          `}
-          <button class="btn btn-secondary btn-sm" onclick="editUser('${folder}')">Edit</button>
-        </div>
-      </div>
-    `;
+function renderList(t) {
+  const c = document.getElementById(`list-${t}`), s = document.getElementById(`search-${t}`).value.toLowerCase();
+  let fl = pages.filter(f => { const u = userInfo[f] || {}; return `${f} ${u.firstName||''} ${u.surname||''} ${u.email||''}`.toLowerCase().includes(s); }).sort();
+  if (t === 'send') fl = fl.filter(f => editKeys[f]);
+  if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }
+  c.innerHTML = fl.map(f => {
+    const u = userInfo[f] || { firstName: '', surname: '', email: '', folder: f }, hk = !!editKeys[f], nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
+    if (t === 'manage') return `<div class="user-item"><div class="user-avatar">${getInitials(u)}</div><div class="user-details"><div class="user-name">${nm} ${hk ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">No access</span>'}</div><div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div></div><div class="user-actions">${!hk ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Generate</button>` : `<button class="btn btn-warning btn-sm" onclick="confirmRegenerate('${f}')">Regenerate</button><button class="btn btn-danger btn-sm" onclick="confirmRemove('${f}')">Remove</button>`}<button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit</button></div></div>`;
+    return `<div class="user-item"><div class="user-avatar">${getInitials(u)}</div><div class="user-details"><div class="user-name">${nm}</div><div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div></div><div class="user-actions">${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Email Link</a>` : ''}<button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy</button></div></div>`;
   }).join('');
 }
 
-function renderSendList(filter = '') {
-  const container = document.getElementById('send-user-list');
-  const filtered = filterUserList(filter).filter(f => editKeys.hasOwnProperty(f));
-  
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="empty-state">No users with edit keys</div>';
-    return;
-  }
-  
-  container.innerHTML = filtered.map(folder => {
-    const user = userInfo[folder] || { firstName: folder, surname: '', email: '' };
-    
-    return `
-      <div class="user-item" data-folder="${folder}">
-        <div class="user-details">
-          <div class="user-name">${user.firstName} ${user.surname}</div>
-          <div class="user-email">${user.email || 'No email'}</div>
-          <span class="user-folder">${folder}</span>
-        </div>
-        <div class="user-actions">
-          ${user.email ? `
-            <a href="${generateMailto(user, folder)}" class="btn btn-primary btn-sm">Email Link</a>
-          ` : ''}
-          <button class="btn btn-secondary btn-sm" onclick="copyLink('${folder}', this)">Copy Link</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+function filterUsers(t) { renderList(t); }
+
+async function generateKey(f) {
+  showAlert('alert-manage', '<span class="spinner"></span> Generating...', 'info');
+  try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'POST', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; populateUI(); showAlert('alert-manage', `Access granted`, 'success'); } else showAlert('alert-manage', d.error, 'error'); }
+  catch { showAlert('alert-manage', 'Error', 'error'); }
 }
 
-function filterUserList(filter) {
-  if (!filter) return [...pages].sort();
-  
-  const term = filter.toLowerCase();
-  return pages.filter(folder => {
-    const user = userInfo[folder] || {};
-    return folder.toLowerCase().includes(term) ||
-           (user.firstName && user.firstName.toLowerCase().includes(term)) ||
-           (user.surname && user.surname.toLowerCase().includes(term)) ||
-           (user.email && user.email.toLowerCase().includes(term));
-  }).sort();
-}
+function confirmRegenerate(f) { showModal('Regenerate?', 'Their current link will stop working.', 'btn-warning', 'Regenerate', () => regenerateKey(f)); }
+async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; populateUI(); showAlert('alert-manage', 'New link created', 'success'); } } catch {} }
 
-function filterUsers(tab) {
-  const input = document.getElementById(`${tab}-search`);
-  if (tab === 'manage') renderManageList(input.value);
-  if (tab === 'send') renderSendList(input.value);
-}
+function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-danger', 'Remove', () => removeKey(f)); }
+async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); delete editKeys[f]; populateUI(); showAlert('alert-manage', 'Access removed', 'success'); } catch {} }
 
-// ============ Key Management ============
-
-async function generateKey(folder) {
-  showStatus('manage-status', '<span class="loader"></span> Generating key...', 'loading');
-  
-  try {
-    const res = await fetch(`${API_URL}/api/keys/${folder}`, {
-      method: 'POST',
-      headers: { 'X-Admin-Key': adminKey }
-    });
-    
-    const data = await res.json();
-    
-    if (res.ok) {
-      editKeys[folder] = data.key;
-      renderUserLists();
-      updateStats();
-      showStatus('manage-status', `Key generated for ${folder}`, 'success');
-    } else {
-      showStatus('manage-status', data.error, 'error');
-    }
-  } catch (e) {
-    showStatus('manage-status', 'Connection error', 'error');
-  }
-}
-
-function confirmRegenerate(folder) {
-  const user = userInfo[folder] || {};
-  const name = user.firstName ? `${user.firstName} ${user.surname}` : folder;
-  showDialog(
-    'Regenerate Key?',
-    `Create a new key for ${name}? Their current link will stop working.`,
-    () => regenerateKey(folder),
-    'btn-warning'
-  );
-}
-
-async function regenerateKey(folder) {
-  showStatus('manage-status', '<span class="loader"></span> Regenerating...', 'loading');
-  
-  try {
-    const res = await fetch(`${API_URL}/api/keys/${folder}`, {
-      method: 'PUT',
-      headers: { 'X-Admin-Key': adminKey }
-    });
-    
-    const data = await res.json();
-    
-    if (res.ok) {
-      editKeys[folder] = data.key;
-      renderUserLists();
-      showStatus('manage-status', `Key regenerated for ${folder}`, 'success');
-    } else {
-      showStatus('manage-status', data.error, 'error');
-    }
-  } catch (e) {
-    showStatus('manage-status', 'Connection error', 'error');
-  }
-}
-
-function confirmRemove(folder) {
-  const user = userInfo[folder] || {};
-  const name = user.firstName ? `${user.firstName} ${user.surname}` : folder;
-  showDialog(
-    'Remove Key?',
-    `Remove edit access for ${name}? They will no longer be able to edit their page.`,
-    () => removeKey(folder),
-    'btn-danger'
-  );
-}
-
-async function removeKey(folder) {
-  showStatus('manage-status', '<span class="loader"></span> Removing...', 'loading');
-  
-  try {
-    const res = await fetch(`${API_URL}/api/keys/${folder}`, {
-      method: 'DELETE',
-      headers: { 'X-Admin-Key': adminKey }
-    });
-    
-    if (res.ok) {
-      delete editKeys[folder];
-      renderUserLists();
-      updateStats();
-      showStatus('manage-status', `Key removed for ${folder}`, 'success');
-    } else {
-      const data = await res.json();
-      showStatus('manage-status', data.error, 'error');
-    }
-  } catch (e) {
-    showStatus('manage-status', 'Connection error', 'error');
-  }
-}
-
-// ============ Edit Page ============
-
-function editUser(folder) {
-  document.getElementById('page-select').value = folder;
-  switchTab('edit');
-  loadPage();
-}
+function editUser(f) { document.getElementById('page-select').value = f; switchTab('edit'); loadPage(); }
 
 async function loadPage() {
   currentFolder = document.getElementById('page-select').value;
-  
-  if (!currentFolder) {
-    document.getElementById('editor-card').style.display = 'none';
-    return;
-  }
-  
-  showStatus('selector-status', '<span class="loader"></span> Loading...', 'loading');
-  
-  try {
-    const res = await fetch(`${API_URL}/api/page/${currentFolder}`, {
-      headers: { 'X-Admin-Key': adminKey }
-    });
-    
-    if (!res.ok) throw new Error('Failed to load');
-    
-    const data = await res.json();
-    currentSha = data.sha;
-    fillForm(data.content);
-    
-    document.getElementById('editor-card').style.display = 'block';
-    hideStatus('selector-status');
-    
-  } catch (e) {
-    showStatus('selector-status', e.message, 'error');
-  }
+  const card = document.getElementById('editor-card');
+  if (!currentFolder) { card.classList.add('hidden'); return; }
+  try { const r = await fetch(`${API}/api/page/${currentFolder}`, { headers: { 'X-Admin-Key': adminKey } }); if (!r.ok) throw 0; const d = await r.json(); currentSha = d.sha; fillForm(d.content); document.getElementById('view-page-link').href = `${PAGES_URL}${currentFolder}/`; card.classList.remove('hidden'); }
+  catch { showAlert('alert-editor', 'Failed to load', 'error'); }
 }
 
-function fillForm(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  
-  function getValue(label) {
-    const divs = doc.querySelectorAll('.info');
-    for (const div of divs) {
-      const lbl = div.querySelector('.label');
-      if (lbl && lbl.textContent.includes(label)) {
-        const link = div.querySelector('a');
-        if (link) return link.textContent.trim();
-        const clone = div.cloneNode(true);
-        clone.querySelector('.label')?.remove();
-        return clone.textContent.trim();
-      }
-    }
-    return '';
-  }
-  
-  document.getElementById('first-name').value = getValue('Name:');
-  document.getElementById('surname').value = getValue('Surname:');
-  document.getElementById('email').value = getValue('Email:');
-  document.getElementById('mobile').value = getValue('Mobile:');
-  document.getElementById('home-country').value = getValue('Home Country:');
-  
-  // Destination
-  const divs = doc.querySelectorAll('.info');
-  for (const div of divs) {
-    const lbl = div.querySelector('.label');
-    if (lbl && lbl.textContent.includes('Destination')) {
-      const lines = div.innerHTML.split('<br>').map(l => {
-        const temp = document.createElement('div');
-        temp.innerHTML = l;
-        return temp.textContent.trim();
-      }).filter(l => l && !l.includes('Destination'));
-      
-      document.getElementById('dest-name').value = lines[0] || '';
-      document.getElementById('dest-phone').value = lines[1] || '';
-      document.getElementById('dest-email').value = lines[2] || '';
-      break;
-    }
-  }
+function fillForm(h) {
+  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
+  const gl = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>.*?<a[^>]*>([^<]+)</a>`, 's')); return m ? m[1].trim() : ''; };
+  document.getElementById('first-name').value = g('Name'); document.getElementById('surname').value = g('Surname');
+  document.getElementById('email').value = gl('Email'); document.getElementById('mobile').value = gl('Mobile');
+  document.getElementById('home-country').value = g('Home Country');
+  const dm = h.match(/<span class="label">Destination Details:<\/span>\s*<br>([^<]*)<br>([^<]*)<br>([^<]*)/);
+  document.getElementById('dest-name').value = dm ? dm[1].trim() : '';
+  document.getElementById('dest-phone').value = dm ? dm[2].trim() : '';
+  document.getElementById('dest-email').value = dm ? dm[3].trim() : '';
 }
 
 async function handleSave(e) {
-  e.preventDefault();
-  
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true;
-  showStatus('editor-status', '<span class="loader"></span> Saving...', 'loading');
-  
+  e.preventDefault(); const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
   try {
-    const content = generateHTML();
-    
-    const res = await fetch(`${API_URL}/api/page/${currentFolder}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Admin-Key': adminKey
-      },
-      body: JSON.stringify({ content, sha: currentSha })
-    });
-    
-    const data = await res.json();
-    
-    if (res.ok) {
-      currentSha = data.sha;
-      
-      // Update cache
-      userInfo[currentFolder] = {
-        firstName: document.getElementById('first-name').value.trim(),
-        surname: document.getElementById('surname').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        folder: currentFolder
-      };
-      
-      populatePageSelect();
-      renderUserLists();
-      
-      showStatus('editor-status', `Saved. <a href="${data.url}" target="_blank">View page →</a>`, 'success');
-    } else {
-      showStatus('editor-status', data.error, 'error');
-    }
-  } catch (e) {
-    showStatus('editor-status', 'Connection error', 'error');
-  } finally {
-    btn.disabled = false;
-  }
+    const c = generateHTML();
+    const r = await fetch(`${API}/api/page/${currentFolder}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ content: c, sha: currentSha }) });
+    const d = await r.json();
+    if (r.ok) { currentSha = d.sha; userInfo[currentFolder] = { firstName: document.getElementById('first-name').value.trim(), surname: document.getElementById('surname').value.trim(), email: document.getElementById('email').value.trim(), folder: currentFolder }; populateUI(); showAlert('alert-editor', `Saved. <a href="${d.url}" target="_blank">View →</a>`, 'success'); }
+    else showAlert('alert-editor', d.error, 'error');
+  } catch { showAlert('alert-editor', 'Error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }
 
 function generateHTML() {
-  const firstName = document.getElementById('first-name').value.trim();
-  const surname = document.getElementById('surname').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const mobile = document.getElementById('mobile').value.trim();
-  const homeCountry = document.getElementById('home-country').value.trim();
-  const destName = document.getElementById('dest-name').value.trim();
-  const destPhone = document.getElementById('dest-phone').value.trim();
-  const destEmail = document.getElementById('dest-email').value.trim();
-  const mobileLink = mobile.replace(/\s/g, '');
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact Information - ${firstName} ${surname}</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 600px; margin: 40px auto; padding: 20px; color: #333; }
-    h1 { margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; font-size: 24px; }
-    .info { margin: 12px 0; }
-    .label { font-weight: 600; }
-    a { color: #0066cc; }
-    hr { margin: 40px 0; border: none; border-top: 1px solid #ddd; }
-    .chinese-section { font-family: -apple-system, BlinkMacSystemFont, "Microsoft YaHei", "PingFang SC", sans-serif; }
-    @media print { body { margin: 0; padding: 10px; max-width: 100%; } a { color: #333; text-decoration: none; } }
-  </style>
-</head>
-<body>
-  <h1>Contact Information</h1>
-  <div class="info"><span class="label">Name:</span> ${firstName}</div>
-  <div class="info"><span class="label">Surname:</span> ${surname}</div>
-  <div class="info"><span class="label">Email:</span> <a href="mailto:${email}">${email}</a></div>
-  <div class="info"><span class="label">Mobile:</span> <a href="tel:${mobileLink}">${mobile}</a></div>
-  <div class="info"><span class="label">Home Country:</span> ${homeCountry}</div>
-  <div class="info"><span class="label">Destination Details:</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div>
-  <hr>
-  <section lang="zh" class="chinese-section">
-    <h1>联系信息</h1>
-    <div class="info"><span class="label">名字：</span> ${firstName}</div>
-    <div class="info"><span class="label">姓氏：</span> ${surname}</div>
-    <div class="info"><span class="label">电子邮件：</span> <a href="mailto:${email}">${email}</a></div>
-    <div class="info"><span class="label">手机：</span> <a href="tel:${mobileLink}">${mobile}</a></div>
-    <div class="info"><span class="label">所属国家：</span> ${homeCountry === 'Australia' ? '澳大利亚' : homeCountry}</div>
-    <div class="info"><span class="label">目的地详情：</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div>
-  </section>
-</body>
-</html>`;
+  const f = i => document.getElementById(i).value.trim(), ml = f('mobile').replace(/\s/g, '');
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${f('first-name')} ${f('surname')}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${f('first-name')}</div><div class="info"><span class="label">Surname:</span> ${f('surname')}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">Home Country:</span> ${f('home-country')}</div><div class="info"><span class="label">Destination Details:</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${f('first-name')}</div><div class="info"><span class="label">姓氏：</span> ${f('surname')}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">所属国家：</span> ${f('home-country')==='Australia'?'澳大利亚':f('home-country')}</div><div class="info"><span class="label">目的地详情：</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div></section></body></html>`;
 }
 
-// ============ Send Links ============
-
-function generateMailto(user, folder) {
-  const link = `${EDITOR_URL}?folder=${folder}&key=${editKeys[folder]}`;
-  const pageUrl = `${PAGES_URL}${folder}/`;
-  
-  const subject = 'Your Contact Page - Edit Link';
-  const body = `Hi ${user.firstName},
-
-You can update your contact information anytime using your personal edit link below.
-
-YOUR EDIT LINK:
-${link}
-
-HOW TO UPDATE:
-1. Click the link above
-2. Edit any fields you want to change
-3. Click "Save Changes"
-
-Your changes will appear within 1-2 minutes.
-
-View your current page: ${pageUrl}
-
-Please don't share this link — it's unique to you.
-
-Best regards`;
-
-  return `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+function generateMailto(u, f) {
+  const l = `${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`, s = 'Your Contact Page Edit Link';
+  const b = `Hi ${u.firstName},\n\nYou can update your contact information using this link:\n\n${l}\n\nHow to update:\n1. Click the link\n2. Make changes\n3. Click Save\n\nPlease keep this link private.\n\nBest regards`;
+  return `mailto:${u.email}?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
 }
 
-function copyLink(folder, btn) {
-  const link = `${EDITOR_URL}?folder=${folder}&key=${editKeys[folder]}`;
-  
-  navigator.clipboard.writeText(link).then(() => {
-    const original = btn.textContent;
-    btn.textContent = 'Copied!';
-    btn.classList.add('btn-success');
-    setTimeout(() => {
-      btn.textContent = original;
-      btn.classList.remove('btn-success');
-    }, 2000);
+function copyLink(f, btn) {
+  navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
+    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-secondary');
+    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-secondary'); }, 2000);
   });
 }
 
-// ============ Tabs ============
+function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); }
 
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  
-  document.querySelector(`.tab[onclick="switchTab('${name}')"]`).classList.add('active');
-  document.getElementById(`tab-${name}`).classList.add('active');
-}
+function showModal(t, m, bc, bt, cb) { document.getElementById('modal-title').textContent = t; document.getElementById('modal-message').textContent = m; const b = document.getElementById('modal-confirm'); b.className = `btn ${bc}`; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
+function closeModal() { document.getElementById('modal').classList.remove('show'); modalCallback = null; }
+document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
 
-// ============ Dialog ============
-
-function showDialog(title, message, onConfirm, btnClass = 'btn-danger') {
-  document.getElementById('dialog-title').textContent = title;
-  document.getElementById('dialog-message').textContent = message;
-  document.getElementById('dialog-confirm').className = `btn ${btnClass} btn-sm`;
-  document.getElementById('confirm-dialog').classList.add('show');
-  pendingAction = onConfirm;
-}
-
-function closeDialog() {
-  document.getElementById('confirm-dialog').classList.remove('show');
-  pendingAction = null;
-}
-
-function confirmAction() {
-  if (pendingAction) pendingAction();
-  closeDialog();
-}
-
-// ============ Status ============
-
-function showStatus(id, message, type) {
-  const el = document.getElementById(id);
-  el.className = `status show status-${type}`;
-  el.innerHTML = message;
-}
-
-function hideStatus(id) {
-  document.getElementById(id).className = 'status';
-}
+function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
+function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 </script>
-
 </body>
 </html>
