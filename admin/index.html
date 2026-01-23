@@ -412,8 +412,12 @@ function populatePageSelect() {
   
   options.innerHTML = sorted.map(f => {
     const u = userInfo[f] || {};
-    const name = u.firstName ? `${u.firstName} ${u.surname}` : f;
-    return `<div class="searchable-select-option" data-value="${f}" data-name="${name}" data-email="${u.email || ''}" onclick="selectPage('${f}')">${name} <span style="color: var(--color-text-muted); font-size: var(--text-xs);">(${f})</span></div>`;
+    const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
+    const meta = u.email ? `${u.email} (${f})` : `(${f})`;
+    return `<div class="searchable-select-option" data-value="${f}" data-name="${displayName}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
+      <div style="font-weight: 500;">${displayName}</div>
+      <div style="font-size: var(--text-xs); color: var(--color-text-muted);">${meta}</div>
+    </div>`;
   }).join('');
   
   if (!sorted.length) {
@@ -498,18 +502,24 @@ function getInitials(u) { return u.firstName && u.surname ? (u.firstName[0] + u.
 
 function renderList(t) {
   const c = document.getElementById(`list-${t}`), s = document.getElementById(`search-${t}`).value.toLowerCase();
-  let fl = pages.filter(f => { const u = userInfo[f] || {}; return `${f} ${u.firstName||''} ${u.surname||''} ${u.email||''}`.toLowerCase().includes(s); }).sort();
+  let fl = pages.filter(f => { const u = userInfo[f] || {}; return `${f} ${u.firstName||''} ${u.surname||''} ${u.email||''}`.toLowerCase().includes(s); }).sort((a, b) => {
+    const uA = userInfo[a] || {}, uB = userInfo[b] || {};
+    const nameA = uA.firstName ? `${uA.firstName} ${uA.surname}` : a;
+    const nameB = uB.firstName ? `${uB.firstName} ${uB.surname}` : b;
+    return nameA.localeCompare(nameB);
+  });
   if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }
   c.innerHTML = fl.map(f => {
-    const u = userInfo[f] || { firstName: '', surname: '', email: '', folder: f }, hk = !!editKeys[f], nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
+    const u = userInfo[f] || { firstName: '', surname: '', email: '', folder: f }, hk = !!editKeys[f];
+    const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
     return `<div class="user-card">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
-          <div class="user-name">${nm}</div>
+          <div class="user-name">${displayName}</div>
           <div class="user-meta">
             <span>${u.email || 'No email'}</span>
-            <span class="user-folder">${f}</span>
+            <span class="user-folder">(${f})</span>
           </div>
         </div>
         <div class="user-status">
