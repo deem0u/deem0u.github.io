@@ -89,16 +89,29 @@ document.addEventListener('DOMContentLoaded', () => {
   folder = params.get('folder');
   const urlKey = params.get('key');
   
-  if (!folder) { showAlert('auth-alert', 'Invalid link. Please check your email for the correct link.', 'error'); return; }
-  if (urlKey) { document.getElementById('edit-key').value = urlKey; authenticate(); }
-  
+  // Always attach form handlers
   document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
   document.getElementById('contact-form').addEventListener('submit', handleSave);
+  
+  // Check if folder parameter exists
+  if (!folder) { 
+    showAlert('auth-alert', 'Invalid link. Please check your email for the correct link.', 'error'); 
+    document.getElementById('edit-key').disabled = true;
+    document.querySelector('#auth-form button[type="submit"]').disabled = true;
+    return; 
+  }
+  
+  // Auto-authenticate if key is in URL
+  if (urlKey) { 
+    document.getElementById('edit-key').value = urlKey; 
+    authenticate(); 
+  }
 });
 
 async function authenticate() {
   editKey = document.getElementById('edit-key').value.trim();
   if (!editKey) { showAlert('auth-alert', 'Please enter your edit key', 'error'); return; }
+  if (!folder) { showAlert('auth-alert', 'Invalid link. Missing folder parameter.', 'error'); return; }
   
   showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
   
@@ -113,7 +126,10 @@ async function authenticate() {
     document.getElementById('user-name').textContent = document.getElementById('first-name').value || folder;
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
-  } catch (e) { showAlert('auth-alert', 'Connection error. Please try again.', 'error'); }
+  } catch (e) { 
+    console.error('Auth error:', e);
+    showAlert('auth-alert', 'Connection error. Please try again.', 'error'); 
+  }
 }
 
 function fillForm(h) {
@@ -162,8 +178,77 @@ async function handleSave(e) {
 }
 
 function generateHTML() {
-  const f = i => document.getElementById(i).value.trim(), ml = f('mobile').replace(/\s/g, '');
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${f('first-name')} ${f('surname')}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${f('first-name')}</div><div class="info"><span class="label">Surname:</span> ${f('surname')}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">Home Country:</span> ${f('home-country')}</div><div class="info"><span class="label">Destination Details:</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${f('first-name')}</div><div class="info"><span class="label">姓氏：</span> ${f('surname')}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">所属国家：</span> ${f('home-country')==='Australia'?'澳大利亚':f('home-country')}</div><div class="info"><span class="label">目的地详情：</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div></section></body></html>`;
+  const f = i => document.getElementById(i).value.trim();
+  const ml = f('mobile').replace(/\s/g, '');
+  const firstName = f('first-name');
+  const surname = f('surname');
+  const email = f('email');
+  const mobile = f('mobile');
+  const homeCountry = f('home-country');
+  const destName = f('dest-name');
+  const destPhone = f('dest-phone');
+  const destEmail = f('dest-email');
+  
+  const css = `
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}
+    .container{max-width:600px;margin:0 auto;padding:32px 24px;background:#fff}
+    @media(min-width:640px){.container{padding:48px 40px}}
+    h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111;letter-spacing:-0.025em}
+    @media(min-width:640px){h1{font-size:1.75rem}}
+    .info{display:flex;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:4px 8px}
+    .info:last-of-type{border-bottom:none}
+    .label{font-weight:600;color:#374151;min-width:140px;flex-shrink:0}
+    .value{color:#1a1a1a;word-break:break-word}
+    a{color:#2563eb;text-decoration:none;transition:color 0.15s}
+    a:hover{color:#1d4ed8;text-decoration:underline}
+    a:active{color:#1e40af}
+    .divider{margin:40px 0;border:none;border-top:2px solid #e5e7eb}
+    @media(min-width:640px){.divider{margin:56px 0}}
+    .section-zh{color:#1a1a1a}
+    .section-zh h1{font-size:1.375rem;border-color:#111}
+    @media(min-width:640px){.section-zh h1{font-size:1.5rem}}
+    .dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}
+    @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
+  `.replace(/\n\s*/g, '');
+  
+  const destHtml = (destName || destPhone || destEmail) 
+    ? `<div class="dest-details"><span>${destName || ''}</span><span>${destPhone || ''}</span><span>${destEmail || ''}</span></div>`
+    : '<span class="value">—</span>';
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0">
+<meta name="format-detection" content="telephone=yes">
+<meta name="theme-color" content="#ffffff">
+<title>Contact - ${firstName} ${surname}</title>
+<style>${css}</style>
+</head>
+<body>
+<div class="container">
+<h1>Contact Information</h1>
+<div class="info"><span class="label">Name</span><span class="value">${firstName}</span></div>
+<div class="info"><span class="label">Surname</span><span class="value">${surname}</span></div>
+<div class="info"><span class="label">Email</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
+<div class="info"><span class="label">Mobile</span><span class="value"><a href="tel:${ml}">${mobile}</a></span></div>
+<div class="info"><span class="label">Home Country</span><span class="value">${homeCountry}</span></div>
+<div class="info"><span class="label">Destination Details</span>${destHtml}</div>
+<hr class="divider">
+<section class="section-zh">
+<h1>联系信息</h1>
+<div class="info"><span class="label">名字</span><span class="value">${firstName}</span></div>
+<div class="info"><span class="label">姓氏</span><span class="value">${surname}</span></div>
+<div class="info"><span class="label">电子邮件</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
+<div class="info"><span class="label">手机</span><span class="value"><a href="tel:${ml}">${mobile}</a></span></div>
+<div class="info"><span class="label">所属国家</span><span class="value">${homeCountry === 'Australia' ? '澳大利亚' : homeCountry}</span></div>
+<div class="info"><span class="label">目的地详情</span>${destHtml}</div>
+</section>
+</div>
+</body>
+</html>`;
 }
 
 function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
