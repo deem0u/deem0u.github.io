@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Update Your Contact Information</title>
+  <title>Contact Editor — Admin</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -13,132 +13,526 @@
         <div class="app-logo">
           <div class="app-logo-icon">C</div>
           <span class="app-logo-text">Contact Editor</span>
+          <span class="app-logo-badge">Admin</span>
         </div>
+        <button id="logout-btn" class="btn btn-ghost btn-sm hidden" onclick="logout()">Sign Out</button>
       </div>
     </header>
 
-    <main id="screen-auth" class="app-centered">
+    <main id="screen-setup" class="app-centered hidden">
       <div class="auth-card">
         <div class="auth-header">
-          <h1 class="auth-title">Access Your Page</h1>
-          <p class="auth-subtitle">Enter your edit key to update your contact information</p>
+          <h1 class="auth-title">Welcome</h1>
+          <p class="auth-subtitle">Set up your admin account to get started</p>
         </div>
-        <form id="auth-form">
+        <form id="setup-form">
           <div class="form-group">
-            <label class="form-label">Edit Key</label>
-            <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key" required>
-            <span class="form-hint">This was provided to you via email</span>
+            <label class="form-label">Create Admin Password</label>
+            <input type="password" id="setup-key" class="form-input" placeholder="Minimum 8 characters" minlength="8" required>
+            <span class="form-hint">Choose a secure password you'll remember</span>
           </div>
-          <div id="auth-alert" class="alert"></div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg">Continue</button>
+          <div class="form-group">
+            <label class="form-label">Recovery Email</label>
+            <input type="email" id="setup-email" class="form-input" placeholder="your@email.com" required>
+            <span class="form-hint">Used to recover your password if forgotten</span>
+          </div>
+          <div id="setup-alert" class="alert"></div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Complete Setup</button>
         </form>
       </div>
     </main>
 
-    <main id="screen-editor" class="app-main hidden">
+    <main id="screen-login" class="app-centered">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Sign In</h1>
+          <p class="auth-subtitle">Enter your admin password to continue</p>
+        </div>
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label">Admin Password</label>
+            <input type="password" id="login-key" class="form-input" placeholder="Enter your password" required>
+          </div>
+          <div id="login-alert" class="alert"></div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+          <div class="text-center mt-4">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="showScreen('recovery')">Forgot password?</button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <main id="screen-recovery" class="app-centered hidden">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Password Recovery</h1>
+          <p class="auth-subtitle" id="recovery-subtitle">Enter your recovery email to receive a verification code</p>
+        </div>
+        
+        <!-- Step 1: Enter email -->
+        <form id="recovery-form-step1">
+          <div class="form-group">
+            <label class="form-label">Recovery Email</label>
+            <input type="email" id="recovery-email" class="form-input" placeholder="your@email.com" required>
+          </div>
+          <div id="recovery-alert-1" class="alert"></div>
+          <button type="submit" id="recovery-submit-1" class="btn btn-primary btn-block btn-lg">Send Recovery Code</button>
+        </form>
+        
+        <!-- Step 2: Send email with code -->
+        <div id="recovery-step2" class="hidden">
+          <div class="alert alert-info show mb-4">
+            <div class="alert-content">Click the button below to send yourself the recovery code, then enter it here.</div>
+          </div>
+          <a id="recovery-mailto" href="#" class="btn btn-primary btn-block btn-lg mb-4" target="_blank">Open Email with Code</a>
+          <form id="recovery-form-step2">
+            <div class="form-group">
+              <label class="form-label">Enter 6-Digit Code</label>
+              <input type="text" id="recovery-code" class="form-input font-mono text-center" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required style="font-size: 1.5rem; letter-spacing: 0.5rem;">
+              <span class="form-hint">Code expires in 10 minutes</span>
+            </div>
+            <div id="recovery-alert-2" class="alert"></div>
+            <button type="submit" id="recovery-submit-2" class="btn btn-primary btn-block btn-lg">Verify Code</button>
+          </form>
+        </div>
+        
+        <!-- Step 3: Show password -->
+        <div id="recovery-step3" class="hidden">
+          <div class="alert alert-success show mb-4">
+            <div class="alert-content">Verification successful! Here's your password:</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Your Admin Password</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="recovered-key" class="form-input font-mono" readonly>
+              <button type="button" class="btn btn-secondary" onclick="copyRecoveredKey()">Copy</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-block btn-lg mt-4" onclick="showScreen('login')">Back to Sign In</button>
+        </div>
+        
+        <div class="text-center mt-4" id="recovery-back-link">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="resetRecovery(); showScreen('login')">← Back to Sign In</button>
+        </div>
+      </div>
+    </main>
+
+    <main id="screen-dashboard" class="app-main hidden">
       <div class="app-container">
-        <div class="card" style="background: var(--blue-50); border-color: var(--blue-100); margin-bottom: var(--space-6);">
-          <div class="card-body" style="padding: var(--space-4) var(--space-5);">
-            <p style="margin: 0; font-size: var(--text-sm); color: var(--blue-700);">
-              Welcome, <strong id="user-name">User</strong>. Update your information below and click Save.
-            </p>
+        <div class="tabs">
+          <button class="tab active" data-tab="manage">Manage Users</button>
+          <button class="tab" data-tab="edit">Edit Pages</button>
+        </div>
+
+        <div id="tab-manage" class="tab-content active">
+          <div class="user-list-header">
+            <div class="user-list-stats">
+              <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">users</span></div>
+              <div class="stat"><span class="stat-value" id="stat-active">0</span><span class="stat-label">with access</span></div>
+            </div>
+            <div class="search-wrapper">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="search-manage" class="search-input" placeholder="Search users..." oninput="filterUsers('manage')">
+            </div>
+          </div>
+          <div id="alert-manage" class="alert"></div>
+          <div id="list-manage" class="user-list"></div>
+        </div>
+
+        <div id="tab-edit" class="tab-content">
+          <div class="card">
+            <div class="card-body" style="display: flex; gap: var(--space-4); align-items: flex-end; flex-wrap: wrap;">
+              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                <label class="form-label">Select Contact Page</label>
+                <select id="page-select" class="form-select" onchange="loadPage()">
+                  <option value="">Choose a user to edit...</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-success" onclick="showNewUserForm()">+ Add New User</button>
+            </div>
+          </div>
+          
+          <!-- New User Form -->
+          <div id="new-user-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Add New Contact Page</span></div>
+            <div class="card-body">
+              <form id="new-user-form">
+                <div class="form-group">
+                  <label class="form-label">Folder Name</label>
+                  <input type="text" id="new-folder" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_-]+" required>
+                  <span class="form-hint">Used in the URL. Letters, numbers, hyphens only. Example: deem0u.github.io/<strong>john-smith</strong>/</span>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">First Name</label><input type="text" id="new-first-name" class="form-input" required></div>
+                  <div class="form-group"><label class="form-label">Surname</label><input type="text" id="new-surname" class="form-input" required></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-email" class="form-input" required></div>
+                  <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="new-mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
+                </div>
+                <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="new-home-country" class="form-input" value="Australia" required></div>
+                <div class="form-group">
+                  <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
+                  <div class="form-section">
+                    <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="new-dest-name" class="form-input"></div>
+                    <div class="form-row">
+                      <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="new-dest-phone" class="form-input"></div>
+                      <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-dest-email" class="form-input"></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="alert-new-user" class="alert"></div>
+                <div class="form-actions">
+                  <button type="submit" id="create-btn" class="btn btn-success">Create Contact Page</button>
+                  <button type="button" class="btn btn-secondary" onclick="hideNewUserForm()">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div id="editor-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Edit Contact Information</span></div>
+            <div class="card-body">
+              <form id="contact-form">
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">First Name</label><input type="text" id="first-name" class="form-input" required></div>
+                  <div class="form-group"><label class="form-label">Surname</label><input type="text" id="surname" class="form-input" required></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" required></div>
+                  <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
+                </div>
+                <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="home-country" class="form-input" required></div>
+                <div class="form-group">
+                  <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
+                  <div class="form-section">
+                    <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="dest-name" class="form-input"></div>
+                    <div class="form-row">
+                      <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="dest-phone" class="form-input"></div>
+                      <div class="form-group"><label class="form-label">Email</label><input type="email" id="dest-email" class="form-input"></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="alert-editor" class="alert"></div>
+                <div class="form-actions">
+                  <button type="submit" id="save-btn" class="btn btn-primary">Save Changes</button>
+                  <button type="button" class="btn btn-secondary" onclick="loadPage()">Reset</button>
+                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost" style="margin-left: auto;">View Page →</a>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header"><span class="card-title">Your Contact Details</span></div>
-          <div class="card-body">
-            <form id="contact-form">
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">First Name</label><input type="text" id="first-name" class="form-input" required></div>
-                <div class="form-group"><label class="form-label">Surname</label><input type="text" id="surname" class="form-input" required></div>
-              </div>
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" required></div>
-                <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
-              </div>
-              <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="home-country" class="form-input" required></div>
-              <div class="form-group">
-                <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
-                <div class="form-section">
-                  <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="dest-name" class="form-input"></div>
-                  <div class="form-row">
-                    <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="dest-phone" class="form-input"></div>
-                    <div class="form-group"><label class="form-label">Email</label><input type="email" id="dest-email" class="form-input"></div>
-                  </div>
-                </div>
-              </div>
-              <div id="editor-alert" class="alert"></div>
-              <div class="form-actions">
-                <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save Changes</button>
-                <button type="button" class="btn btn-secondary" onclick="resetForm()">Reset</button>
-              </div>
-            </form>
-          </div>
-        </div>
       </div>
     </main>
   </div>
 
+  <div id="modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header"><h3 class="modal-title" id="modal-title">Confirm</h3></div>
+      <div class="modal-body"><p id="modal-message">Are you sure?</p></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn" id="modal-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
-let folder = null, editKey = null, currentSha = null;
+const EDITOR_URL = 'https://deem0u.github.io/edit/';
+const PAGES_URL = 'https://deem0u.github.io/';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  folder = params.get('folder');
-  const urlKey = params.get('key');
-  
-  // Always attach form handlers
-  document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
+let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentSha = null, modalCallback = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Attach all event listeners first
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+  document.getElementById('setup-form').addEventListener('submit', handleSetup);
+  document.getElementById('login-form').addEventListener('submit', handleLogin);
+  document.getElementById('recovery-form-step1').addEventListener('submit', handleRecoveryStep1);
+  document.getElementById('recovery-form-step2').addEventListener('submit', handleRecoveryStep2);
   document.getElementById('contact-form').addEventListener('submit', handleSave);
+  document.getElementById('new-user-form').addEventListener('submit', handleCreateUser);
   
-  // Check if folder parameter exists
-  if (!folder) { 
-    showAlert('auth-alert', 'Invalid link. Please check your email for the correct link.', 'error'); 
-    document.getElementById('edit-key').disabled = true;
-    document.querySelector('#auth-form button[type="submit"]').disabled = true;
-    return; 
-  }
-  
-  // Auto-authenticate if key is in URL
-  if (urlKey) { 
-    document.getElementById('edit-key').value = urlKey; 
-    authenticate(); 
+  // Check setup status and authenticate
+  try {
+    const res = await fetch(`${API}/api/setup/status`);
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    
+    if (!data.setup_complete) { 
+      showScreen('setup'); 
+    } else {
+      const saved = localStorage.getItem('admin_key');
+      if (saved && await verifyKey(saved)) { 
+        adminKey = saved; 
+        await loadDashboard(); 
+        showScreen('dashboard'); 
+      } else { 
+        localStorage.removeItem('admin_key'); 
+        showScreen('login'); 
+      }
+    }
+  } catch (e) { 
+    console.error('Init error:', e);
+    showScreen('login'); 
+    showAlert('login-alert', 'Unable to connect to server. Please check your connection and try again.', 'error'); 
   }
 });
 
-async function authenticate() {
-  editKey = document.getElementById('edit-key').value.trim();
-  if (!editKey) { showAlert('auth-alert', 'Please enter your edit key', 'error'); return; }
-  if (!folder) { showAlert('auth-alert', 'Invalid link. Missing folder parameter.', 'error'); return; }
+function showScreen(s) {
+  document.querySelectorAll('main').forEach(el => el.classList.add('hidden'));
+  document.getElementById(`screen-${s}`).classList.remove('hidden');
+  document.getElementById('logout-btn').classList.toggle('hidden', s !== 'dashboard');
+}
+
+function logout() { localStorage.removeItem('admin_key'); adminKey = null; showScreen('login'); }
+
+async function verifyKey(k) {
+  try { const r = await fetch(`${API}/api/auth`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: k }) }); return r.ok; }
+  catch { return false; }
+}
+
+async function handleSetup(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('setup-key').value, email = document.getElementById('setup-email').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Setting up...';
+  try {
+    const r = await fetch(`${API}/api/setup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: key, adminEmail: email }) });
+    const d = await r.json();
+    if (r.ok) { adminKey = key; localStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
+    else { showAlert('setup-alert', d.error, 'error'); }
+  } catch (e) { showAlert('setup-alert', 'Connection error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Complete Setup'; }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('login-key').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in...';
+  if (await verifyKey(key)) { adminKey = key; localStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
+  else { showAlert('login-alert', 'Invalid password', 'error'); }
+  btn.disabled = false; btn.textContent = 'Sign In';
+}
+
+let recoveryEmail = null;
+
+async function handleRecoveryStep1(e) {
+  e.preventDefault();
+  const btn = document.getElementById('recovery-submit-1');
+  recoveryEmail = document.getElementById('recovery-email').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Sending...';
+  try {
+    const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail }) });
+    const d = await r.json();
+    if (r.ok && d.step === 'code_sent') {
+      document.getElementById('recovery-mailto').href = d.mailto;
+      document.getElementById('recovery-form-step1').classList.add('hidden');
+      document.getElementById('recovery-step2').classList.remove('hidden');
+      document.getElementById('recovery-subtitle').textContent = 'Check your email for the verification code';
+    } else { showAlert('recovery-alert-1', d.error, 'error'); }
+  } catch (e) { showAlert('recovery-alert-1', 'Connection error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Send Recovery Code'; }
+}
+
+async function handleRecoveryStep2(e) {
+  e.preventDefault();
+  const btn = document.getElementById('recovery-submit-2');
+  const code = document.getElementById('recovery-code').value;
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Verifying...';
+  try {
+    const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail, code }) });
+    const d = await r.json();
+    if (r.ok && d.step === 'complete') {
+      document.getElementById('recovered-key').value = d.adminKey;
+      document.getElementById('recovery-step2').classList.add('hidden');
+      document.getElementById('recovery-step3').classList.remove('hidden');
+      document.getElementById('recovery-back-link').classList.add('hidden');
+      document.getElementById('recovery-subtitle').textContent = 'Password recovered successfully';
+    } else { showAlert('recovery-alert-2', d.error, 'error'); }
+  } catch (e) { showAlert('recovery-alert-2', 'Connection error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Verify Code'; }
+}
+
+function resetRecovery() {
+  recoveryEmail = null;
+  document.getElementById('recovery-email').value = '';
+  document.getElementById('recovery-code').value = '';
+  document.getElementById('recovery-form-step1').classList.remove('hidden');
+  document.getElementById('recovery-step2').classList.add('hidden');
+  document.getElementById('recovery-step3').classList.add('hidden');
+  document.getElementById('recovery-back-link').classList.remove('hidden');
+  document.getElementById('recovery-subtitle').textContent = 'Enter your recovery email to receive a verification code';
+  hideAlert('recovery-alert-1');
+  hideAlert('recovery-alert-2');
+}
+
+function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert-2', 'Copied to clipboard!', 'success'); }
+
+async function loadDashboard() {
+  const [pR, kR] = await Promise.all([fetch(`${API}/api/pages`, { headers: { 'X-Admin-Key': adminKey } }), fetch(`${API}/api/keys`, { headers: { 'X-Admin-Key': adminKey } })]);
+  pages = (await pR.json()).pages || []; editKeys = (await kR.json()).editKeys || {};
+  await Promise.all(pages.map(async f => { try { const r = await fetch(`${API}/api/page/${f}`, { headers: { 'X-Admin-Key': adminKey } }); if (r.ok) { const d = await r.json(); userInfo[f] = { ...extractInfo(d.content), folder: f }; } } catch {} }));
+  populateUI();
+}
+
+function extractInfo(h) {
+  const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
+  const em = h.match(/href="mailto:([^"]+)"/);
+  return { firstName: g('Name'), surname: g('Surname'), email: em ? em[1] : '' };
+}
+
+function populateUI() {
+  const wk = Object.keys(editKeys).filter(k => pages.includes(k)).length;
+  document.getElementById('stat-total').textContent = pages.length;
+  document.getElementById('stat-active').textContent = wk;
+  const sel = document.getElementById('page-select');
+  sel.innerHTML = '<option value="">Choose a user to edit...</option>';
+  pages.sort().forEach(f => { const u = userInfo[f] || {}; sel.innerHTML += `<option value="${f}">${u.firstName ? u.firstName + ' ' + u.surname : f}</option>`; });
+  renderList('manage');
+}
+
+function getInitials(u) { return u.firstName && u.surname ? (u.firstName[0] + u.surname[0]).toUpperCase() : (u.folder ? u.folder[0].toUpperCase() : '?'); }
+
+function renderList(t) {
+  const c = document.getElementById(`list-${t}`), s = document.getElementById(`search-${t}`).value.toLowerCase();
+  let fl = pages.filter(f => { const u = userInfo[f] || {}; return `${f} ${u.firstName||''} ${u.surname||''} ${u.email||''}`.toLowerCase().includes(s); }).sort();
+  if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }
+  c.innerHTML = fl.map(f => {
+    const u = userInfo[f] || { firstName: '', surname: '', email: '', folder: f }, hk = !!editKeys[f], nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
+    return `<div class="user-item">
+      <div class="user-avatar">${getInitials(u)}</div>
+      <div class="user-details">
+        <div class="user-name">${nm} ${hk ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">No access</span>'}</div>
+        <div class="user-meta"><span>${u.email||'No email'}</span><span class="user-folder">${f}</span></div>
+      </div>
+      <div class="user-actions">
+        <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-ghost btn-sm" title="View contact page">View</a>
+        <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')" title="Edit contact info">Edit</button>
+        ${!hk 
+          ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')" title="Generate edit access">Generate Key</button>` 
+          : `${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm" title="Email edit link">Email Link</a>` : ''}
+             <button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)" title="Copy edit link">Copy Link</button>
+             <button class="btn btn-warning btn-sm" onclick="confirmRegenerate('${f}')" title="Generate new key">Regenerate</button>
+             <button class="btn btn-secondary btn-sm" onclick="confirmRemove('${f}')" title="Revoke edit access">Revoke</button>`}
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')" title="Delete user">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterUsers(t) { renderList(t); }
+
+async function generateKey(f) {
+  showAlert('alert-manage', '<span class="spinner"></span> Generating...', 'info');
+  try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'POST', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; populateUI(); showAlert('alert-manage', `Access granted`, 'success'); } else showAlert('alert-manage', d.error, 'error'); }
+  catch { showAlert('alert-manage', 'Error', 'error'); }
+}
+
+function confirmRegenerate(f) { showModal('Regenerate?', 'Their current link will stop working.', 'btn-warning', 'Regenerate', () => regenerateKey(f)); }
+async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; populateUI(); showAlert('alert-manage', 'New link created', 'success'); } } catch {} }
+
+function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-warning', 'Revoke', () => removeKey(f)); }
+async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); delete editKeys[f]; populateUI(); showAlert('alert-manage', 'Access removed', 'success'); } catch {} }
+
+function confirmDeleteUser(f) {
+  const u = userInfo[f] || {};
+  const nm = u.firstName ? `${u.firstName} ${u.surname}` : f;
+  showModal('Delete User?', `This will permanently delete ${nm}'s contact page. This cannot be undone.`, 'btn-danger', 'Delete', () => deleteUser(f));
+}
+
+async function deleteUser(f) {
+  showAlert('alert-manage', '<span class="spinner"></span> Deleting...', 'info');
+  try {
+    const r = await fetch(`${API}/api/page/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } });
+    if (r.ok) {
+      pages = pages.filter(p => p !== f);
+      delete userInfo[f];
+      delete editKeys[f];
+      populateUI();
+      showAlert('alert-manage', 'User deleted', 'success');
+    } else {
+      const d = await r.json();
+      showAlert('alert-manage', d.error || 'Failed to delete', 'error');
+    }
+  } catch { showAlert('alert-manage', 'Error', 'error'); }
+}
+
+function showNewUserForm() {
+  document.getElementById('new-user-card').classList.remove('hidden');
+  document.getElementById('editor-card').classList.add('hidden');
+  document.getElementById('page-select').value = '';
+  document.getElementById('new-folder').focus();
+}
+
+function hideNewUserForm() {
+  document.getElementById('new-user-card').classList.add('hidden');
+  document.getElementById('new-user-form').reset();
+  hideAlert('alert-new-user');
+}
+
+async function handleCreateUser(e) {
+  e.preventDefault();
+  const btn = document.getElementById('create-btn');
+  const folder = document.getElementById('new-folder').value.trim().toLowerCase();
   
-  showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
   
   try {
-    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'X-Edit-Key': editKey } });
-    if (!res.ok) { showAlert('auth-alert', 'Invalid edit key. Please check and try again.', 'error'); return; }
+    const content = generateNewUserHTML();
+    const r = await fetch(`${API}/api/page`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body: JSON.stringify({ folder, content })
+    });
+    const d = await r.json();
     
-    const data = await res.json();
-    currentSha = data.sha;
-    fillForm(data.content);
-    
-    document.getElementById('user-name').textContent = document.getElementById('first-name').value || folder;
-    document.getElementById('screen-auth').classList.add('hidden');
-    document.getElementById('screen-editor').classList.remove('hidden');
-  } catch (e) { 
-    console.error('Auth error:', e);
-    showAlert('auth-alert', 'Connection error. Please try again.', 'error'); 
-  }
+    if (r.ok) {
+      pages.push(folder);
+      userInfo[folder] = {
+        firstName: document.getElementById('new-first-name').value.trim(),
+        surname: document.getElementById('new-surname').value.trim(),
+        email: document.getElementById('new-email').value.trim(),
+        folder
+      };
+      populateUI();
+      hideNewUserForm();
+      showAlert('alert-manage', `Created ${folder}. <a href="${d.url}" target="_blank">View page →</a>`, 'success');
+      switchTab('manage');
+    } else {
+      showAlert('alert-new-user', d.error || 'Failed to create', 'error');
+    }
+  } catch { showAlert('alert-new-user', 'Error', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Create Contact Page'; }
+}
+
+function generateNewUserHTML() {
+  const f = i => document.getElementById('new-' + i).value.trim();
+  const ml = f('mobile').replace(/\s/g, '');
+  return generatePageHTML(f('first-name'), f('surname'), f('email'), f('mobile'), ml, f('home-country'), f('dest-name'), f('dest-phone'), f('dest-email'));
+}
+
+function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCountry, destName, destPhone, destEmail) {
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${firstName} ${surname}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${firstName}</div><div class="info"><span class="label">Surname:</span> ${surname}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${email}">${email}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${mobileLink}">${mobile}</a></div><div class="info"><span class="label">Home Country:</span> ${homeCountry}</div><div class="info"><span class="label">Destination Details:</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${firstName}</div><div class="info"><span class="label">姓氏：</span> ${surname}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${email}">${email}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${mobileLink}">${mobile}</a></div><div class="info"><span class="label">所属国家：</span> ${homeCountry==='Australia'?'澳大利亚':homeCountry}</div><div class="info"><span class="label">目的地详情：</span> <br>${destName} <br>${destPhone} <br>${destEmail}</div></section></body></html>`;
+}
+
+function editUser(f) { document.getElementById('page-select').value = f; switchTab('edit'); loadPage(); }
+
+async function loadPage() {
+  currentFolder = document.getElementById('page-select').value;
+  const card = document.getElementById('editor-card');
+  if (!currentFolder) { card.classList.add('hidden'); return; }
+  try { const r = await fetch(`${API}/api/page/${currentFolder}`, { headers: { 'X-Admin-Key': adminKey } }); if (!r.ok) throw 0; const d = await r.json(); currentSha = d.sha; fillForm(d.content); document.getElementById('view-page-link').href = `${PAGES_URL}${currentFolder}/`; card.classList.remove('hidden'); }
+  catch { showAlert('alert-editor', 'Failed to load', 'error'); }
 }
 
 function fillForm(h) {
   const g = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>\\s*([^<]+)`)); return m ? m[1].trim() : ''; };
   const gl = l => { const m = h.match(new RegExp(`<span class="label">${l}:</span>.*?<a[^>]*>([^<]+)</a>`, 's')); return m ? m[1].trim() : ''; };
-  document.getElementById('first-name').value = g('Name');
-  document.getElementById('surname').value = g('Surname');
-  document.getElementById('email').value = gl('Email');
-  document.getElementById('mobile').value = gl('Mobile');
+  document.getElementById('first-name').value = g('Name'); document.getElementById('surname').value = g('Surname');
+  document.getElementById('email').value = gl('Email'); document.getElementById('mobile').value = gl('Mobile');
   document.getElementById('home-country').value = g('Home Country');
   const dm = h.match(/<span class="label">Destination Details:<\/span>\s*<br>([^<]*)<br>([^<]*)<br>([^<]*)/);
   document.getElementById('dest-name').value = dm ? dm[1].trim() : '';
@@ -146,41 +540,67 @@ function fillForm(h) {
   document.getElementById('dest-email').value = dm ? dm[3].trim() : '';
 }
 
-async function resetForm() {
-  showAlert('editor-alert', '<span class="spinner"></span> Reloading...', 'info');
-  try {
-    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'X-Edit-Key': editKey } });
-    if (res.ok) { const d = await res.json(); currentSha = d.sha; fillForm(d.content); hideAlert('editor-alert'); }
-  } catch (e) { showAlert('editor-alert', 'Failed to reload', 'error'); }
-}
-
 async function handleSave(e) {
-  e.preventDefault();
-  const btn = document.getElementById('save-btn');
+  e.preventDefault(); const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
-  
   try {
-    const content = generateHTML();
-    const res = await fetch(`${API}/api/page/${folder}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Edit-Key': editKey },
-      body: JSON.stringify({ content, sha: currentSha })
-    });
-    const data = await res.json();
-    
-    if (res.ok) {
-      currentSha = data.sha;
-      document.getElementById('user-name').textContent = document.getElementById('first-name').value;
-      showAlert('editor-alert', `Changes saved! <a href="${data.url}" target="_blank">View your page →</a>`, 'success');
-    } else { showAlert('editor-alert', data.error || 'Failed to save', 'error'); }
-  } catch (e) { showAlert('editor-alert', 'Connection error', 'error'); }
+    const c = generateHTML();
+    const r = await fetch(`${API}/api/page/${currentFolder}`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ content: c, sha: currentSha }) });
+    const d = await r.json();
+    if (r.ok) { currentSha = d.sha; userInfo[currentFolder] = { firstName: document.getElementById('first-name').value.trim(), surname: document.getElementById('surname').value.trim(), email: document.getElementById('email').value.trim(), folder: currentFolder }; populateUI(); showAlert('alert-editor', `Saved. <a href="${d.url}" target="_blank">View →</a>`, 'success'); }
+    else showAlert('alert-editor', d.error, 'error');
+  } catch { showAlert('alert-editor', 'Error', 'error'); }
   finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }
 
 function generateHTML() {
-  const f = i => document.getElementById(i).value.trim(), ml = f('mobile').replace(/\s/g, '');
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ${f('first-name')} ${f('surname')}</title><style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6;max-width:600px;margin:40px auto;padding:20px;color:#333}h1{margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #333;font-size:24px}.info{margin:14px 0}.label{font-weight:600}a{color:#2563eb;text-decoration:none}hr{margin:48px 0;border:none;border-top:1px solid #e5e7eb}</style></head><body><h1>Contact Information</h1><div class="info"><span class="label">Name:</span> ${f('first-name')}</div><div class="info"><span class="label">Surname:</span> ${f('surname')}</div><div class="info"><span class="label">Email:</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">Mobile:</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">Home Country:</span> ${f('home-country')}</div><div class="info"><span class="label">Destination Details:</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div><hr><section><h1>联系信息</h1><div class="info"><span class="label">名字：</span> ${f('first-name')}</div><div class="info"><span class="label">姓氏：</span> ${f('surname')}</div><div class="info"><span class="label">电子邮件：</span> <a href="mailto:${f('email')}">${f('email')}</a></div><div class="info"><span class="label">手机：</span> <a href="tel:${ml}">${f('mobile')}</a></div><div class="info"><span class="label">所属国家：</span> ${f('home-country')==='Australia'?'澳大利亚':f('home-country')}</div><div class="info"><span class="label">目的地详情：</span> <br>${f('dest-name')} <br>${f('dest-phone')} <br>${f('dest-email')}</div></section></body></html>`;
+  const f = i => document.getElementById(i).value.trim();
+  const ml = f('mobile').replace(/\s/g, '');
+  return generatePageHTML(f('first-name'), f('surname'), f('email'), f('mobile'), ml, f('home-country'), f('dest-name'), f('dest-phone'), f('dest-email'));
 }
+
+function generateMailto(u, f) {
+  const editLink = `${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`;
+  const viewLink = `${PAGES_URL}${f}/`;
+  const subject = 'Your Digital Contact Information Page';
+  const body = `Hi ${u.firstName},
+
+Your digital contact information page has been set up and is now live. You can view it here:
+
+${viewLink}
+
+If you need to update your contact details, you can do so using your personalised edit link:
+
+${editLink}
+
+IMPORTANT: This link is unique to you. Please keep it private and do not share it with anyone else, as they would be able to access and edit your contact page.
+
+How to update your information:
+1. Click the edit link above
+2. Make your changes in the form
+3. Click "Save Changes"
+4. Your updates will appear on your contact page within 1-2 minutes
+
+If you wish to have your contact page deleted, please reply to this email and let me know.
+
+Best regards,
+Daniel Mounnarath`;
+
+  return `mailto:${u.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function copyLink(f, btn) {
+  navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
+    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-secondary');
+    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-secondary'); }, 2000);
+  });
+}
+
+function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); }
+
+function showModal(t, m, bc, bt, cb) { document.getElementById('modal-title').textContent = t; document.getElementById('modal-message').textContent = m; const b = document.getElementById('modal-confirm'); b.className = `btn ${bc}`; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
+function closeModal() { document.getElementById('modal').classList.remove('show'); modalCallback = null; }
+document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
 
 function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
