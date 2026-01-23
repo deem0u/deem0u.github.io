@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Contact Page Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1a1a1a;
+            --paper: #faf8f5;
+            --accent: #c45a3b;
+            --accent-soft: #e8d5cf;
+            --border: #d4d0c8;
+            --muted: #8a8680;
+            --success: #2d6a4f;
+            --success-soft: #d4edda;
+            --error: #9d2c2c;
+            --error-soft: #f8d7da;
+            --warning: #856404;
+            --warning-soft: #fff3cd;
+            --admin-accent: #2c4a6e;
+            --admin-soft: #d4e0ed;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Instrument Sans', sans-serif;
+            background: var(--paper);
+            color: var(--ink);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        header {
+            margin-bottom: 48px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 32px;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 2.5rem;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--muted);
+        }
+
+        .admin-badge {
+            background: var(--admin-accent);
+            color: white;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            padding: 6px 12px;
+            text-transform: uppercase;
+        }
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab {
+            padding: 14px 24px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--ink);
+        }
+
+        .tab.active {
+            color: var(--admin-accent);
+            border-bottom-color: var(--admin-accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Auth Section */
+        .auth-section {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .auth-section.hidden {
+            display: none;
+        }
+
+        .auth-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .auth-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        /* Sections */
+        .section {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 32px;
+            margin-bottom: 32px;
+            position: relative;
+            display: none;
+        }
+
+        .section.visible {
+            display: block;
+        }
+
+        .section-title {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            color: var(--ink);
+        }
+
+        label .hint {
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+            color: var(--muted);
+            font-size: 0.8rem;
+            display: block;
+            margin-top: 4px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--ink);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px var(--admin-soft);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a8680' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 48px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .destination-fields {
+            background: var(--paper);
+            padding: 24px;
+            margin-top: 8px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .destination-fields .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Buttons */
+        .btn {
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 12px 24px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--admin-accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e3a5f;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background: var(--muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--ink);
+            background: var(--ink);
+            color: white;
+        }
+
+        .btn-email {
+            background: #0078d4;
+            color: white;
+        }
+
+        .btn-email:hover {
+            background: #106ebe;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #1e5038;
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #7a2020;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #6d5303;
+        }
+
+        .btn-small {
+            padding: 8px 14px;
+            font-size: 0.75rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Status */
+        .status {
+            padding: 14px 18px;
+            margin-top: 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status.show { display: block; }
+        .status.success {
+            background: var(--success-soft);
+            border-left: 3px solid var(--success);
+            color: var(--success);
+        }
+        .status.error {
+            background: var(--error-soft);
+            border-left: 3px solid var(--error);
+            color: var(--error);
+        }
+        .status.loading {
+            background: #f0f0f0;
+            border-left: 3px solid var(--muted);
+            color: var(--ink);
+        }
+        .status a { color: inherit; font-weight: 600; }
+
+        .loader {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--muted);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* User Cards */
+        .user-cards {
+            display: grid;
+            gap: 16px;
+        }
+
+        .user-card {
+            background: var(--paper);
+            border: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .user-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .user-info p {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .user-info .folder {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            background: white;
+            padding: 2px 8px;
+            border: 1px solid var(--border);
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Badges */
+        .badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            margin-left: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-warning {
+            background: var(--warning-soft);
+            color: var(--warning);
+        }
+
+        .badge-error {
+            background: var(--error-soft);
+            color: var(--error);
+        }
+
+        .badge-success {
+            background: var(--success-soft);
+            color: var(--success);
+        }
+
+        /* Copy feedback */
+        .btn.copied {
+            background: var(--success) !important;
+            border-color: var(--success) !important;
+            color: white !important;
+        }
+
+        /* Info box */
+        .info-box {
+            background: var(--admin-soft);
+            border-left: 3px solid var(--admin-accent);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+
+        .info-box p {
+            margin: 0;
+        }
+
+        /* Confirmation Dialog */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dialog-overlay.show {
+            display: flex;
+        }
+
+        .dialog {
+            background: white;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid var(--border);
+        }
+
+        .dialog h3 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+
+        .dialog p {
+            color: var(--muted);
+            margin-bottom: 24px;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .container { padding: 40px 20px; }
+            h1 { font-size: 1.8rem; }
+            .two-col { grid-template-columns: 1fr; }
+            .auth-row { flex-direction: column; }
+            .button-group { flex-direction: column; }
+            .header-row { flex-direction: column; gap: 12px; }
+            .user-card { flex-direction: column; align-items: flex-start; }
+            .tabs { overflow-x: auto; }
+            .user-actions { width: 100%; }
+            .user-actions .btn { flex: 1; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <div>
+                    <h1>Contact Page Editor</h1>
+                    <p class="subtitle">Admin Dashboard — Manage all contact pages</p>
+                </div>
+                <span class="admin-badge">Admin</span>
+            </div>
+        </header>
+
+        <!-- Auth Section -->
+        <section class="auth-section" id="auth-section">
+            <div class="auth-row">
+                <div class="form-group">
+                    <label for="admin-key">
+                        Admin Key
+                        <span class="hint">Your secret admin access key</span>
+                    </label>
+                    <input type="password" id="admin-key" placeholder="Enter admin key">
+                </div>
+                <button class="btn btn-primary" onclick="authenticate()">Sign In</button>
+            </div>
+            <div id="auth-status" class="status"></div>
+        </section>
+
+        <!-- Main Content (hidden until authenticated) -->
+        <div id="main-content" style="display: none;">
+            
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('manage')">Manage Users</button>
+                <button class="tab" onclick="switchTab('edit')">Edit Pages</button>
+                <button class="tab" onclick="switchTab('email')">Send Edit Links</button>
+            </div>
+
+            <!-- Manage Users Tab -->
+            <div id="tab-manage" class="tab-content active">
+                <section class="section visible">
+                    <div class="section-title">Manage User Access</div>
+                    
+                    <div class="info-box">
+                        <p><strong>Generate Key:</strong> Create an edit key for users who don't have one yet<br>
+                        <strong>Regenerate Key:</strong> Create a new key (old link stops working)<br>
+                        <strong>Remove Key:</strong> Revoke self-service access (you can still edit their page)</p>
+                    </div>
+
+                    <div id="manage-status" class="status"></div>
+
+                    <div class="user-cards" id="manage-user-cards">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Edit Pages Tab -->
+            <div id="tab-edit" class="tab-content">
+                <section class="section visible">
+                    <div class="section-title">Select Page to Edit</div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <select id="page-select" onchange="loadPage()">
+                            <option value="">— Choose a contact page —</option>
+                        </select>
+                    </div>
+                    <div id="selector-status" class="status"></div>
+                </section>
+
+                <section class="section" id="editor-section">
+                    <div class="section-title">Edit Contact Details</div>
+                    <form id="contact-form">
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label for="first-name">First Name</label>
+                                <input type="text" id="first-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="surname">Surname</label>
+                                <input type="text" id="surname" required>
+                            </div>
+                        </div>
+
+                        <div class="two-col">
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="mobile">Mobile Number</label>
+                                <input type="tel" id="mobile" placeholder="+61 xxx xxx xxx" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="home-country">Home Country</label>
+                            <input type="text" id="home-country" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Destination Details</label>
+                            <div class="destination-fields">
+                                <div class="form-group">
+                                    <label for="dest-name">Location Name</label>
+                                    <input type="text" id="dest-name">
+                                </div>
+                                <div class="form-group">
+                                    <label for="dest-phone">Phone</label>
+                                    <input type="tel" id="dest-phone">
+                                </div>
+                                <div class="form-group">
+                                    <label for="dest-email">Email</label>
+                                    <input type="email" id="dest-email">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary" id="save-btn">Deploy Changes</button>
+                            <button type="button" class="btn btn-secondary" onclick="loadPage()">Reset</button>
+                        </div>
+                    </form>
+                    <div id="editor-status" class="status"></div>
+                </section>
+            </div>
+
+            <!-- Send Edit Links Tab -->
+            <div id="tab-email" class="tab-content">
+                <section class="section visible">
+                    <div class="section-title">Send Edit Links via Email</div>
+                    
+                    <div class="info-box">
+                        <p>Click <strong>"Email Edit Link"</strong> to open Outlook with a pre-written message containing the user's personal edit link and instructions.</p>
+                    </div>
+
+                    <div id="email-status" class="status"></div>
+
+                    <div class="user-cards" id="email-user-cards">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </section>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div class="dialog-overlay" id="confirm-dialog">
+        <div class="dialog">
+            <h3 id="dialog-title">Confirm Action</h3>
+            <p id="dialog-message">Are you sure?</p>
+            <div class="dialog-buttons">
+                <button class="btn btn-secondary btn-small" onclick="closeDialog()">Cancel</button>
+                <button class="btn btn-danger btn-small" id="dialog-confirm-btn" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===========================================
+        // CONFIGURATION - UPDATE THIS URL ONLY
+        // ===========================================
+        const API_BASE_URL = 'https://contact-page-editor.char-siu-bao-f29.workers.dev';
+        const PUBLIC_EDITOR_URL = 'https://deem0u.github.io/edit/';
+        const PUBLIC_PAGE_BASE_URL = 'https://deem0u.github.io/';
+        // ===========================================
+
+        // State
+        let adminKey = null;
+        let currentFolder = null;
+        let currentSha = null;
+        let pages = [];
+        let editKeys = {};
+        let userInfoCache = {};
+        let pendingAction = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const saved = sessionStorage.getItem('admin_key');
+            if (saved) {
+                document.getElementById('admin-key').value = saved;
+                authenticate();
+            }
+
+            document.getElementById('admin-key').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') authenticate();
+            });
+
+            document.getElementById('contact-form').addEventListener('submit', handleSubmit);
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        function showStatus(id, message, type) {
+            const el = document.getElementById(id);
+            el.className = `status show ${type}`;
+            el.innerHTML = message;
+        }
+
+        function hideStatus(id) {
+            document.getElementById(id).className = 'status';
+        }
+
+        function showDialog(title, message, onConfirm, btnClass = 'btn-danger') {
+            document.getElementById('dialog-title').textContent = title;
+            document.getElementById('dialog-message').textContent = message;
+            document.getElementById('dialog-confirm-btn').className = `btn ${btnClass} btn-small`;
+            document.getElementById('confirm-dialog').classList.add('show');
+            pendingAction = onConfirm;
+        }
+
+        function closeDialog() {
+            document.getElementById('confirm-dialog').classList.remove('show');
+            pendingAction = null;
+        }
+
+        function confirmAction() {
+            if (pendingAction) {
+                pendingAction();
+            }
+            closeDialog();
+        }
+
+        async function authenticate() {
+            adminKey = document.getElementById('admin-key').value.trim();
+            if (!adminKey) {
+                showStatus('auth-status', 'Please enter your admin key.', 'error');
+                return;
+            }
+
+            showStatus('auth-status', '<span class="loader"></span> Signing in...', 'loading');
+
+            try {
+                // Fetch pages list
+                const pagesResponse = await fetch(`${API_BASE_URL}/api/pages`, {
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+
+                if (!pagesResponse.ok) {
+                    showStatus('auth-status', 'Invalid admin key.', 'error');
+                    return;
+                }
+
+                const pagesData = await pagesResponse.json();
+                pages = pagesData.pages;
+
+                // Fetch edit keys
+                const keysResponse = await fetch(`${API_BASE_URL}/api/keys`, {
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+
+                if (keysResponse.ok) {
+                    const keysData = await keysResponse.json();
+                    editKeys = keysData.editKeys;
+                }
+
+                sessionStorage.setItem('admin_key', adminKey);
+
+                // Populate page dropdown
+                const select = document.getElementById('page-select');
+                select.innerHTML = '<option value="">— Choose a contact page —</option>';
+                pages.forEach(page => {
+                    const option = document.createElement('option');
+                    option.value = page;
+                    option.textContent = page;
+                    select.appendChild(option);
+                });
+
+                // Show main content
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('main-content').style.display = 'block';
+
+                // Load user cards
+                await loadAllUserInfo();
+                renderManageCards();
+                renderEmailCards();
+
+            } catch (error) {
+                showStatus('auth-status', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadAllUserInfo() {
+            for (const folder of pages) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/page/${folder}`, {
+                        headers: { 'X-Admin-Key': adminKey }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const userInfo = extractUserInfo(data.content);
+                        userInfo.folder = folder;
+                        userInfoCache[folder] = userInfo;
+                    }
+                } catch (e) {
+                    console.error(`Failed to load ${folder}:`, e);
+                }
+            }
+        }
+
+        function extractUserInfo(html) {
+            const info = { firstName: '', surname: '', email: '' };
+            
+            const nameMatch = html.match(/<span class="label">Name:<\/span>\s*([^<]+)/);
+            if (nameMatch) info.firstName = nameMatch[1].trim();
+            
+            const surnameMatch = html.match(/<span class="label">Surname:<\/span>\s*([^<]+)/);
+            if (surnameMatch) info.surname = surnameMatch[1].trim();
+            
+            const emailMatch = html.match(/href="mailto:([^"]+)"/);
+            if (emailMatch) info.email = emailMatch[1].trim();
+            
+            return info;
+        }
+
+        function renderManageCards() {
+            const container = document.getElementById('manage-user-cards');
+            
+            container.innerHTML = pages.map(folder => {
+                const user = userInfoCache[folder] || { firstName: folder, surname: '', email: '' };
+                const hasKey = editKeys.hasOwnProperty(folder);
+                
+                return `
+                <div class="user-card">
+                    <div class="user-info">
+                        <h3>
+                            ${user.firstName} ${user.surname}
+                            ${hasKey 
+                                ? '<span class="badge badge-success">Has Edit Key</span>' 
+                                : '<span class="badge badge-warning">No Edit Key</span>'}
+                        </h3>
+                        <p>${user.email || 'No email'}</p>
+                        <span class="folder">${folder}</span>
+                    </div>
+                    <div class="user-actions">
+                        ${!hasKey ? `
+                            <button class="btn btn-success btn-small" onclick="generateKey('${folder}')">
+                                Generate Key
+                            </button>
+                        ` : `
+                            <button class="btn btn-warning btn-small" onclick="confirmRegenerate('${folder}')">
+                                Regenerate
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="confirmRemove('${folder}')">
+                                Remove Key
+                            </button>
+                        `}
+                        <button class="btn btn-secondary btn-small" onclick="selectAndEdit('${folder}')">
+                            Edit Page
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function renderEmailCards() {
+            const container = document.getElementById('email-user-cards');
+            
+            container.innerHTML = pages.map(folder => {
+                const user = userInfoCache[folder] || { firstName: folder, surname: '', email: '' };
+                const hasKey = editKeys.hasOwnProperty(folder);
+                
+                return `
+                <div class="user-card">
+                    <div class="user-info">
+                        <h3>
+                            ${user.firstName} ${user.surname}
+                            ${!hasKey ? '<span class="badge badge-warning">No Edit Key</span>' : ''}
+                            ${!user.email ? '<span class="badge badge-error">No Email</span>' : ''}
+                        </h3>
+                        <p>${user.email || 'No email found'}</p>
+                        <span class="folder">${folder}</span>
+                    </div>
+                    <div class="user-actions">
+                        ${hasKey && user.email ? `
+                            <a href="${generateMailtoLink(user, folder)}" class="btn btn-email btn-small">
+                                ✉ Email Edit Link
+                            </a>
+                            <button class="btn btn-secondary btn-small" onclick="copyLink('${folder}', this)">
+                                Copy Link
+                            </button>
+                        ` : hasKey ? `
+                            <button class="btn btn-secondary btn-small" onclick="copyLink('${folder}', this)">
+                                Copy Link
+                            </button>
+                        ` : `
+                            <span style="color: var(--muted); font-size: 0.85rem;">Generate a key first</span>
+                        `}
+                        <button class="btn btn-secondary btn-small" onclick="selectAndEdit('${folder}')">
+                            Edit
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function generateMailtoLink(user, folder) {
+            const editLink = `${PUBLIC_EDITOR_URL}?folder=${folder}&key=${editKeys[folder]}`;
+            const pageUrl = `${PUBLIC_PAGE_BASE_URL}${folder}/`;
+            
+            const subject = 'Your Contact Page - Edit Link';
+            
+            const body = `Hi ${user.firstName},
+
+You can update your contact information anytime using your personal edit link below.
+
+YOUR PERSONAL EDIT LINK:
+${editLink}
+
+HOW TO UPDATE YOUR INFORMATION:
+1. Click the link above (or copy and paste it into your browser)
+2. Your current details will be displayed in a form
+3. Edit any fields you want to update
+4. Click "Save & Publish" when done
+
+Your changes will go live within 1-2 minutes.
+
+You can view your current contact page here:
+${pageUrl}
+
+IMPORTANT: This link is unique to you. Please don't share it with others, as anyone with this link can edit your contact details.
+
+If you have any questions, just reply to this email.
+
+Best regards`;
+
+            return `mailto:${user.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        function copyLink(folder, btn) {
+            const editLink = `${PUBLIC_EDITOR_URL}?folder=${folder}&key=${editKeys[folder]}`;
+            
+            navigator.clipboard.writeText(editLink).then(() => {
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        async function generateKey(folder) {
+            showStatus('manage-status', `<span class="loader"></span> Generating key for ${folder}...`, 'loading');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/keys/${folder}`, {
+                    method: 'POST',
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    editKeys[folder] = data.key;
+                    renderManageCards();
+                    renderEmailCards();
+                    showStatus('manage-status', `✓ Edit key generated for ${folder}`, 'success');
+                } else {
+                    showStatus('manage-status', `Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus('manage-status', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function confirmRegenerate(folder) {
+            const user = userInfoCache[folder];
+            const name = user ? `${user.firstName} ${user.surname}` : folder;
+            showDialog(
+                'Regenerate Edit Key?',
+                `This will create a new key for ${name}. Their current edit link will stop working immediately.`,
+                () => regenerateKey(folder),
+                'btn-warning'
+            );
+        }
+
+        async function regenerateKey(folder) {
+            showStatus('manage-status', `<span class="loader"></span> Regenerating key for ${folder}...`, 'loading');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/keys/${folder}`, {
+                    method: 'PUT',
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    editKeys[folder] = data.key;
+                    renderManageCards();
+                    renderEmailCards();
+                    showStatus('manage-status', `✓ Edit key regenerated for ${folder}. Send them the new link.`, 'success');
+                } else {
+                    showStatus('manage-status', `Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus('manage-status', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function confirmRemove(folder) {
+            const user = userInfoCache[folder];
+            const name = user ? `${user.firstName} ${user.surname}` : folder;
+            showDialog(
+                'Remove Edit Key?',
+                `This will revoke self-service access for ${name}. They will no longer be able to edit their own page. You can still edit it for them.`,
+                () => removeKey(folder),
+                'btn-danger'
+            );
+        }
+
+        async function removeKey(folder) {
+            showStatus('manage-status', `<span class="loader"></span> Removing key for ${folder}...`, 'loading');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/keys/${folder}`, {
+                    method: 'DELETE',
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    delete editKeys[folder];
+                    renderManageCards();
+                    renderEmailCards();
+                    showStatus('manage-status', `✓ Edit key removed for ${folder}`, 'success');
+                } else {
+                    showStatus('manage-status', `Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus('manage-status', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function selectAndEdit(folder) {
+            document.getElementById('page-select').value = folder;
+            switchTab('edit');
+            loadPage();
+        }
+
+        async function loadPage() {
+            currentFolder = document.getElementById('page-select').value;
+            if (!currentFolder) {
+                document.getElementById('editor-section').classList.remove('visible');
+                return;
+            }
+
+            showStatus('selector-status', '<span class="loader"></span> Loading...', 'loading');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/page/${currentFolder}`, {
+                    headers: { 'X-Admin-Key': adminKey }
+                });
+
+                if (!response.ok) throw new Error('Failed to load page');
+
+                const data = await response.json();
+                currentSha = data.sha;
+                parseAndFillForm(data.content);
+
+                document.getElementById('editor-section').classList.add('visible');
+                hideStatus('selector-status');
+
+            } catch (error) {
+                showStatus('selector-status', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        function parseAndFillForm(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            function getFieldValue(labelText) {
+                const infoDivs = doc.querySelectorAll('.info');
+                for (const div of infoDivs) {
+                    const label = div.querySelector('.label');
+                    if (label && label.textContent.includes(labelText)) {
+                        const clone = div.cloneNode(true);
+                        clone.querySelector('.label')?.remove();
+                        const link = div.querySelector('a');
+                        if (link) return link.textContent.trim();
+                        return clone.textContent.trim();
+                    }
+                }
+                return '';
+            }
+
+            document.getElementById('first-name').value = getFieldValue('Name:');
+            document.getElementById('surname').value = getFieldValue('Surname:');
+            document.getElementById('email').value = getFieldValue('Email:');
+            document.getElementById('mobile').value = getFieldValue('Mobile:');
+            document.getElementById('home-country').value = getFieldValue('Home Country:');
+
+            const infoDivs = doc.querySelectorAll('.info');
+            for (const div of infoDivs) {
+                const label = div.querySelector('.label');
+                if (label && label.textContent.includes('Destination')) {
+                    const html = div.innerHTML;
+                    const lines = html.split('<br>').map(line => {
+                        const temp = document.createElement('div');
+                        temp.innerHTML = line;
+                        return temp.textContent.trim();
+                    }).filter(line => line && !line.includes('Destination'));
+                    
+                    document.getElementById('dest-name').value = lines[0] || '';
+                    document.getElementById('dest-phone').value = lines[1] || '';
+                    document.getElementById('dest-email').value = lines[2] || '';
+                    break;
+                }
+            }
+        }
+
+        function generateHTML() {
+            const firstName = document.getElementById('first-name').value.trim();
+            const surname = document.getElementById('surname').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const mobile = document.getElementById('mobile').value.trim();
+            const homeCountry = document.getElementById('home-country').value.trim();
+            const destName = document.getElementById('dest-name').value.trim();
+            const destPhone = document.getElementById('dest-phone').value.trim();
+            const destEmail = document.getElementById('dest-email').value.trim();
+            const mobileLink = mobile.replace(/\s/g, '');
+
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Information - ${firstName} ${surname}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            color: #333;
+            background-color: #fff;
+        }
+        h1 {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .info {
+            margin: 12px 0;
+        }
+        .label {
+            font-weight: bold;
+        }
+        a {
+            color: #0066cc;
+        }
+        .message {
+            margin-top: 20px;
+            font-style: italic;
+        }
+        hr {
+            margin: 40px 0;
+            border: none;
+            border-top: 1px solid #ccc;
+        }
+        .chinese-section {
+            font-family: Arial, "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+
+        @media print {
+            body {
+                margin: 0;
+                padding: 10px;
+                max-width: 100%;
+            }
+            a {
+                color: #333;
+                text-decoration: none;
+            }
+            a[href^="mailto:"]::after {
+                content: " (" attr(href) ")";
+                font-size: 0.9em;
+            }
+            a[href^="tel:"]::after {
+                content: "";
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Contact Information</h1>
+    <div class="info">
+        <span class="label">Name:</span> ${firstName}
+    </div>
+    <div class="info">
+        <span class="label">Surname:</span> ${surname}
+    </div>
+    <div class="info">
+        <span class="label">Email:</span> <a href="mailto:${email}">${email}</a>
+    </div>
+    <div class="info">
+        <span class="label">Mobile:</span> <a href="tel:${mobileLink}">${mobile}</a>
+    </div>
+    <div class="info">
+        <span class="label">Home Country:</span> ${homeCountry}
+    </div>
+    <div class="info">
+        <span class="label">Destination Details:</span> <br>
+        ${destName} <br> 
+        ${destPhone} <br>
+        ${destEmail}
+    </div>
+
+    <hr>
+
+    <section lang="zh" class="chinese-section">
+        <h1>联系信息</h1>
+        <div class="info">
+            <span class="label">名字：</span> ${firstName}
+        </div>
+        <div class="info">
+            <span class="label">姓氏：</span> ${surname}
+        </div>
+        <div class="info">
+            <span class="label">电子邮件：</span> <a href="mailto:${email}">${email}</a>
+        </div>
+        <div class="info">
+            <span class="label">手机：</span> <a href="tel:${mobileLink}">${mobile}</a>
+        </div>
+        <div class="info">
+            <span class="label">所属国家：</span> ${homeCountry === 'Australia' ? '澳大利亚' : homeCountry}
+        </div>
+        <div class="info">
+            <span class="label">目的地详情：</span> <br>
+            ${destName} <br> 
+            ${destPhone} <br>
+            ${destEmail}
+        </div>
+    </section>
+</body>
+</html>`;
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            showStatus('editor-status', '<span class="loader"></span> Deploying...', 'loading');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/page/${currentFolder}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Key': adminKey
+                    },
+                    body: JSON.stringify({
+                        content: generateHTML(),
+                        sha: currentSha
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error);
+                }
+
+                const data = await response.json();
+                currentSha = data.sha;
+
+                // Update cache
+                userInfoCache[currentFolder] = {
+                    firstName: document.getElementById('first-name').value.trim(),
+                    surname: document.getElementById('surname').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    folder: currentFolder
+                };
+
+                showStatus('editor-status', 
+                    `✓ Deployed! <a href="${data.url}" target="_blank">View page →</a>`,
+                    'success'
+                );
+
+                // Refresh cards
+                renderManageCards();
+                renderEmailCards();
+
+            } catch (error) {
+                showStatus('editor-status', `Error: ${error.message}`, 'error');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
