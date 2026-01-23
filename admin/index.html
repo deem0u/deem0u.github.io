@@ -782,7 +782,7 @@ async function handleSave(e) {
       currentSha = d.sha; 
       userInfo[currentFolder] = { firstName: document.getElementById('first-name').value.trim(), surname: document.getElementById('surname').value.trim(), email: document.getElementById('email').value.trim(), folder: currentFolder }; 
       populateUI(); 
-      showAlert('alert-editor', 'Changes saved successfully! Use the "View Page" link above to see your updates.', 'success'); 
+      showAlert('alert-editor', 'Changes saved successfully! Use the "View Page" link below to see your updates.', 'success'); 
     }
     else showAlert('alert-editor', d.error, 'error');
   } catch { showAlert('alert-editor', 'Error', 'error'); }
