@@ -68,6 +68,11 @@
                   </div>
                 </div>
               </div>
+              <div class="form-group">
+                <label class="form-label">Additional Information <span class="form-label-optional">(optional)</span></label>
+                <textarea id="additional-info" class="form-textarea" rows="3" placeholder="Any extra details you want shown on the contact page"></textarea>
+                <span class="form-hint">Shown on the contact page for airport staff</span>
+              </div>
               <div id="editor-alert" class="alert"></div>
               <div class="form-actions">
                 <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save Changes</button>
@@ -142,6 +147,27 @@ function fillForm(h) {
     const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value">([^<]+)</span>`)); 
     return m ? m[1].trim() : ''; 
   };
+  const decodeHtmlEntities = (s) => (s ?? '')
+    .toString()
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<')
+    .replace(/&amp;/g, '&');
+
+  const decodeMultiline = (s) => {
+    const raw = (s ?? '').toString().trim();
+    if (!raw || raw === '—') return '';
+    return decodeHtmlEntities(raw)
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]*>/g, '');
+  };
+
+  const gMulti = l => {
+    const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value">([\\s\\S]*?)</span>`));
+    return m ? decodeMultiline(m[1]) : '';
+  };
   // For links: <span class="label">Email</span><span class="value"><a href="...">email@example.com</a></span>
   const gl = l => { 
     const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
@@ -159,6 +185,8 @@ function fillForm(h) {
   document.getElementById('dest-name').value = dm ? dm[1].trim() : '';
   document.getElementById('dest-phone').value = dm ? dm[2].trim() : '';
   document.getElementById('dest-email').value = dm ? dm[3].trim() : '';
+
+  document.getElementById('additional-info').value = gMulti('Additional Information');
 }
 
 async function resetForm() {
@@ -203,6 +231,21 @@ function generateHTML() {
   const destName = f('dest-name');
   const destPhone = f('dest-phone');
   const destEmail = f('dest-email');
+  const additionalInfo = f('additional-info');
+
+  const escapeHtml = (s) => (s ?? '')
+    .toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const formatMultiline = (s) => {
+    const text = (s ?? '').toString().trim();
+    if (!text) return '';
+    return escapeHtml(text).replace(/\r?\n/g, '<br>');
+  };
   
   const css = `
     *{box-sizing:border-box;margin:0;padding:0}
@@ -232,6 +275,8 @@ function generateHTML() {
     ? `<div class="dest-details"><span>${destName || ''}</span><span>${destPhone || ''}</span><span>${destEmail || ''}</span></div>`
     : '<span class="value">—</span>';
 
+  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -251,6 +296,7 @@ function generateHTML() {
 <div class="info"><span class="label">Mobile</span><span class="value"><a href="tel:${ml}">${mobile}</a></span></div>
 <div class="info"><span class="label">Home Country</span><span class="value">${homeCountry}</span></div>
 <div class="info"><span class="label">Destination Details</span>${destHtml}</div>
+<div class="info"><span class="label">Additional Information</span>${additionalHtml}</div>
 <hr class="divider">
 <section class="section-zh">
 <h1>联系信息</h1>
@@ -260,6 +306,7 @@ function generateHTML() {
 <div class="info"><span class="label">手机</span><span class="value"><a href="tel:${ml}">${mobile}</a></span></div>
 <div class="info"><span class="label">所属国家</span><span class="value">${homeCountry}</span></div>
 <div class="info"><span class="label">目的地详情</span>${destHtml}</div>
+<div class="info"><span class="label">补充信息</span>${additionalHtml}</div>
 </section>
 </div>
 </body>
