@@ -847,13 +847,13 @@ function renderList(t) {
     } else if (u.updatedBy) {
       lastUpdatedDisplay = 'Unknown (old format)';
     }
-    const fullName = `${u.firstName || '—'} ${u.surname || '—'} (${f})`;
+    const namePart = `${u.firstName || '—'} ${u.surname || '—'}`.trim();
     const emailText = u.email || 'No email';
     return `<div class="user-card">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
-          <div class="user-name">${escapeHtml(fullName)}</div>
+          <div class="user-name"><span class="user-name-label">Full Name | (User Name):</span> <span class="user-name-value">${escapeHtml(namePart)}</span> | <span class="user-name-username">(${escapeHtml(f)})</span></div>
           <div class="user-meta">Email: ${escapeHtml(emailText)}</div>
           <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
@@ -862,11 +862,14 @@ function renderList(t) {
         </div>
       </div>
       <div class="user-card-actions">
-        <div class="action-row">
+        <div class="action-row action-row-contact">
           <span class="action-row-label">Contact Page</span>
           <div class="action-row-buttons">
             <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-secondary btn-sm">View Live Page</a>
             <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit Page</button>
+          </div>
+          <div class="action-row-end">
+            <button class="btn btn-ghost btn-sm text-danger" onclick="confirmDeleteUser('${f}')">Delete User</button>
           </div>
         </div>
         <div class="action-row action-row-combo">
@@ -874,9 +877,9 @@ function renderList(t) {
             <span class="action-row-label">Edit Access</span>
             <div class="action-row-buttons">
               ${!hk
-                ? `<button class="btn btn-success btn-sm btn-with-subtext" onclick="generateKey('${f}')"><span class="btn-label">Grant Access</span><span class="btn-subtext">Generate Edit Link</span></button>`
-                : `<button class="btn btn-secondary btn-sm btn-with-subtext" onclick="confirmRegenerate('${f}')"><span class="btn-label">Reset Access</span><span class="btn-subtext">Regen. New Edit Link</span></button>
-                   <button class="btn btn-warning btn-sm btn-with-subtext" onclick="confirmRemove('${f}')"><span class="btn-label">Revoke Access</span><span class="btn-subtext">Delete Edit Link</span></button>`}
+                ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Grant Access</button>`
+                : `<button class="btn btn-secondary btn-sm" onclick="confirmRegenerate('${f}')">Reset Access</button>
+                   <button class="btn btn-warning btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
             </div>
           </div>
           ${hk ? `<div class="action-combo-group">
@@ -886,12 +889,6 @@ function renderList(t) {
               <button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
             </div>
           </div>` : ''}
-        </div>
-        <div class="action-row action-row-danger">
-          <span class="action-row-label"></span>
-          <div class="action-row-buttons">
-            <button class="btn btn-ghost btn-sm text-danger" onclick="confirmDeleteUser('${f}')">Delete User</button>
-          </div>
         </div>
       </div>
     </div>`;
