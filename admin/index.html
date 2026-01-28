@@ -121,7 +121,7 @@
       <div class="app-container">
         <div class="tabs">
           <button class="tab active" data-tab="manage">Manage Users</button>
-          <button class="tab" data-tab="edit">Add Users / Edit Contact Information</button>
+          <button class="tab" data-tab="edit">Add Users / Edit Contact Page</button>
         </div>
 
         <div id="tab-manage" class="tab-content active">
@@ -764,10 +764,11 @@ function populatePageSelect() {
   options.innerHTML = sorted.map(f => {
     const u = userInfo[f] || {};
     const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
-    const meta = u.email ? `${u.email} (${f})` : `(${f})`;
-    return `<div class="searchable-select-option" data-value="${f}" data-name="${displayName}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
-      <div style="font-weight: 500;">${displayName}</div>
-      <div style="font-size: var(--text-xs); color: var(--color-text-muted);">${meta}</div>
+    const line1 = `${displayName} (${f})`;
+    const line2 = u.email || '—';
+    return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
+      <div style="font-weight: 500;">${line1}</div>
+      <div style="font-size: var(--text-xs); color: var(--color-text-muted);">${line2}</div>
     </div>`;
   }).join('');
   
@@ -829,7 +830,7 @@ function selectPage(folder) {
   const u = userInfo[folder] || {};
   const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : folder;
   const textEl = document.getElementById('page-select-text');
-  textEl.textContent = displayName;
+  textEl.textContent = `${displayName} (${folder})`;
   textEl.classList.remove('searchable-select-placeholder');
   textEl.classList.add('searchable-select-value');
   document.getElementById('page-select-dropdown').classList.remove('show');
