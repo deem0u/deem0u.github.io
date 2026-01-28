@@ -287,8 +287,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const saved = localStorage.getItem('admin_key');
       if (saved && await verifyKey(saved)) { 
         adminKey = saved; 
-        await loadDashboard(); 
-        showScreen('dashboard'); 
+        try {
+          await loadDashboard(); 
+          showScreen('dashboard');
+        } catch (e) {
+          console.error('Dashboard load error:', e);
+          localStorage.removeItem('admin_key');
+          showScreen('login');
+          showAlert('login-alert', 'Could not load dashboard. Please sign in again.', 'error');
+        }
       } else { 
         localStorage.removeItem('admin_key'); 
         showScreen('login'); 
@@ -331,9 +338,22 @@ async function handleLogin(e) {
   e.preventDefault();
   const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('login-key').value;
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in...';
-  if (await verifyKey(key)) { adminKey = key; localStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
-  else { showAlert('login-alert', 'Invalid password', 'error'); }
-  btn.disabled = false; btn.textContent = 'Sign In';
+  try {
+    if (await verifyKey(key)) {
+      adminKey = key;
+      localStorage.setItem('admin_key', key);
+      await loadDashboard();
+      showScreen('dashboard');
+    } else {
+      showAlert('login-alert', 'Invalid password', 'error');
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    showAlert('login-alert', 'Could not load dashboard. Check the console for details.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
 }
 
 let recoveryEmail = null;
@@ -560,10 +580,12 @@ function renderList(t) {
     const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
     let lastUpdatedDisplay = 'Never updated';
     if (u.lastUpdated) {
-      // Format in admin's local timezone
-      lastUpdatedDisplay = formatTimestamp(u.lastUpdated, u.updatedBy || 'admin');
+      try {
+        lastUpdatedDisplay = formatTimestamp(u.lastUpdated, u.updatedBy || 'admin');
+      } catch (e) {
+        lastUpdatedDisplay = 'Unknown';
+      }
     } else if (u.updatedBy) {
-      // Old page without ISO timestamp - show unknown
       lastUpdatedDisplay = 'Unknown (old format)';
     }
     return `<div class="user-card">
@@ -687,13 +709,12 @@ async function handleCreateUser(e) {
     if (r.ok) {
       pages.push(folder);
       const now = new Date().toISOString();
-      const formatted = formatTimestamp(now, 'admin');
       userInfo[folder] = {
         firstName: document.getElementById('new-first-name').value.trim(),
         surname: document.getElementById('new-surname').value.trim(),
         email: document.getElementById('new-email').value.trim(),
         folder,
-        lastUpdated: formatted,
+        lastUpdated: now,
         updatedBy: 'admin'
       };
       populateUI();
@@ -954,13 +975,12 @@ async function handleSave(e) {
     if (r.ok) { 
       currentSha = d.sha; 
       const now = new Date().toISOString();
-      const formatted = formatTimestamp(now, 'admin');
       userInfo[currentFolder] = { 
         firstName: document.getElementById('first-name').value.trim(), 
         surname: document.getElementById('surname').value.trim(), 
         email: document.getElementById('email').value.trim(), 
         folder: currentFolder,
-        lastUpdated: formatted,
+        lastUpdated: now,
         updatedBy: 'admin'
       }; 
       populateUI(); 
