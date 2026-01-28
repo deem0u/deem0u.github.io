@@ -50,18 +50,18 @@
           <div class="card-body">
             <form id="contact-form">
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="first-name" class="form-input" pattern="[a-zA-Z\-]+" required><span class="form-hint">Your first or given name(s) as on your ID. Include any other names (e.g. middle names) if applicable.</span></div>
-                <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="surname" class="form-input" pattern="[a-zA-Z\-]+" required><span class="form-hint">Your surname or last name as it appears on your ID.</span></div>
+                <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="first-name" class="form-input" pattern="^(?!.*(\s-|- ))[a-zA-Z][a-zA-Z\s\-]*$" required><span class="form-hint">Your first or given name(s) as on your ID. Include any other names (e.g. middle names) if applicable.</span></div>
+                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^(?!.*(\s-|- ))[a-zA-Z][a-zA-Z\s\-]*$" required><span class="form-hint">Your surname or last name as it appears on your ID.</span></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" required><span class="form-hint">A valid email address where you can be contacted.</span></div>
-                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" placeholder="+61 412 345 678" pattern="\+[0-9][0-9\s\-]{7,24}" inputmode="tel"><span class="form-hint">Include country code. e.g. Australian mobile +61 412 345 678, Victorian landline +61 3 9876 5432.</span></div>
+                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required><span class="form-hint">A valid email address where you can be contacted.</span></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9][0-9\s\-]{7,24}" inputmode="tel"><span class="form-hint">Include country code. e.g. Australian mobile +61 412 345 678, Victorian landline +61 3 9876 5432.</span></div>
               </div>
               <div class="form-group">
                 <label class="form-label">Home Country</label>
                 <div class="searchable-select" id="home-country-edit-container">
                   <button type="button" class="searchable-select-trigger" id="home-country-edit-trigger" onclick="toggleCountrySelectEdit()">
-                    <span id="home-country-edit-text" class="searchable-select-placeholder">Select country (optional)...</span>
+                    <span id="home-country-edit-text" class="searchable-select-placeholder">Select country</span>
                   </button>
                   <div class="searchable-select-dropdown" id="home-country-edit-dropdown">
                     <div class="searchable-select-search">
@@ -74,10 +74,10 @@
                 <span class="form-hint">Your country of residence. Shown on your contact page for identification.</span>
               </div>
               <div class="form-group">
-                <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
+                <label class="form-label">Destination Details</label>
                 <div class="form-section">
                   <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input"><span class="form-hint">e.g. resort, hotel, building or Airbnb name where you are staying.</span></div>
-                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" placeholder="Full street address"><span class="form-hint">Full street address of your destination.</span></div>
+                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input"></div>
                   <div class="form-row">
                     <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address.</span></div>
                     <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-hint">e.g. general, reception or front office address, or someone at this location.</span></div>
@@ -85,9 +85,8 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label">Additional Information <span class="form-label-optional">(optional)</span></label>
+                <label class="form-label">Additional Information</label>
                 <textarea id="additional-info" class="form-textarea" rows="3" placeholder="e.g. emergency contact, special instructions"></textarea>
-                <span class="form-hint">Any additional notes or useful details to help identify or contact you in case of lost property or an emergency.</span>
               </div>
               <div id="editor-alert" class="alert"></div>
               <div class="form-actions">
@@ -105,6 +104,7 @@
   </div>
 
 <script src="../countries-data.js"></script>
+<script src="../form-descriptions.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
 let folder = null, editKey = null, currentSha = null;
@@ -125,12 +125,27 @@ function attachContactNumberMask() {
     if (inp.dataset.maskAttached) return;
     inp.dataset.maskAttached = '1';
     inp.addEventListener('input', function() {
-      var pos = this.selectionStart;
       var val = this.value;
+      var pos = this.selectionStart;
+      var digitsBeforeCursor = (val.substring(0, pos).replace(/\D/g, '')).length;
       var formatted = formatContactNumber(val);
       if (formatted !== val) {
         this.value = formatted;
-        var newPos = Math.min(pos, formatted.length);
+        var newPos = formatted.length;
+        if (digitsBeforeCursor > 0) {
+          var digitCount = 0;
+          for (var i = 0; i < formatted.length; i++) {
+            if (/\d/.test(formatted[i])) {
+              digitCount++;
+              if (digitCount >= digitsBeforeCursor) {
+                newPos = i + 1;
+                break;
+              }
+            }
+          }
+        } else {
+          newPos = 0;
+        }
         this.setSelectionRange(newPos, newPos);
       }
     });
@@ -140,6 +155,22 @@ function attachContactNumberMask() {
         if (d.length) this.value = formatContactNumber('+' + d);
       }
     });
+  });
+}
+
+function applyFormDescriptionsEdit() {
+  var c = window.FORM_DESCRIPTIONS;
+  if (!c) return;
+  var keys = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
+  keys.forEach(function(key) {
+    var el = document.getElementById(key);
+    if (!el) return;
+    var cfg = c[key];
+    if (!cfg) return;
+    var group = el.closest('.form-group');
+    if (!group) return;
+    var hint = group.querySelector('.form-hint');
+    if (hint && cfg.hint) hint.innerHTML = cfg.hint;
   });
 }
 
@@ -159,7 +190,7 @@ function setCountryDropdownEdit(value) {
   var hid = document.getElementById('home-country');
   if (!value) {
     hid.value = '';
-    textEl.textContent = 'Select country (optional)...';
+    textEl.textContent = 'Select country';
     textEl.classList.add('searchable-select-placeholder');
     textEl.classList.remove('searchable-select-value');
   } else {
@@ -240,6 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   attachContactNumberMask();
   initCountryDropdownEdit();
+  applyFormDescriptionsEdit();
   document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
   document.getElementById('contact-form').addEventListener('submit', handleSave);
   document.addEventListener('click', (e) => {
@@ -488,6 +520,8 @@ function generateHTML() {
   const now = new Date().toISOString();
   const lastUpdatedData = `data-timestamp="${now}" data-updated-by="user"`;
   const lastUpdatedHeaderHtml = `<span class="last-updated-header">Last updated:<br><span class="last-updated-display" ${lastUpdatedData}>—</span></span>`;
+  const D = window.FORM_DESCRIPTIONS || {};
+  const lbl = (k) => (D[k] && D[k].label) ? D[k].label : k;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -502,13 +536,13 @@ function generateHTML() {
 <body>
 <div class="container">
 <h1>Contact Information${lastUpdatedHeaderHtml}</h1>
-<div class="info"><span class="label">Given Names</span><span class="value">${firstName}</span></div>
-<div class="info"><span class="label">Family Name</span><span class="value">${surname}</span></div>
-<div class="info"><span class="label">Email</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
-<div class="info"><span class="label">Contact Number</span><span class="value">${mobileHtml}</span></div>
-<div class="info"><span class="label">Home Country</span><span class="value">${homeCountryHtml}</span></div>
-<div class="info"><span class="label">Destination Details</span>${destHtml}</div>
-<div class="info additional-info"><span class="label">Additional Information</span>${additionalHtml}</div>
+<div class="info"><span class="label">${lbl('first-name')}</span><span class="value">${firstName}</span></div>
+<div class="info"><span class="label">${lbl('surname')}</span><span class="value">${surname}</span></div>
+<div class="info"><span class="label">${lbl('email')}</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
+<div class="info"><span class="label">${lbl('mobile')}</span><span class="value">${mobileHtml}</span></div>
+<div class="info"><span class="label">${lbl('home-country')}</span><span class="value">${homeCountryHtml}</span></div>
+<div class="info"><span class="label">${lbl('destination-details')}</span>${destHtml}</div>
+<div class="info additional-info"><span class="label">${lbl('additional-info')}</span>${additionalHtml}</div>
 <hr class="divider">
 <section class="section-zh">
 <h1>联系信息${lastUpdatedHeaderHtml}</h1>

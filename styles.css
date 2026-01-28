@@ -289,6 +289,10 @@ body {
   margin-bottom: var(--space-2);
 }
 
+.form-required {
+  color: #dc2626;
+}
+
 .form-label-optional {
   font-weight: 400;
   color: var(--color-text-muted);
