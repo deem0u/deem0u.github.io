@@ -978,6 +978,14 @@ function showNewUserForm() {
   document.getElementById('new-user-card').classList.remove('hidden');
   document.getElementById('editor-card').classList.add('hidden');
   document.getElementById('page-select').value = '';
+  const textEl = document.getElementById('page-select-text');
+  textEl.textContent = 'Select a user...';
+  textEl.classList.add('searchable-select-placeholder');
+  textEl.classList.remove('searchable-select-value');
+  document.getElementById('page-select-dropdown').classList.remove('show');
+  document.querySelectorAll('#page-select-options .searchable-select-option').forEach(function(opt) { opt.classList.remove('selected'); });
+  document.getElementById('page-select-search').value = '';
+  filterPageOptions();
   document.getElementById('new-folder').focus();
 }
 
