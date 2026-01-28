@@ -130,7 +130,6 @@
               <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Users</span></div>
               <div class="stat"><span class="stat-value" id="stat-without-access">0</span><span class="stat-label">Without edit access</span></div>
               <div class="stat"><span class="stat-value" id="stat-incomplete">0</span><span class="stat-label">Incomplete</span></div>
-              <div class="stat"><span class="stat-value" id="stat-missing">0</span><span class="stat-label">Missing pages</span></div>
             </div>
             <div class="search-filter-row">
               <div class="search-wrapper">
@@ -142,7 +141,6 @@
                 <option value="access">With edit access</option>
                 <option value="no-access">Without edit access</option>
                 <option value="incomplete">Incomplete</option>
-                <option value="missing">Missing pages</option>
               </select>
             </div>
           </div>
@@ -737,17 +735,13 @@ function isIncomplete(f) {
   return !fn || !sn || !em;
 }
 
-function hasMissingPage(f) { return !(f in userInfo); }
-
 function populateUI() {
   const withAccess = Object.keys(editKeys).filter(k => pages.includes(k)).length;
   const withoutAccess = pages.length - withAccess;
-  const incomplete = pages.filter(f => !hasMissingPage(f) && isIncomplete(f)).length;
-  const missing = pages.filter(hasMissingPage).length;
+  const incomplete = pages.filter(isIncomplete).length;
   document.getElementById('stat-total').textContent = pages.length;
   document.getElementById('stat-without-access').textContent = withoutAccess;
   document.getElementById('stat-incomplete').textContent = incomplete;
-  document.getElementById('stat-missing').textContent = missing;
   populatePageSelect();
   renderList('manage');
 }
@@ -863,8 +857,7 @@ function renderList(t) {
     if (!searchMatch) return false;
     if (filterVal === 'access') return !!editKeys[f];
     if (filterVal === 'no-access') return !editKeys[f];
-    if (filterVal === 'incomplete') return !hasMissingPage(f) && isIncomplete(f);
-    if (filterVal === 'missing') return hasMissingPage(f);
+    if (filterVal === 'incomplete') return isIncomplete(f);
     return true;
   }).sort((a, b) => {
     const uA = userInfo[a] || {}, uB = userInfo[b] || {};
@@ -899,7 +892,7 @@ function renderList(t) {
         <div class="user-status">
           <div class="user-status-badges">
             ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
-            ${hasMissingPage(f) ? '<span class="badge badge-error">Page Missing</span>' : (!hasMissingPage(f) && isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : '')}
+            ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
           </div>
         </div>
       </div>
