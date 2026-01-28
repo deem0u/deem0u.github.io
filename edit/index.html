@@ -271,11 +271,46 @@ function generateHTML() {
     @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
   `.replace(/\n\s*/g, '');
   
+  const formatTimestampScript = `
+<script>
+(function() {
+  function formatTimestamp(isoString, updatedBy) {
+    if (!isoString) return '';
+    var date = new Date(isoString);
+    var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var dayName = dayNames[date.getDay()];
+    var day = date.getDate();
+    var month = monthNames[date.getMonth()];
+    var year = date.getFullYear();
+    var hours = String(date.getHours()).padStart(2, '0');
+    var minutes = String(date.getMinutes()).padStart(2, '0');
+    var tzParts = Intl.DateTimeFormat('en', { timeZoneName: 'short' }).formatToParts(date);
+    var tzPart = tzParts.find(function(p) { return p.type === 'timeZoneName'; });
+    var tz = tzPart ? tzPart.value : '';
+    var by = updatedBy === 'admin' ? 'Admin' : 'User';
+    return tz ? dayName + ', ' + day + ' ' + month + ' ' + year + ' ' + hours + ':' + minutes + ' ' + tz + ' by ' + by : dayName + ', ' + day + ' ' + month + ' ' + year + ' ' + hours + ':' + minutes + ' by ' + by;
+  }
+  document.querySelectorAll('.last-updated-display').forEach(function(el) {
+    var timestamp = el.getAttribute('data-timestamp');
+    var updatedBy = el.getAttribute('data-updated-by');
+    if (timestamp) {
+      el.textContent = formatTimestamp(timestamp, updatedBy);
+    }
+  });
+})();
+</script>`;
+  
   const destHtml = (destName || destPhone || destEmail) 
     ? `<div class="dest-details"><span>${destName || ''}</span><span>${destPhone || ''}</span><span>${destEmail || ''}</span></div>`
     : '<span class="value">—</span>';
 
   const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
+  
+  // Store ISO timestamp and updatedBy in data attributes for client-side formatting
+  const now = new Date().toISOString();
+  const lastUpdatedData = `data-timestamp="${now}" data-updated-by="user"`;
+  const lastUpdatedHtml = `<span class="value last-updated-display" ${lastUpdatedData}>—</span>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -297,6 +332,7 @@ function generateHTML() {
 <div class="info"><span class="label">Home Country</span><span class="value">${homeCountry}</span></div>
 <div class="info"><span class="label">Destination Details</span>${destHtml}</div>
 <div class="info"><span class="label">Additional Information</span>${additionalHtml}</div>
+<div class="info"><span class="label">Last Updated</span>${lastUpdatedHtml}</div>
 <hr class="divider">
 <section class="section-zh">
 <h1>联系信息</h1>
@@ -307,8 +343,10 @@ function generateHTML() {
 <div class="info"><span class="label">所属国家</span><span class="value">${homeCountry}</span></div>
 <div class="info"><span class="label">目的地详情</span>${destHtml}</div>
 <div class="info"><span class="label">补充信息</span>${additionalHtml}</div>
+<div class="info"><span class="label">最后更新</span>${lastUpdatedHtml}</div>
 </section>
 </div>
+${formatTimestampScript}
 </body>
 </html>`;
 }

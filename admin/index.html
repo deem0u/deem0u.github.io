@@ -404,7 +404,39 @@ function extractInfo(h) {
     return m ? m[1].trim() : ''; 
   };
   const em = h.match(/href="mailto:([^"]+)"/);
-  return { firstName: g('Name'), surname: g('Surname'), email: em ? em[1] : '' };
+  
+  // Try to extract ISO timestamp from data attribute (new format)
+  const dataTimestampMatch = h.match(/data-timestamp="([^"]+)"/);
+  const dataUpdatedByMatch = h.match(/data-updated-by="([^"]+)"/);
+  
+  let lastUpdated = null, updatedBy = null;
+  
+  if (dataTimestampMatch && dataUpdatedByMatch) {
+    // New format: ISO timestamp in data attribute
+    lastUpdated = dataTimestampMatch[1];
+    updatedBy = dataUpdatedByMatch[1];
+  } else {
+    // Old format: formatted text in value
+    const lastUpdatedText = g('Last Updated');
+    if (lastUpdatedText && lastUpdatedText !== '—') {
+      // Try to extract updatedBy from old format
+      const byMatch = lastUpdatedText.match(/ by (Admin|User)$/);
+      if (byMatch) {
+        updatedBy = byMatch[1].toLowerCase();
+        // For old pages, we can't get the exact ISO timestamp, so store null
+        // The display will show "Never updated" or we could try to parse, but it's unreliable
+        lastUpdated = null;
+      }
+    }
+  }
+  
+  return { 
+    firstName: g('Name'), 
+    surname: g('Surname'), 
+    email: em ? em[1] : '',
+    lastUpdated: lastUpdated,
+    updatedBy: updatedBy
+  };
 }
 
 function populateUI() {
@@ -526,6 +558,14 @@ function renderList(t) {
   c.innerHTML = fl.map(f => {
     const u = userInfo[f] || { firstName: '', surname: '', email: '', folder: f }, hk = !!editKeys[f];
     const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
+    let lastUpdatedDisplay = 'Never updated';
+    if (u.lastUpdated) {
+      // Format in admin's local timezone
+      lastUpdatedDisplay = formatTimestamp(u.lastUpdated, u.updatedBy || 'admin');
+    } else if (u.updatedBy) {
+      // Old page without ISO timestamp - show unknown
+      lastUpdatedDisplay = 'Unknown (old format)';
+    }
     return `<div class="user-card">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
@@ -534,6 +574,9 @@ function renderList(t) {
           <div class="user-meta">
             <span>${u.email || 'No email'}</span>
             <span class="user-folder">(${f})</span>
+          </div>
+          <div class="user-meta" style="margin-top: 4px; font-size: 0.7rem; color: var(--color-text-muted);">
+            <span>Last updated: ${lastUpdatedDisplay}</span>
           </div>
         </div>
         <div class="user-status">
@@ -643,11 +686,15 @@ async function handleCreateUser(e) {
     
     if (r.ok) {
       pages.push(folder);
+      const now = new Date().toISOString();
+      const formatted = formatTimestamp(now, 'admin');
       userInfo[folder] = {
         firstName: document.getElementById('new-first-name').value.trim(),
         surname: document.getElementById('new-surname').value.trim(),
         email: document.getElementById('new-email').value.trim(),
-        folder
+        folder,
+        lastUpdated: formatted,
+        updatedBy: 'admin'
       };
       populateUI();
       hideNewUserForm();
@@ -663,6 +710,7 @@ async function handleCreateUser(e) {
 function generateNewUserHTML() {
   const f = i => document.getElementById('new-' + i).value.trim();
   const ml = f('mobile').replace(/\s/g, '');
+  const now = new Date().toISOString();
   return generatePageHTML(
     f('first-name'),
     f('surname'),
@@ -673,7 +721,9 @@ function generateNewUserHTML() {
     f('dest-name'),
     f('dest-phone'),
     f('dest-email'),
-    f('additional-info')
+    f('additional-info'),
+    now,
+    'admin'
   );
 }
 
@@ -712,7 +762,24 @@ function decodeMultiline(s) {
     .replace(/<[^>]*>/g, '');
 }
 
-function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCountry, destName, destPhone, destEmail, additionalInfo) {
+function formatTimestamp(isoString, updatedBy) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayName = dayNames[date.getDay()];
+  const day = date.getDate();
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const tzPart = Intl.DateTimeFormat('en', { timeZoneName: 'short' }).formatToParts(date).find(function(p) { return p.type === 'timeZoneName'; });
+  const tz = tzPart ? tzPart.value : '';
+  const by = updatedBy === 'admin' ? 'Admin' : 'User';
+  return tz ? `${dayName}, ${day} ${month} ${year} ${hours}:${minutes} ${tz} by ${by}` : `${dayName}, ${day} ${month} ${year} ${hours}:${minutes} by ${by}`;
+}
+
+function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCountry, destName, destPhone, destEmail, additionalInfo, lastUpdated, updatedBy) {
   const css = `
     *{box-sizing:border-box;margin:0;padding:0}
     html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
@@ -737,6 +804,36 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
     @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
   `.replace(/\n\s*/g, '');
   
+  const formatTimestampScript = lastUpdated ? `
+<script>
+(function() {
+  function formatTimestamp(isoString, updatedBy) {
+    if (!isoString) return '';
+    var date = new Date(isoString);
+    var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var dayName = dayNames[date.getDay()];
+    var day = date.getDate();
+    var month = monthNames[date.getMonth()];
+    var year = date.getFullYear();
+    var hours = String(date.getHours()).padStart(2, '0');
+    var minutes = String(date.getMinutes()).padStart(2, '0');
+    var tzParts = Intl.DateTimeFormat('en', { timeZoneName: 'short' }).formatToParts(date);
+    var tzPart = tzParts.find(function(p) { return p.type === 'timeZoneName'; });
+    var tz = tzPart ? tzPart.value : '';
+    var by = updatedBy === 'admin' ? 'Admin' : 'User';
+    return tz ? dayName + ', ' + day + ' ' + month + ' ' + year + ' ' + hours + ':' + minutes + ' ' + tz + ' by ' + by : dayName + ', ' + day + ' ' + month + ' ' + year + ' ' + hours + ':' + minutes + ' by ' + by;
+  }
+  document.querySelectorAll('.last-updated-display').forEach(function(el) {
+    var timestamp = el.getAttribute('data-timestamp');
+    var updatedBy = el.getAttribute('data-updated-by');
+    if (timestamp) {
+      el.textContent = formatTimestamp(timestamp, updatedBy);
+    }
+  });
+})();
+</script>` : '';
+  
   const destHtml = (destName || destPhone || destEmail) 
     ? `<div class="dest-details"><span>${destName || ''}</span><span>${destPhone || ''}</span><span>${destEmail || ''}</span></div>`
     : '<span class="value">—</span>';
@@ -746,6 +843,9 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
     : '<span class="value">—</span>';
 
   const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
+  // Store ISO timestamp and updatedBy in data attributes for client-side formatting
+  const lastUpdatedData = lastUpdated ? `data-timestamp="${lastUpdated}" data-updated-by="${updatedBy}"` : '';
+  const lastUpdatedHtml = lastUpdated ? `<span class="value last-updated-display" ${lastUpdatedData}>—</span>` : '<span class="value">—</span>';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -767,6 +867,7 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
 <div class="info"><span class="label">Home Country</span><span class="value">${homeCountry}</span></div>
 <div class="info"><span class="label">Destination Details</span>${destHtml}</div>
 <div class="info"><span class="label">Additional Information</span>${additionalHtml}</div>
+<div class="info"><span class="label">Last Updated</span>${lastUpdatedHtml}</div>
 <hr class="divider">
 <section class="section-zh">
 <h1>联系信息</h1>
@@ -777,8 +878,10 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
 <div class="info"><span class="label">所属国家</span><span class="value">${homeCountry}</span></div>
 <div class="info"><span class="label">目的地详情</span>${destHtmlZh}</div>
 <div class="info"><span class="label">补充信息</span>${additionalHtml}</div>
+<div class="info"><span class="label">最后更新</span>${lastUpdatedHtml}</div>
 </section>
 </div>
+${formatTimestampScript}
 </body>
 </html>`;
 }
@@ -850,7 +953,16 @@ async function handleSave(e) {
     const d = await r.json();
     if (r.ok) { 
       currentSha = d.sha; 
-      userInfo[currentFolder] = { firstName: document.getElementById('first-name').value.trim(), surname: document.getElementById('surname').value.trim(), email: document.getElementById('email').value.trim(), folder: currentFolder }; 
+      const now = new Date().toISOString();
+      const formatted = formatTimestamp(now, 'admin');
+      userInfo[currentFolder] = { 
+        firstName: document.getElementById('first-name').value.trim(), 
+        surname: document.getElementById('surname').value.trim(), 
+        email: document.getElementById('email').value.trim(), 
+        folder: currentFolder,
+        lastUpdated: formatted,
+        updatedBy: 'admin'
+      }; 
       populateUI(); 
       showAlert('alert-editor', 'Changes saved successfully! Use the "View Page" link above to see your updates.', 'success'); 
     }
@@ -862,6 +974,7 @@ async function handleSave(e) {
 function generateHTML() {
   const f = i => document.getElementById(i).value.trim();
   const ml = f('mobile').replace(/\s/g, '');
+  const now = new Date().toISOString();
   return generatePageHTML(
     f('first-name'),
     f('surname'),
@@ -872,7 +985,9 @@ function generateHTML() {
     f('dest-name'),
     f('dest-phone'),
     f('dest-email'),
-    f('additional-info')
+    f('additional-info'),
+    now,
+    'admin'
   );
 }
 
