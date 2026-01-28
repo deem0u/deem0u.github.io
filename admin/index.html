@@ -897,7 +897,10 @@ function renderList(t) {
           <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
         <div class="user-status">
-          ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
+          <div class="user-status-badges">
+            ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
+            ${hasMissingPage(f) ? '<span class="badge badge-error">Page Missing</span>' : (!hasMissingPage(f) && isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : '')}
+          </div>
         </div>
       </div>
       <div class="user-card-actions">
