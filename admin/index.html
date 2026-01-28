@@ -887,12 +887,12 @@ function renderList(t) {
         <div class="user-details">
           <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(namePart)}</span> <span class="user-name-username">(${escapeHtml(f)})</span></div>
           <div class="user-meta">${escapeHtml(emailText)}</div>
-          <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
+          <div class="user-meta user-meta-muted">Last updated: <span class="user-meta-muted-value">${escapeHtml(lastUpdatedDisplay)}</span></div>
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
-            ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
+            ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-navy">View Only</span>'}
+            ${isIncomplete(f) ? '<span class="badge badge-error">Page Incomplete</span>' : ''}
           </div>
         </div>
       </div>
@@ -900,8 +900,8 @@ function renderList(t) {
         <div class="action-row action-row-contact">
           <span class="action-row-label">Contact Page</span>
           <div class="action-row-buttons">
-            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-secondary btn-sm">View Live Page</a>
-            <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit Page</button>
+            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-teal btn-sm">View Live Page</a>
+            <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
           </div>
           <div class="action-row-end">
             <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
@@ -921,7 +921,7 @@ function renderList(t) {
             <span class="action-row-label">Share Links</span>
             <div class="action-row-buttons">
               ${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
-              <button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
+              <button class="btn btn-mint btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
             </div>
           </div>` : ''}
         </div>
@@ -1382,8 +1382,8 @@ Daniel Mounnarath`;
 
 function copyLink(f, btn) {
   navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
-    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-secondary');
-    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-secondary'); }, 2000);
+    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-mint');
+    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-mint'); }, 2000);
   });
 }
 

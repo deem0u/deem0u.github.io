@@ -595,6 +595,35 @@ body {
   border-color: var(--color-danger-hover);
 }
 
+.btn-teal {
+  background: var(--accent-teal);
+  color: var(--white);
+}
+
+.btn-teal:hover:not(:disabled) {
+  background: var(--accent-teal-dark);
+}
+
+.btn-mint {
+  background: var(--accent-mint);
+  color: var(--accent-navy);
+  border-color: var(--accent-teal);
+}
+
+.btn-mint:hover:not(:disabled) {
+  background: var(--accent-teal);
+  color: var(--white);
+  border-color: var(--accent-teal);
+}
+
+.btn-teal:focus {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.btn-mint:focus {
+  box-shadow: 0 0 0 3px rgba(0, 245, 212, 0.4);
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--color-text-secondary);
@@ -846,10 +875,11 @@ body {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--color-text-muted);
-  background: var(--color-bg-muted);
+  color: var(--accent-blue);
+  background: var(--white);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--grey-300);
 }
 
 .user-field-label {
@@ -860,8 +890,8 @@ body {
 }
 
 .user-card-header .user-meta {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  color: var(--color-text);
   display: block;
   line-height: 1.4;
 }
@@ -878,7 +908,12 @@ body {
 }
 
 .user-status .badge-success {
-  background: var(--color-success);
+  background: var(--accent-teal);
+  color: var(--white);
+}
+
+.user-status .badge-navy {
+  background: var(--accent-navy);
   color: var(--white);
 }
 
@@ -888,7 +923,7 @@ body {
 }
 
 .user-status .badge-error {
-  background: var(--color-danger);
+  background: var(--accent-coral);
   color: var(--white);
 }
 
@@ -971,8 +1006,14 @@ body {
 }
 
 .user-details .user-meta-muted {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.user-meta-muted-value {
+  color: var(--color-text);
+  font-weight: 600;
 }
 
 .text-danger {
@@ -987,8 +1028,8 @@ body {
 .user-avatar {
   width: 40px;
   height: 40px;
-  background: var(--grey-200);
-  color: var(--color-primary);
+  background: var(--accent-teal);
+  color: var(--white);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -1059,6 +1100,11 @@ body {
 .badge-info {
   background: var(--grey-200);
   color: var(--color-primary);
+}
+
+.badge-navy {
+  background: var(--grey-200);
+  color: var(--accent-navy);
 }
 
 /* ========================================
