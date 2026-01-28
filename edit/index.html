@@ -50,28 +50,44 @@
           <div class="card-body">
             <form id="contact-form">
               <div class="form-row">
-                <div class="form-group"><label class="form-label">First Name</label><input type="text" id="first-name" class="form-input" required></div>
-                <div class="form-group"><label class="form-label">Surname</label><input type="text" id="surname" class="form-input" required></div>
+                <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="first-name" class="form-input" pattern="[a-zA-Z\-]+" required><span class="form-hint">Your first or given name(s) as on your ID. Include any other names (e.g. middle names) if applicable.</span></div>
+                <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="surname" class="form-input" pattern="[a-zA-Z\-]+" required><span class="form-hint">Your surname or last name as it appears on your ID.</span></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" required></div>
-                <div class="form-group"><label class="form-label">Mobile</label><input type="tel" id="mobile" class="form-input" placeholder="+61 xxx xxx xxx" required></div>
+                <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" required><span class="form-hint">A valid email address where you can be contacted.</span></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" placeholder="+61 412 345 678" pattern="\+[0-9][0-9\s\-]{7,24}" inputmode="tel"><span class="form-hint">Include country code. e.g. Australian mobile +61 412 345 678, Victorian landline +61 3 9876 5432.</span></div>
               </div>
-              <div class="form-group"><label class="form-label">Home Country</label><input type="text" id="home-country" class="form-input" required></div>
+              <div class="form-group">
+                <label class="form-label">Home Country</label>
+                <div class="searchable-select" id="home-country-edit-container">
+                  <button type="button" class="searchable-select-trigger" id="home-country-edit-trigger" onclick="toggleCountrySelectEdit()">
+                    <span id="home-country-edit-text" class="searchable-select-placeholder">Select country (optional)...</span>
+                  </button>
+                  <div class="searchable-select-dropdown" id="home-country-edit-dropdown">
+                    <div class="searchable-select-search">
+                      <input type="text" id="home-country-edit-search" placeholder="Search countries..." oninput="filterCountryOptionsEdit()">
+                    </div>
+                    <div class="searchable-select-options" id="home-country-edit-options"></div>
+                  </div>
+                </div>
+                <input type="hidden" id="home-country" value="">
+                <span class="form-hint">Your country of residence. Shown on your contact page for identification.</span>
+              </div>
               <div class="form-group">
                 <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
                 <div class="form-section">
-                  <div class="form-group"><label class="form-label">Location Name</label><input type="text" id="dest-name" class="form-input"></div>
+                  <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input"><span class="form-hint">e.g. resort, hotel, building or Airbnb name where you are staying.</span></div>
+                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" placeholder="Full street address"><span class="form-hint">Full street address of your destination.</span></div>
                   <div class="form-row">
-                    <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="dest-phone" class="form-input"></div>
-                    <div class="form-group"><label class="form-label">Email</label><input type="email" id="dest-email" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address.</span></div>
+                    <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-hint">e.g. general, reception or front office address, or someone at this location.</span></div>
                   </div>
                 </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Additional Information <span class="form-label-optional">(optional)</span></label>
-                <textarea id="additional-info" class="form-textarea" rows="3" placeholder="Any extra details you want shown on the contact page"></textarea>
-                <span class="form-hint">Shown on the contact page for airport staff</span>
+                <textarea id="additional-info" class="form-textarea" rows="3" placeholder="e.g. emergency contact, special instructions"></textarea>
+                <span class="form-hint">Any additional notes or useful details to help identify or contact you in case of lost property or an emergency.</span>
               </div>
               <div id="editor-alert" class="alert"></div>
               <div class="form-actions">
@@ -88,20 +104,149 @@
     </main>
   </div>
 
+<script src="../countries-data.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
 let folder = null, editKey = null, currentSha = null;
+
+function formatContactNumber(val) {
+  var d = (val || '').replace(/\D/g, '');
+  if (!d.length) return '';
+  var ccLen = (d.charAt(0) === '1' && d.length >= 11) ? 1 : 2;
+  var cc = d.substring(0, ccLen);
+  var rest = d.substring(ccLen);
+  var s = '+' + cc;
+  for (var i = 0; i < rest.length; i += 3) s += ' ' + rest.substring(i, i + 3);
+  return s.trim();
+}
+
+function attachContactNumberMask() {
+  document.querySelectorAll('.contact-number-mask').forEach(function(inp) {
+    if (inp.dataset.maskAttached) return;
+    inp.dataset.maskAttached = '1';
+    inp.addEventListener('input', function() {
+      var pos = this.selectionStart;
+      var val = this.value;
+      var formatted = formatContactNumber(val);
+      if (formatted !== val) {
+        this.value = formatted;
+        var newPos = Math.min(pos, formatted.length);
+        this.setSelectionRange(newPos, newPos);
+      }
+    });
+    inp.addEventListener('blur', function() {
+      if (this.value && !/^\+[0-9]/.test(this.value)) {
+        var d = this.value.replace(/\D/g, '');
+        if (d.length) this.value = formatContactNumber('+' + d);
+      }
+    });
+  });
+}
+
+function resolveCountryDisplayEdit(parsed) {
+  if (!parsed || (parsed.trim()) === '' || parsed.trim() === '—') return null;
+  var p = parsed.trim();
+  var list = window.COUNTRIES || [];
+  for (var i = 0; i < list.length; i++) {
+    var name = list[i][0], code = list[i][1], label = name + ' (' + code + ')';
+    if (p === name || p === label) return label;
+  }
+  return p;
+}
+
+function setCountryDropdownEdit(value) {
+  var textEl = document.getElementById('home-country-edit-text');
+  var hid = document.getElementById('home-country');
+  if (!value) {
+    hid.value = '';
+    textEl.textContent = 'Select country (optional)...';
+    textEl.classList.add('searchable-select-placeholder');
+    textEl.classList.remove('searchable-select-value');
+  } else {
+    hid.value = value;
+    textEl.textContent = value;
+    textEl.classList.remove('searchable-select-placeholder');
+    textEl.classList.add('searchable-select-value');
+  }
+}
+
+function initCountryDropdownEdit() {
+  var list = window.COUNTRIES || [];
+  var el = document.getElementById('home-country-edit-options');
+  if (!el) return;
+  el.innerHTML = list.map(function(c) {
+    var label = c[0] + ' (' + c[1] + ')';
+    return '<div class="searchable-select-option" data-value="' + label.replace(/"/g, '&quot;') + '">' + label + '</div>';
+  }).join('');
+  el.addEventListener('click', function(e) {
+    var o = e.target.closest('.searchable-select-option');
+    if (o) selectCountryEdit(o.dataset.value);
+  });
+}
+
+function toggleCountrySelectEdit() {
+  var dropdown = document.getElementById('home-country-edit-dropdown');
+  var trigger = document.getElementById('home-country-edit-trigger');
+  var isOpen = dropdown.classList.contains('show');
+  document.querySelectorAll('.searchable-select-dropdown').forEach(function(d) { d.classList.remove('show'); });
+  if (!isOpen) {
+    var rect = trigger.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.width = rect.width + 'px';
+    dropdown.classList.add('show');
+    var search = document.getElementById('home-country-edit-search');
+    search.value = '';
+    filterCountryOptionsEdit();
+    search.focus();
+  }
+}
+
+function filterCountryOptionsEdit() {
+  var search = document.getElementById('home-country-edit-search').value.toLowerCase();
+  var opts = document.querySelectorAll('#home-country-edit-options .searchable-select-option');
+  var visible = 0;
+  opts.forEach(function(o) {
+    var match = o.dataset.value.toLowerCase().includes(search);
+    o.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  var container = document.getElementById('home-country-edit-options');
+  var empty = container.querySelector('.searchable-select-empty');
+  if (!visible && !empty) {
+    var e = document.createElement('div');
+    e.className = 'searchable-select-empty';
+    e.textContent = 'No countries match';
+    container.appendChild(e);
+  } else if (visible && empty) empty.remove();
+}
+
+function selectCountryEdit(value) {
+  document.getElementById('home-country').value = value;
+  var textEl = document.getElementById('home-country-edit-text');
+  textEl.textContent = value;
+  textEl.classList.remove('searchable-select-placeholder');
+  textEl.classList.add('searchable-select-value');
+  document.getElementById('home-country-edit-dropdown').classList.remove('show');
+  document.querySelectorAll('#home-country-edit-options .searchable-select-option').forEach(function(o) {
+    o.classList.toggle('selected', o.dataset.value === value);
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   folder = params.get('folder');
   const urlKey = params.get('key');
   
-  // Always attach form handlers
+  attachContactNumberMask();
+  initCountryDropdownEdit();
   document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
   document.getElementById('contact-form').addEventListener('submit', handleSave);
-  
-  // Check if folder parameter exists
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.searchable-select')) {
+      document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
+    }
+  });
   if (!folder) { 
     showAlert('auth-alert', 'Invalid link. Please check your email for the correct link.', 'error'); 
     document.getElementById('edit-key').disabled = true;
@@ -174,17 +319,34 @@ function fillForm(h) {
     return m ? m[1].trim() : ''; 
   };
   
-  document.getElementById('first-name').value = g('Name');
-  document.getElementById('surname').value = g('Surname');
+  document.getElementById('first-name').value = g('Given Names') || g('Name');
+  document.getElementById('surname').value = g('Family Name') || g('Surname');
   document.getElementById('email').value = gl('Email');
-  document.getElementById('mobile').value = gl('Mobile');
-  document.getElementById('home-country').value = g('Home Country');
+  var mv = gl('Contact Number') || gl('Mobile');
+  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '—' || !plain) mv = ''; }
+  document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
+  var hc = resolveCountryDisplayEdit(g('Home Country'));
+  setCountryDropdownEdit(hc || null);
   
-  // Destination details: <div class="dest-details"><span>Name</span><span>Phone</span><span>Email</span></div>
-  const dm = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
-  document.getElementById('dest-name').value = dm ? dm[1].trim() : '';
-  document.getElementById('dest-phone').value = dm ? dm[2].trim() : '';
-  document.getElementById('dest-email').value = dm ? dm[3].trim() : '';
+  // Destination details: 4-span (name, address, phone, email) or 3-span legacy (name, phone, email)
+  const dm4 = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
+  const dm3 = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
+  if (dm4) {
+    document.getElementById('dest-name').value = dm4[1].trim();
+    document.getElementById('dest-address').value = dm4[2].trim();
+    document.getElementById('dest-phone').value = dm4[3].trim();
+    document.getElementById('dest-email').value = dm4[4].trim();
+  } else if (dm3) {
+    document.getElementById('dest-name').value = dm3[1].trim();
+    document.getElementById('dest-address').value = '';
+    document.getElementById('dest-phone').value = dm3[2].trim();
+    document.getElementById('dest-email').value = dm3[3].trim();
+  } else {
+    document.getElementById('dest-name').value = '';
+    document.getElementById('dest-address').value = '';
+    document.getElementById('dest-phone').value = '';
+    document.getElementById('dest-email').value = '';
+  }
 
   document.getElementById('additional-info').value = gMulti('Additional Information');
 }
@@ -222,13 +384,13 @@ async function handleSave(e) {
 
 function generateHTML() {
   const f = i => document.getElementById(i).value.trim();
-  const ml = f('mobile').replace(/\s/g, '');
   const firstName = f('first-name');
   const surname = f('surname');
   const email = f('email');
   const mobile = f('mobile');
   const homeCountry = f('home-country');
   const destName = f('dest-name');
+  const destAddress = f('dest-address');
   const destPhone = f('dest-phone');
   const destEmail = f('dest-email');
   const additionalInfo = f('additional-info');
@@ -273,7 +435,7 @@ function generateHTML() {
     .section-zh{color:#1a1a1a;margin-top:8px}
     .section-zh h1{font-size:1.375rem;border-color:#111}
     @media(min-width:640px){.section-zh h1{font-size:1.5rem}}
-    .dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}
+    .dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}
     @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
   `.replace(/\n\s*/g, '');
   
@@ -307,13 +469,22 @@ function generateHTML() {
 })();
 </scr` + `ipt>`;
   
-  const destHtml = (destName || destPhone || destEmail) 
-    ? `<div class="dest-details"><span>${destName || ''}</span><span>${destPhone || ''}</span><span>${destEmail || ''}</span></div>`
-    : '<span class="value">—</span>';
+  const dName = (destName == null ? '' : String(destName)).trim();
+  const dAddr = (destAddress == null ? '' : String(destAddress)).trim();
+  const dPhone = (destPhone == null ? '' : String(destPhone)).trim();
+  const dEmail = (destEmail == null ? '' : String(destEmail)).trim();
+  const hasDest = !!(dName || dAddr || dPhone || dEmail);
+  const destParts = [dName, dAddr, dPhone, dEmail].map(t => '<span>' + (t ? escapeHtml(t) : '') + '</span>');
+  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
 
   const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
-  
-  // Store ISO timestamp and updatedBy in data attributes for client-side formatting
+  const hasMobile = mobile != null && String(mobile).trim() !== '';
+  const ml = (mobile || '').replace(/\s/g, '');
+  const mobileHtml = hasMobile
+    ? `<a href="tel:${ml.replace(/"/g, '&quot;')}">${escapeHtml(String(mobile).trim())}</a>`
+    : '—';
+  const hasHomeCountry = homeCountry != null && String(homeCountry).trim() !== '';
+  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : '—';
   const now = new Date().toISOString();
   const lastUpdatedData = `data-timestamp="${now}" data-updated-by="user"`;
   const lastUpdatedHeaderHtml = `<span class="last-updated-header">Last updated:<br><span class="last-updated-display" ${lastUpdatedData}>—</span></span>`;
@@ -331,11 +502,11 @@ function generateHTML() {
 <body>
 <div class="container">
 <h1>Contact Information${lastUpdatedHeaderHtml}</h1>
-<div class="info"><span class="label">Name</span><span class="value">${firstName}</span></div>
-<div class="info"><span class="label">Surname</span><span class="value">${surname}</span></div>
+<div class="info"><span class="label">Given Names</span><span class="value">${firstName}</span></div>
+<div class="info"><span class="label">Family Name</span><span class="value">${surname}</span></div>
 <div class="info"><span class="label">Email</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
-<div class="info"><span class="label">Mobile</span><span class="value"><a href="tel:${ml}">${mobile}</a></span></div>
-<div class="info"><span class="label">Home Country</span><span class="value">${homeCountry}</span></div>
+<div class="info"><span class="label">Contact Number</span><span class="value">${mobileHtml}</span></div>
+<div class="info"><span class="label">Home Country</span><span class="value">${homeCountryHtml}</span></div>
 <div class="info"><span class="label">Destination Details</span>${destHtml}</div>
 <div class="info additional-info"><span class="label">Additional Information</span>${additionalHtml}</div>
 <hr class="divider">
@@ -344,8 +515,8 @@ function generateHTML() {
 <div class="info"><span class="label">名字</span><span class="value">${firstName}</span></div>
 <div class="info"><span class="label">姓氏</span><span class="value">${surname}</span></div>
 <div class="info"><span class="label">电子邮件</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
-<div class="info"><span class="label">手机</span><span class="value"><a href="tel:${ml}">${mobile}</a></span></div>
-<div class="info"><span class="label">所属国家</span><span class="value">${homeCountry}</span></div>
+<div class="info"><span class="label">手机</span><span class="value">${mobileHtml}</span></div>
+<div class="info"><span class="label">所属国家</span><span class="value">${homeCountryHtml}</span></div>
 <div class="info"><span class="label">目的地详情</span>${destHtml}</div>
 <div class="info additional-info"><span class="label">补充信息</span>${additionalHtml}</div>
 </section>
