@@ -847,21 +847,15 @@ function renderList(t) {
     } else if (u.updatedBy) {
       lastUpdatedDisplay = 'Unknown (old format)';
     }
-    var D = window.FORM_DESCRIPTIONS || {};
-    var l = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
+    const fullName = `${u.firstName || '—'} ${u.surname || '—'} (${f})`;
+    const emailText = u.email || 'No email';
     return `<div class="user-card">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
-          <div class="user-name"><span class="user-field-label">${l('first-name')}</span>${u.firstName || '—'}</div>
-          <div class="user-name"><span class="user-field-label">${l('surname')}</span>${u.surname || '—'}</div>
-          <div class="user-meta">
-            <span>${u.email || 'No email'}</span>
-            <span class="user-folder">(${f})</span>
-          </div>
-          <div class="user-meta" style="margin-top: 4px; font-size: 0.7rem; color: var(--color-text-muted);">
-            <span>Last updated: ${lastUpdatedDisplay}</span>
-          </div>
+          <div class="user-name">${escapeHtml(fullName)}</div>
+          <div class="user-meta">Email: ${escapeHtml(emailText)}</div>
+          <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
         <div class="user-status">
           ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
@@ -869,28 +863,30 @@ function renderList(t) {
       </div>
       <div class="user-card-actions">
         <div class="action-row">
-          <span class="action-row-label">Page</span>
+          <span class="action-row-label">Contact Page</span>
           <div class="action-row-buttons">
             <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-secondary btn-sm">View Live Page</a>
-            <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit Content</button>
+            <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit Page</button>
           </div>
         </div>
-        <div class="action-row">
-          <span class="action-row-label">Access</span>
-          <div class="action-row-buttons">
-            ${!hk 
-              ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Grant Edit Access</button>` 
-              : `<button class="btn btn-warning btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>
-                 <button class="btn btn-secondary btn-sm" onclick="confirmRegenerate('${f}')">Reset Link</button>`}
+        <div class="action-row action-row-combo">
+          <div class="action-combo-group">
+            <span class="action-row-label">Edit Access</span>
+            <div class="action-row-buttons">
+              ${!hk
+                ? `<button class="btn btn-success btn-sm btn-with-subtext" onclick="generateKey('${f}')"><span class="btn-label">Grant Access</span><span class="btn-subtext">Generate Edit Link</span></button>`
+                : `<button class="btn btn-secondary btn-sm btn-with-subtext" onclick="confirmRegenerate('${f}')"><span class="btn-label">Reset Access</span><span class="btn-subtext">Regen. New Edit Link</span></button>
+                   <button class="btn btn-warning btn-sm btn-with-subtext" onclick="confirmRemove('${f}')"><span class="btn-label">Revoke Access</span><span class="btn-subtext">Delete Edit Link</span></button>`}
+            </div>
           </div>
+          ${hk ? `<div class="action-combo-group">
+            <span class="action-row-label">Share Links</span>
+            <div class="action-row-buttons">
+              ${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
+              <button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
+            </div>
+          </div>` : ''}
         </div>
-        ${hk ? `<div class="action-row">
-          <span class="action-row-label">Share</span>
-          <div class="action-row-buttons">
-            ${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
-          </div>
-        </div>` : ''}
         <div class="action-row action-row-danger">
           <span class="action-row-label"></span>
           <div class="action-row-buttons">
