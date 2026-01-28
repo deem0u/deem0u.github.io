@@ -169,15 +169,15 @@
                 <div class="form-group">
                   <label class="form-label">User Name</label>
                   <input type="text" id="new-folder" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_-]+" required>
-                  <span class="form-hint">Will be used in the URL for your contact information page - Letters, numbers and hyphens only. Example: the User Name john-smith will have the URL deem0u.github.io/<strong>john-smith</strong>/</span>
+                  <span class="form-hint">Will be used in the URL for your contact information page Example: the User Name john-smith will have the URL deem0u.github.io/<strong>john-smith</strong>/</span>
                 </div>
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="new-first-name" class="form-input" pattern="[a-zA-Z\-]+" required><span class="form-hint">Your first or given name(s) as on your ID. Include any other names (e.g. middle names) if applicable.</span></div>
-                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="[a-zA-Z\-]+" required><span class="form-hint">Your surname or last name as it appears on your ID.</span></div>
+                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="new-first-name" class="form-input" pattern="[a-zA-Z\-]+" required><span class="form-hint">Your first name including any other names (e.g. middle names) as it appears on your ID</span></div>
+                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="[a-zA-Z\-]+" required><span class="form-hint">Your surname as it appears on your ID</span></div>
                 </div>
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-email" class="form-input" required><span class="form-hint">A valid email address where you can be contacted.</span></div>
-                  <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="new-mobile" class="form-input contact-number-mask" placeholder="+61 412 345 678" pattern="\+[0-9][0-9\s\-]{7,24}" inputmode="tel"><span class="form-hint">Include country code. e.g. Australian mobile +61 412 345 678, Victorian landline +61 3 9876 5432.</span></div>
+                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-email" class="form-input" required><span class="form-hint">A valid email address where you can be contacted</span></div>
+                  <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="new-mobile" class="form-input contact-number-mask" placeholder="+61 412 345 678" pattern="\+[0-9][0-9\s\-]{7,24}" inputmode="tel"><span class="form-hint">Include country code. e.g. +61 412 345 678 or +61 3 9876 5432</span></div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Home Country</label>
@@ -193,23 +193,23 @@
                     </div>
                   </div>
                   <input type="hidden" id="new-home-country" value="">
-                  <span class="form-hint">Your country of residence. Shown on your contact page for identification.</span>
+                  <span class="form-hint">Your country of residence </span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Destination Details <span class="form-label-optional">(optional)</span></label>
                   <div class="form-section">
-                    <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="new-dest-name" class="form-input"><span class="form-hint">e.g. resort, hotel, building or Airbnb name where you are staying.</span></div>
-                    <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="new-dest-address" class="form-input" placeholder="Full street address"><span class="form-hint">Full street address of your destination.</span></div>
+                    <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="new-dest-name" class="form-input"><span class="form-hint">The name of resort, hotel AirBnb you are staying at</span></div>
+                    <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="new-dest-address" class="form-input" placeholder="Full street address"><span class="form-hint">Full street address of the place you are staying at</span></div>
                     <div class="form-row">
-                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="new-dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address.</span></div>
-                      <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="new-dest-email" class="form-input"><span class="form-hint">e.g. general, reception or front office address, or someone at this location.</span></div>
+                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="new-dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address</span></div>
+                      <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="new-dest-email" class="form-input"><span class="form-hint">Email address for this location - e.g. front office, general email or a person at this address.</span></div>
                     </div>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Additional Information <span class="form-label-optional">(optional)</span></label>
-                  <textarea id="new-additional-info" class="form-textarea" rows="3" placeholder="e.g. emergency contact, special instructions"></textarea>
-                  <span class="form-hint">Any additional notes or useful details to help identify or contact you in case of lost property or an emergency.</span>
+                  <textarea id="new-additional-info" class="form-textarea" rows="3"></textarea>
+                  <span class="form-hint">Any additional notes or useful details to help identify/contact you in case of lost property or an emergency</span>
                 </div>
                 <div id="alert-new-user" class="alert"></div>
                 <div class="form-actions">
