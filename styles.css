@@ -906,21 +906,6 @@ body {
   display: none;
 }
 
-.btn-with-subtext {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0;
-  text-align: left;
-}
-.btn-with-subtext .btn-label { display: block; }
-.btn-with-subtext .btn-subtext {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--color-text-muted);
-  margin-top: 1px;
-}
-
 .action-row-combo {
   display: flex;
   flex-wrap: wrap;
@@ -950,50 +935,6 @@ body {
 .text-danger:hover {
   color: var(--red-700) !important;
   background: var(--red-50) !important;
-}
-
-/* Legacy action-group styles - remove after migration */
-.action-group {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.action-group-label {
-  display: none;
-}
-
-.action-group-danger {
-  margin-left: auto;
-}
-
-/* Legacy user-item for backwards compatibility */
-.user-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  background: var(--white);
-  border: 1px solid var(--color-border);
-  margin-top: -1px;
-  gap: var(--space-4);
-  transition: background var(--transition);
-}
-
-.user-item:first-child {
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-}
-
-.user-item:last-child {
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-}
-
-.user-item:only-child {
-  border-radius: var(--radius-md);
-}
-
-.user-item:hover {
-  background: var(--color-bg-subtle);
 }
 
 .user-avatar {
@@ -1038,12 +979,6 @@ body {
   background: var(--color-bg-muted);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
-}
-
-.user-actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-shrink: 0;
 }
 
 /* ========================================
@@ -1308,6 +1243,10 @@ body {
   }
   
   .app-main {
+    padding: var(--space-6) var(--space-4);
+  }
+  
+  .app-centered {
     padding: var(--space-4);
   }
   
@@ -1349,47 +1288,6 @@ body {
   .user-card-actions {
     flex-direction: column;
     gap: var(--space-3);
-  }
-  
-  .action-group {
-    width: 100%;
-    padding-right: 0;
-    padding-bottom: var(--space-3);
-    border-right: none;
-    border-bottom: 1px solid var(--color-border);
-    flex-wrap: wrap;
-  }
-  
-  .action-group:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-  
-  .action-group-label {
-    width: 100%;
-    margin-bottom: var(--space-2);
-    margin-right: 0;
-  }
-  
-  .action-group-danger {
-    margin-left: 0;
-  }
-  
-  .action-group .btn {
-    flex: 1;
-  }
-  
-  .user-item {
-    flex-wrap: wrap;
-  }
-  
-  .user-actions {
-    width: 100%;
-    margin-top: var(--space-3);
-  }
-  
-  .user-actions .btn {
-    flex: 1;
   }
   
   .tabs {
