@@ -17,7 +17,8 @@
 <div class="info"><span class="label">Mobile</span><span class="value"><a href="tel:+61432644581">+61 432644581</a></span></div>
 <div class="info"><span class="label">Home Country</span><span class="value">Australia</span></div>
 <div class="info"><span class="label">Destination Details</span><div class="dest-details"><span>The Mulia, Nusa Dua, Bali</span><span>+62 361 301 7777</span><span>fo.themulia@themulia.com</span></div></div>
-<div class="info"><span class="label">Additional Information</span><span class="value">—</span></div>
+<div class="info"><span class="label">Additional Information</span><span class="value">TEst</span></div>
+<div class="info"><span class="label">Last Updated</span><span class="value last-updated-display" data-timestamp="2026-01-28T01:30:00.427Z" data-updated-by="admin">—</span></div>
 <hr class="divider">
 <section class="section-zh">
 <h1>联系信息</h1>
@@ -27,8 +28,38 @@
 <div class="info"><span class="label">手机</span><span class="value"><a href="tel:+61432644581">+61 432644581</a></span></div>
 <div class="info"><span class="label">所属国家</span><span class="value">Australia</span></div>
 <div class="info"><span class="label">目的地详情</span><div class="dest-details"><span>The Mulia, Nusa Dua, Bali</span><span>+62 361 301 7777</span><span>fo.themulia@themulia.com</span></div></div>
-<div class="info"><span class="label">补充信息</span><span class="value">—</span></div>
+<div class="info"><span class="label">补充信息</span><span class="value">TEst</span></div>
+<div class="info"><span class="label">最后更新</span><span class="value last-updated-display" data-timestamp="2026-01-28T01:30:00.427Z" data-updated-by="admin">—</span></div>
 </section>
 </div>
+
+<script>
+(function() {
+  function formatTimestamp(isoString, updatedBy) {
+    if (!isoString) return '';
+    var date = new Date(isoString);
+    var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var dayName = dayNames[date.getDay()];
+    var day = date.getDate();
+    var month = monthNames[date.getMonth()];
+    var year = date.getFullYear();
+    var hours = String(date.getHours()).padStart(2, '0');
+    var minutes = String(date.getMinutes()).padStart(2, '0');
+    var tzParts = Intl.DateTimeFormat('en', { timeZoneName: 'short' }).formatToParts(date);
+    var tzPart = tzParts.find(function(p) { return p.type === 'timeZoneName'; });
+    var tz = tzPart ? tzPart.value : '';
+    var by = updatedBy === 'admin' ? 'Admin' : 'User';
+    return tz ? dayName + ', ' + day + ' ' + month + ' ' + year + ' ' + hours + ':' + minutes + ' ' + tz + ' by ' + by : dayName + ', ' + day + ' ' + month + ' ' + year + ' ' + hours + ':' + minutes + ' by ' + by;
+  }
+  document.querySelectorAll('.last-updated-display').forEach(function(el) {
+    var timestamp = el.getAttribute('data-timestamp');
+    var updatedBy = el.getAttribute('data-updated-by');
+    if (timestamp) {
+      el.textContent = formatTimestamp(timestamp, updatedBy);
+    }
+  });
+})();
+</script>
 </body>
 </html>
