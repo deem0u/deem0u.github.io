@@ -88,7 +88,7 @@
           <form id="recovery-form-step2" onsubmit="return false;">
             <div class="form-group">
               <label class="form-label">Enter 6-Digit Code</label>
-              <input type="text" id="recovery-code" class="form-input font-mono text-center" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required style="font-size: 1.5rem; letter-spacing: 0.5rem;">
+              <input type="text" id="recovery-code" class="form-input form-input-code font-mono text-center" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
               <span class="form-hint">Code expires in 10 minutes</span>
             </div>
             <div id="recovery-alert-2" class="alert"></div>
@@ -103,7 +103,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Your Admin Password</label>
-            <div style="display: flex; gap: 8px;">
+            <div class="form-inline-row">
               <input type="text" id="recovered-key" class="form-input font-mono" readonly>
               <button type="button" class="btn btn-secondary" onclick="copyRecoveredKey()">Copy</button>
             </div>
@@ -150,8 +150,8 @@
 
         <div id="tab-edit" class="tab-content">
           <div class="card">
-            <div class="card-body" style="display: flex; gap: var(--space-4); align-items: flex-end; flex-wrap: wrap;">
-              <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+            <div class="card-body form-row-inline">
+              <div class="form-group form-group-inline">
                 <label class="form-label">Select existing User to Edit</label>
                 <div class="searchable-select" id="page-select-container">
                   <button type="button" class="searchable-select-trigger" id="page-select-trigger" onclick="togglePageSelect()">
@@ -210,8 +210,8 @@
                     <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="new-dest-name" class="form-input"><span class="form-hint">e.g. resort, hotel, building or Airbnb name where you are staying.</span></div>
                     <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="new-dest-address" class="form-input"></div>
                     <div class="form-row">
-                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="new-dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address</span></div>
-                      <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="new-dest-email" class="form-input"><span class="form-hint">Email address for this location - e.g. front office, general email or a person at this address.</span></div>
+                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="new-dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address.</span></div>
+                      <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="new-dest-email" class="form-input"><span class="form-hint">e.g. general, reception or front office address, or someone at this location.</span></div>
                     </div>
                   </div>
                 </div>
@@ -275,7 +275,7 @@
                 <div class="form-actions">
                   <button type="submit" id="save-btn" class="btn btn-primary">Save Changes</button>
                   <button type="button" class="btn btn-secondary" onclick="loadPage()">Reset</button>
-                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost" style="margin-left: auto;">View Page →</a>
+                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost ml-auto">View Page →</a>
                 </div>
               </form>
             </div>
@@ -761,8 +761,8 @@ function populatePageSelect() {
     const line1 = `${displayName} (${f})`;
     const line2 = u.email || '—';
     return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
-      <div style="font-weight: 500;">${line1}</div>
-      <div style="font-size: var(--text-xs); color: var(--color-text-muted);">${line2}</div>
+      <div class="searchable-select-option-title">${line1}</div>
+      <div class="searchable-select-option-meta">${line2}</div>
     </div>`;
   }).join('');
   

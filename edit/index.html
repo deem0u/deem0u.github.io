@@ -37,9 +37,9 @@
 
     <main id="screen-editor" class="app-main hidden">
       <div class="app-container">
-        <div class="card" style="background: var(--blue-50); border-color: var(--blue-100); margin-bottom: var(--space-6);">
-          <div class="card-body" style="padding: var(--space-4) var(--space-5);">
-            <p style="margin: 0; font-size: var(--text-sm); color: var(--blue-700);">
+        <div class="card card-welcome">
+          <div class="card-body">
+            <p class="card-welcome-text">
               Welcome, <strong id="user-name">User</strong>. Update your information below and click Save.
             </p>
           </div>
@@ -50,7 +50,7 @@
           <div class="card-body">
             <form id="contact-form">
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="first-name" class="form-input" pattern="^(?!.*(\s-|- ))[a-zA-Z][a-zA-Z\s\-]*$" required><span class="form-hint">Your first or given name(s) as on your ID. Include any other names (e.g. middle names) if applicable.</span></div>
+                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^(?!.*(\s-|- ))[a-zA-Z][a-zA-Z\s\-]*$" required><span class="form-hint">Your first or given name(s) as on your ID. Include any other names (e.g. middle names) if applicable.</span></div>
                 <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^(?!.*(\s-|- ))[a-zA-Z][a-zA-Z\s\-]*$" required><span class="form-hint">Your surname or last name as it appears on your ID.</span></div>
               </div>
               <div class="form-row">
@@ -95,7 +95,7 @@
               </div>
             </form>
           </div>
-          <div class="card-footer" style="display: flex; justify-content: flex-end;">
+          <div class="card-footer card-footer-actions">
             <a id="view-page-link" href="#" target="_blank" class="btn btn-secondary">View Page →</a>
           </div>
         </div>
