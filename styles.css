@@ -581,10 +581,12 @@ body {
 .btn-danger {
   background: var(--red-600);
   color: var(--white);
+  border-color: var(--red-700);
 }
 
 .btn-danger:hover:not(:disabled) {
   background: var(--red-700);
+  border-color: var(--red-700);
 }
 
 .btn-ghost {
@@ -778,7 +780,12 @@ body {
   font-weight: 600;
   color: var(--color-text-muted);
   font-size: var(--text-xs);
-  margin-right: var(--space-1);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.user-name-value-line {
+  display: block;
 }
 
 .user-name-value {
@@ -842,6 +849,7 @@ body {
   letter-spacing: 0.05em;
   min-width: 80px;
   flex-shrink: 0;
+  margin-right: var(--space-5);
 }
 
 .action-row-buttons {
@@ -887,7 +895,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--space-4);
+  gap: var(--space-8);
 }
 .action-row-combo .action-combo-group {
   display: flex;
@@ -897,6 +905,7 @@ body {
 .action-row-combo .action-combo-group .action-row-label {
   min-width: 80px;
   flex-shrink: 0;
+  margin-right: var(--space-5);
 }
 
 .user-details .user-meta-muted {

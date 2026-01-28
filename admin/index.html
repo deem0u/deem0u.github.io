@@ -853,7 +853,10 @@ function renderList(t) {
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
-          <div class="user-name"><span class="user-name-label">Full Name | (User Name):</span> <span class="user-name-value">${escapeHtml(namePart)}</span> | <span class="user-name-username">(${escapeHtml(f)})</span></div>
+          <div class="user-name">
+            <div class="user-name-label">Full Name | (User Name):</div>
+            <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(namePart)}</span> <span class="user-name-username">(${escapeHtml(f)})</span></div>
+          </div>
           <div class="user-meta">Email: ${escapeHtml(emailText)}</div>
           <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
@@ -869,7 +872,7 @@ function renderList(t) {
             <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit Page</button>
           </div>
           <div class="action-row-end">
-            <button class="btn btn-ghost btn-sm text-danger" onclick="confirmDeleteUser('${f}')">Delete User</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
           </div>
         </div>
         <div class="action-row action-row-combo">
