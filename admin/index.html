@@ -48,15 +48,15 @@
           <h1 class="auth-title">Sign In</h1>
           <p class="auth-subtitle">Enter your admin password to continue</p>
         </div>
-        <form id="login-form" onsubmit="return false;">
+        <form id="login-form">
           <div class="form-group">
             <label class="form-label">Admin Password</label>
             <input type="password" id="login-key" class="form-input" placeholder="Enter your password" required>
           </div>
           <div id="login-alert" class="alert"></div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-submit-btn">Sign In</button>
           <div class="text-center mt-4">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="if(typeof showScreen==='function'){showScreen('recovery');}else{console.error('showScreen not available');}">Forgot password?</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="forgot-password-link">Forgot password?</button>
           </div>
         </form>
       </div>
@@ -277,7 +277,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const newUserForm = document.getElementById('new-user-form');
     
     if (setupForm) setupForm.addEventListener('submit', handleSetup);
-    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (loginForm) {
+      loginForm.addEventListener('submit', function(ev) { ev.preventDefault(); doLogin(); });
+    }
+    var forgotLink = document.getElementById('forgot-password-link');
+    if (forgotLink) forgotLink.addEventListener('click', function(ev) { ev.preventDefault(); showScreen('recovery'); });
     if (recoveryForm1) recoveryForm1.addEventListener('submit', handleRecoveryStep1);
     if (recoveryForm2) recoveryForm2.addEventListener('submit', handleRecoveryStep2);
     if (contactForm) contactForm.addEventListener('submit', handleSave);
@@ -345,26 +349,39 @@ async function handleSetup(e) {
   finally { btn.disabled = false; btn.textContent = 'Complete Setup'; }
 }
 
-async function handleLogin(e) {
-  e.preventDefault();
-  const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('login-key').value;
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in...';
+async function doLogin() {
+  var keyInput = document.getElementById('login-key');
+  var key = keyInput ? keyInput.value.trim() : '';
+  var btn = document.getElementById('login-submit-btn');
+  var alertEl = document.getElementById('login-alert');
+  if (alertEl) { alertEl.className = 'alert'; alertEl.innerHTML = ''; }
+  if (!key) {
+    showAlert('login-alert', 'Please enter your password.', 'error');
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in...'; }
   try {
-    if (await verifyKey(key)) {
+    var ok = await verifyKey(key);
+    if (ok) {
       adminKey = key;
       localStorage.setItem('admin_key', key);
       await loadDashboard();
       showScreen('dashboard');
     } else {
-      showAlert('login-alert', 'Invalid password', 'error');
+      showAlert('login-alert', 'Invalid password. Please try again or use Forgot password?', 'error');
     }
   } catch (err) {
     console.error('Login error:', err);
-    showAlert('login-alert', 'Could not load dashboard. Check the console for details.', 'error');
+    var msg = (err && err.message) ? String(err.message) : 'Unknown error. Open browser console (F12) for details.';
+    showAlert('login-alert', 'Could not load dashboard: ' + msg, 'error');
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
   }
+}
+
+function handleLogin(e) {
+  if (e) e.preventDefault();
+  doLogin();
 }
 
 let recoveryEmail = null;
@@ -422,10 +439,32 @@ function resetRecovery() {
 function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert-2', 'Copied to clipboard!', 'success'); }
 
 async function loadDashboard() {
-  const [pR, kR] = await Promise.all([fetch(`${API}/api/pages`, { headers: { 'X-Admin-Key': adminKey } }), fetch(`${API}/api/keys`, { headers: { 'X-Admin-Key': adminKey } })]);
-  pages = (await pR.json()).pages || []; editKeys = (await kR.json()).editKeys || {};
-  await Promise.all(pages.map(async f => { try { const r = await fetch(`${API}/api/page/${f}`, { headers: { 'X-Admin-Key': adminKey } }); if (r.ok) { const d = await r.json(); userInfo[f] = { ...extractInfo(d.content), folder: f }; } } catch {} }));
-  populateUI();
+  var pRes = await fetch(API + '/api/pages', { headers: { 'X-Admin-Key': adminKey } });
+  var kRes = await fetch(API + '/api/keys', { headers: { 'X-Admin-Key': adminKey } });
+  if (!pRes.ok) throw new Error('Failed to load pages: ' + pRes.status);
+  if (!kRes.ok) throw new Error('Failed to load keys: ' + kRes.status);
+  var pData = await pRes.json();
+  var kData = await kRes.json();
+  pages = pData.pages || [];
+  editKeys = kData.editKeys || {};
+  userInfo = {};
+  for (var i = 0; i < pages.length; i++) {
+    var f = pages[i];
+    try {
+      var r = await fetch(API + '/api/page/' + f, { headers: { 'X-Admin-Key': adminKey } });
+      if (r.ok) {
+        var d = await r.json();
+        var info = extractInfo(d.content);
+        userInfo[f] = { firstName: info.firstName, surname: info.surname, email: info.email, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
+      }
+    } catch (e) { /* skip */ }
+  }
+  try {
+    populateUI();
+  } catch (e) {
+    console.error('populateUI error:', e);
+    throw new Error('Dashboard UI error: ' + (e.message || 'see console'));
+  }
 }
 
 function extractInfo(h) {
