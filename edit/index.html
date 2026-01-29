@@ -526,9 +526,6 @@ function generateHTML() {
   const lastUpdatedHeaderHtml = `<span class="last-updated-header">Last updated:<br><span class="last-updated-display" ${lastUpdatedData}>—</span></span>`;
   const D = window.FORM_DESCRIPTIONS || {};
   const lbl = (k) => (D[k] && D[k].label) ? D[k].label : k;
-  const Dzh = window.FORM_DESCRIPTIONS_ZH || {};
-  const zhFallback = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
-  const lblZh = (k) => zhFallback[k] || Dzh[k] || k;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -552,14 +549,14 @@ function generateHTML() {
 <div class="info additional-info"><span class="label">${lbl('additional-info')}</span>${additionalHtml}</div>
 <hr class="divider">
 <section class="section-zh">
-<h1>${lblZh('section-title')}${lastUpdatedHeaderHtml}</h1>
-<div class="info"><span class="label">${lblZh('first-name')}</span><span class="value">${firstName}</span></div>
-<div class="info"><span class="label">${lblZh('surname')}</span><span class="value">${surname}</span></div>
-<div class="info"><span class="label">${lblZh('email')}</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
-<div class="info"><span class="label">${lblZh('mobile')}</span><span class="value">${mobileHtml}</span></div>
-<div class="info"><span class="label">${lblZh('home-country')}</span><span class="value">${homeCountryHtml}</span></div>
-<div class="info"><span class="label">${lblZh('destination-details')}</span>${destHtml}</div>
-<div class="info additional-info"><span class="label">${lblZh('additional-info')}</span>${additionalHtml}</div>
+<h1>\u8054\u7cfb\u4fe1\u606f${lastUpdatedHeaderHtml}</h1>
+<div class="info"><span class="label">\u540d\u5b57</span><span class="value">${firstName}</span></div>
+<div class="info"><span class="label">\u59d3\u6c0f</span><span class="value">${surname}</span></div>
+<div class="info"><span class="label">\u7535\u5b50\u90ae\u4ef6</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
+<div class="info"><span class="label">\u7535\u8bdd</span><span class="value">${mobileHtml}</span></div>
+<div class="info"><span class="label">\u5c45\u4f4f\u56fd\u5bb6</span><span class="value">${homeCountryHtml}</span></div>
+<div class="info"><span class="label">\u76ee\u7684\u5730\u8be6\u60c5</span>${destHtml}</div>
+<div class="info additional-info"><span class="label">\u9644\u52a0\u4fe1\u606f</span>${additionalHtml}</div>
 </section>
 </div>
 ${formatTimestampScript}
