@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Contact Editor — Admin</title>
+  <meta name="theme-color" content="#272932">
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -891,7 +892,7 @@ function renderList(t) {
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
+            ${!hk ? '<span class="badge badge-warning">View Only</span>' : ''}
             ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
           </div>
         </div>
@@ -900,7 +901,7 @@ function renderList(t) {
         <div class="action-row action-row-contact">
           <span class="action-row-label">Contact Page</span>
           <div class="action-row-buttons">
-            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-teal btn-sm">View Live Page</a>
+            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm">View Live Page</a>
             <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
           </div>
           <div class="action-row-end">
