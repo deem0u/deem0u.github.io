@@ -320,7 +320,9 @@ function fillForm(h) {
   const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const g = l => { 
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
-    return m ? m[1].trim() : ''; 
+    if (!m) return '';
+    const v = m[1].trim();
+    return (v === '—' || !v) ? '' : v;
   };
   const decodeHtmlEntities = (s) => (s ?? '')
     .toString()
@@ -345,7 +347,9 @@ function fillForm(h) {
   };
   const gl = l => { 
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
-    return m ? m[1].trim() : ''; 
+    if (!m) return '';
+    const v = m[1].trim();
+    return (v === '—' || !v) ? '' : v;
   };
   
   document.getElementById('first-name').value = g('Given Names') || g('Name');

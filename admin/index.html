@@ -686,35 +686,28 @@ async function loadDashboard() {
 }
 
 function extractInfo(h) {
-  // New HTML structure: <span class="label">Name</span><span class="value">John</span>
+  const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const g = l => { 
-    const m = h.match(new RegExp(`<span class="label">${l}</span><span class="value">([^<]+)</span>`)); 
-    return m ? m[1].trim() : ''; 
+    const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
+    if (!m) return '';
+    const v = m[1].trim();
+    return (v === '—' || !v) ? '' : v;
   };
   const em = h.match(/href="mailto:([^"]+)"/);
   
-  // Try to extract ISO timestamp from data attribute (new format)
   const dataTimestampMatch = h.match(/data-timestamp="([^"]+)"/);
   const dataUpdatedByMatch = h.match(/data-updated-by="([^"]+)"/);
   
   let lastUpdated = null, updatedBy = null;
   
   if (dataTimestampMatch && dataUpdatedByMatch) {
-    // New format: ISO timestamp in data attribute
     lastUpdated = dataTimestampMatch[1];
     updatedBy = dataUpdatedByMatch[1];
   } else {
-    // Old format: formatted text in value
-    const lastUpdatedText = g('Last Updated');
-    if (lastUpdatedText && lastUpdatedText !== '—') {
-      // Try to extract updatedBy from old format
+    const lastUpdatedText = g('Last Updated') || g('Last updated');
+    if (lastUpdatedText) {
       const byMatch = lastUpdatedText.match(/ by (Admin|User)$/);
-      if (byMatch) {
-        updatedBy = byMatch[1].toLowerCase();
-        // For old pages, we can't get the exact ISO timestamp, so store null
-        // The display will show "Never updated" or we could try to parse, but it's unreliable
-        lastUpdated = null;
-      }
+      if (byMatch) { updatedBy = byMatch[1].toLowerCase(); lastUpdated = null; }
     }
   }
   
@@ -880,12 +873,13 @@ function renderList(t) {
       lastUpdatedDisplay = 'Unknown (old format)';
     }
     const namePart = `${u.firstName || '—'} ${u.surname || '—'}`.trim();
+    const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
     const emailText = u.email || 'No email';
     return `<div class="user-card">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
-          <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(namePart)}</span> <span class="user-name-username">(${escapeHtml(f)})</span></div>
+          <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span></div>
           <div class="user-meta">${escapeHtml(emailText)}</div>
           <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
@@ -1244,7 +1238,9 @@ function fillForm(h) {
   const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const g = l => { 
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
-    return m ? m[1].trim() : ''; 
+    if (!m) return '';
+    const v = m[1].trim();
+    return (v === '—' || !v) ? '' : v;
   };
   const gMulti = l => {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([\\s\\S]*?)</span>`));
@@ -1252,7 +1248,9 @@ function fillForm(h) {
   };
   const gl = l => { 
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
-    return m ? m[1].trim() : ''; 
+    if (!m) return '';
+    const v = m[1].trim();
+    return (v === '—' || !v) ? '' : v;
   };
   
   document.getElementById('first-name').value = g('Given Names') || g('Name'); 
