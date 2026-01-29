@@ -922,7 +922,7 @@ body {
 .user-status .badge-warning {
   background: var(--accent-yellow);
   color: var(--accent-dark);
-  border: 1px solid #c4b000;
+  border: 2px solid #c4b000 !important;
 }
 
 .user-status .badge-error {
