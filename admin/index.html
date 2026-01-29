@@ -51,7 +51,11 @@
         <form id="login-form">
           <div class="form-group">
             <label class="form-label">Admin Password</label>
-            <input type="password" id="login-key" class="form-input" placeholder="Enter your password" required>
+            <div class="form-inline-row">
+              <input type="password" id="login-key" class="form-input" placeholder="Enter your password" required autocomplete="current-password">
+              <button type="button" class="btn btn-ghost btn-sm" id="login-toggle-password" aria-label="Show password">Show</button>
+            </div>
+            <span class="form-hint">Use Show to verify what you enter and avoid paste issues on other devices.</span>
           </div>
           <div id="login-alert" class="alert"></div>
           <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-submit-btn">Sign In</button>
@@ -366,6 +370,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (loginForm) {
       loginForm.addEventListener('submit', function(ev) { ev.preventDefault(); doLogin(); });
     }
+    var togglePw = document.getElementById('login-toggle-password');
+    if (togglePw) {
+      togglePw.addEventListener('click', function() {
+        var inp = document.getElementById('login-key');
+        if (!inp) return;
+        var hidden = inp.type === 'password';
+        inp.type = hidden ? 'text' : 'password';
+        togglePw.textContent = hidden ? 'Hide' : 'Show';
+        togglePw.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+      });
+    }
     var forgotLink = document.getElementById('forgot-password-link');
     if (forgotLink) forgotLink.addEventListener('click', function(ev) { ev.preventDefault(); showScreen('recovery'); });
     if (recoveryForm1) recoveryForm1.addEventListener('submit', handleRecoveryStep1);
@@ -606,7 +621,7 @@ async function verifyKey(k) {
 
 async function handleSetup(e) {
   e.preventDefault();
-  const btn = e.target.querySelector('button[type="submit"]'), key = document.getElementById('setup-key').value, email = document.getElementById('setup-email').value;
+  const btn = e.target.querySelector('button[type="submit"]'), key = (document.getElementById('setup-key').value || '').trim(), email = (document.getElementById('setup-email').value || '').trim();
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Setting up...';
   try {
     const r = await fetch(`${API}/api/setup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: key, adminEmail: email }) });
@@ -657,37 +672,47 @@ let recoveryEmail = null;
 async function handleRecoveryStep1(e) {
   e.preventDefault();
   const btn = document.getElementById('recovery-submit-1');
-  recoveryEmail = document.getElementById('recovery-email').value;
+  recoveryEmail = document.getElementById('recovery-email').value.trim();
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Sending...';
   try {
     const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail }) });
-    const d = await r.json();
+    var text = await r.text();
+    var d = { error: 'Request failed' };
+    try { d = text ? JSON.parse(text) : d; } catch (_) {}
     if (r.ok && d.step === 'code_sent') {
       document.getElementById('recovery-mailto').href = d.mailto;
       document.getElementById('recovery-form-step1').classList.add('hidden');
       document.getElementById('recovery-step2').classList.remove('hidden');
       document.getElementById('recovery-subtitle').textContent = 'Check your email for the verification code';
-    } else { showAlert('recovery-alert-1', d.error, 'error'); }
-  } catch (e) { showAlert('recovery-alert-1', 'Connection error', 'error'); }
+    } else { showAlert('recovery-alert-1', d.error || 'Request failed', 'error'); }
+  } catch (e) {
+    var msg = (e && e.message) ? String(e.message) : '';
+    showAlert('recovery-alert-1', 'Connection error. Check your internet connection and that you can reach the server. If you\'re on a different network or device, try again from your usual network or later.' + (msg ? ' (' + msg + ')' : ''), 'error');
+  }
   finally { btn.disabled = false; btn.textContent = 'Send Recovery Code'; }
 }
 
 async function handleRecoveryStep2(e) {
   e.preventDefault();
   const btn = document.getElementById('recovery-submit-2');
-  const code = document.getElementById('recovery-code').value;
+  const code = document.getElementById('recovery-code').value.trim();
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Verifying...';
   try {
     const r = await fetch(`${API}/api/recover`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: recoveryEmail, code }) });
-    const d = await r.json();
+    var text = await r.text();
+    var d = { error: 'Request failed' };
+    try { d = text ? JSON.parse(text) : d; } catch (_) {}
     if (r.ok && d.step === 'complete') {
       document.getElementById('recovered-key').value = d.adminKey;
       document.getElementById('recovery-step2').classList.add('hidden');
       document.getElementById('recovery-step3').classList.remove('hidden');
       document.getElementById('recovery-back-link').classList.add('hidden');
       document.getElementById('recovery-subtitle').textContent = 'Password recovered successfully';
-    } else { showAlert('recovery-alert-2', d.error, 'error'); }
-  } catch (e) { showAlert('recovery-alert-2', 'Connection error', 'error'); }
+    } else { showAlert('recovery-alert-2', d.error || 'Request failed', 'error'); }
+  } catch (e) {
+    var msg = (e && e.message) ? String(e.message) : '';
+    showAlert('recovery-alert-2', 'Connection error. Check your internet connection and try again.' + (msg ? ' (' + msg + ')' : ''), 'error');
+  }
   finally { btn.disabled = false; btn.textContent = 'Verify Code'; }
 }
 
