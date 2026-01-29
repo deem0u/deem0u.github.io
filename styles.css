@@ -283,6 +283,10 @@ body {
 .card-welcome-text {
   margin: 0;
   font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.card-welcome-text strong {
   color: var(--accent-teal);
 }
 
@@ -515,6 +519,7 @@ body {
 
 .form-actions {
   display: flex;
+  flex-wrap: nowrap;
   gap: var(--space-3);
   margin-top: var(--space-6);
   padding-top: var(--space-6);
