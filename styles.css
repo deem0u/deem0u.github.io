@@ -1318,6 +1318,34 @@ body {
   color: var(--color-text-secondary);
   margin-bottom: var(--space-4);
 }
+.modal-qr-toggle {
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+.modal-qr-tab {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.modal-qr-tab:hover {
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+}
+.modal-qr-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--white, #fff);
+}
+.modal-qr-panels { margin-bottom: var(--space-4); }
+.modal-qr-panel.hidden { display: none !important; }
+.modal-qr-panel .modal-qr-image-wrap { margin-bottom: 0; }
 .modal-qr-image-wrap {
   text-align: center;
   margin-bottom: var(--space-4);

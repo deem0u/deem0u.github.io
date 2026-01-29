@@ -304,12 +304,21 @@
 
   <div id="modal-qr" class="modal-overlay">
     <div class="modal modal-qr">
-      <div class="modal-header"><h3 class="modal-title">QR Code &amp; Contact</h3></div>
+      <div class="modal-header"><h3 class="modal-title">QR Codes &amp; Contact</h3></div>
       <div class="modal-body" id="modal-qr-body">
         <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
         <div id="modal-qr-content" class="modal-qr-content hidden">
-          <p class="modal-qr-desc">Single QR encodes 3 records: URL, contact card (vCard), and plain text. Scan to import each separately; use with NFC tools to write to a tag.</p>
-          <div class="modal-qr-image-wrap"><img id="modal-qr-img" alt="QR code" class="modal-qr-img"></div>
+          <p class="modal-qr-desc">Toggle between three QRs: URL, vCard, or plain text. Copy or download as needed.</p>
+          <div class="modal-qr-toggle">
+            <button type="button" class="modal-qr-tab active" data-qr="url" aria-pressed="true">URL</button>
+            <button type="button" class="modal-qr-tab" data-qr="vcard" aria-pressed="false">vCard</button>
+            <button type="button" class="modal-qr-tab" data-qr="text" aria-pressed="false">Text</button>
+          </div>
+          <div class="modal-qr-panels">
+            <div id="modal-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="modal-qr-img-url" alt="QR code: URL" class="modal-qr-img"></div></div>
+            <div id="modal-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
+            <div id="modal-qr-panel-text" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-text" alt="QR code: text" class="modal-qr-img"></div></div>
+          </div>
           <div class="modal-qr-actions">
             <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
             <button type="button" class="btn btn-secondary btn-sm" id="modal-qr-copy-url">Copy URL</button>
@@ -1598,48 +1607,6 @@ function closeQrModal() {
   qrModalData = { url: '', vcard: '', text: '' };
 }
 
-function encodeNDEF(url, vcard, text) {
-  var te = new TextEncoder();
-  var parts = [];
-  function push(b) { if (typeof b === 'number') parts.push(b); else for (var i = 0; i < b.length; i++) parts.push(b[i]); }
-  function uint32Be(n) { push((n >>> 24) & 0xff); push((n >>> 16) & 0xff); push((n >>> 8) & 0xff); push(n & 0xff); }
-
-  var uriSuffix = url.replace(/^https:\/\//i, '');
-  var uriPayload = te.encode(uriSuffix);
-  var uriFull = new Uint8Array(1 + uriPayload.length);
-  uriFull[0] = 0x01;
-  uriFull.set(uriPayload, 1);
-  var vcardBytes = te.encode(vcard);
-  var textBytes = te.encode(text);
-  var textPayload = new Uint8Array(1 + textBytes.length);
-  textPayload[0] = 0;
-  textPayload.set(textBytes, 1);
-
-  var n = uriFull.length;
-  push(0x91);
-  push(1);
-  push(n);
-  push(0x55);
-  for (var i = 0; i < n; i++) push(uriFull[i]);
-
-  n = vcardBytes.length;
-  var mime = te.encode('text/vcard');
-  push(0x02);
-  push(mime.length);
-  uint32Be(n);
-  for (i = 0; i < mime.length; i++) push(mime[i]);
-  for (i = 0; i < n; i++) push(vcardBytes[i]);
-
-  n = textPayload.length;
-  push(0x41);
-  push(1);
-  uint32Be(n);
-  push(0x54);
-  for (i = 0; i < n; i++) push(textPayload[i]);
-
-  return new Uint8Array(parts);
-}
-
 function parseContactFromHtml(html, folder) {
   var doc = new DOMParser().parseFromString(html, 'text/html');
   var infos = doc.querySelectorAll('.info');
@@ -1684,7 +1651,6 @@ async function showQrModal(folder) {
   var loading = document.getElementById('modal-qr-loading');
   var content = document.getElementById('modal-qr-content');
   var errEl = document.getElementById('modal-qr-error');
-  var img = document.getElementById('modal-qr-img');
   var downloadA = document.getElementById('modal-qr-download-vcard');
   loading.classList.remove('hidden');
   content.classList.add('hidden');
@@ -1700,28 +1666,41 @@ async function showQrModal(folder) {
     var data = parseContactFromHtml(d.content || '', folder);
     qrModalData = { url: data.url, vcard: data.vcard, text: data.text };
 
-    var ndef = encodeNDEF(data.url, data.vcard, data.text);
-    var seg = [{ data: new Uint8ClampedArray(ndef), mode: 'byte' }];
-    var mod = await import('https://esm.sh/qrcode@1.5.4');
-    var QRCode = mod.default || mod;
-    var dataUrl = await QRCode.toDataURL(seg, { margin: 2, width: 280, errorCorrectionLevel: 'M' });
-    img.src = dataUrl;
-    img.alt = 'QR code – URL, contact card, and text (3 records).';
+    var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';
+    document.getElementById('modal-qr-img-url').src = base + encodeURIComponent(data.url);
+    document.getElementById('modal-qr-img-vcard').src = base + encodeURIComponent(data.vcard);
+    document.getElementById('modal-qr-img-text').src = base + encodeURIComponent(data.text);
 
     downloadA.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard);
     downloadA.download = (data.fn || folder).replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf';
 
+    switchQrTab('url');
     loading.classList.add('hidden');
     content.classList.remove('hidden');
   } catch (e) {
     loading.classList.add('hidden');
     errEl.textContent = (e && e.message) ? e.message : 'Something went wrong.';
-    if (/import|fetch|Failed to fetch|Dynamic import/i.test(String(errEl.textContent))) {
-      errEl.textContent = 'QR generation failed. Check your connection and try again.';
-    }
     errEl.classList.remove('hidden');
   }
 }
+
+function switchQrTab(name) {
+  var tabs = document.querySelectorAll('.modal-qr-tab');
+  var panels = document.querySelectorAll('.modal-qr-panel');
+  tabs.forEach(function(t) {
+    var on = t.dataset.qr === name;
+    t.classList.toggle('active', on);
+    t.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  panels.forEach(function(p) {
+    var on = p.id === 'modal-qr-panel-' + name;
+    p.classList.toggle('hidden', !on);
+  });
+}
+
+document.querySelectorAll('.modal-qr-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() { switchQrTab(this.dataset.qr); });
+});
 
 document.getElementById('modal-qr-copy-url').addEventListener('click', function() {
   if (!qrModalData.url) return;
