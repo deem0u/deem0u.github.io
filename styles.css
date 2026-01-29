@@ -829,7 +829,7 @@ body {
   gap: var(--space-4);
   padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--color-border-strong);
-  background: var(--white);
+  background: var(--color-bg-subtle);
 }
 
 
@@ -884,7 +884,7 @@ body {
   font-size: var(--text-sm);
   font-weight: 500;
   color: #9370db;
-  background: var(--color-bg-subtle);
+  background: var(--white);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--grey-300);
@@ -922,7 +922,6 @@ body {
 .user-status .badge-warning {
   background: var(--accent-yellow);
   color: var(--accent-dark);
-  border: 1px solid var(--accent-dark);
 }
 
 .user-status .badge-error {
