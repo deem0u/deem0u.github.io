@@ -1,10 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Contact Editor — Admin</title>
-  <meta name="theme-color" content="#272932">
+  <title>Contact Editor ÔÇö Admin</title>
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -113,7 +112,7 @@
         </div>
         
         <div class="text-center mt-4" id="recovery-back-link">
-          <button type="button" class="btn btn-ghost btn-sm" onclick="resetRecovery(); showScreen('login')">← Back to Sign In</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="resetRecovery(); showScreen('login')">ÔåÉ Back to Sign In</button>
         </div>
       </div>
     </main>
@@ -211,7 +210,7 @@
                     <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="new-dest-name" class="form-input"><span class="form-hint">e.g. resort, hotel, building or Airbnb name where you are staying.</span></div>
                     <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="new-dest-address" class="form-input"></div>
                     <div class="form-row">
-                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="new-dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address.</span></div>
+                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="new-dest-phone" class="form-input"><span class="form-hint">Contact number for this location ÔÇö e.g. front office, reception, or a person at this address.</span></div>
                       <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="new-dest-email" class="form-input"><span class="form-hint">e.g. general, reception or front office address, or someone at this location.</span></div>
                     </div>
                   </div>
@@ -263,7 +262,7 @@
                     <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input"><span class="form-hint">e.g. resort, hotel, building or Airbnb name where you are staying.</span></div>
                     <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input"></div>
                     <div class="form-row">
-                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address.</span></div>
+                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input"><span class="form-hint">Contact number for this location ÔÇö e.g. front office, reception, or a person at this address.</span></div>
                       <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-hint">e.g. general, reception or front office address, or someone at this location.</span></div>
                     </div>
                   </div>
@@ -276,7 +275,7 @@
                 <div class="form-actions">
                   <button type="submit" id="save-btn" class="btn btn-primary">Save Changes</button>
                   <button type="button" class="btn btn-secondary" onclick="loadPage()">Reset</button>
-                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost ml-auto">View Page →</a>
+                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost ml-auto">View Page ÔåÆ</a>
                 </div>
               </form>
             </div>
@@ -462,7 +461,7 @@ function selectCountry(which, value) {
 }
 
 function resolveCountryDisplay(parsed) {
-  if (!parsed || (parsed.trim()) === '' || parsed.trim() === '—') return null;
+  if (!parsed || (parsed.trim()) === '' || parsed.trim() === 'ÔÇö') return null;
   var p = parsed.trim();
   var list = window.COUNTRIES || [];
   for (var i = 0; i < list.length; i++) {
@@ -707,7 +706,7 @@ function extractInfo(h) {
   } else {
     // Old format: formatted text in value
     const lastUpdatedText = g('Last Updated');
-    if (lastUpdatedText && lastUpdatedText !== '—') {
+    if (lastUpdatedText && lastUpdatedText !== 'ÔÇö') {
       // Try to extract updatedBy from old format
       const byMatch = lastUpdatedText.match(/ by (Admin|User)$/);
       if (byMatch) {
@@ -760,7 +759,7 @@ function populatePageSelect() {
     const u = userInfo[f] || {};
     const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
     const line1 = `${displayName} (${f})`;
-    const line2 = u.email || '—';
+    const line2 = u.email || 'ÔÇö';
     return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
       <div class="searchable-select-option-title">${line1}</div>
       <div class="searchable-select-option-meta">${line2}</div>
@@ -880,7 +879,7 @@ function renderList(t) {
     } else if (u.updatedBy) {
       lastUpdatedDisplay = 'Unknown (old format)';
     }
-    const namePart = `${u.firstName || '—'} ${u.surname || '—'}`.trim();
+    const namePart = `${u.firstName || 'ÔÇö'} ${u.surname || 'ÔÇö'}`.trim();
     const emailText = u.email || 'No email';
     return `<div class="user-card">
       <div class="user-card-header">
@@ -888,11 +887,11 @@ function renderList(t) {
         <div class="user-details">
           <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(namePart)}</span> <span class="user-name-username">(${escapeHtml(f)})</span></div>
           <div class="user-meta">${escapeHtml(emailText)}</div>
-          <div class="user-meta user-meta-muted">Last updated: <span class="user-meta-muted-value">${escapeHtml(lastUpdatedDisplay)}</span></div>
+          <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${!hk ? '<span class="badge badge-warning">View Only</span>' : ''}
+            ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
             ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
           </div>
         </div>
@@ -901,8 +900,8 @@ function renderList(t) {
         <div class="action-row action-row-contact">
           <span class="action-row-label">Contact Page</span>
           <div class="action-row-buttons">
-            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm">View Live Page</a>
-            <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
+            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-secondary btn-sm">View Live Page</a>
+            <button class="btn btn-secondary btn-sm" onclick="editUser('${f}')">Edit Page</button>
           </div>
           <div class="action-row-end">
             <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
@@ -914,15 +913,15 @@ function renderList(t) {
             <div class="action-row-buttons">
               ${!hk
                 ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Grant Access</button>`
-                : `<button class="btn btn-cyan btn-sm" onclick="confirmRegenerate('${f}')">Reset Access</button>
-                   <button class="btn btn-danger btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
+                : `<button class="btn btn-secondary btn-sm" onclick="confirmRegenerate('${f}')">Reset Access</button>
+                   <button class="btn btn-warning btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
             </div>
           </div>
           ${hk ? `<div class="action-combo-group">
             <span class="action-row-label">Share Links</span>
             <div class="action-row-buttons">
               ${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
-              <button class="btn btn-primary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
             </div>
           </div>` : ''}
         </div>
@@ -1019,7 +1018,7 @@ async function handleCreateUser(e) {
       };
       populateUI();
       hideNewUserForm();
-      showAlert('alert-manage', `Created ${folder}. <a href="${d.url}" target="_blank">View page →</a>`, 'success');
+      showAlert('alert-manage', `Created ${folder}. <a href="${d.url}" target="_blank">View page ÔåÆ</a>`, 'success');
       switchTab('manage');
     } else {
       showAlert('alert-new-user', d.error || 'Failed to create', 'error');
@@ -1078,7 +1077,7 @@ function decodeHtmlEntities(s) {
 
 function decodeMultiline(s) {
   const raw = (s ?? '').toString().trim();
-  if (!raw || raw === '—') return '';
+  if (!raw || raw === 'ÔÇö') return '';
   return decodeHtmlEntities(raw)
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, '');
@@ -1176,19 +1175,19 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
   const destParts = [dName, dAddr, dPhone, dEmail].map(function(t) {
     return '<span>' + (t ? escapeHtml(t) : '') + '</span>';
   });
-  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
+  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">ÔÇö</span>';
   const destHtmlZh = destHtml;
 
-  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
+  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">ÔÇö</span>';
   // Store ISO timestamp and updatedBy in data attributes for client-side formatting
   const lastUpdatedData = lastUpdated ? `data-timestamp="${lastUpdated}" data-updated-by="${updatedBy}"` : '';
-  const lastUpdatedHeaderHtml = lastUpdated ? `<span class="last-updated-header">Last updated:<br><span class="last-updated-display" ${lastUpdatedData}>—</span></span>` : '';
+  const lastUpdatedHeaderHtml = lastUpdated ? `<span class="last-updated-header">Last updated:<br><span class="last-updated-display" ${lastUpdatedData}>ÔÇö</span></span>` : '';
   const hasMobile = mobile != null && String(mobile).trim() !== '';
   const mobileHtml = hasMobile
     ? `<a href="tel:${(mobileLink || '').replace(/"/g, '&quot;')}">${escapeHtml(String(mobile).trim())}</a>`
-    : '—';
+    : 'ÔÇö';
   const hasHomeCountry = homeCountry != null && String(homeCountry).trim() !== '';
-  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : '—';
+  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : 'ÔÇö';
   var D = window.FORM_DESCRIPTIONS || {};
   var lbl = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
 
@@ -1214,14 +1213,14 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
 <div class="info additional-info"><span class="label">${lbl('additional-info')}</span>${additionalHtml}</div>
 <hr class="divider">
 <section class="section-zh">
-<h1>联系信息${lastUpdatedHeaderHtml}</h1>
-<div class="info"><span class="label">名字</span><span class="value">${firstName}</span></div>
-<div class="info"><span class="label">姓氏</span><span class="value">${surname}</span></div>
-<div class="info"><span class="label">电子邮件</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
-<div class="info"><span class="label">手机</span><span class="value">${mobileHtml}</span></div>
-<div class="info"><span class="label">所属国家</span><span class="value">${homeCountryHtml}</span></div>
-<div class="info"><span class="label">目的地详情</span>${destHtmlZh}</div>
-<div class="info additional-info"><span class="label">补充信息</span>${additionalHtml}</div>
+<h1>Þüöþ│╗õ┐íµü»${lastUpdatedHeaderHtml}</h1>
+<div class="info"><span class="label">ÕÉìÕ¡ù</span><span class="value">${firstName}</span></div>
+<div class="info"><span class="label">Õºôµ░Å</span><span class="value">${surname}</span></div>
+<div class="info"><span class="label">þöÁÕ¡ÉÚé«õ╗Â</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
+<div class="info"><span class="label">µëïµ£║</span><span class="value">${mobileHtml}</span></div>
+<div class="info"><span class="label">µëÇÕ▒×Õø¢Õ«Â</span><span class="value">${homeCountryHtml}</span></div>
+<div class="info"><span class="label">þø«þÜäÕ£░Þ»ªµâà</span>${destHtmlZh}</div>
+<div class="info additional-info"><span class="label">ÞíÑÕààõ┐íµü»</span>${additionalHtml}</div>
 </section>
 </div>
 ${formatTimestampScript}
@@ -1276,7 +1275,7 @@ function fillForm(h) {
   document.getElementById('surname').value = g('Family Name') || g('Surname');
   document.getElementById('email').value = gl('Email'); 
   var mv = gl('Contact Number') || gl('Mobile');
-  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '—' || !plain) mv = ''; }
+  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === 'ÔÇö' || !plain) mv = ''; }
   document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
   var hc = resolveCountryDisplay(g('Home Country'));
   setCountryDropdown('edit', hc || null);
@@ -1383,8 +1382,8 @@ Daniel Mounnarath`;
 
 function copyLink(f, btn) {
   navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
-    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-primary');
-    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-primary'); }, 2000);
+    const o = btn.innerHTML; btn.innerHTML = 'Ô£ô Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-secondary');
+    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-secondary'); }, 2000);
   });
 }
 

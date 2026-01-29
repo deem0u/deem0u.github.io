@@ -1,10 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Update Your Contact Information</title>
-  <meta name="theme-color" content="#272932">
   <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -80,7 +79,7 @@
                   <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input"><span class="form-hint">e.g. resort, hotel, building or Airbnb name where you are staying.</span></div>
                   <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input"></div>
                   <div class="form-row">
-                    <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address.</span></div>
+                    <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input"><span class="form-hint">Contact number for this location ÔÇö e.g. front office, reception, or a person at this address.</span></div>
                     <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-hint">e.g. general, reception or front office address, or someone at this location.</span></div>
                   </div>
                 </div>
@@ -97,7 +96,7 @@
             </form>
           </div>
           <div class="card-footer card-footer-actions">
-            <a id="view-page-link" href="#" target="_blank" class="btn btn-primary">View Page →</a>
+            <a id="view-page-link" href="#" target="_blank" class="btn btn-secondary">View Page ÔåÆ</a>
           </div>
         </div>
       </div>
@@ -176,7 +175,7 @@ function applyFormDescriptionsEdit() {
 }
 
 function resolveCountryDisplayEdit(parsed) {
-  if (!parsed || (parsed.trim()) === '' || parsed.trim() === '—') return null;
+  if (!parsed || (parsed.trim()) === '' || parsed.trim() === 'ÔÇö') return null;
   var p = parsed.trim();
   var list = window.COUNTRIES || [];
   for (var i = 0; i < list.length; i++) {
@@ -336,7 +335,7 @@ function fillForm(h) {
 
   const decodeMultiline = (s) => {
     const raw = (s ?? '').toString().trim();
-    if (!raw || raw === '—') return '';
+    if (!raw || raw === 'ÔÇö') return '';
     return decodeHtmlEntities(raw)
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<[^>]*>/g, '');
@@ -356,7 +355,7 @@ function fillForm(h) {
   document.getElementById('surname').value = g('Family Name') || g('Surname');
   document.getElementById('email').value = gl('Email');
   var mv = gl('Contact Number') || gl('Mobile');
-  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '—' || !plain) mv = ''; }
+  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === 'ÔÇö' || !plain) mv = ''; }
   document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
   var hc = resolveCountryDisplayEdit(g('Home Country'));
   setCountryDropdownEdit(hc || null);
@@ -514,19 +513,19 @@ function generateHTML() {
   const dEmail = (destEmail == null ? '' : String(destEmail)).trim();
   const hasDest = !!(dName || dAddr || dPhone || dEmail);
   const destParts = [dName, dAddr, dPhone, dEmail].map(t => '<span>' + (t ? escapeHtml(t) : '') + '</span>');
-  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
+  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">ÔÇö</span>';
 
-  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
+  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">ÔÇö</span>';
   const hasMobile = mobile != null && String(mobile).trim() !== '';
   const ml = (mobile || '').replace(/\s/g, '');
   const mobileHtml = hasMobile
     ? `<a href="tel:${ml.replace(/"/g, '&quot;')}">${escapeHtml(String(mobile).trim())}</a>`
-    : '—';
+    : 'ÔÇö';
   const hasHomeCountry = homeCountry != null && String(homeCountry).trim() !== '';
-  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : '—';
+  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : 'ÔÇö';
   const now = new Date().toISOString();
   const lastUpdatedData = `data-timestamp="${now}" data-updated-by="user"`;
-  const lastUpdatedHeaderHtml = `<span class="last-updated-header">Last updated:<br><span class="last-updated-display" ${lastUpdatedData}>—</span></span>`;
+  const lastUpdatedHeaderHtml = `<span class="last-updated-header">Last updated:<br><span class="last-updated-display" ${lastUpdatedData}>ÔÇö</span></span>`;
   const D = window.FORM_DESCRIPTIONS || {};
   const lbl = (k) => (D[k] && D[k].label) ? D[k].label : k;
 
@@ -552,14 +551,14 @@ function generateHTML() {
 <div class="info additional-info"><span class="label">${lbl('additional-info')}</span>${additionalHtml}</div>
 <hr class="divider">
 <section class="section-zh">
-<h1>联系信息${lastUpdatedHeaderHtml}</h1>
-<div class="info"><span class="label">名字</span><span class="value">${firstName}</span></div>
-<div class="info"><span class="label">姓氏</span><span class="value">${surname}</span></div>
-<div class="info"><span class="label">电子邮件</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
-<div class="info"><span class="label">手机</span><span class="value">${mobileHtml}</span></div>
-<div class="info"><span class="label">所属国家</span><span class="value">${homeCountryHtml}</span></div>
-<div class="info"><span class="label">目的地详情</span>${destHtml}</div>
-<div class="info additional-info"><span class="label">补充信息</span>${additionalHtml}</div>
+<h1>Þüöþ│╗õ┐íµü»${lastUpdatedHeaderHtml}</h1>
+<div class="info"><span class="label">ÕÉìÕ¡ù</span><span class="value">${firstName}</span></div>
+<div class="info"><span class="label">Õºôµ░Å</span><span class="value">${surname}</span></div>
+<div class="info"><span class="label">þöÁÕ¡ÉÚé«õ╗Â</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
+<div class="info"><span class="label">µëïµ£║</span><span class="value">${mobileHtml}</span></div>
+<div class="info"><span class="label">µëÇÕ▒×Õø¢Õ«Â</span><span class="value">${homeCountryHtml}</span></div>
+<div class="info"><span class="label">þø«þÜäÕ£░Þ»ªµâà</span>${destHtml}</div>
+<div class="info additional-info"><span class="label">ÞíÑÕààõ┐íµü»</span>${additionalHtml}</div>
 </section>
 </div>
 ${formatTimestampScript}

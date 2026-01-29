@@ -1,11 +1,6 @@
-/* 
+﻿/* 
  * Contact Page Editor - Design System
- * Clean, modern interface with clear visual hierarchy.
- * Used by: admin (Admin dashboard), edit (self-service editor).
- * Not used by: user contact pages (*/index.html) — those stay minimal.
- *
- * Accent usage: avatar & username/folder = purple (#9370db);
- * View Live Page, Copy = dark (#272932); Grant Access = teal; Reset = cyan.
+ * Clean, modern interface with clear visual hierarchy
  */
 
 :root {
@@ -20,19 +15,13 @@
   --grey-900: #333333;
 
   /* Accent palette */
-  --accent-dark: #272932;
-  --accent-dark-hover: #1a1d24;
-  --accent-red: #710000;
-  --accent-red-hover: #8a0000;
-  --accent-yellow: #fdf500;
-  --accent-teal: #1ac5b0;
-  --accent-teal-hover: #15a894;
-  --accent-cyan: #37ebf3;
-  --accent-cyan-hover: #2bc9d6;
-  --accent-purple: #9370db;
-  --accent-pink: #e455ae;
-  --accent-magenta: #cb1dcd;
-  --accent-warm: #d1c5c0;
+  --accent-navy: #020617;
+  --accent-blue: #003566;
+  --accent-teal: #008891;
+  --accent-teal-dark: #006d75;
+  --accent-mint: #00f5d4;
+  --accent-coral: #ff3366;
+  --accent-coral-dark: #e62959;
 
   /* Semantic colors */
   --color-bg: var(--white);
@@ -43,15 +32,15 @@
   --color-text: var(--grey-900);
   --color-text-secondary: var(--grey-500);
   --color-text-muted: var(--grey-400);
-  --color-primary: var(--accent-dark);
-  --color-primary-hover: var(--accent-dark-hover);
+  --color-primary: var(--accent-blue);
+  --color-primary-hover: var(--accent-navy);
   --color-success: var(--accent-teal);
-  --color-success-hover: var(--accent-teal-hover);
-  --color-danger: var(--accent-red);
-  --color-danger-hover: var(--accent-red-hover);
-  --color-warning: var(--accent-yellow);
-  --focus-ring: rgba(26, 197, 176, 0.35);
-  --focus-ring-primary: rgba(39, 41, 50, 0.3);
+  --color-success-hover: var(--accent-teal-dark);
+  --color-danger: var(--accent-coral);
+  --color-danger-hover: var(--accent-coral-dark);
+  --color-warning: var(--accent-blue);
+  --focus-ring: rgba(0, 136, 145, 0.35);
+  --focus-ring-primary: rgba(0, 53, 102, 0.3);
 
   /* Typography */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -148,7 +137,7 @@ body {
 .app-logo-icon {
   width: 32px;
   height: 32px;
-  background: var(--accent-purple);
+  background: var(--color-primary);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -216,7 +205,7 @@ body {
   align-items: center;
   justify-content: center;
   margin: 0 auto var(--space-4);
-  color: var(--accent-teal);
+  color: var(--color-primary);
 }
 
 .auth-title {
@@ -288,7 +277,7 @@ body {
 .card-welcome-text {
   margin: 0;
   font-size: var(--text-sm);
-  color: var(--accent-purple);
+  color: var(--color-primary);
 }
 
 /* ========================================
@@ -588,12 +577,11 @@ body {
 
 .btn-warning {
   background: var(--color-warning);
-  color: var(--accent-dark);
+  color: var(--white);
 }
 
 .btn-warning:hover:not(:disabled) {
-  background: var(--grey-400);
-  color: var(--accent-dark);
+  background: var(--color-primary-hover);
 }
 
 .btn-danger {
@@ -605,35 +593,6 @@ body {
 .btn-danger:hover:not(:disabled) {
   background: var(--color-danger-hover);
   border-color: var(--color-danger-hover);
-}
-
-.btn-teal {
-  background: var(--accent-teal);
-  color: var(--white);
-}
-
-.btn-teal:hover:not(:disabled) {
-  background: var(--accent-teal-hover);
-}
-
-.btn-cyan {
-  background: var(--accent-cyan);
-  color: var(--accent-dark);
-  border: 1px solid var(--accent-teal);
-}
-
-.btn-cyan:hover:not(:disabled) {
-  background: var(--accent-cyan-hover);
-  color: var(--accent-dark);
-  border-color: var(--accent-teal);
-}
-
-.btn-teal:focus {
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-
-.btn-cyan:focus {
-  box-shadow: 0 0 0 3px rgba(55, 235, 243, 0.4);
 }
 
 .btn-ghost {
@@ -702,7 +661,6 @@ body {
   background: var(--white);
   color: var(--color-text);
   box-shadow: var(--shadow-sm);
-  border-bottom: 2px solid var(--accent-teal);
 }
 
 .tab-content {
@@ -888,11 +846,10 @@ body {
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: 500;
-  color: var(--accent-purple);
-  background: var(--white);
+  color: var(--color-text-muted);
+  background: var(--color-bg-muted);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--grey-300);
 }
 
 .user-field-label {
@@ -903,8 +860,8 @@ body {
 }
 
 .user-card-header .user-meta {
-  font-size: var(--text-sm);
-  color: var(--color-text);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
   display: block;
   line-height: 1.4;
 }
@@ -920,18 +877,18 @@ body {
   gap: var(--space-1);
 }
 
-/* Can Edit badge removed – hide if any legacy markup still has it */
 .user-status .badge-success {
-  display: none;
+  background: var(--color-success);
+  color: var(--white);
 }
 
 .user-status .badge-warning {
-  background: var(--accent-yellow);
-  color: var(--accent-dark);
+  background: var(--color-warning);
+  color: var(--white);
 }
 
 .user-status .badge-error {
-  background: var(--accent-red);
+  background: var(--color-danger);
   color: var(--white);
 }
 
@@ -1014,14 +971,8 @@ body {
 }
 
 .user-details .user-meta-muted {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-.user-meta-muted-value {
-  color: var(--color-text);
-  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
 }
 
 .text-danger {
@@ -1036,8 +987,8 @@ body {
 .user-avatar {
   width: 40px;
   height: 40px;
-  background: var(--accent-purple);
-  color: var(--white);
+  background: var(--grey-200);
+  color: var(--color-primary);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -1097,7 +1048,7 @@ body {
 
 .badge-warning {
   background: var(--grey-200);
-  color: var(--accent-dark);
+  color: var(--color-warning);
 }
 
 .badge-error {
