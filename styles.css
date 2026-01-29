@@ -143,7 +143,7 @@ body {
 .app-logo-icon {
   width: 32px;
   height: 32px;
-  background: var(--accent-teal);
+  background: var(--accent-purple);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -283,7 +283,7 @@ body {
 .card-welcome-text {
   margin: 0;
   font-size: var(--text-sm);
-  color: var(--accent-teal);
+  color: var(--accent-purple);
 }
 
 /* ========================================
@@ -920,11 +920,6 @@ body {
   color: var(--white);
 }
 
-.user-status .badge-dark {
-  background: var(--accent-dark);
-  color: var(--white);
-}
-
 .user-status .badge-warning {
   background: var(--accent-yellow);
   color: var(--accent-dark);
@@ -1108,11 +1103,6 @@ body {
 .badge-info {
   background: var(--grey-200);
   color: var(--color-primary);
-}
-
-.badge-dark {
-  background: var(--grey-200);
-  color: var(--accent-dark);
 }
 
 /* ========================================

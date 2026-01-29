@@ -891,8 +891,8 @@ function renderList(t) {
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-dark">View Only</span>'}
-            ${isIncomplete(f) ? '<span class="badge badge-error">Page Incomplete</span>' : ''}
+            ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-warning">View Only</span>'}
+            ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
           </div>
         </div>
       </div>
@@ -921,7 +921,7 @@ function renderList(t) {
             <span class="action-row-label">Share Links</span>
             <div class="action-row-buttons">
               ${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
-              <button class="btn btn-cyan btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
+              <button class="btn btn-primary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
             </div>
           </div>` : ''}
         </div>
@@ -1382,8 +1382,8 @@ Daniel Mounnarath`;
 
 function copyLink(f, btn) {
   navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
-    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-cyan');
-    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-cyan'); }, 2000);
+    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-primary');
+    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-primary'); }, 2000);
   });
 }
 
