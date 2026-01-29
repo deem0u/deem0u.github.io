@@ -321,6 +321,21 @@ body {
   margin-top: var(--space-1);
 }
 
+.form-error {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  margin-top: var(--space-1);
+}
+
+.form-input.is-invalid {
+  border-color: var(--color-danger);
+}
+
+.form-input.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(113, 0, 0, 0.25);
+}
+
 .form-input,
 .form-select,
 .form-textarea {

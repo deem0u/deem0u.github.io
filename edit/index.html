@@ -50,12 +50,12 @@
           <div class="card-body">
             <form id="contact-form">
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^(?!.*(\s-|- ))[a-zA-Z][a-zA-Z\s\-]*$" required><span class="form-hint">Your first or given name(s) as on your ID. Include any other names (e.g. middle names) if applicable.</span></div>
-                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^(?!.*(\s-|- ))[a-zA-Z][a-zA-Z\s\-]*$" required><span class="form-hint">Your surname or last name as it appears on your ID.</span></div>
+                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\-]*$" maxlength="32" required autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\-]*$" maxlength="32" required autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required><span class="form-hint">A valid email address where you can be contacted.</span></div>
-                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9][0-9\s\-]{7,24}" inputmode="tel"><span class="form-hint">Include country code. e.g. Australian mobile +61 412 345 678, Victorian landline +61 3 9876 5432.</span></div>
+                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-email" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="tel"><span class="form-hint"></span><span class="form-error" id="error-mobile" role="alert"></span></div>
               </div>
               <div class="form-group">
                 <label class="form-label">Home Country</label>
@@ -65,7 +65,7 @@
                   </button>
                   <div class="searchable-select-dropdown" id="home-country-edit-dropdown">
                     <div class="searchable-select-search">
-                      <input type="text" id="home-country-edit-search" placeholder="Search countries..." oninput="filterCountryOptionsEdit()">
+                      <input type="text" id="home-country-edit-search" oninput="filterCountryOptionsEdit()">
                     </div>
                     <div class="searchable-select-options" id="home-country-edit-options"></div>
                   </div>
@@ -75,18 +75,20 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Destination Details</label>
+                <span class="form-hint" id="hint-destination-details"></span>
                 <div class="form-section">
-                  <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input"><span class="form-hint">e.g. resort, hotel, building or Airbnb name where you are staying.</span></div>
-                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input"></div>
+                  <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200"></div>
+                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200"></div>
                   <div class="form-row">
-                    <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input"><span class="form-hint">Contact number for this location — e.g. front office, reception, or a person at this address.</span></div>
-                    <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-hint">e.g. general, reception or front office address, or someone at this location.</span></div>
+                    <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-dest-phone" role="alert"></span></div>
+                    <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-error" id="error-dest-email" role="alert"></span></div>
                   </div>
                 </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Additional Information</label>
-                <textarea id="additional-info" class="form-textarea" rows="3" placeholder="e.g. emergency contact, special instructions"></textarea>
+                <textarea id="additional-info" class="form-textarea form-textarea-additional" rows="8" maxlength="500"></textarea>
+                <span class="form-hint">Optional. e.g. emergency contact, special instructions.</span>
               </div>
               <div id="editor-alert" class="alert"></div>
               <div class="form-actions form-actions-editor">
@@ -110,12 +112,7 @@ let folder = null, editKey = null, currentSha = null;
 function formatContactNumber(val) {
   var d = (val || '').replace(/\D/g, '');
   if (!d.length) return '';
-  var ccLen = (d.charAt(0) === '1' && d.length >= 11) ? 1 : 2;
-  var cc = d.substring(0, ccLen);
-  var rest = d.substring(ccLen);
-  var s = '+' + cc;
-  for (var i = 0; i < rest.length; i += 3) s += ' ' + rest.substring(i, i + 3);
-  return s.trim();
+  return '+' + d.substring(0, 20);
 }
 
 function attachContactNumberMask() {
@@ -125,31 +122,17 @@ function attachContactNumberMask() {
     inp.addEventListener('input', function() {
       var val = this.value;
       var pos = this.selectionStart;
-      var digitsBeforeCursor = (val.substring(0, pos).replace(/\D/g, '')).length;
+      var digitsBefore = (val.substring(0, pos).replace(/\D/g, '')).length;
       var formatted = formatContactNumber(val);
       if (formatted !== val) {
         this.value = formatted;
-        var newPos = formatted.length;
-        if (digitsBeforeCursor > 0) {
-          var digitCount = 0;
-          for (var i = 0; i < formatted.length; i++) {
-            if (/\d/.test(formatted[i])) {
-              digitCount++;
-              if (digitCount >= digitsBeforeCursor) {
-                newPos = i + 1;
-                break;
-              }
-            }
-          }
-        } else {
-          newPos = 0;
-        }
+        var newPos = Math.min(digitsBefore + 1, formatted.length);
         this.setSelectionRange(newPos, newPos);
       }
     });
     inp.addEventListener('blur', function() {
       if (this.value && !/^\+[0-9]/.test(this.value)) {
-        var d = this.value.replace(/\D/g, '');
+        var d = (this.value || '').replace(/\D/g, '');
         if (d.length) this.value = formatContactNumber('+' + d);
       }
     });
@@ -169,6 +152,135 @@ function applyFormDescriptionsEdit() {
     if (!group) return;
     var hint = group.querySelector('.form-hint');
     if (hint && cfg.hint) hint.innerHTML = cfg.hint;
+  });
+  var dd = c['destination-details'];
+  if (dd && dd.hint) {
+    var h = document.getElementById('hint-destination-details');
+    if (h) h.innerHTML = dd.hint;
+  }
+}
+
+function validateGivenNames(val, required) {
+  var s = (val || '').trim();
+  var msg = 'Given names must be up to 32 characters, using only letters and hyphens.';
+  if (!s) return required ? { valid: false, message: 'Given names are required.' } : { valid: true };
+  if (s.length > 32) return { valid: false, message: msg };
+  if (!/^[a-zA-Z][a-zA-Z\-]*$/.test(s)) return { valid: false, message: msg };
+  return { valid: true };
+}
+
+function initGivenNamesValidationEdit() {
+  var inp = document.getElementById('first-name');
+  var errEl = document.getElementById('error-first-name');
+  if (!inp || !errEl) return;
+  var required = true;
+  function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+  function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+  inp.addEventListener('blur', function() {
+    var r = validateGivenNames(this.value, required);
+    if (r.valid) clearErr(); else showErr(r.message);
+  });
+  inp.addEventListener('input', function() {
+    var r = validateGivenNames(this.value, required);
+    if (r.valid) clearErr();
+  });
+}
+
+function validateFamilyName(val, required) {
+  var s = (val || '').trim();
+  var msg = 'Family name must be up to 32 characters, using only letters and hyphens.';
+  if (!s) return required ? { valid: false, message: 'Family name is required.' } : { valid: true };
+  if (s.length > 32) return { valid: false, message: msg };
+  if (!/^[a-zA-Z][a-zA-Z\-]*$/.test(s)) return { valid: false, message: msg };
+  return { valid: true };
+}
+
+function initFamilyNameValidationEdit() {
+  var inp = document.getElementById('surname');
+  var errEl = document.getElementById('error-surname');
+  if (!inp || !errEl) return;
+  var required = true;
+  function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+  function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+  inp.addEventListener('blur', function() {
+    var r = validateFamilyName(this.value, required);
+    if (r.valid) clearErr(); else showErr(r.message);
+  });
+  inp.addEventListener('input', function() {
+    var r = validateFamilyName(this.value, required);
+    if (r.valid) clearErr();
+  });
+}
+
+function validateEmailInput(inp, required) {
+  var s = (inp.value || '').trim();
+  var msg = 'Please enter a valid email address (e.g. name@example.com).';
+  if (!s) return required ? { valid: false, message: 'Email is required.' } : { valid: true };
+  if (!inp.validity.valid) return { valid: false, message: msg };
+  return { valid: true };
+}
+
+function initEmailValidationEdit() {
+  var inp = document.getElementById('email');
+  var errEl = document.getElementById('error-email');
+  if (!inp || !errEl) return;
+  var required = true;
+  function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+  function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+  inp.addEventListener('blur', function() {
+    var r = validateEmailInput(this, required);
+    if (r.valid) clearErr(); else showErr(r.message);
+  });
+  inp.addEventListener('input', function() {
+    var r = validateEmailInput(this, required);
+    if (r.valid) clearErr();
+  });
+}
+
+function validateContactNumber(val) {
+  var s = (val || '').trim();
+  var msg = 'Please enter a valid phone number including country code (e.g. +61432123456).';
+  if (!s) return { valid: true };
+  if (!/^\+[0-9]{8,20}$/.test(s)) return { valid: false, message: msg };
+  return { valid: true };
+}
+
+function initContactNumberValidationEdit() {
+  var configs = [
+    { id: 'mobile', errId: 'error-mobile' },
+    { id: 'dest-phone', errId: 'error-dest-phone' }
+  ];
+  configs.forEach(function(c) {
+    var inp = document.getElementById(c.id);
+    var errEl = document.getElementById(c.errId);
+    if (!inp || !errEl) return;
+    function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+    function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+    inp.addEventListener('blur', function() {
+      var r = validateContactNumber(this.value);
+      if (r.valid) clearErr(); else showErr(r.message);
+    });
+    inp.addEventListener('input', function() {
+      var r = validateContactNumber(this.value);
+      if (r.valid) clearErr();
+    });
+  });
+}
+
+function initDestinationEmailValidationEdit() {
+  var inp = document.getElementById('dest-email');
+  var errEl = document.getElementById('error-dest-email');
+  if (!inp || !errEl) return;
+  var required = false;
+  function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+  function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+  inp.addEventListener('blur', function() {
+    var r = validateEmailInput(this, required);
+    if (r.valid) clearErr(); else showErr(r.message);
+  });
+  inp.addEventListener('input', function() {
+    var r = validateEmailInput(this, required);
+    if (r.valid) clearErr();
   });
 }
 
@@ -270,6 +382,11 @@ document.addEventListener('DOMContentLoaded', () => {
   attachContactNumberMask();
   initCountryDropdownEdit();
   applyFormDescriptionsEdit();
+  initGivenNamesValidationEdit();
+  initFamilyNameValidationEdit();
+  initEmailValidationEdit();
+  initContactNumberValidationEdit();
+  initDestinationEmailValidationEdit();
   document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
   document.getElementById('contact-form').addEventListener('submit', handleSave);
   document.addEventListener('click', (e) => {
@@ -367,12 +484,14 @@ function fillForm(h) {
   if (dm4) {
     document.getElementById('dest-name').value = dm4[1].trim();
     document.getElementById('dest-address').value = dm4[2].trim();
-    document.getElementById('dest-phone').value = dm4[3].trim();
+    var dp = dm4[3].trim();
+    document.getElementById('dest-phone').value = dp ? formatContactNumber(dp) : '';
     document.getElementById('dest-email').value = dm4[4].trim();
   } else if (dm3) {
     document.getElementById('dest-name').value = dm3[1].trim();
     document.getElementById('dest-address').value = '';
-    document.getElementById('dest-phone').value = dm3[2].trim();
+    var dp = dm3[2].trim();
+    document.getElementById('dest-phone').value = dp ? formatContactNumber(dp) : '';
     document.getElementById('dest-email').value = dm3[3].trim();
   } else {
     document.getElementById('dest-name').value = '';
@@ -388,13 +507,62 @@ async function resetForm() {
   showAlert('editor-alert', '<span class="spinner"></span> Reloading...', 'info');
   try {
     const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'X-Edit-Key': editKey } });
-    if (res.ok) { const d = await res.json(); currentSha = d.sha; fillForm(d.content); hideAlert('editor-alert'); }
+    if (res.ok) {
+      const d = await res.json();
+      currentSha = d.sha;
+      fillForm(d.content);
+      hideAlert('editor-alert');
+      function clearFieldErr(errId, inpId) {
+        var e = document.getElementById(errId), i = document.getElementById(inpId);
+        if (e) { e.textContent = ''; e.removeAttribute('aria-live'); }
+        if (i) i.classList.remove('is-invalid');
+      }
+      clearFieldErr('error-first-name', 'first-name');
+      clearFieldErr('error-surname', 'surname');
+      clearFieldErr('error-email', 'email');
+      clearFieldErr('error-mobile', 'mobile');
+      clearFieldErr('error-dest-phone', 'dest-phone');
+      clearFieldErr('error-dest-email', 'dest-email');
+    }
   } catch (e) { showAlert('editor-alert', 'Failed to reload', 'error'); }
 }
 
 async function handleSave(e) {
   e.preventDefault();
   const btn = document.getElementById('save-btn');
+  var fnInput = document.getElementById('first-name'), fnErr = document.getElementById('error-first-name');
+  var snInput = document.getElementById('surname'), snErr = document.getElementById('error-surname');
+  var r = validateGivenNames(fnInput.value, true);
+  if (!r.valid) {
+    if (fnErr) { fnErr.textContent = r.message; fnErr.setAttribute('aria-live', 'polite'); }
+    fnInput.classList.add('is-invalid');
+    fnInput.focus();
+    if (snErr) snErr.textContent = '';
+    if (snInput) snInput.classList.remove('is-invalid');
+    return;
+  }
+  if (fnErr) fnErr.textContent = '';
+  fnInput.classList.remove('is-invalid');
+  r = validateFamilyName(snInput.value, true);
+  if (!r.valid) {
+    if (snErr) { snErr.textContent = r.message; snErr.setAttribute('aria-live', 'polite'); }
+    snInput.classList.add('is-invalid');
+    snInput.focus();
+    return;
+  }
+  if (snErr) snErr.textContent = '';
+  snInput.classList.remove('is-invalid');
+  var emInput = document.getElementById('email'), emErr = document.getElementById('error-email');
+  r = validateEmailInput(emInput, true);
+  if (!r.valid) {
+    if (emErr) { emErr.textContent = r.message; emErr.setAttribute('aria-live', 'polite'); }
+    emInput.classList.add('is-invalid');
+    emInput.focus();
+    return;
+  }
+  if (emErr) emErr.textContent = '';
+  emInput.classList.remove('is-invalid');
+
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
   
   try {

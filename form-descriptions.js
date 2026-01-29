@@ -6,41 +6,38 @@
 window.FORM_DESCRIPTIONS = {
   'folder': {
     label: 'User Name',
-    hint: 'Will be used in the URL for your contact information page - Letters, numbers and hyphens only. Example: the User Name john-smith will have the URL deem0u.github.io/<strong>john-smith</strong>/'
+    hint: 'This will be used in the URL for your contact information page. Eg. The User Name john-smith will have the URL deem0u.github.io/<strong>john-smith</strong>/'
   },
   'first-name': {
     label: 'Given Names',
-    hint: 'Your first or given name(s) as on your ID. Include any other names (e.g. middle names) if applicable.'
+    hint: 'Your first name including any middle names (if applicable) as it appears on your ID.'
   },
   'surname': {
     label: 'Family Name',
-    hint: 'Your surname or last name as it appears on your ID.'
+    hint: 'Your surname as it appears on your ID.'
   },
   'email': {
     label: 'Email',
-    hint: 'A valid email address where you can be contacted.'
+    hint: 'A valid email address which you have access to.'
   },
   'mobile': {
     label: 'Contact Number',
-    hint: 'Include country code. e.g. Australian mobile +61 412 345 678, Victorian landline +61 3 9876 5432.'
+    hint: 'A phone number that you can be contacted on including the country code. Eg. +61432123456'
   },
   'home-country': {
     label: 'Home Country',
-    hint: 'Your country of residence. Shown on your contact page for identification.'
+    hint: 'Your main country of residence.'
   },
-  'dest-name': {
-    label: 'Destination Name',
-    hint: 'e.g. resort, hotel, building or Airbnb name where you are staying.'
-  },
+  'dest-name': { label: 'Destination Name' },
   'dest-address': { label: 'Destination Address' },
-  'dest-phone': {
-    label: 'Destination Contact Number',
-    hint: 'Contact number for this location — e.g. front office, reception, or a person at this address.'
+  'dest-phone': { label: 'Destination Contact Number' },
+  'dest-email': { label: 'Destination Email' },
+  'additional-info': {
+    label: 'Additional Information',
+    hint: 'Any additional notes that can help with identifying & contacting you in case of lost property and emergency.'
   },
-  'dest-email': {
-    label: 'Destination Email',
-    hint: 'e.g. general, reception or front office address, or someone at this location.'
-  },
-  'additional-info': { label: 'Additional Information' },
-  'destination-details': { label: 'Destination Details' }
+  'destination-details': {
+    label: 'Destination Details',
+    hint: 'The name, street address, contact number and email of the place where you will mostly be staying (e.g. You may choose to put down the name and address of the hotel you\'re staying at and include their front-office phone number and email).'
+  }
 };
