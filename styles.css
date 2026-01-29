@@ -1375,12 +1375,6 @@ body {
   color: var(--color-text-secondary);
   margin: 0 0 var(--space-2);
 }
-.modal-qr-format-note {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  opacity: 0.85;
-  margin: 0 0 var(--space-2);
-}
 .modal-qr-error {
   padding: var(--space-4);
   color: var(--color-danger);

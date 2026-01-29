@@ -326,7 +326,6 @@
             </div>
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <p class="modal-qr-action-desc">Download vCard</p>
-              <p class="modal-qr-format-note">QR format: NDEF Media (0x02), text/vcard (RFC 2046).</p>
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
             </div>
             <div id="modal-qr-action-text" class="modal-qr-action hidden">
@@ -1628,26 +1627,6 @@ function closeQrModal() {
   qrModalData = { url: '', vcard: '', text: '' };
 }
 
-/** Encode vCard as NDEF record TNF 0x02 (Media / MIME per RFC 2046), type "text/vcard". */
-function encodeNdefVcardMime(vcardStr) {
-  var te = new TextEncoder();
-  var payload = te.encode(vcardStr);
-  var type = 'text/vcard';
-  var typeBytes = te.encode(type);
-  var typeLen = typeBytes.length;
-  var payloadLen = payload.length;
-  var short = payloadLen <= 255;
-  var header = short ? 0xD2 : 0xC2; // MB=1, ME=1, CF=0, SR=1|0, IL=0, TNF=0x02 (MIME)
-  var out = [header, typeLen];
-  if (short) out.push(payloadLen & 0xFF);
-  else {
-    out.push((payloadLen >>> 24) & 0xFF, (payloadLen >>> 16) & 0xFF, (payloadLen >>> 8) & 0xFF, payloadLen & 0xFF);
-  }
-  for (var i = 0; i < typeLen; i++) out.push(typeBytes[i]);
-  for (var j = 0; j < payloadLen; j++) out.push(payload[j]);
-  return new Uint8Array(out);
-}
-
 function parseContactFromHtml(html, folder) {
   var doc = new DOMParser().parseFromString(html, 'text/html');
   var infos = doc.querySelectorAll('.info');
@@ -1709,12 +1688,8 @@ async function showQrModal(folder) {
 
     var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';
     document.getElementById('modal-qr-img-url').src = base + encodeURIComponent(data.url);
+    document.getElementById('modal-qr-img-vcard').src = base + encodeURIComponent(data.vcard);
     document.getElementById('modal-qr-img-text').src = base + encodeURIComponent(data.text);
-
-    var ndefBytes = encodeNdefVcardMime(data.vcard);
-    var QRCode = (await import('https://esm.sh/qrcode@1.5.4')).default;
-    var vcardDataUrl = await QRCode.toDataURL([{ data: new Uint8ClampedArray(ndefBytes), mode: 'byte' }], { margin: 10, width: 280, errorCorrectionLevel: 'M' });
-    document.getElementById('modal-qr-img-vcard').src = vcardDataUrl;
 
     downloadA.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard);
     downloadA.download = (data.fn || folder).replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf';
