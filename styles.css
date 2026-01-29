@@ -829,7 +829,7 @@ body {
   gap: var(--space-4);
   padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--color-border-strong);
-  background: #F5F5F5;
+  background: #FAFAFA;
 }
 
 
@@ -922,6 +922,7 @@ body {
 .user-status .badge-warning {
   background: var(--accent-yellow);
   color: var(--accent-dark);
+  border: 1px solid #c4b000;
 }
 
 .user-status .badge-error {
