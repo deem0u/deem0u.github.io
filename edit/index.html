@@ -527,7 +527,8 @@ function generateHTML() {
   const D = window.FORM_DESCRIPTIONS || {};
   const lbl = (k) => (D[k] && D[k].label) ? D[k].label : k;
   const Dzh = window.FORM_DESCRIPTIONS_ZH || {};
-  const lblZh = (k) => Dzh[k] || k;
+  const zhFallback = { 'section-title': '联系信息', 'first-name': '名字', 'surname': '姓氏', 'email': '电子邮件', 'mobile': '电话', 'home-country': '居住国家', 'destination-details': '目的地详情', 'additional-info': '附加信息' };
+  const lblZh = (k) => Dzh[k] || zhFallback[k] || k;
 
   return `<!DOCTYPE html>
 <html lang="en">
