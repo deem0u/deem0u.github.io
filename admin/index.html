@@ -1637,7 +1637,7 @@ function encodeNdefVcardMime(vcardStr) {
   var typeLen = typeBytes.length;
   var payloadLen = payload.length;
   var short = payloadLen <= 255;
-  var header = short ? 0xD2 : 0xD0; // MB=1, ME=1, CF=0, SR=1|0, IL=0, TNF=0x02
+  var header = short ? 0xD2 : 0xC2; // MB=1, ME=1, CF=0, SR=1|0, IL=0, TNF=0x02 (MIME)
   var out = [header, typeLen];
   if (short) out.push(payloadLen & 0xFF);
   else {
