@@ -15,7 +15,7 @@ Reference forms: **Add New User**, **Edit Contact Information** (admin), **User 
 | **Family Name** | Optional. Same pattern, maxlength, proactive as Given Names | Same | Required. Same; submit blocked if invalid. | Letters, spaces, apostrophes, hyphens and periods only; max 32 chars. |
 | **Email** | Optional. `type="email"`, proactive (blur/input), inline error | Same | Required. Same; submit blocked if invalid. | `type="email"`; message: "Please enter a valid email address (e.g. name@example.com)." |
 | **Contact Number** | Optional. `pattern="\+[0-9]{8,20}"`, `maxlength="21"`, mask (`+` prefix, digits only, 8–20), proactive | Same | Same | Mask strips spaces; format `+` then digits only. |
-| **Home Country** | Optional. Searchable select; valid only if from list | Same | Same | No proactive validation. |
+| **Home Country** | Optional. Searchable select; valid only if from list. Can be cleared or left empty via “Leave empty” | Same | Same | No proactive validation. |
 | **Destination Name** | Optional. `maxlength="200"` | Same | Same | Free text; no proactive validation. |
 | **Destination Address** | Optional. `maxlength="200"` | Same | Same | Free text; no proactive validation. |
 | **Destination Contact Number** | Optional. Same as Contact Number (mask, pattern, proactive) | Same | Same | Same inline error as Contact Number. |

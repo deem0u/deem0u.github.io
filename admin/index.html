@@ -326,6 +326,7 @@
             </div>
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <p class="modal-qr-action-desc">Download vCard</p>
+              <p class="modal-qr-format-note">QR format: NDEF Media (0x02), text/vcard (RFC 2046).</p>
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
             </div>
             <div id="modal-qr-action-text" class="modal-qr-action hidden">
@@ -446,6 +447,7 @@ function applyFormDescriptions() {
 
 function initCountryDropdowns() {
   var list = window.COUNTRIES || [];
+  var clearHtml = '<div class="searchable-select-option searchable-select-clear" data-which="{{which}}" data-value="" data-clear="1">Leave empty</div>';
   var opts = function(which) {
     var id = which === 'new' ? 'home-country-new-options' : 'home-country-edit-options';
     return document.getElementById(id);
@@ -453,13 +455,13 @@ function initCountryDropdowns() {
   ['new','edit'].forEach(function(which) {
     var el = opts(which);
     if (!el) return;
-    el.innerHTML = list.map(function(c) {
+    el.innerHTML = clearHtml.replace('{{which}}', which) + list.map(function(c) {
       var label = c[0] + ' (' + c[1] + ')';
       return '<div class="searchable-select-option" data-which="' + which + '" data-value="' + label.replace(/"/g, '&quot;') + '">' + label + '</div>';
     }).join('');
     el.addEventListener('click', function(e) {
       var o = e.target.closest('.searchable-select-option');
-      if (o) selectCountry(o.dataset.which, o.dataset.value);
+      if (o) selectCountry(o.dataset.which, o.dataset.value !== undefined ? o.dataset.value : '');
     });
   });
 }
@@ -489,6 +491,10 @@ function filterCountryOptions(which) {
   var opts = document.querySelectorAll('#home-country-' + suffix + '-options .searchable-select-option');
   var visible = 0;
   opts.forEach(function(o) {
+    if (o.dataset.clear === '1') {
+      o.style.display = '';
+      return;
+    }
     var match = o.dataset.value.toLowerCase().includes(search);
     o.style.display = match ? '' : 'none';
     if (match) visible++;
@@ -507,14 +513,20 @@ function selectCountry(which, value) {
   var suffix = which === 'new' ? 'new' : 'edit';
   var hiddenId = which === 'new' ? 'new-home-country' : 'home-country';
   var textId = 'home-country-' + suffix + '-text';
-  document.getElementById(hiddenId).value = value;
   var textEl = document.getElementById(textId);
-  textEl.textContent = value;
-  textEl.classList.remove('searchable-select-placeholder');
-  textEl.classList.add('searchable-select-value');
+  document.getElementById(hiddenId).value = value || '';
+  if (!value) {
+    textEl.textContent = 'Select country';
+    textEl.classList.add('searchable-select-placeholder');
+    textEl.classList.remove('searchable-select-value');
+  } else {
+    textEl.textContent = value;
+    textEl.classList.remove('searchable-select-placeholder');
+    textEl.classList.add('searchable-select-value');
+  }
   document.getElementById('home-country-' + suffix + '-dropdown').classList.remove('show');
   document.querySelectorAll('#home-country-' + suffix + '-options .searchable-select-option').forEach(function(o) {
-    o.classList.toggle('selected', o.dataset.value === value);
+    o.classList.toggle('selected', (o.dataset.value || '') === (value || ''));
   });
 }
 
@@ -935,7 +947,7 @@ function renderList(t) {
           <div class="action-row-buttons">
             <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm">View Live Page</a>
             <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
-            <button class="btn btn-secondary btn-sm" onclick="showQrModal('${f}')">QR Code</button>
+            <button class="btn btn-primary btn-sm" onclick="showQrModal('${f}')">QR Codes</button>
           </div>
           <div class="action-row-end">
             <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
@@ -1616,6 +1628,26 @@ function closeQrModal() {
   qrModalData = { url: '', vcard: '', text: '' };
 }
 
+/** Encode vCard as NDEF record TNF 0x02 (Media / MIME per RFC 2046), type "text/vcard". */
+function encodeNdefVcardMime(vcardStr) {
+  var te = new TextEncoder();
+  var payload = te.encode(vcardStr);
+  var type = 'text/vcard';
+  var typeBytes = te.encode(type);
+  var typeLen = typeBytes.length;
+  var payloadLen = payload.length;
+  var short = payloadLen <= 255;
+  var header = short ? 0xD2 : 0xD0; // MB=1, ME=1, CF=0, SR=1|0, IL=0, TNF=0x02
+  var out = [header, typeLen];
+  if (short) out.push(payloadLen & 0xFF);
+  else {
+    out.push((payloadLen >>> 24) & 0xFF, (payloadLen >>> 16) & 0xFF, (payloadLen >>> 8) & 0xFF, payloadLen & 0xFF);
+  }
+  for (var i = 0; i < typeLen; i++) out.push(typeBytes[i]);
+  for (var j = 0; j < payloadLen; j++) out.push(payload[j]);
+  return new Uint8Array(out);
+}
+
 function parseContactFromHtml(html, folder) {
   var doc = new DOMParser().parseFromString(html, 'text/html');
   var infos = doc.querySelectorAll('.info');
@@ -1677,8 +1709,12 @@ async function showQrModal(folder) {
 
     var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';
     document.getElementById('modal-qr-img-url').src = base + encodeURIComponent(data.url);
-    document.getElementById('modal-qr-img-vcard').src = base + encodeURIComponent(data.vcard);
     document.getElementById('modal-qr-img-text').src = base + encodeURIComponent(data.text);
+
+    var ndefBytes = encodeNdefVcardMime(data.vcard);
+    var QRCode = (await import('https://esm.sh/qrcode@1.5.4')).default;
+    var vcardDataUrl = await QRCode.toDataURL([{ data: new Uint8ClampedArray(ndefBytes), mode: 'byte' }], { margin: 10, width: 280, errorCorrectionLevel: 'M' });
+    document.getElementById('modal-qr-img-vcard').src = vcardDataUrl;
 
     downloadA.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard);
     downloadA.download = (data.fn || folder).replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf';

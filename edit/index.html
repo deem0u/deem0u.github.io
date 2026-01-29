@@ -315,13 +315,13 @@ function initCountryDropdownEdit() {
   var list = window.COUNTRIES || [];
   var el = document.getElementById('home-country-edit-options');
   if (!el) return;
-  el.innerHTML = list.map(function(c) {
+  el.innerHTML = '<div class="searchable-select-option searchable-select-clear" data-value="" data-clear="1">Leave empty</div>' + list.map(function(c) {
     var label = c[0] + ' (' + c[1] + ')';
     return '<div class="searchable-select-option" data-value="' + label.replace(/"/g, '&quot;') + '">' + label + '</div>';
   }).join('');
   el.addEventListener('click', function(e) {
     var o = e.target.closest('.searchable-select-option');
-    if (o) selectCountryEdit(o.dataset.value);
+    if (o) selectCountryEdit(o.dataset.value !== undefined ? o.dataset.value : '');
   });
 }
 
@@ -348,6 +348,10 @@ function filterCountryOptionsEdit() {
   var opts = document.querySelectorAll('#home-country-edit-options .searchable-select-option');
   var visible = 0;
   opts.forEach(function(o) {
+    if (o.dataset.clear === '1') {
+      o.style.display = '';
+      return;
+    }
     var match = o.dataset.value.toLowerCase().includes(search);
     o.style.display = match ? '' : 'none';
     if (match) visible++;
@@ -363,14 +367,20 @@ function filterCountryOptionsEdit() {
 }
 
 function selectCountryEdit(value) {
-  document.getElementById('home-country').value = value;
   var textEl = document.getElementById('home-country-edit-text');
-  textEl.textContent = value;
-  textEl.classList.remove('searchable-select-placeholder');
-  textEl.classList.add('searchable-select-value');
+  document.getElementById('home-country').value = value || '';
+  if (!value) {
+    textEl.textContent = 'Select country';
+    textEl.classList.add('searchable-select-placeholder');
+    textEl.classList.remove('searchable-select-value');
+  } else {
+    textEl.textContent = value;
+    textEl.classList.remove('searchable-select-placeholder');
+    textEl.classList.add('searchable-select-value');
+  }
   document.getElementById('home-country-edit-dropdown').classList.remove('show');
   document.querySelectorAll('#home-country-edit-options .searchable-select-option').forEach(function(o) {
-    o.classList.toggle('selected', o.dataset.value === value);
+    o.classList.toggle('selected', (o.dataset.value || '') === (value || ''));
   });
 }
 

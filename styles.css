@@ -952,7 +952,7 @@ body {
 .user-status .badge-warning {
   background: var(--accent-yellow);
   color: var(--accent-dark);
-  border: 2px solid #c4b000 !important;
+  border: 1px solid rgba(196, 176, 0, 0.55);
 }
 
 .user-status .badge-error {
@@ -1373,6 +1373,12 @@ body {
 .modal-qr-action-desc {
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
+  margin: 0 0 var(--space-2);
+}
+.modal-qr-format-note {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  opacity: 0.85;
   margin: 0 0 var(--space-2);
 }
 .modal-qr-error {
