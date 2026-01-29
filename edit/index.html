@@ -450,7 +450,7 @@ function generateHTML() {
     @media(min-width:640px){h1{font-size:1.75rem}}
     .last-updated-header{font-size:0.7rem;font-weight:400;color:#6b7280;margin-left:auto;line-height:1.4;text-align:right;flex-shrink:0;padding-top:2px}
     @media(min-width:640px){.last-updated-header{font-size:0.75rem}}
-    .last-updated-header .last-updated-display{display:block;margin-top:2px;word-break:break-word;overflow-wrap:break-word;text-align:right}
+    .last-updated-header .last-updated-display{display:block;margin-top:6px;word-break:break-word;overflow-wrap:break-word;text-align:right}
     .info{display:flex;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:16px 24px}
     @media(max-width:480px){.info{padding:12px 0;gap:12px 16px}}
     .info.additional-info{flex-direction:column;align-items:flex-start;gap:6px}
@@ -513,12 +513,16 @@ function generateHTML() {
   const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : '—';
   const now = new Date().toISOString();
   const lastUpdatedData = `data-timestamp="${now}" data-updated-by="user"`;
-  const lastUpdatedHeaderHtml = `<span class="last-updated-header">Last updated:<br><span class="last-updated-display" ${lastUpdatedData}>—</span></span>`;
+  const lastUpdatedEn = 'Last updated';
+  const lastUpdatedFr = 'Derni\u00e8re mise \u00e0 jour';
+  const lastUpdatedZh = '\u6700\u540e\u66f4\u65b0';
+  const lastUpdatedHeaderHtml = `<span class="last-updated-header">${lastUpdatedEn}<br>${lastUpdatedFr}<br>${lastUpdatedZh}<br><span class="last-updated-display" ${lastUpdatedData}>—</span></span>`;
   const D = window.FORM_DESCRIPTIONS || {};
   const lbl = (k) => (D[k] && D[k].label) ? D[k].label : k;
+  const fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
   const zh = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
   const titleEn = 'Contact Information';
-  const lblBoth = (k) => { const e = k === 'section-title' ? titleEn : lbl(k); return e + ' \u00b7 ' + (zh[k] || ''); };
+  const lblBoth = (k) => { const e = k === 'section-title' ? titleEn : lbl(k); return e + ' \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
 
   return `<!DOCTYPE html>
 <html lang="en">
