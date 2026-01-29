@@ -2,6 +2,19 @@
  * Single source of truth for form labels and hints.
  * New Form (Add New User) is canonical; Edit form and user edit page use these.
  */
+
+/** Chinese labels for contact page section-zh. Keep this file UTF-8; do not re-save as other encodings. */
+window.FORM_DESCRIPTIONS_ZH = {
+  'section-title': '联系信息',
+  'first-name': '名字',
+  'surname': '姓氏',
+  'email': '电子邮件',
+  'mobile': '电话',
+  'home-country': '居住国家',
+  'destination-details': '目的地详情',
+  'additional-info': '附加信息'
+};
+
 window.FORM_DESCRIPTIONS = {
   'folder': {
     label: 'User Name',
