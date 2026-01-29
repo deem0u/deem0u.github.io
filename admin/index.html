@@ -302,6 +302,28 @@
     </div>
   </div>
 
+  <div id="modal-qr" class="modal-overlay">
+    <div class="modal modal-qr">
+      <div class="modal-header"><h3 class="modal-title">QR Code &amp; Contact</h3></div>
+      <div class="modal-body" id="modal-qr-body">
+        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
+        <div id="modal-qr-content" class="modal-qr-content hidden">
+          <p class="modal-qr-desc">Single QR encodes 3 records: URL, contact card (vCard), and plain text. Scan to import each separately; use with NFC tools to write to a tag.</p>
+          <div class="modal-qr-image-wrap"><img id="modal-qr-img" alt="QR code" class="modal-qr-img"></div>
+          <div class="modal-qr-actions">
+            <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
+            <button type="button" class="btn btn-secondary btn-sm" id="modal-qr-copy-url">Copy URL</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="modal-qr-copy-text">Copy text</button>
+          </div>
+        </div>
+        <div id="modal-qr-error" class="modal-qr-error hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeQrModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
 <script src="../countries-data.js"></script>
 <script src="../form-descriptions.js"></script>
 <script>
@@ -895,6 +917,7 @@ function renderList(t) {
           <div class="action-row-buttons">
             <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm">View Live Page</a>
             <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
+            <button class="btn btn-secondary btn-sm" onclick="showQrModal('${f}')">QR Code</button>
           </div>
           <div class="action-row-end">
             <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
@@ -1567,6 +1590,157 @@ function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classLi
 function showModal(t, m, bc, bt, cb) { document.getElementById('modal-title').textContent = t; document.getElementById('modal-message').textContent = m; const b = document.getElementById('modal-confirm'); b.className = `btn ${bc}`; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
 function closeModal() { document.getElementById('modal').classList.remove('show'); modalCallback = null; }
 document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
+
+var qrModalData = { url: '', vcard: '', text: '' };
+
+function closeQrModal() {
+  document.getElementById('modal-qr').classList.remove('show');
+  qrModalData = { url: '', vcard: '', text: '' };
+}
+
+function encodeNDEF(url, vcard, text) {
+  var te = new TextEncoder();
+  var parts = [];
+  function push(b) { if (typeof b === 'number') parts.push(b); else for (var i = 0; i < b.length; i++) parts.push(b[i]); }
+  function uint32Be(n) { push((n >>> 24) & 0xff); push((n >>> 16) & 0xff); push((n >>> 8) & 0xff); push(n & 0xff); }
+
+  var uriSuffix = url.replace(/^https:\/\//i, '');
+  var uriPayload = te.encode(uriSuffix);
+  var uriFull = new Uint8Array(1 + uriPayload.length);
+  uriFull[0] = 0x01;
+  uriFull.set(uriPayload, 1);
+  var vcardBytes = te.encode(vcard);
+  var textBytes = te.encode(text);
+  var textPayload = new Uint8Array(1 + textBytes.length);
+  textPayload[0] = 0;
+  textPayload.set(textBytes, 1);
+
+  var n = uriFull.length;
+  push(0x91);
+  push(1);
+  push(n);
+  push(0x55);
+  for (var i = 0; i < n; i++) push(uriFull[i]);
+
+  n = vcardBytes.length;
+  var mime = te.encode('text/vcard');
+  push(0x02);
+  push(mime.length);
+  uint32Be(n);
+  for (i = 0; i < mime.length; i++) push(mime[i]);
+  for (i = 0; i < n; i++) push(vcardBytes[i]);
+
+  n = textPayload.length;
+  push(0x41);
+  push(1);
+  uint32Be(n);
+  push(0x54);
+  for (i = 0; i < n; i++) push(textPayload[i]);
+
+  return new Uint8Array(parts);
+}
+
+function parseContactFromHtml(html, folder) {
+  var doc = new DOMParser().parseFromString(html, 'text/html');
+  var infos = doc.querySelectorAll('.info');
+  var given = '', family = '', email = '', tel = '', country = '';
+  var vals = [];
+  for (var i = 0; i < infos.length && i < 5; i++) {
+    var info = infos[i];
+    var valEl = info.querySelector('.value');
+    var a = valEl ? valEl.querySelector('a') : null;
+    var raw = valEl ? (a ? a.textContent : valEl.textContent) : '';
+    var t = (raw || '').trim().replace(/\s+/g, ' ').replace(/^—$/, '');
+    vals.push(t);
+    if (a && a.getAttribute('href')) {
+      var href = a.getAttribute('href');
+      if (href.indexOf('mailto:') === 0) { email = href.slice(7).trim(); }
+      else if (href.indexOf('tel:') === 0) { tel = href.slice(4).trim(); }
+    }
+  }
+  if (vals[0]) given = vals[0];
+  if (vals[1]) family = vals[1];
+  if (!email && vals[2]) email = vals[2];
+  if (!tel && vals[3]) tel = vals[3];
+  if (vals[4]) country = vals[4];
+  var fn = [given, family].filter(Boolean).join(' ').trim() || folder;
+  var url = PAGES_URL + folder + '/index.html';
+  var lines = ['Given Name: ' + given, 'Family Name: ' + family, 'Email: ' + email, 'Contact Number: ' + tel, 'Home Country: ' + country];
+  var text = lines.join('\r\n');
+  var adr = ';;;;;;' + (country || '').replace(/;/g, ',');
+  var vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:' + fn + '\r\nN:' + family + ';' + given + ';;;\r\n';
+  if (tel) vcard += 'TEL;TYPE=VOICE:' + tel + '\r\n';
+  if (email) vcard += 'EMAIL:' + email + '\r\n';
+  vcard += 'URL:' + url + '\r\n';
+  vcard += 'ADR;TYPE=HOME:' + adr + '\r\n';
+  var note = (text || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n');
+  vcard += 'NOTE:' + note + '\r\n';
+  vcard += 'END:VCARD';
+  return { given: given, family: family, email: email, tel: tel, country: country, fn: fn, url: url, text: text, vcard: vcard };
+}
+
+async function showQrModal(folder) {
+  var overlay = document.getElementById('modal-qr');
+  var loading = document.getElementById('modal-qr-loading');
+  var content = document.getElementById('modal-qr-content');
+  var errEl = document.getElementById('modal-qr-error');
+  var img = document.getElementById('modal-qr-img');
+  var downloadA = document.getElementById('modal-qr-download-vcard');
+  loading.classList.remove('hidden');
+  content.classList.add('hidden');
+  errEl.classList.add('hidden');
+  errEl.textContent = '';
+  overlay.classList.add('show');
+  qrModalData = { url: '', vcard: '', text: '' };
+
+  try {
+    var r = await fetch(API + '/api/page/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+    if (!r.ok) throw new Error('Could not load page');
+    var d = await r.json();
+    var data = parseContactFromHtml(d.content || '', folder);
+    qrModalData = { url: data.url, vcard: data.vcard, text: data.text };
+
+    var ndef = encodeNDEF(data.url, data.vcard, data.text);
+    var seg = [{ data: new Uint8ClampedArray(ndef), mode: 'byte' }];
+    var mod = await import('https://esm.sh/qrcode@1.5.4');
+    var QRCode = mod.default || mod;
+    var dataUrl = await QRCode.toDataURL(seg, { margin: 2, width: 280, errorCorrectionLevel: 'M' });
+    img.src = dataUrl;
+    img.alt = 'QR code – URL, contact card, and text (3 records).';
+
+    downloadA.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard);
+    downloadA.download = (data.fn || folder).replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf';
+
+    loading.classList.add('hidden');
+    content.classList.remove('hidden');
+  } catch (e) {
+    loading.classList.add('hidden');
+    errEl.textContent = (e && e.message) ? e.message : 'Something went wrong.';
+    if (/import|fetch|Failed to fetch|Dynamic import/i.test(String(errEl.textContent))) {
+      errEl.textContent = 'QR generation failed. Check your connection and try again.';
+    }
+    errEl.classList.remove('hidden');
+  }
+}
+
+document.getElementById('modal-qr-copy-url').addEventListener('click', function() {
+  if (!qrModalData.url) return;
+  navigator.clipboard.writeText(qrModalData.url).then(function() {
+    var btn = document.getElementById('modal-qr-copy-url');
+    var orig = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(function() { btn.textContent = orig; }, 2000);
+  });
+});
+document.getElementById('modal-qr-copy-text').addEventListener('click', function() {
+  if (!qrModalData.text) return;
+  navigator.clipboard.writeText(qrModalData.text).then(function() {
+    var btn = document.getElementById('modal-qr-copy-text');
+    var orig = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(function() { btn.textContent = orig; }, 2000);
+  });
+});
 
 function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }

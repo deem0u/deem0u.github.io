@@ -1302,6 +1302,44 @@ body {
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
+.modal-qr .modal-body { padding: var(--space-6); }
+.modal-qr-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  color: var(--color-text-secondary);
+}
+.modal-qr-content.hidden,
+.modal-qr-error.hidden { display: none !important; }
+.modal-qr-desc {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+.modal-qr-image-wrap {
+  text-align: center;
+  margin-bottom: var(--space-4);
+}
+.modal-qr-img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.modal-qr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.modal-qr-error {
+  padding: var(--space-4);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
 /* ========================================
    Empty State
    ======================================== */
