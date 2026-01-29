@@ -50,8 +50,8 @@
           <div class="card-body">
             <form id="contact-form">
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\-]*$" maxlength="32" required autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
-                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\-]*$" maxlength="32" required autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
               </div>
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-email" role="alert"></span></div>
@@ -162,10 +162,10 @@ function applyFormDescriptionsEdit() {
 
 function validateGivenNames(val, required) {
   var s = (val || '').trim();
-  var msg = 'Given names must be up to 32 characters, using only letters and hyphens.';
+  var msg = 'Given names must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
   if (!s) return required ? { valid: false, message: 'Given names are required.' } : { valid: true };
   if (s.length > 32) return { valid: false, message: msg };
-  if (!/^[a-zA-Z][a-zA-Z\-]*$/.test(s)) return { valid: false, message: msg };
+  if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
   return { valid: true };
 }
 
@@ -188,10 +188,10 @@ function initGivenNamesValidationEdit() {
 
 function validateFamilyName(val, required) {
   var s = (val || '').trim();
-  var msg = 'Family name must be up to 32 characters, using only letters and hyphens.';
+  var msg = 'Family name must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
   if (!s) return required ? { valid: false, message: 'Family name is required.' } : { valid: true };
   if (s.length > 32) return { valid: false, message: msg };
-  if (!/^[a-zA-Z][a-zA-Z\-]*$/.test(s)) return { valid: false, message: msg };
+  if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
   return { valid: true };
 }
 

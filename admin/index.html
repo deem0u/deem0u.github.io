@@ -182,8 +182,8 @@
                   <span class="form-error" id="error-new-folder" role="alert"></span>
                 </div>
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="new-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\-]*$" maxlength="32" autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-new-first-name" role="alert"></span></div>
-                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\-]*$" maxlength="32" autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-new-surname" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="new-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-new-first-name" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-new-surname" role="alert"></span></div>
                 </div>
                 <div class="form-row">
                   <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-email" class="form-input" autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-new-email" role="alert"></span></div>
@@ -236,8 +236,8 @@
             <div class="card-body">
               <form id="contact-form">
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\-]*$" maxlength="32" autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
-                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\-]*$" maxlength="32" autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
                 </div>
                 <div class="form-row">
                   <div class="form-group"><label class="form-label">Email</label><input type="email" id="email" class="form-input" autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-email" role="alert"></span></div>
@@ -304,12 +304,12 @@
 
   <div id="modal-qr" class="modal-overlay">
     <div class="modal modal-qr">
-      <div class="modal-header"><h3 class="modal-title">QR Codes &amp; Contact</h3></div>
+      <div class="modal-header"><h3 class="modal-title">QR Codes</h3></div>
       <div class="modal-body" id="modal-qr-body">
         <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
         <div id="modal-qr-content" class="modal-qr-content hidden">
-          <p class="modal-qr-desc">Toggle between three QRs: URL, vCard, or plain text. Copy or download as needed.</p>
-          <div class="modal-qr-toggle">
+          <p class="modal-qr-desc">Toggle between the required QR codes for download, copy or exporting as needed. You can use the NFC Tools App to scan each QR to import as records to then write to an appropriate NFC tag.</p>
+          <div class="modal-qr-tabs">
             <button type="button" class="modal-qr-tab active" data-qr="url" aria-pressed="true">URL</button>
             <button type="button" class="modal-qr-tab" data-qr="vcard" aria-pressed="false">vCard</button>
             <button type="button" class="modal-qr-tab" data-qr="text" aria-pressed="false">Text</button>
@@ -320,9 +320,18 @@
             <div id="modal-qr-panel-text" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-text" alt="QR code: text" class="modal-qr-img"></div></div>
           </div>
           <div class="modal-qr-actions">
-            <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
-            <button type="button" class="btn btn-secondary btn-sm" id="modal-qr-copy-url">Copy URL</button>
-            <button type="button" class="btn btn-secondary btn-sm" id="modal-qr-copy-text">Copy text</button>
+            <div id="modal-qr-action-url" class="modal-qr-action active">
+              <p class="modal-qr-action-desc">Copy as URL to your Contact Page</p>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy URL</button>
+            </div>
+            <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
+              <p class="modal-qr-action-desc">Download vCard</p>
+              <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
+            </div>
+            <div id="modal-qr-action-text" class="modal-qr-action hidden">
+              <p class="modal-qr-action-desc">Copy as Plain Text</p>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-text">Copy text</button>
+            </div>
           </div>
         </div>
         <div id="modal-qr-error" class="modal-qr-error hidden"></div>
@@ -1051,10 +1060,10 @@ function initFolderValidation() {
 
 function validateGivenNames(val, required) {
   var s = (val || '').trim();
-  var msg = 'Given names must be up to 32 characters, using only letters and hyphens.';
+  var msg = 'Given names must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
   if (!s) return required ? { valid: false, message: 'Given names are required.' } : { valid: true };
   if (s.length > 32) return { valid: false, message: msg };
-  if (!/^[a-zA-Z][a-zA-Z\-]*$/.test(s)) return { valid: false, message: msg };
+  if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
   return { valid: true };
 }
 
@@ -1082,10 +1091,10 @@ function initGivenNamesValidation() {
 
 function validateFamilyName(val, required) {
   var s = (val || '').trim();
-  var msg = 'Family name must be up to 32 characters, using only letters and hyphens.';
+  var msg = 'Family name must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
   if (!s) return required ? { valid: false, message: 'Family name is required.' } : { valid: true };
   if (s.length > 32) return { valid: false, message: msg };
-  if (!/^[a-zA-Z][a-zA-Z\-]*$/.test(s)) return { valid: false, message: msg };
+  if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
   return { valid: true };
 }
 
@@ -1687,14 +1696,18 @@ async function showQrModal(folder) {
 function switchQrTab(name) {
   var tabs = document.querySelectorAll('.modal-qr-tab');
   var panels = document.querySelectorAll('.modal-qr-panel');
+  var actions = document.querySelectorAll('.modal-qr-action');
   tabs.forEach(function(t) {
     var on = t.dataset.qr === name;
     t.classList.toggle('active', on);
     t.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
   panels.forEach(function(p) {
-    var on = p.id === 'modal-qr-panel-' + name;
-    p.classList.toggle('hidden', !on);
+    p.classList.toggle('hidden', p.id !== 'modal-qr-panel-' + name);
+  });
+  actions.forEach(function(a) {
+    a.classList.toggle('hidden', a.id !== 'modal-qr-action-' + name);
+    a.classList.toggle('active', a.id === 'modal-qr-action-' + name);
   });
 }
 
@@ -1704,20 +1717,32 @@ document.querySelectorAll('.modal-qr-tab').forEach(function(tab) {
 
 document.getElementById('modal-qr-copy-url').addEventListener('click', function() {
   if (!qrModalData.url) return;
+  var btn = document.getElementById('modal-qr-copy-url');
   navigator.clipboard.writeText(qrModalData.url).then(function() {
-    var btn = document.getElementById('modal-qr-copy-url');
-    var orig = btn.textContent;
-    btn.textContent = 'Copied';
-    setTimeout(function() { btn.textContent = orig; }, 2000);
+    var orig = btn.innerHTML;
+    btn.innerHTML = '✓ Copied';
+    btn.classList.add('btn-success');
+    btn.classList.remove('btn-primary');
+    setTimeout(function() {
+      btn.innerHTML = orig;
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-primary');
+    }, 2000);
   });
 });
 document.getElementById('modal-qr-copy-text').addEventListener('click', function() {
   if (!qrModalData.text) return;
+  var btn = document.getElementById('modal-qr-copy-text');
   navigator.clipboard.writeText(qrModalData.text).then(function() {
-    var btn = document.getElementById('modal-qr-copy-text');
-    var orig = btn.textContent;
-    btn.textContent = 'Copied';
-    setTimeout(function() { btn.textContent = orig; }, 2000);
+    var orig = btn.innerHTML;
+    btn.innerHTML = '✓ Copied';
+    btn.classList.add('btn-success');
+    btn.classList.remove('btn-primary');
+    setTimeout(function() {
+      btn.innerHTML = orig;
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-primary');
+    }, 2000);
   });
 });
 

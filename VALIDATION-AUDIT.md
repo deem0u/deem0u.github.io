@@ -11,8 +11,8 @@ Reference forms: **Add New User**, **Edit Contact Information** (admin), **User 
 | Field | Add New User | Edit Contact (admin) | User Contact Editor | Notes |
 |-------|----------------|----------------------|---------------------|-------|
 | **User Name** | `required`, `pattern="^[a-zA-Z0-9_-]{3,32}$"`, `minlength="3"`, `maxlength="32"`, proactive (blur/input), inline error | — | — | Alphanumeric, hyphens, underscores only; 3–32 chars. |
-| **Given Names** | Optional. `pattern="^[a-zA-Z][a-zA-Z\-]*$"`, `maxlength="32"`, proactive (blur/input), inline error | Same | Required. Same pattern, maxlength, proactive; submit blocked if invalid. | Letters and hyphens only; max 32 chars. Must start with letter. |
-| **Family Name** | Optional. Same pattern, maxlength, proactive as Given Names | Same | Required. Same; submit blocked if invalid. | Letters and hyphens only; max 32 chars. |
+| **Given Names** | Optional. `pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$"`, `maxlength="32"`, proactive (blur/input), inline error | Same | Required. Same pattern, maxlength, proactive; submit blocked if invalid. | Letters, spaces, apostrophes, hyphens and periods only; max 32 chars. Must start with letter. |
+| **Family Name** | Optional. Same pattern, maxlength, proactive as Given Names | Same | Required. Same; submit blocked if invalid. | Letters, spaces, apostrophes, hyphens and periods only; max 32 chars. |
 | **Email** | Optional. `type="email"`, proactive (blur/input), inline error | Same | Required. Same; submit blocked if invalid. | `type="email"`; message: "Please enter a valid email address (e.g. name@example.com)." |
 | **Contact Number** | Optional. `pattern="\+[0-9]{8,20}"`, `maxlength="21"`, mask (`+` prefix, digits only, 8–20), proactive | Same | Same | Mask strips spaces; format `+` then digits only. |
 | **Home Country** | Optional. Searchable select; valid only if from list | Same | Same | No proactive validation. |
