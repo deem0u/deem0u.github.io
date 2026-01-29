@@ -526,6 +526,16 @@ body {
   border-top: 1px solid var(--color-border);
 }
 
+/* Editor form actions: admin Edit Contact + user Contact Editor — identical layout */
+.form-actions-editor {
+  align-items: center;
+}
+
+.form-actions-editor .btn,
+.form-actions-editor .btn-lg {
+  flex-shrink: 0;
+}
+
 /* ========================================
    Buttons
    ======================================== */

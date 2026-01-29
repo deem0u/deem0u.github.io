@@ -89,10 +89,10 @@
                 <textarea id="additional-info" class="form-textarea" rows="3" placeholder="e.g. emergency contact, special instructions"></textarea>
               </div>
               <div id="editor-alert" class="alert"></div>
-              <div class="form-actions">
-                <button type="submit" id="save-btn" class="btn btn-cyan btn-lg">Save Changes</button>
-                <button type="button" class="btn btn-secondary" onclick="resetForm()">Undo All Changes</button>
-                <a id="view-page-link" href="#" target="_blank" class="btn btn-cyan btn-lg ml-auto">View Page →</a>
+              <div class="form-actions form-actions-editor">
+                <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save Changes</button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">Reset</button>
+                <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost btn-lg ml-auto">View Page →</a>
               </div>
             </form>
           </div>
@@ -406,7 +406,7 @@ async function handleSave(e) {
     if (res.ok) {
       currentSha = data.sha;
       document.getElementById('user-name').textContent = document.getElementById('first-name').value;
-      showAlert('editor-alert', 'Changes saved successfully! Use the "View Page" button below to see your updates.', 'success');
+      showAlert('editor-alert', 'Changes saved successfully! Use the "View Page" link above to see your updates.', 'success');
     } else { showAlert('editor-alert', data.error || 'Failed to save', 'error'); }
   } catch (e) { showAlert('editor-alert', 'Connection error', 'error'); }
   finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
