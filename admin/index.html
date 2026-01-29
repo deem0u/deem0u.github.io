@@ -891,8 +891,8 @@ function renderList(t) {
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${hk ? '<span class="badge badge-success">Can Edit</span>' : '<span class="badge badge-dark">View Only</span>'}
-            ${isIncomplete(f) ? '<span class="badge badge-error">Page Incomplete</span>' : ''}
+            ${!hk ? '<span class="badge badge-warning">View Only</span>' : ''}
+            ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
           </div>
         </div>
       </div>
@@ -900,7 +900,7 @@ function renderList(t) {
         <div class="action-row action-row-contact">
           <span class="action-row-label">Contact Page</span>
           <div class="action-row-buttons">
-            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-teal btn-sm">View Live Page</a>
+            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm">View Live Page</a>
             <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
           </div>
           <div class="action-row-end">
@@ -914,14 +914,14 @@ function renderList(t) {
               ${!hk
                 ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Grant Access</button>`
                 : `<button class="btn btn-cyan btn-sm" onclick="confirmRegenerate('${f}')">Reset Access</button>
-                   <button class="btn btn-danger btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
+                   <button class="btn btn-cyan btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
             </div>
           </div>
           ${hk ? `<div class="action-combo-group">
             <span class="action-row-label">Share Links</span>
             <div class="action-row-buttons">
               ${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
-              <button class="btn btn-cyan btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
+              <button class="btn btn-primary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
             </div>
           </div>` : ''}
         </div>
@@ -941,7 +941,7 @@ async function generateKey(f) {
 function confirmRegenerate(f) { showModal('Regenerate?', 'Their current link will stop working.', 'btn-warning', 'Regenerate', () => regenerateKey(f)); }
 async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; populateUI(); showAlert('alert-manage', 'New link created', 'success'); } } catch {} }
 
-function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-warning', 'Revoke', () => removeKey(f)); }
+function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-cyan', 'Revoke', () => removeKey(f)); }
 async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); delete editKeys[f]; populateUI(); showAlert('alert-manage', 'Access removed', 'success'); } catch {} }
 
 function confirmDeleteUser(f) {
@@ -1382,8 +1382,8 @@ Daniel Mounnarath`;
 
 function copyLink(f, btn) {
   navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
-    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-cyan');
-    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-cyan'); }, 2000);
+    const o = btn.innerHTML; btn.innerHTML = '✓ Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-primary');
+    setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-primary'); }, 2000);
   });
 }
 
