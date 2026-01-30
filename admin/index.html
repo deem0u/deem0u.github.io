@@ -115,7 +115,7 @@
         </div>
         
         <div class="text-center mt-4" id="recovery-back-link">
-          <button type="button" class="btn btn-ghost btn-sm" onclick="resetRecovery(); showScreen('login')">‚Üê Back to Sign In</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="resetRecovery(); showScreen('login')">? Back to Sign In</button>
         </div>
       </div>
     </main>
@@ -189,7 +189,7 @@
                   <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-new-surname" role="alert"></span></div>
                 </div>
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Email</label><input type="email" id="new-email" class="form-input" autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-new-email" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Contact Page Email</label><input type="email" id="new-email" class="form-input" autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-new-email" role="alert"></span></div>
                   <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="new-mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="tel"><span class="form-hint"></span><span class="form-error" id="error-new-mobile" role="alert"></span></div>
                 </div>
                 <div class="form-group">
@@ -283,7 +283,7 @@
                 <div class="form-actions form-actions-editor">
                   <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save Changes</button>
                   <button type="button" class="btn btn-secondary btn-lg" onclick="loadPage()">Reset</button>
-                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost btn-lg ml-auto">View Page ‚Üí</a>
+                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost btn-lg ml-auto">View Page ?</a>
                 </div>
               </form>
             </div>
@@ -309,7 +309,7 @@
     <div class="modal modal-qr">
       <div class="modal-header"><h3 class="modal-title">QR Codes</h3></div>
       <div class="modal-body" id="modal-qr-body">
-        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading‚Ä¶</div>
+        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> LoadingÖ</div>
         <div id="modal-qr-content" class="modal-qr-content hidden">
           <p class="modal-qr-desc">Toggle between the required QR codes for download, copy or exporting as needed. You can use the NFC Tools App to scan each QR to import as records to then write to an appropriate NFC tag.</p>
           <div class="modal-qr-tabs">
@@ -544,7 +544,7 @@ function selectCountry(which, value) {
 }
 
 function resolveCountryDisplay(parsed) {
-  if (!parsed || (parsed.trim()) === '' || parsed.trim() === '‚Äî') return null;
+  if (!parsed || (parsed.trim()) === '' || parsed.trim() === 'ó') return null;
   var p = parsed.trim();
   var list = window.COUNTRIES || [];
   for (var i = 0; i < list.length; i++) {
@@ -747,7 +747,7 @@ async function loadDashboard() {
       if (r.ok) {
         var d = await r.json();
         var info = extractInfo(d.content);
-        userInfo[f] = { firstName: info.firstName, surname: info.surname, email: info.email, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
+        userInfo[f] = { firstName: info.firstName, surname: info.surname, email: info.email, accountEmail: (typeof accountEmails !== 'undefined' ? accountEmails[f] : null) || info.email, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
       }
     } catch (e) { /* skip */ }
   }
@@ -765,7 +765,7 @@ function extractInfo(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === '‚Äî' || !v) ? '' : v;
+    return (v === 'ó' || !v) ? '' : v;
   };
   const em = h.match(/href="mailto:([^"]+)"/);
   
@@ -826,7 +826,7 @@ function populatePageSelect() {
     const u = userInfo[f] || {};
     const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
     const line1 = `${displayName} (${f})`;
-    const line2 = u.email || '‚Äî';
+    const line2 = (u.accountEmail || u.email) || 'ó';
     return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
       <div class="searchable-select-option-title">${line1}</div>
       <div class="searchable-select-option-meta">${line2}</div>
@@ -946,9 +946,9 @@ function renderList(t) {
     } else if (u.updatedBy) {
       lastUpdatedDisplay = 'Unknown (old format)';
     }
-    const namePart = `${u.firstName || '‚Äî'} ${u.surname || '‚Äî'}`.trim();
+    const namePart = `${u.firstName || 'ó'} ${u.surname || 'ó'}`.trim();
     const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
-    const emailText = u.email || 'No email';
+    const emailText = (u.accountEmail || u.email) || 'No email';
     return `<div class="user-card">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
@@ -989,7 +989,7 @@ function renderList(t) {
           ${hk ? `<div class="action-combo-group">
             <span class="action-row-label">Share Links</span>
             <div class="action-row-buttons">
-              ${u.email ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
+              ${(u.accountEmail || u.email) ? `<a href="${generateMailto(u,f)}" class="btn btn-primary btn-sm">Send via Email</a>` : ''}
               <button class="btn btn-primary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
             </div>
           </div>` : ''}
@@ -1062,6 +1062,7 @@ function hideNewUserForm() {
     if (i) i.classList.remove('is-invalid');
   }
   clearErr('new-folder', 'error-new-folder');
+  clearErr('new-account-email', 'error-new-account-email');
   clearErr('new-first-name', 'error-new-first-name');
   clearErr('new-surname', 'error-new-surname');
   clearErr('new-email', 'error-new-email');
@@ -1070,7 +1071,7 @@ function hideNewUserForm() {
 
 function validateFolder(val) {
   var s = (val || '').trim();
-  var msg = 'User name must be 3‚Äì32 characters, using only letters, numbers, hyphens and underscores.';
+  var msg = 'User name must be 3ñ32 characters, using only letters, numbers, hyphens and underscores.';
   if (!s) return { valid: false, message: 'User name is required.' };
   if (s.length < 3 || s.length > 32) return { valid: false, message: msg };
   if (!/^[a-zA-Z0-9_-]+$/.test(s)) return { valid: false, message: msg };
@@ -1262,7 +1263,7 @@ async function handleCreateUser(e) {
     const r = await fetch(`${API}/api/page`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({ folder, content })
+      body: JSON.stringify({ folder, content, accountEmail: document.getElementById("new-account-email").value.trim() })
     });
     const d = await r.json();
     
@@ -1279,7 +1280,7 @@ async function handleCreateUser(e) {
       };
       populateUI();
       hideNewUserForm();
-      showAlert('alert-manage', `Created ${folder}. <a href="${d.url}" target="_blank">View page ‚Üí</a>`, 'success');
+      showAlert('alert-manage', `Created ${folder}. <a href="${d.url}" target="_blank">View page ?</a>`, 'success');
       switchTab('manage');
     } else {
       showAlert('alert-new-user', d.error || 'Failed to create', 'error');
@@ -1338,7 +1339,7 @@ function decodeHtmlEntities(s) {
 
 function decodeMultiline(s) {
   const raw = (s ?? '').toString().trim();
-  if (!raw || raw === '‚Äî') return '';
+  if (!raw || raw === 'ó') return '';
   return decodeHtmlEntities(raw)
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, '');
@@ -1425,21 +1426,21 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
   const destParts = [dName, dAddr, dPhone, dEmail].map(function(t) {
     return '<span>' + (t ? escapeHtml(t) : '') + '</span>';
   });
-  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">‚Äî</span>';
+  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">ó</span>';
 
-  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">‚Äî</span>';
+  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">ó</span>';
   const lastUpdatedData = lastUpdated ? `data-timestamp="${lastUpdated}" data-updated-by="${updatedBy}"` : '';
   const lastUpdatedEn = 'Last updated';
   const lastUpdatedFr = 'Derni\u00e8re mise \u00e0 jour';
   const lastUpdatedZh = '\u6700\u540e\u66f4\u65b0';
   const lastUpdatedTitles = lastUpdatedEn + ' \u00b7 ' + lastUpdatedFr + ' \u00b7 ' + lastUpdatedZh;
-  const lastUpdatedBlockHtml = lastUpdated ? `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>‚Äî</span></div>` : '';
+  const lastUpdatedBlockHtml = lastUpdated ? `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>ó</span></div>` : '';
   const hasMobile = mobile != null && String(mobile).trim() !== '';
   const mobileHtml = hasMobile
     ? `<a href="tel:${(mobileLink || '').replace(/"/g, '&quot;')}">${escapeHtml(String(mobile).trim())}</a>`
-    : '‚Äî';
+    : 'ó';
   const hasHomeCountry = homeCountry != null && String(homeCountry).trim() !== '';
-  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : '‚Äî';
+  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : 'ó';
   var D = window.FORM_DESCRIPTIONS || {};
   var lbl = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
   var fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
@@ -1507,7 +1508,7 @@ function fillForm(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === '‚Äî' || !v) ? '' : v;
+    return (v === 'ó' || !v) ? '' : v;
   };
   const gMulti = l => {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([\\s\\S]*?)</span>`));
@@ -1517,14 +1518,14 @@ function fillForm(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === '‚Äî' || !v) ? '' : v;
+    return (v === 'ó' || !v) ? '' : v;
   };
   
   document.getElementById('first-name').value = g('Given Names') || g('Name'); 
   document.getElementById('surname').value = g('Family Name') || g('Surname');
   document.getElementById('email').value = gl('Email'); 
   var mv = gl('Contact Number') || gl('Mobile');
-  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '‚Äî' || !plain) mv = ''; }
+  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === 'ó' || !plain) mv = ''; }
   document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
   var hc = resolveCountryDisplay(g('Home Country'));
   setCountryDropdown('edit', hc || null);
@@ -1628,12 +1629,12 @@ If you wish to have your contact page deleted, please contact deem0u.github.io@g
 Best regards,
 Daniel Mounnarath`;
 
-  return `mailto:${u.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return `mailto:${u.accountEmail || u.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function copyLink(f, btn) {
   navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
-    const o = btn.innerHTML; btn.innerHTML = '‚úì Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-primary');
+    const o = btn.innerHTML; btn.innerHTML = '? Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-primary');
     setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-primary'); }, 2000);
   });
 }
@@ -1661,7 +1662,7 @@ function parseContactFromHtml(html, folder) {
     var valEl = info.querySelector('.value');
     var a = valEl ? valEl.querySelector('a') : null;
     var raw = valEl ? (a ? a.textContent : valEl.textContent) : '';
-    var t = (raw || '').trim().replace(/\s+/g, ' ').replace(/^‚Äî$/, '');
+    var t = (raw || '').trim().replace(/\s+/g, ' ').replace(/^ó$/, '');
     vals.push(t);
     if (a && a.getAttribute('href')) {
       var href = a.getAttribute('href');
@@ -1755,7 +1756,7 @@ document.getElementById('modal-qr-copy-url').addEventListener('click', function(
   var btn = document.getElementById('modal-qr-copy-url');
   navigator.clipboard.writeText(qrModalData.url).then(function() {
     var orig = btn.innerHTML;
-    btn.innerHTML = '‚úì Copied';
+    btn.innerHTML = '? Copied';
     btn.classList.add('btn-success');
     btn.classList.remove('btn-primary');
     setTimeout(function() {
@@ -1770,7 +1771,7 @@ document.getElementById('modal-qr-copy-text').addEventListener('click', function
   var btn = document.getElementById('modal-qr-copy-text');
   navigator.clipboard.writeText(qrModalData.text).then(function() {
     var orig = btn.innerHTML;
-    btn.innerHTML = '‚úì Copied';
+    btn.innerHTML = '? Copied';
     btn.classList.add('btn-success');
     btn.classList.remove('btn-primary');
     setTimeout(function() {
