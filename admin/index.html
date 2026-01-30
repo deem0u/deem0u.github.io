@@ -772,15 +772,17 @@ function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementB
 async function loadDashboard() {
   var pRes = await fetch(API + '/api/pages', { headers: { 'X-Admin-Key': adminKey } });
   var kRes = await fetch(API + '/api/keys', { headers: { 'X-Admin-Key': adminKey } });
-  var aRes = await fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey } });
   if (!pRes.ok) throw new Error('Failed to load pages: ' + pRes.status);
   if (!kRes.ok) throw new Error('Failed to load keys: ' + kRes.status);
   var pData = await pRes.json();
   var kData = await kRes.json();
-  var aData = aRes.ok ? await aRes.json() : {};
+  var accountEmails = {};
+  try {
+    var aRes = await fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey } });
+    if (aRes.ok) { var aData = await aRes.json(); accountEmails = (aData && aData.accountEmails) ? aData.accountEmails : {}; }
+  } catch (e) { /* account-emails optional */ }
   pages = pData.pages || [];
   editKeys = kData.editKeys || {};
-  var accountEmails = (aData && aData.accountEmails) ? aData.accountEmails : {};
   userInfo = {};
   for (var i = 0; i < pages.length; i++) {
     var f = pages[i];
