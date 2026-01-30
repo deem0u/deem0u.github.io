@@ -21,9 +21,14 @@
       <div class="auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Access Your Page</h1>
-          <p class="auth-subtitle">Enter your edit key to update your contact information</p>
+          <p class="auth-subtitle">Enter your user name and edit key below, or use the full link from your email</p>
         </div>
         <form id="auth-form">
+          <div class="form-group">
+            <label class="form-label">User Name</label>
+            <input type="text" id="folder-input" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
+            <span class="form-hint">Your contact page user name (from your email link)</span>
+          </div>
           <div class="form-group">
             <label class="form-label">Edit Key</label>
             <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key" required>
@@ -404,12 +409,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
     }
   });
-  if (!folder) { 
-    showAlert('auth-alert', 'Invalid link. Please check your email for the correct link.', 'error'); 
-    document.getElementById('edit-key').disabled = true;
-    document.querySelector('#auth-form button[type="submit"]').disabled = true;
-    return; 
-  }
+  const folderInput = document.getElementById('folder-input');
+  if (folder) folderInput.value = folder;
   
   // Auto-authenticate if key is in URL
   if (urlKey) { 
@@ -421,8 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
 async function authenticate() {
   editKey = document.getElementById('edit-key').value.trim();
   if (!editKey) { showAlert('auth-alert', 'Please enter your edit key', 'error'); return; }
-  if (!folder) { showAlert('auth-alert', 'Invalid link. Missing folder parameter.', 'error'); return; }
-  
+  folder = folder || document.getElementById('folder-input').value.trim().toLowerCase();
+  if (!folder) { showAlert('auth-alert', 'Please enter your user name.', 'error'); return; }
   showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
   
   try {
