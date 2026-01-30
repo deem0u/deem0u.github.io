@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -772,12 +772,15 @@ function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementB
 async function loadDashboard() {
   var pRes = await fetch(API + '/api/pages', { headers: { 'X-Admin-Key': adminKey } });
   var kRes = await fetch(API + '/api/keys', { headers: { 'X-Admin-Key': adminKey } });
+  var aRes = await fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey } });
   if (!pRes.ok) throw new Error('Failed to load pages: ' + pRes.status);
   if (!kRes.ok) throw new Error('Failed to load keys: ' + kRes.status);
   var pData = await pRes.json();
   var kData = await kRes.json();
+  var aData = aRes.ok ? await aRes.json() : {};
   pages = pData.pages || [];
   editKeys = kData.editKeys || {};
+  var accountEmails = (aData && aData.accountEmails) ? aData.accountEmails : {};
   userInfo = {};
   for (var i = 0; i < pages.length; i++) {
     var f = pages[i];
@@ -786,7 +789,7 @@ async function loadDashboard() {
       if (r.ok) {
         var d = await r.json();
         var info = extractInfo(d.content);
-        userInfo[f] = { firstName: info.firstName, surname: info.surname, email: info.email, accountEmail: (typeof accountEmails !== 'undefined' ? accountEmails[f] : null) || info.email, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
+        userInfo[f] = { firstName: info.firstName, surname: info.surname, email: info.email, accountEmail: (typeof accountEmails !== 'undefined' ? accountEmails[f] : null), lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
       }
     } catch (e) { /* skip */ }
   }
@@ -865,11 +868,15 @@ function populatePageSelect() {
     const u = userInfo[f] || {};
     const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
     const line1 = `${displayName} (${f})`;
+    const hasAccEm = !!u.accountEmail;
+    const useContactFallback = !hasAccEm && u.email;
     const line2 = (u.accountEmail || u.email) || '�';
+    const line2Display = useContactFallback ? line2 + ' (Contact Page Email)' : line2;
+    const metaClass = useContactFallback ? 'searchable-select-option-meta text-danger' : 'searchable-select-option-meta';
     return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
       <div class="searchable-select-option-title">${line1}</div>
-      <div class="searchable-select-option-meta">${line2}</div>
-    </div>`;
+      <div class="${metaClass}">${escapeHtml(line2Display)}</div>
+    </div>`;iv>`;
   }).join('');
   
   if (!sorted.length) {
@@ -987,38 +994,45 @@ function renderList(t) {
     }
     const namePart = `${u.firstName || '�'} ${u.surname || '�'}`.trim();
     const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
+    const hasAccountEmail = !!u.accountEmail;
+    const isContactFallback = !hasAccountEmail && u.email;
     const emailText = (u.accountEmail || u.email) || 'No email';
+    const emailDisplay = isContactFallback ? emailText + ' (Contact Page Email)' : emailText;
+    const emailMetaClass = isContactFallback ? 'user-meta text-danger' : 'user-meta';
+    const secretsNotSet = !hasAccountEmail;
     return `<div class="user-card">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
           <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span></div>
-          <div class="user-meta">${escapeHtml(emailText)}</div>
+          <div class="${emailMetaClass}">${escapeHtml(emailDisplay)}</div>
           <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${!hk ? '<span class="badge badge-warning">View Only</span>' : ''}
+            ${secretsNotSet ? '<span class="badge badge-error">Secrets Not Set</span>' : ''}
             ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
           </div>
         </div>
       </div>
       <div class="user-card-actions">
-        <div class="action-row action-row-contact">
-          <span class="action-row-label">Contact Page</span>
-          <div class="action-row-buttons">
-            <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm">View Live Page</a>
-            <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
-            <button class="btn btn-primary btn-sm" onclick="showQrModal('${f}')">QR Codes</button>
+        <div class="action-row action-row-combo">
+          <div class="action-combo-group">
+            <span class="action-row-label">Contact Page</span>
+            <div class="action-row-buttons">
+              <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm">View Live Page</a>
+              <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
+              <button class="btn btn-primary btn-sm" onclick="showQrModal('${f}')">QR Codes</button>
+            </div>
+            <div class="action-row-end">
+              <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
+            </div>
           </div>
-          <div class="action-row-end">
-            <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
-          </div>
-        </div>
-        <div class="action-row">
-          <span class="action-row-label">Recovery</span>
-          <div class="action-row-buttons">
-            <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
+          <div class="action-combo-group">
+            <span class="action-row-label">Recovery</span>
+            <div class="action-row-buttons">
+              <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
+            </div>
           </div>
         </div>
         <div class="action-row action-row-combo">
