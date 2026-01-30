@@ -10,10 +10,11 @@
   .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
   .consent-text { font-size: 0.9rem; line-height: 1.6; }
   .consent-group { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
-  .consent-group input[type="checkbox"] { margin-top: 0.35em; flex-shrink: 0; }
+  .consent-group input[type="checkbox"] { margin-top: 0.35em; flex-shrink: 0; width: 1.25rem; height: 1.25rem; }
   .secret-q-row { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
   .secret-q-select { width: 100%; min-height: 3rem; }
   .secret-q-answer { width: 100%; min-height: 2.5rem; }
+  .secret-q-select option:disabled { opacity: 0.25; color: #999; background: #f5f5f5; }
   </style>
 </head>
 <body>
@@ -25,9 +26,9 @@
           <span class="app-logo-text">Digital Contact Information Page</span>
         </div>
         <nav class="app-nav tabs">
-          <a href="/home/" class="tab">Home</a>
-          <a href="/terms-and-privacy/" class="tab">Terms of Use & Privacy</a>
+          <a href="/home/" class="tab active">Home</a>
           <a href="https://deem0u.github.io/edit/" class="tab">Contact Editor</a>
+          <a href="/terms-and-privacy/" class="tab">Terms of Use & Privacy</a>
           <a href="mailto:deem0u.github.io@gmail.com" class="tab">Email Me</a>
         </nav>
       </div>
@@ -214,8 +215,43 @@
 
   function validateDob(val) {
     const norm = normalizeDob(val);
-    if (!norm) return { valid: false, message: 'Please enter a valid date (dd/mm/yyyy).' };
+    if (!norm) return { valid: false, message: 'Please enter a valid date in dd/mm/yyyy format (e.g. 25/01/1990).' };
     return { valid: true, normalized: norm };
+  }
+
+  function validateFolder(val) {
+    var s = (val || '').trim().toLowerCase();
+    var msg = 'User name must be 3–32 characters, using only letters, numbers, hyphens and underscores.';
+    if (!s) return { valid: false, message: 'User name is required.' };
+    if (s.length < 3 || s.length > 32) return { valid: false, message: msg };
+    if (!/^[a-zA-Z0-9_-]+$/.test(s)) return { valid: false, message: msg };
+    return { valid: true };
+  }
+
+  function validateGivenNames(val, required) {
+    var s = (val || '').trim();
+    var msg = 'Given names must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
+    if (!s) return required ? { valid: false, message: 'Given names are required.' } : { valid: true };
+    if (s.length > 32) return { valid: false, message: msg };
+    if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
+    return { valid: true };
+  }
+
+  function validateFamilyName(val, required) {
+    var s = (val || '').trim();
+    var msg = 'Family name must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
+    if (!s) return required ? { valid: false, message: 'Family name is required.' } : { valid: true };
+    if (s.length > 32) return { valid: false, message: msg };
+    if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
+    return { valid: true };
+  }
+
+  function validateEmailInput(inp, required) {
+    var s = (inp.value || '').trim();
+    var msg = 'Please enter a valid email address (e.g. name@example.com).';
+    if (!s) return required ? { valid: false, message: 'Email is required.' } : { valid: true };
+    if (!inp.validity.valid) return { valid: false, message: msg };
+    return { valid: true };
   }
 
   function validateSecretAnswer(a) {
@@ -254,6 +290,57 @@
   document.getElementById('signup-form').addEventListener('change', updateSubmitButton);
   document.getElementById('signup-consent').addEventListener('change', updateSubmitButton);
 
+  function initValidations() {
+    var folderInp = document.getElementById('signup-folder'), folderErr = document.getElementById('error-signup-folder');
+    if (folderInp && folderErr) {
+      function showErr(m) { folderErr.textContent = m || ''; folderInp.classList.add('is-invalid'); }
+      function clearErr() { folderErr.textContent = ''; folderInp.classList.remove('is-invalid'); }
+      folderInp.addEventListener('blur', async function() {
+        var r = validateFolder(this.value);
+        if (!r.valid) { showErr(r.message); return; }
+        var u = this.value.trim().toLowerCase();
+        if (u.length >= 3) {
+          try {
+            var res = await fetch(API + '/api/check-username/' + encodeURIComponent(u));
+            var d = await res.json();
+            if (d.available === false) { showErr('This user name is already taken. Please choose another.'); return; }
+          } catch (e) {}
+        }
+        clearErr();
+      });
+      folderInp.addEventListener('input', function() { if (validateFolder(this.value).valid) clearErr(); });
+    }
+    var fnInp = document.getElementById('signup-first-name'), fnErr = document.getElementById('error-signup-first-name');
+    if (fnInp && fnErr) {
+      function showErr(m) { fnErr.textContent = m || ''; fnInp.classList.add('is-invalid'); }
+      function clearErr() { fnErr.textContent = ''; fnInp.classList.remove('is-invalid'); }
+      fnInp.addEventListener('blur', function() { var r = validateGivenNames(this.value, true); r.valid ? clearErr() : showErr(r.message); });
+      fnInp.addEventListener('input', function() { if (validateGivenNames(this.value, true).valid) clearErr(); });
+    }
+    var snInp = document.getElementById('signup-surname'), snErr = document.getElementById('error-signup-surname');
+    if (snInp && snErr) {
+      function showErr(m) { snErr.textContent = m || ''; snInp.classList.add('is-invalid'); }
+      function clearErr() { snErr.textContent = ''; snInp.classList.remove('is-invalid'); }
+      snInp.addEventListener('blur', function() { var r = validateFamilyName(this.value, true); r.valid ? clearErr() : showErr(r.message); });
+      snInp.addEventListener('input', function() { if (validateFamilyName(this.value, true).valid) clearErr(); });
+    }
+    var emInp = document.getElementById('signup-email'), emErr = document.getElementById('error-signup-email');
+    if (emInp && emErr) {
+      function showErr(m) { emErr.textContent = m || ''; emInp.classList.add('is-invalid'); }
+      function clearErr() { emErr.textContent = ''; emInp.classList.remove('is-invalid'); }
+      emInp.addEventListener('blur', function() { var r = validateEmailInput(this, true); r.valid ? clearErr() : showErr(r.message); });
+      emInp.addEventListener('input', function() { if (validateEmailInput(this, true).valid) clearErr(); });
+    }
+    var dobInp = document.getElementById('signup-dob'), dobErr = document.getElementById('error-signup-dob');
+    if (dobInp && dobErr) {
+      function showErr(m) { dobErr.textContent = m || ''; dobInp.classList.add('is-invalid'); }
+      function clearErr() { dobErr.textContent = ''; dobInp.classList.remove('is-invalid'); }
+      dobInp.addEventListener('blur', function() { var r = validateDob(this.value); r.valid ? clearErr() : showErr(r.message); });
+      dobInp.addEventListener('input', function() { if (validateDob(this.value).valid) clearErr(); });
+    }
+  }
+  initValidations();
+
   ['sq1','sq2','sq3'].forEach(function(id) {
     document.getElementById(id).addEventListener('change', syncSecretQuestionOptions);
   });
@@ -289,20 +376,65 @@
   document.getElementById('signup-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     hideAlert('signup-alert');
+    ['error-signup-folder','error-signup-first-name','error-signup-surname','error-signup-email','error-signup-dob','error-secret-questions','error-signup-consent'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.textContent = '';
+    });
+    ['signup-folder','signup-first-name','signup-surname','signup-email','signup-dob'].forEach(function(id) {
+      var inp = document.getElementById(id); if (inp) inp.classList.remove('is-invalid');
+    });
 
-    const folder = document.getElementById('signup-folder').value.trim().toLowerCase();
-    const firstName = document.getElementById('signup-first-name').value.trim();
-    const surname = document.getElementById('signup-surname').value.trim();
-    const email = document.getElementById('signup-email').value.trim();
-    const dobRaw = document.getElementById('signup-dob').value.trim();
-
-    const dobCheck = validateDob(dobRaw);
-    if (!dobCheck.valid) {
-      showAlert('signup-alert', dobCheck.message, 'error');
-      document.getElementById('signup-dob').classList.add('is-invalid');
+    var folder = document.getElementById('signup-folder').value.trim().toLowerCase();
+    var r = validateFolder(folder);
+    if (!r.valid) {
+      document.getElementById('error-signup-folder').textContent = r.message;
+      document.getElementById('signup-folder').classList.add('is-invalid');
+      document.getElementById('signup-folder').focus();
       return;
     }
-    const dob = dobCheck.normalized;
+    try {
+      var checkRes = await fetch(API + '/api/check-username/' + encodeURIComponent(folder));
+      var checkData = await checkRes.json();
+      if (checkData.available === false) {
+        document.getElementById('error-signup-folder').textContent = 'This user name is already taken. Please choose another.';
+        document.getElementById('signup-folder').classList.add('is-invalid');
+        document.getElementById('signup-folder').focus();
+        return;
+      }
+    } catch (err) {}
+    r = validateGivenNames(document.getElementById('signup-first-name').value, true);
+    if (!r.valid) {
+      document.getElementById('error-signup-first-name').textContent = r.message;
+      document.getElementById('signup-first-name').classList.add('is-invalid');
+      document.getElementById('signup-first-name').focus();
+      return;
+    }
+    r = validateFamilyName(document.getElementById('signup-surname').value, true);
+    if (!r.valid) {
+      document.getElementById('error-signup-surname').textContent = r.message;
+      document.getElementById('signup-surname').classList.add('is-invalid');
+      document.getElementById('signup-surname').focus();
+      return;
+    }
+    r = validateEmailInput(document.getElementById('signup-email'), true);
+    if (!r.valid) {
+      document.getElementById('error-signup-email').textContent = r.message;
+      document.getElementById('signup-email').classList.add('is-invalid');
+      document.getElementById('signup-email').focus();
+      return;
+    }
+    var dobRaw = document.getElementById('signup-dob').value.trim();
+    r = validateDob(dobRaw);
+    if (!r.valid) {
+      document.getElementById('error-signup-dob').textContent = r.message;
+      document.getElementById('signup-dob').classList.add('is-invalid');
+      document.getElementById('signup-dob').focus();
+      return;
+    }
+    var firstName = document.getElementById('signup-first-name').value.trim();
+    var surname = document.getElementById('signup-surname').value.trim();
+    var email = document.getElementById('signup-email').value.trim();
+
+    var dob = normalizeDob(dobRaw);
 
     const secretQuestions = [
       { questionId: parseInt(document.getElementById('sq1').value, 10), answer: document.getElementById('sq1-answer').value.trim() },
