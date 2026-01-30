@@ -75,7 +75,7 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Date of Birth <span class="form-required">*</span></label>
-                  <input type="text" id="signup-dob" class="form-input" placeholder="dd/mm/yyyy" maxlength="10" required inputmode="numeric" autocomplete="bday">
+                  <input type="text" id="signup-dob" class="form-input" placeholder="dd/mm/yyyy" maxlength="10" required inputmode="numeric" autocomplete="bday" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy">
                   <span class="form-hint">Used for account recovery purposes only. Format: dd/mm/yyyy</span>
                   <span class="form-error" id="error-signup-dob" role="alert"></span>
                 </div>
@@ -99,6 +99,7 @@
                         <option value="10">What is a word that Chris cannot correctly pronounce?</option>
                       </select>
                       <input type="text" id="sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required>
+                      <span class="form-error" id="error-sq1-answer" role="alert"></span>
                     </div>
                     <div class="secret-q-row">
                       <select id="sq2" class="form-input secret-q-select" required>
@@ -115,6 +116,7 @@
                         <option value="10">What is a word that Chris cannot correctly pronounce?</option>
                       </select>
                       <input type="text" id="sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required>
+                      <span class="form-error" id="error-sq2-answer" role="alert"></span>
                     </div>
                     <div class="secret-q-row">
                       <select id="sq3" class="form-input secret-q-select" required>
@@ -131,6 +133,7 @@
                         <option value="10">What is a word that Chris cannot correctly pronounce?</option>
                       </select>
                       <input type="text" id="sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required>
+                      <span class="form-error" id="error-sq3-answer" role="alert"></span>
                     </div>
                   </div>
                   <span class="form-error" id="error-secret-questions" role="alert"></span>
@@ -203,18 +206,9 @@
 
   function normalizeDob(val) {
     const s = (val || '').trim().replace(/\s+/g, '');
-    const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/) || s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (!m) return null;
-    let d, mo, y;
-    if (m[3] && m[3].length === 4) {
-      d = parseInt(m[1], 10);
-      mo = parseInt(m[2], 10);
-      y = parseInt(m[3], 10);
-    } else {
-      y = parseInt(m[1], 10);
-      mo = parseInt(m[2], 10);
-      d = parseInt(m[3], 10);
-    }
+    const d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
     if (d < 1 || d > 31 || mo < 1 || mo > 12 || y < 1900 || y > 2100) return null;
     return String(d).padStart(2, '0') + '/' + String(mo).padStart(2, '0') + '/' + y;
   }
@@ -301,8 +295,8 @@
   function initValidations() {
     var folderInp = document.getElementById('signup-folder'), folderErr = document.getElementById('error-signup-folder');
     if (folderInp && folderErr) {
-      function showErr(m) { folderErr.textContent = m || ''; folderInp.classList.add('is-invalid'); }
-      function clearErr() { folderErr.textContent = ''; folderInp.classList.remove('is-invalid'); }
+      function showErr(m) { folderErr.textContent = m || ''; folderErr.setAttribute('aria-live', 'polite'); folderInp.classList.add('is-invalid'); }
+      function clearErr() { folderErr.textContent = ''; folderErr.removeAttribute('aria-live'); folderInp.classList.remove('is-invalid'); }
       folderInp.addEventListener('blur', async function() {
         var r = validateFolder(this.value);
         if (!r.valid) { showErr(r.message); return; }
@@ -320,22 +314,22 @@
     }
     var fnInp = document.getElementById('signup-first-name'), fnErr = document.getElementById('error-signup-first-name');
     if (fnInp && fnErr) {
-      function showErr(m) { fnErr.textContent = m || ''; fnInp.classList.add('is-invalid'); }
-      function clearErr() { fnErr.textContent = ''; fnInp.classList.remove('is-invalid'); }
+      function showErr(m) { fnErr.textContent = m || ''; fnErr.setAttribute('aria-live', 'polite'); fnInp.classList.add('is-invalid'); }
+      function clearErr() { fnErr.textContent = ''; fnErr.removeAttribute('aria-live'); fnInp.classList.remove('is-invalid'); }
       fnInp.addEventListener('blur', function() { var r = validateGivenNames(this.value, true); r.valid ? clearErr() : showErr(r.message); });
       fnInp.addEventListener('input', function() { if (validateGivenNames(this.value, true).valid) clearErr(); });
     }
     var snInp = document.getElementById('signup-surname'), snErr = document.getElementById('error-signup-surname');
     if (snInp && snErr) {
-      function showErr(m) { snErr.textContent = m || ''; snInp.classList.add('is-invalid'); }
-      function clearErr() { snErr.textContent = ''; snInp.classList.remove('is-invalid'); }
+      function showErr(m) { snErr.textContent = m || ''; snErr.setAttribute('aria-live', 'polite'); snInp.classList.add('is-invalid'); }
+      function clearErr() { snErr.textContent = ''; snErr.removeAttribute('aria-live'); snInp.classList.remove('is-invalid'); }
       snInp.addEventListener('blur', function() { var r = validateFamilyName(this.value, true); r.valid ? clearErr() : showErr(r.message); });
       snInp.addEventListener('input', function() { if (validateFamilyName(this.value, true).valid) clearErr(); });
     }
     var accEmInp = document.getElementById('signup-account-email'), accEmErr = document.getElementById('error-signup-account-email');
     if (accEmInp && accEmErr) {
-      function showErr(m) { accEmErr.textContent = m || ''; accEmInp.classList.add('is-invalid'); }
-      function clearErr() { accEmErr.textContent = ''; accEmInp.classList.remove('is-invalid'); }
+      function showErr(m) { accEmErr.textContent = m || ''; accEmErr.setAttribute('aria-live', 'polite'); accEmInp.classList.add('is-invalid'); }
+      function clearErr() { accEmErr.textContent = ''; accEmErr.removeAttribute('aria-live'); accEmInp.classList.remove('is-invalid'); }
       accEmInp.addEventListener('blur', async function() {
         var r = validateEmailInput(this, true);
         if (!r.valid) { showErr(r.message); return; }
@@ -353,18 +347,26 @@
     }
     var contactEmInp = document.getElementById('signup-contact-email'), contactEmErr = document.getElementById('error-signup-contact-email');
     if (contactEmInp && contactEmErr) {
-      function showErr(m) { contactEmErr.textContent = m || ''; contactEmInp.classList.add('is-invalid'); }
-      function clearErr() { contactEmErr.textContent = ''; contactEmInp.classList.remove('is-invalid'); }
+      function showErr(m) { contactEmErr.textContent = m || ''; contactEmErr.setAttribute('aria-live', 'polite'); contactEmInp.classList.add('is-invalid'); }
+      function clearErr() { contactEmErr.textContent = ''; contactEmErr.removeAttribute('aria-live'); contactEmInp.classList.remove('is-invalid'); }
       contactEmInp.addEventListener('blur', function() { var r = validateEmailInput(this, true); r.valid ? clearErr() : showErr(r.message); });
       contactEmInp.addEventListener('input', function() { if (validateEmailInput(this, true).valid) clearErr(); });
     }
     var dobInp = document.getElementById('signup-dob'), dobErr = document.getElementById('error-signup-dob');
     if (dobInp && dobErr) {
-      function showErr(m) { dobErr.textContent = m || ''; dobInp.classList.add('is-invalid'); }
-      function clearErr() { dobErr.textContent = ''; dobInp.classList.remove('is-invalid'); }
+      function showErr(m) { dobErr.textContent = m || ''; dobErr.setAttribute('aria-live', 'polite'); dobInp.classList.add('is-invalid'); }
+      function clearErr() { dobErr.textContent = ''; dobErr.removeAttribute('aria-live'); dobInp.classList.remove('is-invalid'); }
       dobInp.addEventListener('blur', function() { var r = validateDob(this.value); r.valid ? clearErr() : showErr(r.message); });
       dobInp.addEventListener('input', function() { if (validateDob(this.value).valid) clearErr(); });
     }
+    ['sq1-answer','sq2-answer','sq3-answer'].forEach(function(id, idx) {
+      var inp = document.getElementById(id), errId = 'error-' + id, errEl = document.getElementById(errId);
+      if (!inp || !errEl) return;
+      function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+      function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+      inp.addEventListener('blur', function() { var r = validateSecretAnswer(this.value); r.valid ? clearErr() : showErr(r.message); });
+      inp.addEventListener('input', function() { if (validateSecretAnswer(this.value).valid) clearErr(); });
+    });
   }
   initValidations();
 
@@ -391,7 +393,7 @@
       const inp = document.getElementById(id);
       if (inp) inp.classList.remove('is-invalid');
     });
-    ['error-signup-folder','error-signup-first-name','error-signup-surname','error-signup-account-email','error-signup-contact-email','error-signup-dob','error-secret-questions','error-signup-consent'].forEach(function(id) {
+    ['error-signup-folder','error-signup-first-name','error-signup-surname','error-signup-account-email','error-signup-contact-email','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
       const el = document.getElementById(id);
       if (el) el.textContent = '';
     });
@@ -403,7 +405,7 @@
   document.getElementById('signup-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     hideAlert('signup-alert');
-    ['error-signup-folder','error-signup-first-name','error-signup-surname','error-signup-account-email','error-signup-contact-email','error-signup-dob','error-secret-questions','error-signup-consent'].forEach(function(id) {
+    ['error-signup-folder','error-signup-first-name','error-signup-surname','error-signup-account-email','error-signup-contact-email','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
       var el = document.getElementById(id); if (el) el.textContent = '';
     });
     ['signup-folder','signup-first-name','signup-surname','signup-account-email','signup-contact-email','signup-dob'].forEach(function(id) {
