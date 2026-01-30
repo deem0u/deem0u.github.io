@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Contact Editor — Admin</title>
+  <title>Admin Dashboard</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -12,8 +12,7 @@
       <div class="app-header-inner">
         <div class="app-logo">
           <div class="app-logo-icon">C</div>
-          <span class="app-logo-text">Contact Editor</span>
-          <span class="app-logo-badge">Admin</span>
+          <span class="app-logo-text">Admin Dashboard</span>
         </div>
         <button id="logout-btn" class="btn btn-ghost btn-sm hidden" onclick="logout()">Sign Out</button>
       </div>
@@ -125,7 +124,7 @@
       <div class="app-container">
         <div class="tabs">
           <button class="tab active" data-tab="manage">Manage Users</button>
-          <button class="tab" data-tab="edit">Add Users / Edit Contact Page</button>
+          <button class="tab" data-tab="edit">Add Users / Edit Contact Information</button>
         </div>
 
         <div id="tab-manage" class="tab-content active">
@@ -176,7 +175,7 @@
           
           <!-- New User Form -->
           <div id="new-user-card" class="card hidden">
-            <div class="card-header"><span class="card-title">Add New User/Contact Page</span></div>
+            <div class="card-header"><span class="card-title">Add New User/Contact Information Page</span></div>
             <div class="card-body">
               <form id="new-user-form">
                 <div class="form-group">
@@ -228,7 +227,7 @@
                 </div>
                 <div id="alert-new-user" class="alert"></div>
                 <div class="form-actions">
-                  <button type="submit" id="create-btn" class="btn btn-success btn-lg">Create Contact Page</button>
+                  <button type="submit" id="create-btn" class="btn btn-success btn-lg">Create</button>
                   <button type="button" class="btn btn-secondary btn-lg" onclick="hideNewUserForm()">Cancel</button>
                 </div>
               </form>
@@ -1286,7 +1285,7 @@ async function handleCreateUser(e) {
       showAlert('alert-new-user', d.error || 'Failed to create', 'error');
     }
   } catch { showAlert('alert-new-user', 'Error', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Create Contact Page'; }
+  finally { btn.disabled = false; btn.textContent = 'Create'; }
 }
 
 function generateNewUserHTML() {

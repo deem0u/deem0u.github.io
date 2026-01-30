@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Update Your Contact Information</title>
+  <title>Contact Editor - User</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -12,8 +12,9 @@
       <div class="app-header-inner">
         <div class="app-logo">
           <div class="app-logo-icon">C</div>
-          <span class="app-logo-text">Contact Editor</span>
+          <span class="app-logo-text" id="header-logo-text">Contact Editor - User</span>
         </div>
+        <button id="signout-btn" class="btn btn-ghost btn-sm hidden" onclick="signOut()">Sign Out</button>
       </div>
     </header>
 
@@ -35,7 +36,7 @@
             <span class="form-hint">This was provided to you via email</span>
           </div>
           <div id="auth-alert" class="alert"></div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg">Continue</button>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
         </form>
       </div>
     </main>
@@ -45,13 +46,13 @@
         <div class="card card-welcome">
           <div class="card-body">
             <p class="card-welcome-text">
-              Welcome, <strong id="user-name">User</strong>. Update your information below and click Save.
+              Welcome, <strong id="user-name">User</strong>. Here are your current Contact Information. Make the required updates to your details below and click Save.
             </p>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header"><span class="card-title">Your Contact Details</span></div>
+          <div class="card-header"><span class="card-title">Your Contact Information</span></div>
           <div class="card-body">
             <form id="contact-form">
               <div class="form-row">
@@ -434,7 +435,10 @@ async function authenticate() {
     currentSha = data.sha;
     fillForm(data.content);
     
-    document.getElementById('user-name').textContent = document.getElementById('first-name').value || folder;
+    document.getElementById('user-name').textContent = (document.getElementById('first-name').value || folder) + ' (' + folder + ')';
+    document.title = 'Contact Editor - ' + folder;
+    document.getElementById('header-logo-text').textContent = 'Contact Editor - ' + folder;
+    document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('view-page-link').href = `https://deem0u.github.io/${folder}/`;
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
@@ -442,6 +446,20 @@ async function authenticate() {
     console.error('Auth error:', e);
     showAlert('auth-alert', 'Connection error. Please try again.', 'error'); 
   }
+}
+
+function signOut() {
+  folder = null;
+  editKey = null;
+  currentSha = null;
+  document.title = 'Contact Editor - User';
+  document.getElementById('header-logo-text').textContent = 'Contact Editor - User';
+  document.getElementById('signout-btn').classList.add('hidden');
+  document.getElementById('screen-editor').classList.add('hidden');
+  document.getElementById('screen-auth').classList.remove('hidden');
+  document.getElementById('folder-input').value = '';
+  document.getElementById('edit-key').value = '';
+  hideAlert('auth-alert');
 }
 
 function fillForm(h) {
@@ -587,7 +605,7 @@ async function handleSave(e) {
     
     if (res.ok) {
       currentSha = data.sha;
-      document.getElementById('user-name').textContent = document.getElementById('first-name').value;
+      document.getElementById('user-name').textContent = (document.getElementById('first-name').value || folder) + ' (' + folder + ')';
       showAlert('editor-alert', 'Changes saved successfully! Use the "View Page" link above to see your updates.', 'success');
     } else { showAlert('editor-alert', data.error || 'Failed to save', 'error'); }
   } catch (e) { showAlert('editor-alert', 'Connection error', 'error'); }
