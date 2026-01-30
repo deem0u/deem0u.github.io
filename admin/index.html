@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -315,7 +315,7 @@
     <div class="modal modal-qr">
       <div class="modal-header"><h3 class="modal-title">QR Codes</h3></div>
       <div class="modal-body" id="modal-qr-body">
-        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loadingï¿½</div>
+        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading?</div>
         <div id="modal-qr-content" class="modal-qr-content hidden">
           <p class="modal-qr-desc">Toggle between the required QR codes for download, copy or exporting as needed. You can use the NFC Tools App to scan each QR to import as records to then write to an appropriate NFC tag.</p>
           <div class="modal-qr-tabs">
@@ -361,18 +361,20 @@
             <label class="form-label">Account Email</label>
             <input type="email" id="secrets-account-email" class="form-input" autocomplete="email">
             <span class="form-hint">Used for recovery. Must be unique.</span>
+            <span class="form-error" id="error-secrets-account-email" role="alert"></span>
           </div>
           <div class="form-group">
             <label class="form-label">Date of Birth</label>
-            <input type="text" id="secrets-dob" class="form-input" placeholder="dd/mm/yyyy" maxlength="10">
+            <input type="text" id="secrets-dob" class="form-input" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
             <span class="form-hint">Format: dd/mm/yyyy</span>
+            <span class="form-error" id="error-secrets-dob" role="alert"></span>
           </div>
           <div class="form-group">
             <label class="form-label">Security Questions</label>
-            <span class="form-hint" style="display:block; margin-bottom: 0.5rem;">Select 3 different questions and provide answers (4â€“30 characters each).</span>
-            <div style="margin-bottom: 0.75rem;"><select id="secrets-sq1" class="form-input" style="width:100%; min-height:2.5rem"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq1-answer" class="form-input" maxlength="30" placeholder="Answer" style="margin-top:0.25rem"></div>
-            <div style="margin-bottom: 0.75rem;"><select id="secrets-sq2" class="form-input" style="width:100%; min-height:2.5rem"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq2-answer" class="form-input" maxlength="30" placeholder="Answer" style="margin-top:0.25rem"></div>
-            <div><select id="secrets-sq3" class="form-input" style="width:100%; min-height:2.5rem"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq3-answer" class="form-input" maxlength="30" placeholder="Answer" style="margin-top:0.25rem"></div>
+            <span class="form-hint" style="display:block; margin-bottom: 0.5rem;">Select 3 different questions and provide answers (4–30 characters each).</span>
+            <div class="secret-q-row"><select id="secrets-sq1" class="form-input secret-q-select"><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div>
+            <div class="secret-q-row"><select id="secrets-sq2" class="form-input secret-q-select"><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div>
+            <div class="secret-q-row"><select id="secrets-sq3" class="form-input secret-q-select"><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div>
           </div>
         </div>
         <div id="modal-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
@@ -384,7 +386,7 @@
     </div>
   </div>
 
-<script src="../countries-data.js"></script></script>
+<script src="../countries-data.js"></script>
 <script src="../form-descriptions.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
@@ -464,6 +466,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initCountryDropdowns();
   applyFormDescriptions();
   initFolderValidation();
+  if (typeof initSecretsModalValidations === 'function') initSecretsModalValidations();
   initGivenNamesValidation();
   initFamilyNameValidation();
   initEmailValidation();
@@ -583,7 +586,7 @@ function selectCountry(which, value) {
 }
 
 function resolveCountryDisplay(parsed) {
-  if (!parsed || (parsed.trim()) === '' || parsed.trim() === 'ï¿½') return null;
+  if (!parsed || (parsed.trim()) === '' || parsed.trim() === '?') return null;
   var p = parsed.trim();
   var list = window.COUNTRIES || [];
   for (var i = 0; i < list.length; i++) {
@@ -776,7 +779,13 @@ async function fetchAccountEmailsAndRefresh() {
     if (!r || !r.ok) return;
     var d = await r.json();
     var accountEmails = (d && d.accountEmails) ? d.accountEmails : {};
-    for (var f in userInfo) { if (accountEmails[f]) userInfo[f].accountEmail = accountEmails[f]; }
+    for (var f in userInfo) { userInfo[f].accountEmail = accountEmails[f] || null; }
+    var sr = await fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ folders: pages || [] }) });
+    if (sr && sr.ok) {
+      var sd = await sr.json();
+      var statuses = (sd && sd.statuses) ? sd.statuses : {};
+      for (var f in userInfo) { userInfo[f].secretsComplete = !!(statuses[f] && statuses[f].secretsComplete); }
+    }
     populateUI();
   } catch (e) { /* ignore */ }
 }
@@ -817,7 +826,7 @@ function extractInfo(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === 'ï¿½' || !v) ? '' : v;
+    return (v === '?' || !v) ? '' : v;
   };
   const em = h.match(/href="mailto:([^"]+)"/);
   
@@ -880,7 +889,7 @@ function populatePageSelect() {
     const line1 = `${displayName} (${f})`;
     const hasAccEm = !!u.accountEmail;
     const useContactFallback = !hasAccEm && u.email;
-    const line2 = (u.accountEmail || u.email) || 'ï¿½';
+    const line2 = (u.accountEmail || u.email) || '?';
     const line2Display = useContactFallback ? line2 + ' (Contact Page Email)' : line2;
     const metaClass = useContactFallback ? 'searchable-select-option-meta text-danger' : 'searchable-select-option-meta';
     return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
@@ -1002,14 +1011,14 @@ function renderList(t) {
     } else if (u.updatedBy) {
       lastUpdatedDisplay = 'Unknown (old format)';
     }
-    const namePart = `${u.firstName || 'ï¿½'} ${u.surname || 'ï¿½'}`.trim();
+    const namePart = `${u.firstName || '?'} ${u.surname || '?'}`.trim();
     const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
     const hasAccountEmail = !!u.accountEmail;
     const isContactFallback = !hasAccountEmail && u.email;
     const emailText = (u.accountEmail || u.email) || 'No email';
     const emailDisplay = isContactFallback ? emailText + ' (Contact Page Email)' : emailText;
     const emailMetaClass = isContactFallback ? 'user-meta text-danger' : 'user-meta';
-    const secretsNotSet = !hasAccountEmail;
+    const secretsNotSet = !(u.secretsComplete === true);
     return `<div class="user-card">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
@@ -1020,8 +1029,9 @@ function renderList(t) {
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${secretsNotSet ? '<span class="badge badge-error">Secrets Not Set</span>' : ''}
             ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
+            ${!hk ? '<span class="badge badge-secondary">View Only</span>' : ''}
+            ${secretsNotSet ? '<span class="badge badge-error">Secrets Not Set</span>' : ''}
           </div>
         </div>
       </div>
@@ -1140,7 +1150,7 @@ function hideNewUserForm() {
 
 function validateFolder(val) {
   var s = (val || '').trim();
-  var msg = 'User name must be 3ï¿½32 characters, using only letters, numbers, hyphens and underscores.';
+  var msg = 'User name must be 3?32 characters, using only letters, numbers, hyphens and underscores.';
   if (!s) return { valid: false, message: 'User name is required.' };
   if (s.length < 3 || s.length > 32) return { valid: false, message: msg };
   if (!/^[a-zA-Z0-9_-]+$/.test(s)) return { valid: false, message: msg };
@@ -1408,7 +1418,7 @@ function decodeHtmlEntities(s) {
 
 function decodeMultiline(s) {
   const raw = (s ?? '').toString().trim();
-  if (!raw || raw === 'ï¿½') return '';
+  if (!raw || raw === '?') return '';
   return decodeHtmlEntities(raw)
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, '');
@@ -1495,21 +1505,21 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
   const destParts = [dName, dAddr, dPhone, dEmail].map(function(t) {
     return '<span>' + (t ? escapeHtml(t) : '') + '</span>';
   });
-  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">ï¿½</span>';
+  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">?</span>';
 
-  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">ï¿½</span>';
+  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">?</span>';
   const lastUpdatedData = lastUpdated ? `data-timestamp="${lastUpdated}" data-updated-by="${updatedBy}"` : '';
   const lastUpdatedEn = 'Last updated';
   const lastUpdatedFr = 'Derni\u00e8re mise \u00e0 jour';
   const lastUpdatedZh = '\u6700\u540e\u66f4\u65b0';
   const lastUpdatedTitles = lastUpdatedEn + ' \u00b7 ' + lastUpdatedFr + ' \u00b7 ' + lastUpdatedZh;
-  const lastUpdatedBlockHtml = lastUpdated ? `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>ï¿½</span></div>` : '';
+  const lastUpdatedBlockHtml = lastUpdated ? `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>?</span></div>` : '';
   const hasMobile = mobile != null && String(mobile).trim() !== '';
   const mobileHtml = hasMobile
     ? `<a href="tel:${(mobileLink || '').replace(/"/g, '&quot;')}">${escapeHtml(String(mobile).trim())}</a>`
-    : 'ï¿½';
+    : '?';
   const hasHomeCountry = homeCountry != null && String(homeCountry).trim() !== '';
-  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : 'ï¿½';
+  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : '?';
   var D = window.FORM_DESCRIPTIONS || {};
   var lbl = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
   var fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
@@ -1577,7 +1587,7 @@ function fillForm(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === 'ï¿½' || !v) ? '' : v;
+    return (v === '?' || !v) ? '' : v;
   };
   const gMulti = l => {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([\\s\\S]*?)</span>`));
@@ -1587,14 +1597,14 @@ function fillForm(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === 'ï¿½' || !v) ? '' : v;
+    return (v === '?' || !v) ? '' : v;
   };
   
   document.getElementById('first-name').value = g('Given Names') || g('Name'); 
   document.getElementById('surname').value = g('Family Name') || g('Surname');
   document.getElementById('email').value = gl('Email'); 
   var mv = gl('Contact Number') || gl('Mobile');
-  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === 'ï¿½' || !plain) mv = ''; }
+  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '?' || !plain) mv = ''; }
   document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
   var hc = resolveCountryDisplay(g('Home Country'));
   setCountryDropdown('edit', hc || null);
@@ -1723,7 +1733,7 @@ function closeQrModal() {
 
 
 var secretsModalFolder = null;
-var SQ_OPTIONS = [{v:'',t:'â€” Select question â€”'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
+var SQ_OPTIONS = [{v:'',t:'— Select question —'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
 
 function syncSecretsModalSqOptions() {
   var v1 = document.getElementById('secrets-sq1').value, v2 = document.getElementById('secrets-sq2').value, v3 = document.getElementById('secrets-sq3').value;
@@ -1740,6 +1750,16 @@ function syncSecretsModalSqOptions() {
   });
 }
 
+
+(function attachSecretsSqListeners(){['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('change',syncSecretsModalSqOptions);});})();
+
+function initSecretsModalValidations(){
+  function validateDob(val){var s=(val||'').trim().replace(/\s+/g,'');var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)return{valid:false,message:'Please enter a valid date in dd/mm/yyyy format.'};var d=parseInt(m[1],10),mo=parseInt(m[2],10),y=parseInt(m[3],10);if(d<1||d>31||mo<1||mo>12||y<1900||y>2100)return{valid:false,message:'Please enter a valid date.'};return{valid:true};}
+  function validateSecretAnswer(a){var t=(a||'').trim();if(t.length<4)return{valid:false,message:'Answer must be at least 4 characters.'};if(t.length>30)return{valid:false,message:'Answer must be 30 characters or fewer.'};return{valid:true};}
+  var dobInp=document.getElementById('secrets-dob'),dobErr=document.getElementById('error-secrets-dob');
+  if(dobInp&&dobErr){dobInp.addEventListener('blur',function(){var r=validateDob(this.value);if(r.valid){dobErr.textContent='';dobInp.classList.remove('is-invalid');}else{dobErr.textContent=r.message;dobErr.setAttribute('aria-live','polite');dobInp.classList.add('is-invalid');}});dobInp.addEventListener('input',function(){if(validateDob(this.value).valid){dobErr.textContent='';dobInp.classList.remove('is-invalid');}});}
+  ['secrets-sq1-answer','secrets-sq2-answer','secrets-sq3-answer'].forEach(function(id){var inp=document.getElementById(id),errEl=document.getElementById('error-'+id);if(!inp||!errEl)return;inp.addEventListener('blur',function(){var r=validateSecretAnswer(this.value);if(r.valid){errEl.textContent='';inp.classList.remove('is-invalid');}else{errEl.textContent=r.message;errEl.setAttribute('aria-live','polite');inp.classList.add('is-invalid');}});inp.addEventListener('input',function(){if(validateSecretAnswer(this.value).valid){errEl.textContent='';inp.classList.remove('is-invalid');}});});
+}
 function closeSecretsModal() {
   document.getElementById('modal-secrets').classList.remove('show');
   secretsModalFolder = null;
@@ -1832,7 +1852,7 @@ function parseContactFromHtml(html, folder) {
     var valEl = info.querySelector('.value');
     var a = valEl ? valEl.querySelector('a') : null;
     var raw = valEl ? (a ? a.textContent : valEl.textContent) : '';
-    var t = (raw || '').trim().replace(/\s+/g, ' ').replace(/^ï¿½$/, '');
+    var t = (raw || '').trim().replace(/\s+/g, ' ').replace(/^?$/, '');
     vals.push(t);
     if (a && a.getAttribute('href')) {
       var href = a.getAttribute('href');
