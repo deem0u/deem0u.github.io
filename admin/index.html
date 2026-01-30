@@ -769,6 +769,17 @@ function resetRecovery() {
 
 function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert-2', 'Copied to clipboard!', 'success'); }
 
+
+async function fetchAccountEmailsAndRefresh() {
+  try {
+    var r = await fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey } });
+    if (!r || !r.ok) return;
+    var d = await r.json();
+    var accountEmails = (d && d.accountEmails) ? d.accountEmails : {};
+    for (var f in userInfo) { if (accountEmails[f]) userInfo[f].accountEmail = accountEmails[f]; }
+    populateUI();
+  } catch (e) { /* ignore */ }
+}
 async function loadDashboard() {
   var pRes = await fetch(API + '/api/pages', { headers: { 'X-Admin-Key': adminKey } });
   var kRes = await fetch(API + '/api/keys', { headers: { 'X-Admin-Key': adminKey } });
@@ -793,6 +804,7 @@ async function loadDashboard() {
   }
   try {
     populateUI();
+    fetchAccountEmailsAndRefresh();
   } catch (e) {
     console.error('populateUI error:', e);
     throw new Error('Dashboard UI error: ' + (e.message || 'see console'));
