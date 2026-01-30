@@ -315,7 +315,7 @@
     <div class="modal modal-qr">
       <div class="modal-header"><h3 class="modal-title">QR Codes</h3></div>
       <div class="modal-body" id="modal-qr-body">
-        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
+        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loadingï¿½</div>
         <div id="modal-qr-content" class="modal-qr-content hidden">
           <p class="modal-qr-desc">Toggle between the required QR codes for download, copy or exporting as needed. You can use the NFC Tools App to scan each QR to import as records to then write to an appropriate NFC tag.</p>
           <div class="modal-qr-tabs">
@@ -351,7 +351,40 @@
     </div>
   </div>
 
-<script src="../countries-data.js"></script>
+  <div id="modal-secrets" class="modal-overlay">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header"><h3 class="modal-title" id="modal-secrets-title">Set Secrets</h3></div>
+      <div class="modal-body">
+        <div id="modal-secrets-loading" class="modal-qr-loading"><span class="spinner"></span> Loading...</div>
+        <div id="modal-secrets-form" class="hidden">
+          <div class="form-group">
+            <label class="form-label">Account Email</label>
+            <input type="email" id="secrets-account-email" class="form-input" autocomplete="email">
+            <span class="form-hint">Used for recovery. Must be unique.</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date of Birth</label>
+            <input type="text" id="secrets-dob" class="form-input" placeholder="dd/mm/yyyy" maxlength="10">
+            <span class="form-hint">Format: dd/mm/yyyy</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Security Questions</label>
+            <span class="form-hint" style="display:block; margin-bottom: 0.5rem;">Select 3 different questions and provide answers (4â€“30 characters each).</span>
+            <div style="margin-bottom: 0.75rem;"><select id="secrets-sq1" class="form-input" style="width:100%; min-height:2.5rem"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq1-answer" class="form-input" maxlength="30" placeholder="Answer" style="margin-top:0.25rem"></div>
+            <div style="margin-bottom: 0.75rem;"><select id="secrets-sq2" class="form-input" style="width:100%; min-height:2.5rem"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq2-answer" class="form-input" maxlength="30" placeholder="Answer" style="margin-top:0.25rem"></div>
+            <div><select id="secrets-sq3" class="form-input" style="width:100%; min-height:2.5rem"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq3-answer" class="form-input" maxlength="30" placeholder="Answer" style="margin-top:0.25rem"></div>
+          </div>
+        </div>
+        <div id="modal-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSecretsModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()">Save</button>
+      </div>
+    </div>
+  </div>
+
+<script src="../countries-data.js"></script></script>
 <script src="../form-descriptions.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
@@ -550,7 +583,7 @@ function selectCountry(which, value) {
 }
 
 function resolveCountryDisplay(parsed) {
-  if (!parsed || (parsed.trim()) === '' || parsed.trim() === '—') return null;
+  if (!parsed || (parsed.trim()) === '' || parsed.trim() === 'ï¿½') return null;
   var p = parsed.trim();
   var list = window.COUNTRIES || [];
   for (var i = 0; i < list.length; i++) {
@@ -771,7 +804,7 @@ function extractInfo(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === '—' || !v) ? '' : v;
+    return (v === 'ï¿½' || !v) ? '' : v;
   };
   const em = h.match(/href="mailto:([^"]+)"/);
   
@@ -832,7 +865,7 @@ function populatePageSelect() {
     const u = userInfo[f] || {};
     const displayName = u.firstName && u.surname ? `${u.firstName} ${u.surname}` : f;
     const line1 = `${displayName} (${f})`;
-    const line2 = (u.accountEmail || u.email) || '—';
+    const line2 = (u.accountEmail || u.email) || 'ï¿½';
     return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
       <div class="searchable-select-option-title">${line1}</div>
       <div class="searchable-select-option-meta">${line2}</div>
@@ -952,7 +985,7 @@ function renderList(t) {
     } else if (u.updatedBy) {
       lastUpdatedDisplay = 'Unknown (old format)';
     }
-    const namePart = `${u.firstName || '—'} ${u.surname || '—'}`.trim();
+    const namePart = `${u.firstName || 'ï¿½'} ${u.surname || 'ï¿½'}`.trim();
     const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
     const emailText = (u.accountEmail || u.email) || 'No email';
     return `<div class="user-card">
@@ -980,6 +1013,12 @@ function renderList(t) {
           </div>
           <div class="action-row-end">
             <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
+          </div>
+        </div>
+        <div class="action-row">
+          <span class="action-row-label">Recovery</span>
+          <div class="action-row-buttons">
+            <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
           </div>
         </div>
         <div class="action-row action-row-combo">
@@ -1077,7 +1116,7 @@ function hideNewUserForm() {
 
 function validateFolder(val) {
   var s = (val || '').trim();
-  var msg = 'User name must be 3–32 characters, using only letters, numbers, hyphens and underscores.';
+  var msg = 'User name must be 3ï¿½32 characters, using only letters, numbers, hyphens and underscores.';
   if (!s) return { valid: false, message: 'User name is required.' };
   if (s.length < 3 || s.length > 32) return { valid: false, message: msg };
   if (!/^[a-zA-Z0-9_-]+$/.test(s)) return { valid: false, message: msg };
@@ -1345,7 +1384,7 @@ function decodeHtmlEntities(s) {
 
 function decodeMultiline(s) {
   const raw = (s ?? '').toString().trim();
-  if (!raw || raw === '—') return '';
+  if (!raw || raw === 'ï¿½') return '';
   return decodeHtmlEntities(raw)
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]*>/g, '');
@@ -1432,21 +1471,21 @@ function generatePageHTML(firstName, surname, email, mobile, mobileLink, homeCou
   const destParts = [dName, dAddr, dPhone, dEmail].map(function(t) {
     return '<span>' + (t ? escapeHtml(t) : '') + '</span>';
   });
-  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
+  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">ï¿½</span>';
 
-  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
+  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">ï¿½</span>';
   const lastUpdatedData = lastUpdated ? `data-timestamp="${lastUpdated}" data-updated-by="${updatedBy}"` : '';
   const lastUpdatedEn = 'Last updated';
   const lastUpdatedFr = 'Derni\u00e8re mise \u00e0 jour';
   const lastUpdatedZh = '\u6700\u540e\u66f4\u65b0';
   const lastUpdatedTitles = lastUpdatedEn + ' \u00b7 ' + lastUpdatedFr + ' \u00b7 ' + lastUpdatedZh;
-  const lastUpdatedBlockHtml = lastUpdated ? `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>—</span></div>` : '';
+  const lastUpdatedBlockHtml = lastUpdated ? `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>ï¿½</span></div>` : '';
   const hasMobile = mobile != null && String(mobile).trim() !== '';
   const mobileHtml = hasMobile
     ? `<a href="tel:${(mobileLink || '').replace(/"/g, '&quot;')}">${escapeHtml(String(mobile).trim())}</a>`
-    : '—';
+    : 'ï¿½';
   const hasHomeCountry = homeCountry != null && String(homeCountry).trim() !== '';
-  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : '—';
+  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : 'ï¿½';
   var D = window.FORM_DESCRIPTIONS || {};
   var lbl = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
   var fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
@@ -1514,7 +1553,7 @@ function fillForm(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === '—' || !v) ? '' : v;
+    return (v === 'ï¿½' || !v) ? '' : v;
   };
   const gMulti = l => {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([\\s\\S]*?)</span>`));
@@ -1524,14 +1563,14 @@ function fillForm(h) {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
     if (!m) return '';
     const v = m[1].trim();
-    return (v === '—' || !v) ? '' : v;
+    return (v === 'ï¿½' || !v) ? '' : v;
   };
   
   document.getElementById('first-name').value = g('Given Names') || g('Name'); 
   document.getElementById('surname').value = g('Family Name') || g('Surname');
   document.getElementById('email').value = gl('Email'); 
   var mv = gl('Contact Number') || gl('Mobile');
-  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '—' || !plain) mv = ''; }
+  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === 'ï¿½' || !plain) mv = ''; }
   document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
   var hc = resolveCountryDisplay(g('Home Country'));
   setCountryDropdown('edit', hc || null);
@@ -1658,6 +1697,107 @@ function closeQrModal() {
   qrModalData = { url: '', vcard: '', text: '' };
 }
 
+
+var secretsModalFolder = null;
+var SQ_OPTIONS = [{v:'',t:'â€” Select question â€”'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
+
+function syncSecretsModalSqOptions() {
+  var v1 = document.getElementById('secrets-sq1').value, v2 = document.getElementById('secrets-sq2').value, v3 = document.getElementById('secrets-sq3').value;
+  ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    var exclude = (id === 'secrets-sq1' ? [v2,v3] : id === 'secrets-sq2' ? [v1,v3] : [v1,v2]).filter(Boolean);
+    var cur = sel.value;
+    if (cur && exclude.indexOf(cur) >= 0) cur = '';
+    sel.innerHTML = SQ_OPTIONS.map(function(o) {
+      var dis = o.v && exclude.indexOf(o.v) >= 0 ? ' disabled' : '';
+      var sel_ = o.v === cur ? ' selected' : '';
+      return '<option value=\"'+o.v+'\"'+dis+sel_+'>'+o.t+'</option>';
+    }).join('');
+  });
+}
+
+function closeSecretsModal() {
+  document.getElementById('modal-secrets').classList.remove('show');
+  secretsModalFolder = null;
+}
+
+async function showSecretsModal(folder) {
+  secretsModalFolder = folder;
+  document.getElementById('modal-secrets-title').textContent = 'Set Secrets - ' + folder;
+  document.getElementById('modal-secrets-loading').classList.remove('hidden');
+  document.getElementById('modal-secrets-form').classList.add('hidden');
+  document.getElementById('modal-secrets-error').classList.add('hidden');
+  document.getElementById('modal-secrets-error').textContent = '';
+  document.getElementById('modal-secrets').classList.add('show');
+  try {
+    var r = await fetch(API + '/api/secrets/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+    var d = await r.json();
+    document.getElementById('modal-secrets-loading').classList.add('hidden');
+    document.getElementById('modal-secrets-form').classList.remove('hidden');
+    document.getElementById('secrets-account-email').value = d.accountEmail || '';
+    document.getElementById('secrets-dob').value = d.dob || '';
+    var sq = Array.isArray(d.secretQuestions) ? d.secretQuestions : [];
+    ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id, i) {
+      var q = sq[i] || {};
+      document.getElementById(id).value = q.questionId ? String(q.questionId) : '';
+      document.getElementById(id + '-answer').value = q.answer || '';
+    });
+    syncSecretsModalSqOptions();
+  } catch (e) {
+    document.getElementById('modal-secrets-loading').classList.add('hidden');
+    document.getElementById('modal-secrets-form').classList.remove('hidden');
+    document.getElementById('modal-secrets-error').textContent = 'Failed to load. Please try again.';
+    document.getElementById('modal-secrets-error').classList.remove('hidden');
+  }
+}
+
+async function saveSecrets() {
+  if (!secretsModalFolder) return;
+  var accountEmail = document.getElementById('secrets-account-email').value.trim();
+  var dob = document.getElementById('secrets-dob').value.trim();
+  var sq = [
+    { questionId: parseInt(document.getElementById('secrets-sq1').value, 10), answer: document.getElementById('secrets-sq1-answer').value.trim() },
+    { questionId: parseInt(document.getElementById('secrets-sq2').value, 10), answer: document.getElementById('secrets-sq2-answer').value.trim() },
+    { questionId: parseInt(document.getElementById('secrets-sq3').value, 10), answer: document.getElementById('secrets-sq3-answer').value.trim() }
+  ];
+  var hasAllSq = sq[0].questionId && sq[1].questionId && sq[2].questionId && sq[0].answer.length >= 4 && sq[1].answer.length >= 4 && sq[2].answer.length >= 4;
+  var ids = sq.map(function(q) { return q.questionId; });
+  if (hasAllSq && (new Set(ids).size !== 3 || ids.some(function(i) { return !i || i < 1 || i > 10; }))) {
+    document.getElementById('modal-secrets-error').textContent = 'Select 3 different questions with answers (4-30 chars each).';
+    document.getElementById('modal-secrets-error').classList.remove('hidden');
+    return;
+  }
+  if (dob && !/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dob.replace(/\s/g, ''))) {
+    document.getElementById('modal-secrets-error').textContent = 'Date of birth must be dd/mm/yyyy.';
+    document.getElementById('modal-secrets-error').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('modal-secrets-error').classList.add('hidden');
+  var body = { accountEmail: accountEmail || '', dob: dob || '' };
+  if (hasAllSq) body.secretQuestions = sq;
+  document.getElementById('secrets-save-btn').disabled = true;
+  try {
+    var r = await fetch(API + '/api/secrets/' + encodeURIComponent(secretsModalFolder), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body: JSON.stringify(body)
+    });
+    var d = await r.json();
+    if (r.ok) {
+      if (accountEmail && userInfo[secretsModalFolder]) userInfo[secretsModalFolder].accountEmail = accountEmail;
+      populateUI();
+      closeSecretsModal();
+      showAlert('alert-manage', 'Secrets updated', 'success');
+    } else {
+      document.getElementById('modal-secrets-error').textContent = d.error || 'Failed to save';
+      document.getElementById('modal-secrets-error').classList.remove('hidden');
+    }
+  } catch (e) {
+    document.getElementById('modal-secrets-error').textContent = 'Connection error. Please try again.';
+    document.getElementById('modal-secrets-error').classList.remove('hidden');
+  }
+  document.getElementById('secrets-save-btn').disabled = false;
+}
 function parseContactFromHtml(html, folder) {
   var doc = new DOMParser().parseFromString(html, 'text/html');
   var infos = doc.querySelectorAll('.info');
@@ -1668,7 +1808,7 @@ function parseContactFromHtml(html, folder) {
     var valEl = info.querySelector('.value');
     var a = valEl ? valEl.querySelector('a') : null;
     var raw = valEl ? (a ? a.textContent : valEl.textContent) : '';
-    var t = (raw || '').trim().replace(/\s+/g, ' ').replace(/^—$/, '');
+    var t = (raw || '').trim().replace(/\s+/g, ' ').replace(/^ï¿½$/, '');
     vals.push(t);
     if (a && a.getAttribute('href')) {
       var href = a.getAttribute('href');
