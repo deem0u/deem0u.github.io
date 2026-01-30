@@ -886,7 +886,7 @@ function populatePageSelect() {
     return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.email || ''}" onclick="selectPage('${f}')">
       <div class="searchable-select-option-title">${line1}</div>
       <div class="${metaClass}">${escapeHtml(line2Display)}</div>
-    </div>`;iv>`;
+    </div>`;
   }).join('');
   
   if (!sorted.length) {
