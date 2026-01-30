@@ -184,6 +184,12 @@
                   <span class="form-hint" id="hint-new-folder"></span>
                   <span class="form-error" id="error-new-folder" role="alert"></span>
                 </div>
+                <div class="form-group">
+                  <label class="form-label">Account Email <span class="form-required">*</span></label>
+                  <input type="email" id="new-account-email" class="form-input" required autocomplete="email">
+                  <span class="form-hint">Must be unique. Used for recovery.</span>
+                  <span class="form-error" id="error-new-account-email" role="alert"></span>
+                </div>
                 <div class="form-row">
                   <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="new-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-new-first-name" role="alert"></span></div>
                   <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-new-surname" role="alert"></span></div>
