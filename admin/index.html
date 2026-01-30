@@ -360,28 +360,28 @@
           <div class="form-group">
             <label class="form-label">Account Email</label>
             <input type="email" id="secrets-account-email" class="form-input" autocomplete="email">
-            <span class="form-hint">Used for recovery. Must be unique.</span>
+            <span class="form-hint">Please provide a valid email for account management &amp; recovery - Must not be currently used to manage another User account</span>
             <span class="form-error" id="error-secrets-account-email" role="alert"></span>
           </div>
           <div class="form-group">
             <label class="form-label">Date of Birth</label>
-            <input type="text" id="secrets-dob" class="form-input" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
+            <input type="text" id="secrets-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
             <span class="form-hint">Format: dd/mm/yyyy</span>
             <span class="form-error" id="error-secrets-dob" role="alert"></span>
           </div>
           <div class="form-group">
             <label class="form-label">Security Questions</label>
-            <span class="form-hint" style="display:block; margin-bottom: 0.5rem;">Select 3 different questions and provide answers (4–30 characters each).</span>
-            <div class="secret-q-row"><select id="secrets-sq1" class="form-input secret-q-select"><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div>
-            <div class="secret-q-row"><select id="secrets-sq2" class="form-input secret-q-select"><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div>
-            <div class="secret-q-row"><select id="secrets-sq3" class="form-input secret-q-select"><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="secrets-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div>
+            <span class="form-hint" style="display:block; margin-bottom: 0.5rem;">Select 3 different questions and provide answers (4â€“30 characters each).</span>
+            <div class="secret-q-row"><select id="secrets-sq1" class="form-input secret-q-select"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div></div></div>
+            <div class="secret-q-row"><select id="secrets-sq2" class="form-input secret-q-select"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq2-answer" role="alert"></span></div></div></div>
+            <div class="secret-q-row"><select id="secrets-sq3" class="form-input secret-q-select"><option value="">â€” Select question â€”</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq3-answer" role="alert"></span></div></div></div>
           </div>
         </div>
         <div id="modal-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeSecretsModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()">Save</button>
+        <button type="button" class="btn btn-ghost" onclick="clearSecretsModal()">Clear</button>        <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()">Save</button>
       </div>
     </div>
   </div>
@@ -1044,14 +1044,12 @@ function renderList(t) {
               <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
               <button class="btn btn-primary btn-sm" onclick="showQrModal('${f}')">QR Codes</button>
             </div>
-            <div class="action-row-end">
-              <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
-            </div>
           </div>
           <div class="action-combo-group">
             <span class="action-row-label">Recovery</span>
             <div class="action-row-buttons">
               <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
+              <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
             </div>
           </div>
         </div>
@@ -1733,7 +1731,7 @@ function closeQrModal() {
 
 
 var secretsModalFolder = null;
-var SQ_OPTIONS = [{v:'',t:'— Select question —'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
+var SQ_OPTIONS = [{v:'',t:'â€” Select question â€”'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
 
 function syncSecretsModalSqOptions() {
   var v1 = document.getElementById('secrets-sq1').value, v2 = document.getElementById('secrets-sq2').value, v3 = document.getElementById('secrets-sq3').value;

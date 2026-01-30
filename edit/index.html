@@ -51,6 +51,12 @@
           </div>
         </div>
 
+        <div id="secrets-banner" class="alert alert-warning hidden" style="margin-top:1rem;">
+          <p><strong>To recover access to your Contact Editor</strong>, please set the following:</p>
+          <ul id="secrets-missing-list" style="margin:0.5rem 0 1rem 1.5rem;"></ul>
+          <button type="button" class="btn btn-primary btn-sm" onclick="showEditSecretsModal()">Set Secrets</button>
+        </div>
+
         <div class="card">
           <div class="card-header"><span class="card-title">Your Contact Information</span></div>
           <div class="card-body">
@@ -107,10 +113,43 @@
         </div>
       </div>
     </main>
+
+  <div id="edit-secrets-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header"><h3 class="modal-title">Set Secrets</h3></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Account Email</label>
+          <input type="email" id="edit-secrets-account-email" class="form-input" autocomplete="email">
+          <span class="form-hint">For account management &amp; recovery. Must not be used by another account.</span>
+          <span class="form-error" id="error-edit-secrets-account-email" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth</label>
+          <input type="text" id="edit-secrets-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="bday">
+          <span class="form-hint">Format: dd/mm/yyyy</span>
+          <span class="form-error" id="error-edit-secrets-dob" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Security Questions</label>
+          <span class="form-hint" style="display:block;margin-bottom:0.5rem;">Select 3 different questions (4-30 chars each).</span>
+          <div id="edit-secrets-sq-container">          <div class="secret-q-row"><select id="edit-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq1-answer" role="alert"></span></div></div>
+          <div class="secret-q-row"><select id="edit-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq2-answer" role="alert"></span></div></div>
+          <div class="secret-q-row"><select id="edit-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq3-answer" role="alert"></span></div></div></div>
+        </div>
+        <div id="edit-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditSecretsModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="edit-secrets-save-btn" onclick="saveEditSecrets()">Save</button>
+      </div>
+    </div>
+  </div>
   </div>
 
 <script src="../countries-data.js"></script>
 <script src="../form-descriptions.js"></script>
+<script src="edit-secrets.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
 let folder = null, editKey = null, currentSha = null;
@@ -396,6 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlKey = params.get('key');
   
   attachContactNumberMask();
+  attachDobMask();
   initCountryDropdownEdit();
   applyFormDescriptionsEdit();
   initGivenNamesValidationEdit();
@@ -442,6 +482,7 @@ async function authenticate() {
     document.getElementById('view-page-link').href = `https://deem0u.github.io/${folder}/`;
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
+    if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
   } catch (e) { 
     console.error('Auth error:', e);
     showAlert('auth-alert', 'Connection error. Please try again.', 'error'); 
