@@ -460,6 +460,7 @@ function signOut() {
   document.getElementById('folder-input').value = '';
   document.getElementById('edit-key').value = '';
   hideAlert('auth-alert');
+  window.history.replaceState({}, '', window.location.origin + '/edit/');
 }
 
 function fillForm(h) {
