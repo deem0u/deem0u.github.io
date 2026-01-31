@@ -1,4 +1,4 @@
-// Edit page secrets modal - to be inlined into edit/index.html
+// Edit page secrets modal - loaded by edit/index.html
 async function checkSecretsStatus() {
   if (!folder || !editKey) return;
   try {

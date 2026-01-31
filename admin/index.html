@@ -714,11 +714,6 @@ async function doLogin() {
   }
 }
 
-function handleLogin(e) {
-  if (e) e.preventDefault();
-  doLogin();
-}
-
 let recoveryEmail = null;
 
 async function handleRecoveryStep1(e) {
