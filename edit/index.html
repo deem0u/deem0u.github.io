@@ -232,6 +232,7 @@
   </div>
   </div>
 
+<script src="/account-details-content.js"></script>
 <script src="../countries-data.js"></script>
 <script src="../form-descriptions.js"></script>
 <script src="edit-secrets.js"></script>
@@ -401,14 +402,11 @@ function recoveryVerify() {
 }
 
 function showRecoverySuccess(folder, newKey) {
-  var viewLink = PAGES_URL + folder + '/';
-  var editLink = EDITOR_URL + '?folder=' + encodeURIComponent(folder) + '&key=' + encodeURIComponent(newKey);
   document.getElementById('recovery-success-banner').textContent = 'Hi ' + folder + '! Your Edit Key has been reset. Your old Edit Key and Personalised Edit Link no longer work and have been replaced by new ones noted below:';
-  document.getElementById('recovery-success-details').innerHTML = '<p>Below are details related to your account you should keep handy.</p><ul><li><strong>User Name:</strong> ' + folder + '</li><li><strong>Edit Key:</strong> ' + (newKey || '') + '</li><li><strong>Your Digital Contact Page URL:</strong> <a href="' + viewLink + '" target="_blank" rel="noopener">' + viewLink + '</a></li><li><strong>Your personalised edit link:</strong> <a href="' + editLink + '" target="_blank" rel="noopener">' + editLink + '</a></li></ul><p class="success-important">IMPORTANT: This personalised edit link and Edit Key is unique to you and gives you access to edit your Digital Contact Page. Please keep it private and do not share it with anyone else.</p><p class="success-heading">HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</p><ol><li>Visit the Contact Editor (<a href="' + EDITOR_URL + '" target="_blank" rel="noopener">' + EDITOR_URL + '</a>) and Sign In with your User Name and Edit Key or Click your personalised edit link above</li><li>Make your changes in the Contact Editor</li><li>Click "Save Changes" â€“ Your updates will appear on your contact page within a few minutes</li></ol><p>If at any point you wish to have your account/Digital Contact Page deleted, contact me at <a href="mailto:deem0u.github.io@gmail.com">deem0u.github.io@gmail.com</a></p>';
-  var msgPlain = 'Hi ' + folder + '!\n\nYour Edit Key has been reset. Your old Edit Key and Personalised Edit Link no longer work.\n\nUser Name: ' + folder + '\nEdit Key: ' + newKey + '\nYour Digital Contact Page URL: ' + viewLink + '\nYour personalised edit link: ' + editLink;
-  var mailtoHref = 'mailto:' + encodeURIComponent(recoveryAccountEmail || '') + '?subject=' + encodeURIComponent('Digital Contact Page - Edit Key Reset') + '&body=' + encodeURIComponent(msgPlain);
-  document.getElementById('recovery-mailto-btn').href = mailtoHref;
-  document.getElementById('recovery-signin-btn').href = editLink;
+  document.getElementById('recovery-success-details').innerHTML = window.ACCOUNT_DETAILS.getBodyHtml(folder, newKey);
+  var subject = window.ACCOUNT_DETAILS.getSubject(folder);
+  var bodyPlain = window.ACCOUNT_DETAILS.getBodyPlainText(folder, newKey);
+  document.getElementById('recovery-mailto-btn').href = 'mailto:' + encodeURIComponent(recoveryAccountEmail || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyPlain);
   document.getElementById('screen-auth').classList.add('hidden');
   document.getElementById('screen-recovery-success').classList.remove('hidden');
 }

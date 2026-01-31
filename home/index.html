@@ -48,6 +48,7 @@
     .home-right-col { max-width: none; }
   }
   </style>
+  <script src="/account-details-content.js"></script>
 </head>
 <body>
   <div class="app">
@@ -522,50 +523,19 @@
         return;
       }
 
-      const viewLink = PAGES_URL + folder + '/';
       const editLink = EDITOR_URL + '?folder=' + encodeURIComponent(folder) + '&key=' + encodeURIComponent(data.key);
 
-      const msgPlain = `Hi ${folder},
-
-Your account and digital contact page has been set up and is now live.
-
-Below are details related to your account you should keep handy:
-
-• User Name: ${folder}
-• Edit Key: ${data.key}
-• Your Digital Contact Page URL: ${viewLink}
-• Your personalised edit link: ${editLink}
-
-IMPORTANT: This personalised edit link and Edit Key is unique to you and gives you access to edit your Digital Contact Page. Please keep it private and do not share it with anyone else.
-
-HOW TO UPDATE YOUR DIGITAL CONTACT PAGE
-1. Visit the Contact Editor (${EDITOR_URL}) and Sign In with your User Name and Edit Key or Click your personalised edit link above
-2. Make your changes in the Contact Editor
-3. Click "Save Changes" – Your updates will appear on your contact page within a few minutes
-
-If at any point you wish to have your account/Digital Contact Page deleted, contact me at deem0u.github.io@gmail.com`;
-
       document.getElementById('success-banner').textContent = 'Hi ' + folder + '! Your account and digital contact page has been set up and is now live.';
-      document.getElementById('success-details').innerHTML = '<p>Below are details related to your account you should keep handy.</p>' +
-        '<ul><li><strong>User Name:</strong> ' + folder + '</li>' +
-        '<li><strong>Edit Key:</strong> ' + (data.key || '') + '</li>' +
-        '<li><strong>Your Digital Contact Page URL:</strong> <a href="' + viewLink + '" target="_blank" rel="noopener">' + viewLink + '</a></li>' +
-        '<li><strong>Your personalised edit link:</strong> <a href="' + editLink + '" target="_blank" rel="noopener">' + editLink + '</a></li></ul>' +
-        '<p class="success-important">IMPORTANT: This personalised edit link and Edit Key is unique to you and gives you access to edit your Digital Contact Page. Please keep it private and do not share it with anyone else.</p>' +
-        '<p class="success-heading">HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</p>' +
-        '<ol><li>Visit the Contact Editor (<a href="' + EDITOR_URL + '" target="_blank" rel="noopener">' + EDITOR_URL + '</a>) and Sign In with your User Name and Edit Key or Click your personalised edit link above</li>' +
-        '<li>Make your changes in the Contact Editor</li>' +
-        '<li>Click "Save Changes" – Your updates will appear on your contact page within a few minutes</li></ol>' +
-        '<p>If at any point you wish to have your account/Digital Contact Page deleted, contact me at <a href="mailto:deem0u.github.io@gmail.com">deem0u.github.io@gmail.com</a></p>';
+      document.getElementById('success-details').innerHTML = window.ACCOUNT_DETAILS.getBodyHtml(folder, data.key);
       document.getElementById('success-section').classList.remove('hidden');
       document.getElementById('signup-form-section').classList.add('hidden');
       document.querySelector('.app-container').classList.add('home-success-active');
 
       document.getElementById('complete-page-btn').href = editLink;
 
-      const subject = 'Digital Contact Information Page - ' + folder;
-      const mailtoHref = 'mailto:' + encodeURIComponent(accountEmailVal) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(msgPlain);
-      document.getElementById('mailto-btn').href = mailtoHref;
+      const subject = window.ACCOUNT_DETAILS.getSubject(folder);
+      const bodyPlain = window.ACCOUNT_DETAILS.getBodyPlainText(folder, data.key);
+      document.getElementById('mailto-btn').href = 'mailto:' + encodeURIComponent(accountEmailVal) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyPlain);
     } catch (err) {
       showAlert('signup-alert', 'Connection error. Please try again.', 'error');
       btn.disabled = false;

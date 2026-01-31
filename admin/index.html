@@ -396,6 +396,7 @@
     </div>
   </div>
 
+<script src="/account-details-content.js"></script>
 <script src="../countries-data.js"></script>
 <script src="../form-descriptions.js"></script>
 <script>
@@ -1709,32 +1710,8 @@ function generateHTML() {
 }
 
 function generateMailto(u, f) {
-  const editLink = `${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`;
-  const viewLink = `${PAGES_URL}${f}/`;
-  const subject = 'Your Digital Contact Information Page';
-  const body = `Hi ${u.firstName},
-
-Your digital contact information page has been set up and is now live. You can view it here:
-
-${viewLink}
-
-If you need to update your contact details, you can do so using your personalised edit link:
-
-${editLink}
-
-IMPORTANT: This link is unique to you. Please keep it private and do not share it with anyone else, as they would be able to access and edit your contact page.
-
-How to update your information:
-1. Click the edit link above
-2. Make your changes in the form
-3. Click "Save Changes"
-4. Your updates will appear on your contact page within 1-2 minutes
-
-If you wish to have your contact page deleted, please contact deem0u.github.io@gmail.com.
-
-Best regards,
-Daniel Mounnarath`;
-
+  const subject = window.ACCOUNT_DETAILS.getSubject(f);
+  const body = window.ACCOUNT_DETAILS.getBodyPlainText(f, editKeys[f]);
   return `mailto:${u.accountEmail || u.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
