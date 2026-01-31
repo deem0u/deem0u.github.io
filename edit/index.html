@@ -171,6 +171,26 @@ function formatContactNumber(val) {
   return '+' + d.substring(0, 20);
 }
 
+function formatDob(val) {
+  var d = (val || '').replace(/\D/g, '').substring(0, 8);
+  if (!d.length) return '';
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return d.substring(0, 2) + '/' + d.substring(2);
+  return d.substring(0, 2) + '/' + d.substring(2, 4) + '/' + d.substring(4);
+}
+
+function attachDobMask() {
+  document.querySelectorAll('.dob-mask').forEach(function(inp) {
+    if (inp.dataset.dobMaskAttached) return;
+    inp.dataset.dobMaskAttached = '1';
+    inp.addEventListener('input', function() {
+      var val = this.value;
+      var formatted = formatDob(val);
+      if (formatted !== val) this.value = formatted;
+    });
+  });
+}
+
 function attachContactNumberMask() {
   document.querySelectorAll('.contact-number-mask').forEach(function(inp) {
     if (inp.dataset.maskAttached) return;
