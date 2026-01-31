@@ -15,6 +15,22 @@
   .secret-q-select { width: 100%; min-height: 3rem; }
   .secret-q-answer { width: 100%; min-height: 2.5rem; }
   .secret-q-select option:disabled { opacity: 0.25; color: #999; background: #f5f5f5; }
+  .home-two-col { display: flex; gap: 2rem; max-width: 1100px; margin: 0 auto; padding: 1rem; align-items: stretch; }
+  .home-left-col { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+  .home-right-col { flex: 1; max-width: 480px; }
+  .home-hero { text-align: center; max-width: 480px; }
+  .home-heading { font-size: 1.75rem; margin-bottom: 0.5rem; }
+  .home-subheading { font-size: 1.1rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 1rem; }
+  .home-blurb { font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+  .home-actions { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+  .home-action-btn { display: inline-flex; flex-direction: column; align-items: center; text-decoration: none; }
+  .home-action-btn .btn-main { font-size: 1rem; font-weight: 600; }
+  .home-action-btn .btn-sub { font-size: 0.75rem; opacity: 0.85; margin-top: 0.2rem; }
+  @media (max-width: 768px) {
+    .home-two-col { flex-direction: column; }
+    .home-left-col { min-height: auto; padding: 1rem 0; }
+    .home-right-col { max-width: none; }
+  }
   </style>
 </head>
 <body>
@@ -35,8 +51,25 @@
     </header>
 
     <main class="app-main">
-      <div class="app-container" style="max-width: 640px; margin: 0 auto;">
-        <div id="signup-form-section">
+      <div class="app-container home-two-col">
+        <div id="home-left-col" class="home-left-col">
+          <div class="home-hero">
+            <h1 class="home-heading">Your Digital Contact Page</h1>
+            <p class="home-subheading">Manage and share your contact information online</p>
+            <p class="home-blurb">Create your own personal contact page that you can share with friends, family, or anyone who needs to reach you. You control the information — update it anytime with our simple editor. Perfect for travellers, professionals, or anyone who wants a central place for their contact details.</p>
+            <div class="home-actions">
+              <button type="button" class="btn btn-primary btn-lg home-action-btn" onclick="showSignupForm()">
+                <span class="btn-main">Get Started</span>
+                <span class="btn-sub">(New Users)</span>
+              </button>
+              <a href="https://deem0u.github.io/edit/" class="btn btn-secondary btn-lg home-action-btn">
+                <span class="btn-main">Contact Editor</span>
+                <span class="btn-sub">(Existing Users)</span>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div id="signup-form-section" class="home-right-col hidden">
           <div class="card">
             <div class="card-header"><span class="card-title">Create Your Digital Contact Information Page</span></div>
             <div class="card-body">
@@ -47,31 +80,11 @@
                   <span class="form-hint" id="hint-signup-folder">This will be used in the URL for your contact information page. Eg. The User Name <strong>john-smith</strong> will have the URL deem0u.github.io/john-smith/</span>
                   <span class="form-error" id="error-signup-folder" role="alert"></span>
                 </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Given Names <span class="form-required">*</span></label>
-                    <input type="text" id="signup-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="given-name">
-                    <span class="form-hint">Your first name including any middle names (if applicable) as it appears on your ID.</span>
-                    <span class="form-error" id="error-signup-first-name" role="alert"></span>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Family Name <span class="form-required">*</span></label>
-                    <input type="text" id="signup-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="family-name">
-                    <span class="form-hint">Your surname as it appears on your ID.</span>
-                    <span class="form-error" id="error-signup-surname" role="alert"></span>
-                  </div>
-                </div>
                 <div class="form-group">
                   <label class="form-label">Account Email <span class="form-required">*</span></label>
                   <input type="email" id="signup-account-email" class="form-input" required autocomplete="email">
-                  <span class="form-hint">Your account email for recovery and notifications. Must be unique. Not shown on your contact page.</span>
+                  <span class="form-hint">Provide a valid email for account management &amp; recovery - Must not be currently used to manage another User account. This is not the email that will be displayed on your Contact Information Page.</span>
                   <span class="form-error" id="error-signup-account-email" role="alert"></span>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Contact Page Email <span class="form-required">*</span></label>
-                  <input type="email" id="signup-contact-email" class="form-input" required autocomplete="email">
-                  <span class="form-hint">Email displayed on your public contact information page.</span>
-                  <span class="form-error" id="error-signup-contact-email" role="alert"></span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Date of Birth <span class="form-required">*</span></label>
@@ -261,12 +274,14 @@
     return { valid: true, normalized: t };
   }
 
+  function showSignupForm() {
+    document.getElementById('signup-form-section').classList.remove('hidden');
+    document.getElementById('signup-folder').focus();
+  }
+
   function updateSubmitButton() {
     const folder = document.getElementById('signup-folder').value.trim();
-    const fn = document.getElementById('signup-first-name').value.trim();
-    const sn = document.getElementById('signup-surname').value.trim();
     const accEm = document.getElementById('signup-account-email').value.trim();
-    const contactEm = document.getElementById('signup-contact-email').value.trim();
     const dob = document.getElementById('signup-dob').value.trim();
     const sq1 = document.getElementById('sq1').value;
     const sq2 = document.getElementById('sq2').value;
@@ -277,15 +292,12 @@
     const consent = document.getElementById('signup-consent').checked;
 
     const folderOk = /^[a-zA-Z0-9_-]{3,32}$/.test(folder);
-    const fnOk = /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(fn) && fn.length <= 32;
-    const snOk = /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(sn) && sn.length <= 32;
     const accEmOk = accEm && accEm.includes('@');
-    const contactEmOk = contactEm && contactEm.includes('@');
     const dobOk = normalizeDob(dob);
     const sqOk = sq1 && sq2 && sq3 && sq1 !== sq2 && sq2 !== sq3 && sq1 !== sq3;
     const aOk = a1.length >= 4 && a2.length >= 4 && a3.length >= 4;
 
-    document.getElementById('signup-submit-btn').disabled = !(folderOk && fnOk && snOk && accEmOk && contactEmOk && dobOk && sqOk && aOk && consent);
+    document.getElementById('signup-submit-btn').disabled = !(folderOk && accEmOk && dobOk && sqOk && aOk && consent);
   }
 
   document.getElementById('signup-form').addEventListener('input', updateSubmitButton);
@@ -312,20 +324,6 @@
       });
       folderInp.addEventListener('input', function() { if (validateFolder(this.value).valid) clearErr(); });
     }
-    var fnInp = document.getElementById('signup-first-name'), fnErr = document.getElementById('error-signup-first-name');
-    if (fnInp && fnErr) {
-      function showErr(m) { fnErr.textContent = m || ''; fnErr.setAttribute('aria-live', 'polite'); fnInp.classList.add('is-invalid'); }
-      function clearErr() { fnErr.textContent = ''; fnErr.removeAttribute('aria-live'); fnInp.classList.remove('is-invalid'); }
-      fnInp.addEventListener('blur', function() { var r = validateGivenNames(this.value, true); r.valid ? clearErr() : showErr(r.message); });
-      fnInp.addEventListener('input', function() { if (validateGivenNames(this.value, true).valid) clearErr(); });
-    }
-    var snInp = document.getElementById('signup-surname'), snErr = document.getElementById('error-signup-surname');
-    if (snInp && snErr) {
-      function showErr(m) { snErr.textContent = m || ''; snErr.setAttribute('aria-live', 'polite'); snInp.classList.add('is-invalid'); }
-      function clearErr() { snErr.textContent = ''; snErr.removeAttribute('aria-live'); snInp.classList.remove('is-invalid'); }
-      snInp.addEventListener('blur', function() { var r = validateFamilyName(this.value, true); r.valid ? clearErr() : showErr(r.message); });
-      snInp.addEventListener('input', function() { if (validateFamilyName(this.value, true).valid) clearErr(); });
-    }
     var accEmInp = document.getElementById('signup-account-email'), accEmErr = document.getElementById('error-signup-account-email');
     if (accEmInp && accEmErr) {
       function showErr(m) { accEmErr.textContent = m || ''; accEmErr.setAttribute('aria-live', 'polite'); accEmInp.classList.add('is-invalid'); }
@@ -344,13 +342,6 @@
         clearErr();
       });
       accEmInp.addEventListener('input', function() { if (validateEmailInput(this, true).valid) clearErr(); });
-    }
-    var contactEmInp = document.getElementById('signup-contact-email'), contactEmErr = document.getElementById('error-signup-contact-email');
-    if (contactEmInp && contactEmErr) {
-      function showErr(m) { contactEmErr.textContent = m || ''; contactEmErr.setAttribute('aria-live', 'polite'); contactEmInp.classList.add('is-invalid'); }
-      function clearErr() { contactEmErr.textContent = ''; contactEmErr.removeAttribute('aria-live'); contactEmInp.classList.remove('is-invalid'); }
-      contactEmInp.addEventListener('blur', function() { var r = validateEmailInput(this, true); r.valid ? clearErr() : showErr(r.message); });
-      contactEmInp.addEventListener('input', function() { if (validateEmailInput(this, true).valid) clearErr(); });
     }
     var dobInp = document.getElementById('signup-dob'), dobErr = document.getElementById('error-signup-dob');
     if (dobInp && dobErr) {
@@ -389,11 +380,11 @@
   function clearSignupForm() {
     document.getElementById('signup-form').reset();
     syncSecretQuestionOptions();
-    ['signup-folder','signup-first-name','signup-surname','signup-account-email','signup-contact-email','signup-dob','sq1','sq2','sq3','sq1-answer','sq2-answer','sq3-answer'].forEach(function(id) {
+    ['signup-folder','signup-account-email','signup-dob','sq1','sq2','sq3','sq1-answer','sq2-answer','sq3-answer'].forEach(function(id) {
       const inp = document.getElementById(id);
       if (inp) inp.classList.remove('is-invalid');
     });
-    ['error-signup-folder','error-signup-first-name','error-signup-surname','error-signup-account-email','error-signup-contact-email','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
+    ['error-signup-folder','error-signup-account-email','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
       const el = document.getElementById(id);
       if (el) el.textContent = '';
     });
@@ -405,10 +396,10 @@
   document.getElementById('signup-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     hideAlert('signup-alert');
-    ['error-signup-folder','error-signup-first-name','error-signup-surname','error-signup-account-email','error-signup-contact-email','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
+    ['error-signup-folder','error-signup-account-email','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
       var el = document.getElementById(id); if (el) el.textContent = '';
     });
-    ['signup-folder','signup-first-name','signup-surname','signup-account-email','signup-contact-email','signup-dob'].forEach(function(id) {
+    ['signup-folder','signup-account-email','signup-dob'].forEach(function(id) {
       var inp = document.getElementById(id); if (inp) inp.classList.remove('is-invalid');
     });
 
@@ -430,20 +421,6 @@
         return;
       }
     } catch (err) {}
-    r = validateGivenNames(document.getElementById('signup-first-name').value, true);
-    if (!r.valid) {
-      document.getElementById('error-signup-first-name').textContent = r.message;
-      document.getElementById('signup-first-name').classList.add('is-invalid');
-      document.getElementById('signup-first-name').focus();
-      return;
-    }
-    r = validateFamilyName(document.getElementById('signup-surname').value, true);
-    if (!r.valid) {
-      document.getElementById('error-signup-surname').textContent = r.message;
-      document.getElementById('signup-surname').classList.add('is-invalid');
-      document.getElementById('signup-surname').focus();
-      return;
-    }
     r = validateEmailInput(document.getElementById('signup-account-email'), true);
     if (!r.valid) {
       document.getElementById('error-signup-account-email').textContent = r.message;
@@ -462,13 +439,6 @@
         return;
       }
     } catch (err) {}
-    r = validateEmailInput(document.getElementById('signup-contact-email'), true);
-    if (!r.valid) {
-      document.getElementById('error-signup-contact-email').textContent = r.message;
-      document.getElementById('signup-contact-email').classList.add('is-invalid');
-      document.getElementById('signup-contact-email').focus();
-      return;
-    }
     var dobRaw = document.getElementById('signup-dob').value.trim();
     r = validateDob(dobRaw);
     if (!r.valid) {
@@ -477,10 +447,6 @@
       document.getElementById('signup-dob').focus();
       return;
     }
-    var firstName = document.getElementById('signup-first-name').value.trim();
-    var surname = document.getElementById('signup-surname').value.trim();
-    var contactPageEmailVal = document.getElementById('signup-contact-email').value.trim();
-
     var dob = normalizeDob(dobRaw);
 
     const secretQuestions = [
@@ -520,10 +486,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: folder,
-          firstName,
-          surname,
+          firstName: '',
+          surname: '',
           accountEmail: accountEmailVal,
-          contactPageEmail: contactPageEmailVal,
+          contactPageEmail: '',
           dob,
           secretQuestions: secretQuestions.map(function(q) { return { questionId: q.questionId, answer: q.answer }; })
         })
@@ -539,9 +505,8 @@
 
       const viewLink = PAGES_URL + folder + '/';
       const editLink = EDITOR_URL + '?folder=' + folder + '&key=' + data.key;
-      const fullName = firstName + ' ' + surname;
 
-      const msg = `Hi ${firstName},
+      const msg = `Hi,
 
 Your digital contact information page has been set up and is now live. Below are some details you should keep handy:
 
@@ -564,7 +529,7 @@ If at any point you wish to have your digital contact information page deleted, 
       document.getElementById('success-section').classList.remove('hidden');
       document.getElementById('signup-form-section').classList.add('hidden');
 
-      const subject = 'Digital Contact Information Page - ' + fullName + ' (' + folder + ')';
+      const subject = 'Digital Contact Information Page - ' + folder;
       const mailtoHref = 'mailto:' + encodeURIComponent(accountEmailVal) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(msg);
       document.getElementById('mailto-btn').href = mailtoHref;
       document.getElementById('email-myself-link').href = mailtoHref;
