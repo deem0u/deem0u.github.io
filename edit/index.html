@@ -66,10 +66,10 @@
 
       <div id="recovery-card" class="auth-card hidden">
         <div class="auth-header">
-          <h2 class="auth-title">Account Recovery</h2>
+          <h2 class="auth-title">Access Recovery</h2>
+          <p class="auth-subtitle" id="recovery-subtitle">Enter your User Name to reset your Edit Key</p>
         </div>
         <div id="recovery-step1">
-          <p class="auth-subtitle">Enter your User Name to perform a Recovery</p>
           <form id="recovery-form-step1" onsubmit="return false;">
             <div class="form-group">
               <label class="form-label">User Name</label>
@@ -77,12 +77,11 @@
               <span class="form-error" id="error-recovery-username" role="alert"></span>
             </div>
             <div id="recovery-alert" class="alert"></div>
-            <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-check-btn" onclick="recoveryCheckUsername()">Perform Recovery</button>
+            <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-check-btn" onclick="recoveryCheckUsername()">Reset Edit Key</button>
             <p class="text-center mt-4"><a href="#" id="recovery-back-link" class="btn btn-ghost btn-sm">Back to Sign In</a></p>
           </form>
         </div>
         <div id="recovery-step2" class="hidden">
-          <p class="auth-subtitle">Verify your account details to reset your Edit Key</p>
           <form id="recovery-form-step2" onsubmit="return false;">
             <div class="form-group">
               <label class="form-label">Account Email</label>
@@ -101,7 +100,7 @@
               <span class="form-error" id="error-recovery-sq" role="alert"></span>
             </div>
             <div id="recovery-verify-alert" class="alert"></div>
-            <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-verify-btn" onclick="recoveryVerify()">Reset Access</button>
+            <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-verify-btn" onclick="recoveryVerify()">Reset Edit Key</button>
             <p class="text-center mt-4"><a href="#" onclick="recoveryBackToStep1(); return false;" class="btn btn-ghost btn-sm">Back</a></p>
           </form>
         </div>
@@ -115,7 +114,7 @@
             <div id="recovery-success-banner" class="edit-recovery-success-banner"></div>
             <div id="recovery-success-details" class="edit-recovery-success-details"></div>
             <div class="edit-recovery-success-action">
-              <p>Don't worry — A copy of this will be emailed to you (once I get to it). You may wish to click the "Email Myself a Copy" button below and send yourself a copy now. Once you're ready we can proceed with Signing In to your Digital Contact Page otherwise you can do it later via the Contact Editor.</p>
+              <p>Don't worry — A copy of this will be emailed to you (once I get to it). You may wish to click the "Email Myself a Copy" button below and send yourself a copy now. Proceed with Sign In to your Digital Contact Page otherwise you can do it later via the Contact Editor.</p>
               <div class="edit-recovery-success-buttons">
                 <a id="recovery-mailto-btn" href="#" class="btn btn-primary">Email Myself a Copy</a>
                 <a id="recovery-signin-btn" href="https://deem0u.github.io/edit/" class="btn btn-primary">Go to Sign In</a>
@@ -298,17 +297,25 @@ function attachContactNumberMask() {
 function showRecoveryAlert(msg, type) {
   var el = document.getElementById('recovery-alert');
   if (!el) return;
-  el.textContent = msg || '';
-  el.className = 'alert' + (type ? ' alert-' + type : '');
-  el.classList.remove('hidden');
+  if (msg) {
+    el.className = 'alert alert-' + (type || 'info') + ' show';
+    el.innerHTML = '<div class="alert-content">' + msg + '</div>';
+  } else {
+    el.className = 'alert';
+    el.textContent = '';
+  }
 }
 
 function showRecoveryVerifyAlert(msg, type) {
   var el = document.getElementById('recovery-verify-alert');
   if (!el) return;
-  el.textContent = msg || '';
-  el.className = 'alert' + (type ? ' alert-' + type : '');
-  el.classList.remove('hidden');
+  if (msg) {
+    el.className = 'alert alert-' + (type || 'info') + ' show';
+    el.innerHTML = '<div class="alert-content">' + msg + '</div>';
+  } else {
+    el.className = 'alert';
+    el.textContent = '';
+  }
 }
 
 function recoveryCheckUsername() {
@@ -317,8 +324,12 @@ function recoveryCheckUsername() {
   var username = (inp && inp.value || '').trim().toLowerCase();
   showRecoveryAlert('', '');
   if (errEl) errEl.textContent = '';
-  if (!username || username.length < 3) {
-    if (errEl) errEl.textContent = 'Please enter your User Name';
+  if (!username) {
+    showRecoveryAlert('Please enter your User Name.', 'error');
+    return;
+  }
+  if (username.length < 3) {
+    showRecoveryAlert('User Name must be at least 3 characters.', 'error');
     return;
   }
   var btn = document.getElementById('recovery-check-btn');
@@ -328,7 +339,7 @@ function recoveryCheckUsername() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: username })
   }).then(function(r) { return r.json(); }).then(function(d) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Perform Recovery'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
     if (!d.exists) {
       showRecoveryAlert('No account with the User Name exists.', 'error');
       return;
@@ -341,6 +352,8 @@ function recoveryCheckUsername() {
     recoveryQuestionId = d.recoveryQuestionId;
     document.getElementById('recovery-step1').classList.add('hidden');
     document.getElementById('recovery-step2').classList.remove('hidden');
+    var sub = document.getElementById('recovery-subtitle');
+    if (sub) sub.textContent = 'Verify your account details to reset your Edit Key';
     var label = document.getElementById('recovery-sq-label');
     if (label) label.textContent = RECOVERY_SQ_OPTIONS[recoveryQuestionId] || 'Security Question';
     document.getElementById('recovery-account-email').value = '';
@@ -348,7 +361,7 @@ function recoveryCheckUsername() {
     document.getElementById('recovery-sq-answer').value = '';
     attachDobMask();
   }).catch(function() {
-    if (btn) { btn.disabled = false; btn.textContent = 'Perform Recovery'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
     showRecoveryAlert('Connection error. Please try again.', 'error');
   });
 }
@@ -357,6 +370,8 @@ function recoveryBackToStep1() {
   recoveryUsername = null; recoveryQuestionId = null;
   document.getElementById('recovery-step2').classList.add('hidden');
   document.getElementById('recovery-step1').classList.remove('hidden');
+  var sub = document.getElementById('recovery-subtitle');
+  if (sub) sub.textContent = 'Enter your User Name to reset your Edit Key';
   showRecoveryAlert('', '');
 }
 
@@ -388,7 +403,7 @@ function recoveryVerify() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: recoveryUsername, accountEmail: accEm, dob: dobNorm, questionId: recoveryQuestionId, answer: ans })
   }).then(function(r) { return r.json(); }).then(function(d) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Reset Access'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
     if (d.error || !d.success) {
       showRecoveryVerifyAlert(d.error || 'Recovery verification failed.', 'error');
       return;
@@ -396,7 +411,7 @@ function recoveryVerify() {
     recoveryAccountEmail = accEm;
     showRecoverySuccess(d.folder, d.key);
   }).catch(function() {
-    if (btn) { btn.disabled = false; btn.textContent = 'Reset Access'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
     showRecoveryVerifyAlert('Connection error. Please try again.', 'error');
   });
 }
