@@ -18,10 +18,12 @@ async function checkSecretsStatus() {
     if (!banner || !list) return;
     if (missing.length === 0) {
       banner.classList.add('hidden');
+      banner.classList.remove('show');
       return;
     }
     list.innerHTML = missing.map(function(m) { return '<li>' + m + '</li>'; }).join('');
     banner.classList.remove('hidden');
+    banner.classList.add('show');
   } catch (e) {}
 }
 
