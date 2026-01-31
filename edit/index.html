@@ -40,8 +40,11 @@
           </div>
           <div class="form-group">
             <label class="form-label">Edit Key</label>
-            <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key" required>
-            <span class="form-hint">This was provided to you via email</span>
+            <div class="form-inline-row">
+              <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key" required>
+              <button type="button" class="btn btn-ghost btn-sm" id="edit-key-toggle" aria-label="Show edit key">Show</button>
+            </div>
+            <span class="form-hint">Use Show to verify what you enter and avoid paste issues on other devices.</span>
           </div>
           <div id="auth-alert" class="alert"></div>
           <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
@@ -452,6 +455,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initContactNumberValidationEdit();
   initDestinationEmailValidationEdit();
   document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
+  const editKeyToggle = document.getElementById('edit-key-toggle');
+  if (editKeyToggle) {
+    editKeyToggle.addEventListener('click', () => {
+      const inp = document.getElementById('edit-key');
+      if (!inp) return;
+      const hidden = inp.type === 'password';
+      inp.type = hidden ? 'text' : 'password';
+      editKeyToggle.textContent = hidden ? 'Hide' : 'Show';
+      editKeyToggle.setAttribute('aria-label', hidden ? 'Hide edit key' : 'Show edit key');
+    });
+  }
   document.getElementById('contact-form').addEventListener('submit', handleSave);
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.searchable-select')) {
