@@ -137,11 +137,6 @@
 
         <div id="tab-manage" class="tab-content active">
           <div class="user-list-header">
-            <div class="user-list-stats">
-              <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Users</span></div>
-              <div class="stat"><span class="stat-value" id="stat-without-access">0</span><span class="stat-label">Without edit access</span></div>
-              <div class="stat"><span class="stat-value" id="stat-incomplete">0</span><span class="stat-label">Incomplete</span></div>
-            </div>
             <div class="search-filter-row">
               <div class="search-wrapper">
                 <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -152,7 +147,26 @@
                 <option value="access">With edit access</option>
                 <option value="no-access">Without edit access</option>
                 <option value="incomplete">Incomplete</option>
+                <option value="secrets-not-set">Secrets not set</option>
+                <option value="new">New</option>
               </select>
+              <select id="sort-manage" class="filter-select" onchange="filterUsers('manage')">
+                <option value="name-asc">Sort: Name A-Z</option>
+                <option value="name-desc">Sort: Name Z-A</option>
+                <option value="folder-asc">Sort: User name A-Z</option>
+                <option value="folder-desc">Sort: User name Z-A</option>
+              </select>
+            </div>
+            <div class="user-list-stats-block">
+              <div class="stats-chart-wrap">
+                <svg id="stats-chart" class="stats-chart" viewBox="0 0 100 100" width="80" height="80" aria-hidden="true"></svg>
+              </div>
+              <div class="user-list-stats">
+                <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Users</span></div>
+                <div class="stat"><span class="stat-value" id="stat-without-access">0</span><span class="stat-label">Without edit access</span></div>
+                <div class="stat"><span class="stat-value" id="stat-incomplete">0</span><span class="stat-label">Incomplete</span></div>
+                <div class="stat"><span class="stat-value" id="stat-secrets-not-set">0</span><span class="stat-label">Secrets not set</span></div>
+              </div>
             </div>
           </div>
           <div id="alert-manage" class="alert"></div>
@@ -873,13 +887,52 @@ function isIncomplete(f) {
   return !fn || !sn || !em;
 }
 
+
+function updateStatsChart(total, withoutAccess, incomplete, secretsNotSet) {
+  var svg = document.getElementById('stats-chart');
+  if (!svg) return;
+  var withAccess = total - withoutAccess;
+  var incompleteOnly = 0, secretsOnly = 0, ok = 0;
+  pages.forEach(function(f){
+    var hk = !!editKeys[f], u = userInfo[f] || {};
+    if (!hk) return;
+    var inc = isIncomplete(f), sec = !(u.secretsComplete === true);
+    if (inc) incompleteOnly++; else if (sec) secretsOnly++; else ok++;
+  });
+  var segs = [
+    { v: withoutAccess, c: 'var(--grey-500)' },
+    { v: incompleteOnly, c: 'var(--accent-yellow)' },
+    { v: secretsOnly, c: 'var(--accent-red)' },
+    { v: ok, c: 'var(--accent-teal)' }
+  ].filter(function(s){ return s.v > 0; });
+  if (total === 0) { svg.innerHTML = '<circle cx="50" cy="50" r="45" fill="var(--grey-200)"/><circle cx="50" cy="50" r="35" fill="var(--white)"/>'; return; }
+  var acc = 0;
+  var parts = [];
+  segs.forEach(function(s){
+    var pct = (s.v/total)*360;
+    var x1 = 50 + 45*Math.cos((acc-90)*Math.PI/180);
+    var y1 = 50 + 45*Math.sin((acc-90)*Math.PI/180);
+    var x2 = 50 + 45*Math.cos((acc+pct-90)*Math.PI/180);
+    var y2 = 50 + 45*Math.sin((acc+pct-90)*Math.PI/180);
+    var lg = pct > 180 ? 1 : 0;
+    var d = 'M50,50 L'+x1+','+y1+' A45,45 0 '+lg+',1 '+x2+','+y2+' Z';
+    acc += pct;
+    parts.push('<path d="'+d+'" fill="'+s.c+'"/>');
+  });
+  svg.innerHTML = '<circle cx="50" cy="50" r="45" fill="var(--grey-200)"/>'+parts.join('')+'<circle cx="50" cy="50" r="35" fill="var(--white)"/>';
+}
+
 function populateUI() {
   const withAccess = Object.keys(editKeys).filter(k => pages.includes(k)).length;
   const withoutAccess = pages.length - withAccess;
   const incomplete = pages.filter(isIncomplete).length;
+  const secretsNotSetCount = pages.filter(f => !(userInfo[f] && userInfo[f].secretsComplete === true)).length;
   document.getElementById('stat-total').textContent = pages.length;
   document.getElementById('stat-without-access').textContent = withoutAccess;
   document.getElementById('stat-incomplete').textContent = incomplete;
+  var statSecretsEl = document.getElementById('stat-secrets-not-set');
+  if (statSecretsEl) statSecretsEl.textContent = secretsNotSetCount;
+  updateStatsChart(pages.length, withoutAccess, incomplete, secretsNotSetCount);
   populatePageSelect();
   renderList('manage');
 }
@@ -1000,11 +1053,21 @@ function renderList(t) {
     if (filterVal === 'access') return !!editKeys[f];
     if (filterVal === 'no-access') return !editKeys[f];
     if (filterVal === 'incomplete') return isIncomplete(f);
+    if (filterVal === 'secrets-not-set') return !(u.secretsComplete === true);
+    if (filterVal === 'new') return !!editKeys[f] && !(u.accountDetailsSent === true);
     return true;
-  }).sort((a, b) => {
+  });
+  var sortEl = document.getElementById('sort-manage');
+  var sortVal = sortEl ? sortEl.value : 'name-asc';
+  fl.sort((a, b) => {
     const uA = userInfo[a] || {}, uB = userInfo[b] || {};
-    const nameA = uA.firstName && uA.surname ? `${uA.firstName} ${uA.surname}` : a;
-    const nameB = uB.firstName && uB.surname ? `${uB.firstName} ${uB.surname}` : b;
+    const nameA = (uA.firstName && uA.surname ? uA.firstName + ' ' + uA.surname : a).toLowerCase();
+    const nameB = (uB.firstName && uB.surname ? uB.firstName + ' ' + uB.surname : b).toLowerCase();
+    const folderA = (a || '').toLowerCase(), folderB = (b || '').toLowerCase();
+    if (sortVal === 'name-asc') return nameA.localeCompare(nameB);
+    if (sortVal === 'name-desc') return nameB.localeCompare(nameA);
+    if (sortVal === 'folder-asc') return folderA.localeCompare(folderB);
+    if (sortVal === 'folder-desc') return folderB.localeCompare(folderA);
     return nameA.localeCompare(nameB);
   });
   if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }

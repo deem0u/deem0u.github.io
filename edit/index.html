@@ -22,6 +22,12 @@
   #secrets-banner.secrets-attention-banner .secrets-attention-message { margin: 0 0 0.5rem 0; font-weight: normal; }
   #secrets-banner.secrets-attention-banner #secrets-missing-list { margin: 0.5rem 0 0 1.5rem; padding-left: 1rem; }
   #secrets-banner.secrets-attention-banner .secrets-attention-actions { flex-shrink: 0; margin-left: auto; }
+  .recovery-toggle-wrap { margin: 1rem 0; }
+  .recovery-toggle { display: inline-block; padding: 0.5rem 1rem; font-size: 0.875rem; color: var(--accent-teal, #1ac5b0); border: 1px solid var(--accent-teal, #1ac5b0); border-radius: 9999px; text-decoration: none; background: transparent; transition: background 0.15s, color 0.15s; }
+  .recovery-toggle:hover { background: var(--accent-teal, #1ac5b0); color: white; }
+  .recovery-actions { margin-top: 1.25rem; }
+  .recovery-actions .alert { margin-bottom: 1rem; }
+  .recovery-actions .alert:not(.show) { margin-bottom: 0; }
   </style>
 </head>
 <body>
@@ -83,7 +89,7 @@
                 <input type="text" id="recovery-username" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
                 <span class="form-error" id="error-recovery-username" role="alert"></span>
               </div>
-              <p class="text-center mb-3"><a href="#" id="recovery-use-email-link" class="text-sm">Forgot your User Name? Use Account Email instead</a></p>
+              <p class="text-center recovery-toggle-wrap"><a href="#" id="recovery-use-email-link" class="recovery-toggle">Forgot your User Name? Use Account Email instead</a></p>
             </div>
             <div id="recovery-step1-email" class="hidden">
               <div class="form-group">
@@ -91,10 +97,12 @@
                 <input type="email" id="recovery-account-email-step1" class="form-input" placeholder="your@email.com" autocomplete="email">
                 <span class="form-error" id="error-recovery-email" role="alert"></span>
               </div>
-              <p class="text-center mb-3"><a href="#" id="recovery-use-username-link" class="text-sm">Use User Name instead</a></p>
+              <p class="text-center recovery-toggle-wrap"><a href="#" id="recovery-use-username-link" class="recovery-toggle">Use User Name instead</a></p>
             </div>
-            <div id="recovery-alert" class="alert"></div>
-            <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-check-btn" onclick="recoveryCheckStep1()">Reset Edit Key</button>
+            <div class="recovery-actions">
+              <div id="recovery-alert" class="alert"></div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-check-btn" onclick="recoveryCheckStep1()">Reset Edit Key</button>
+            </div>
             <p class="text-center mt-4"><a href="#" id="recovery-back-link" class="btn btn-ghost btn-sm">Back to Sign In</a></p>
           </form>
         </div>
@@ -121,8 +129,10 @@
               <input type="text" id="recovery-sq2-answer" class="form-input" maxlength="30" placeholder="Answer">
               <span class="form-error" id="error-recovery-sq2" role="alert"></span>
             </div>
-            <div id="recovery-verify-alert" class="alert"></div>
-            <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-verify-btn" onclick="recoveryVerify()">Reset Edit Key</button>
+            <div class="recovery-actions">
+              <div id="recovery-verify-alert" class="alert"></div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-verify-btn" onclick="recoveryVerify()">Reset Edit Key</button>
+            </div>
             <p class="text-center mt-4"><a href="#" onclick="recoveryBackToStep1(); return false;" class="btn btn-ghost btn-sm">Back</a></p>
           </form>
         </div>
