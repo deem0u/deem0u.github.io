@@ -377,12 +377,12 @@
             <div class="secret-q-row"><select id="secrets-sq3" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq3-answer" role="alert"></span></div></div></div>
           </div>
         </div>
-        <div id="modal-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
+        <div id="modal-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div><div id="modal-secrets-success" class="alert alert-success hidden" style="margin-top:0.5rem">Secrets saved successfully.</div>
       </div>
       <div class="modal-footer modal-footer-secrets">
         <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()">Save</button>
         <button type="button" class="btn btn-secondary" onclick="resetSecretsModal()">Reset</button>
-        <button type="button" class="btn btn-ghost" onclick="clearSecretsModal()">Clear</button>
+        <button type="button" class="btn btn-secondary" onclick="clearSecretsModal()">Clear</button>
         <button type="button" class="btn btn-secondary" onclick="closeSecretsModal()">Cancel</button>
       </div>
     </div>
@@ -1780,7 +1780,7 @@ function syncSecretsModalSqOptions() {
 (function attachSecretsSqListeners(){['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('change',syncSecretsModalSqOptions);});})();
 
 function initSecretsModalValidations(){
-  function validateDob(val){var s=(val||'').trim().replace(/\s+/g,'');var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)return{valid:false,message:'Please enter a valid date in dd/mm/yyyy format.'};var d=parseInt(m[1],10),mo=parseInt(m[2],10),y=parseInt(m[3],10);if(d<1||d>31||mo<1||mo>12||y<1900||y>2100)return{valid:false,message:'Please enter a valid date.'};return{valid:true};}
+  function validateDob(val){var s=(val||'').trim().replace(/\s+/g,'');if(!s)return{valid:true};var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)return{valid:false,message:'Please enter a valid date in dd/mm/yyyy format.'};var d=parseInt(m[1],10),mo=parseInt(m[2],10),y=parseInt(m[3],10);if(d<1||d>31||mo<1||mo>12||y<1900||y>2100)return{valid:false,message:'Please enter a valid date.'};return{valid:true};}
   function validateSecretAnswer(a){var t=(a||'').trim();if(t.length<4)return{valid:false,message:'Answer must be at least 4 characters.'};if(t.length>30)return{valid:false,message:'Answer must be 30 characters or fewer.'};return{valid:true};}
 
   var accEmInp=document.getElementById('secrets-account-email'),accEmErr=document.getElementById('error-secrets-account-email');
@@ -1795,6 +1795,27 @@ function closeSecretsModal() {
   document.getElementById('modal-secrets').classList.remove('show');
   secretsModalFolder = null;
   lastSavedSecretsData = null;
+}
+
+function clearSecretsModal() {
+  document.getElementById('secrets-account-email').value = '';
+  document.getElementById('secrets-dob').value = '';
+  ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
+    document.getElementById(id).value = '';
+    document.getElementById(id + '-answer').value = '';
+    var e = document.getElementById('error-' + id + '-answer');
+    if (e) e.textContent = '';
+  });
+  syncSecretsModalSqOptions();
+  document.getElementById('error-secrets-account-email').textContent = '';
+  document.getElementById('error-secrets-dob').textContent = '';
+  document.getElementById('modal-secrets-error').classList.add('hidden');
+  document.getElementById('secrets-account-email').classList.remove('is-invalid');
+  document.getElementById('secrets-dob').classList.remove('is-invalid');
+  ['secrets-sq1-answer','secrets-sq2-answer','secrets-sq3-answer'].forEach(function(id) {
+    var inp = document.getElementById(id);
+    if (inp) inp.classList.remove('is-invalid');
+  });
 }
 
 function resetSecretsModal() {
@@ -1813,6 +1834,7 @@ function resetSecretsModal() {
     document.getElementById('error-secrets-dob').textContent = '';
     ['secrets-sq1-answer','secrets-sq2-answer','secrets-sq3-answer'].forEach(function(id) { var e = document.getElementById('error-' + id); if (e) e.textContent = ''; });
     document.getElementById('modal-secrets-error').classList.add('hidden');
+  var succ = document.getElementById('modal-secrets-success'); if (succ) succ.classList.add('hidden');
   }
 }
 
@@ -1823,6 +1845,7 @@ async function showSecretsModal(folder) {
   document.getElementById('modal-secrets-form').classList.add('hidden');
   document.getElementById('modal-secrets-error').classList.add('hidden');
   document.getElementById('modal-secrets-error').textContent = '';
+  var succ = document.getElementById('modal-secrets-success'); if (succ) succ.classList.add('hidden');
   document.getElementById('modal-secrets').classList.add('show');
   try {
     var r = await fetch(API + '/api/secrets/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
@@ -1883,6 +1906,12 @@ async function saveSecrets() {
   ];
   var hasAllSq = sq[0].questionId && sq[1].questionId && sq[2].questionId && sq[0].answer.length >= 4 && sq[1].answer.length >= 4 && sq[2].answer.length >= 4;
   var ids = sq.map(function(q) { return q.questionId; });
+  var hasAnySq = sq[0].questionId || sq[1].questionId || sq[2].questionId;
+  if (hasAnySq && !hasAllSq) {
+    document.getElementById('modal-secrets-error').textContent = 'Select 3 different questions with answers (4-30 chars each), or leave all empty.';
+    document.getElementById('modal-secrets-error').classList.remove('hidden');
+    return;
+  }
   if (hasAllSq && (new Set(ids).size !== 3 || ids.some(function(i) { return !i || i < 1 || i > 10; }))) {
     document.getElementById('modal-secrets-error').textContent = 'Select 3 different questions with answers (4-30 chars each).';
     document.getElementById('modal-secrets-error').classList.remove('hidden');
@@ -1894,8 +1923,7 @@ async function saveSecrets() {
     return;
   }
   document.getElementById('modal-secrets-error').classList.add('hidden');
-  var body = { accountEmail: accountEmail || '', dob: dob || '' };
-  if (hasAllSq) body.secretQuestions = sq;
+  var body = { accountEmail: accountEmail || '', dob: dob || '', secretQuestions: hasAllSq ? sq : [] };
   document.getElementById('secrets-save-btn').disabled = true;
   try {
     var r = await fetch(API + '/api/secrets/' + encodeURIComponent(secretsModalFolder), {
@@ -1916,6 +1944,7 @@ async function saveSecrets() {
   } catch (e) {
     document.getElementById('modal-secrets-error').textContent = 'Connection error. Please try again.';
     document.getElementById('modal-secrets-error').classList.remove('hidden');
+    var succ = document.getElementById('modal-secrets-success'); if (succ) succ.classList.add('hidden');
   }
   document.getElementById('secrets-save-btn').disabled = false;
 }

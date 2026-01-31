@@ -1564,15 +1564,21 @@ body {
   display: flex;
   flex-direction: column;
   max-height: 90vh;
+  width: 100%;
 }
 
 #modal-secrets .modal-body {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
+}
+
+#modal-secrets .modal-footer {
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .modal-footer-secrets {
-  flex-shrink: 0;
-  margin-top: auto;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
