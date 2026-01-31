@@ -1,0 +1,10 @@
+name = "contact-page-editor"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "EDIT_KEYS_KV"
+id = "6cb625208ddb4313b95972ca16693098"
+
+# Required secret (set via Cloudflare dashboard):
+# GITHUB_TOKEN - Your GitHub Personal Access Token with 'repo' scope
