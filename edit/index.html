@@ -16,6 +16,12 @@
   .edit-recovery-success-action { margin-top: 1.5rem; }
   .edit-recovery-success-action p { margin-bottom: 1rem; }
   .edit-recovery-success-buttons { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+  #secrets-banner.secrets-attention-banner { background: #fef9e7; border: 1px solid #d4a017; border-radius: var(--radius-md, 6px); padding: 1rem 1.25rem; margin-top: 1rem; display: flex; align-items: center; gap: 1.5rem; text-align: left; }
+  #secrets-banner.secrets-attention-banner .secrets-attention-content { flex: 1; }
+  #secrets-banner.secrets-attention-banner .secrets-attention-title { font-weight: 600; margin: 0 0 0.5rem 0; }
+  #secrets-banner.secrets-attention-banner .secrets-attention-message { margin: 0 0 0.5rem 0; font-weight: normal; }
+  #secrets-banner.secrets-attention-banner #secrets-missing-list { margin: 0.5rem 0 0 1.5rem; padding-left: 1rem; }
+  #secrets-banner.secrets-attention-banner .secrets-attention-actions { flex-shrink: 0; margin-left: auto; }
   </style>
 </head>
 <body>
@@ -151,10 +157,15 @@
           </div>
         </div>
 
-        <div id="secrets-banner" class="alert alert-warning hidden" style="margin-top:1rem;">
-          <p><strong>To recover access to your Contact Editor</strong>, please set the following:</p>
-          <ul id="secrets-missing-list" style="margin:0.5rem 0 1rem 1.5rem;"></ul>
-          <button type="button" class="btn btn-primary btn-sm" onclick="showEditSecretsModal()">Set Secrets</button>
+        <div id="secrets-banner" class="alert alert-warning hidden secrets-attention-banner">
+          <div class="secrets-attention-content">
+            <p class="secrets-attention-title">There are some items that need your attention</p>
+            <p class="secrets-attention-message">To enable Access Recovery to your Contact Editor, please set the following:</p>
+            <ul id="secrets-missing-list"></ul>
+          </div>
+          <div class="secrets-attention-actions">
+            <button type="button" class="btn btn-primary btn-sm" onclick="showEditSecretsModal()">Set Secrets</button>
+          </div>
         </div>
 
         <div class="card">
