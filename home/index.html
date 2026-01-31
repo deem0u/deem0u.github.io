@@ -23,9 +23,10 @@
   .home-subheading { font-size: 1.1rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 1rem; }
   .home-blurb { font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
   .home-actions { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
-  .home-action-btn { display: inline-flex; flex-direction: column; align-items: center; text-decoration: none; }
-  .home-action-btn .btn-main { font-size: 1rem; font-weight: 600; }
-  .home-action-btn .btn-sub { font-size: 0.75rem; opacity: 0.85; margin-top: 0.2rem; }
+  .home-action-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; width: 165px; min-width: 165px; padding: var(--space-3) var(--space-4); font-size: var(--text-sm); }
+  .home-action-btn.btn-lg { padding: var(--space-3) var(--space-4); font-size: var(--text-sm); }
+  .home-action-btn .btn-main { font-size: 0.95rem; font-weight: 600; }
+  .home-action-btn .btn-sub { font-size: 0.7rem; opacity: 0.85; margin-top: 0.15rem; }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -71,7 +72,7 @@
         </div>
         <div id="signup-form-section" class="home-right-col hidden">
           <div class="card">
-            <div class="card-header"><span class="card-title">Create Your Digital Contact Information Page</span></div>
+            <div class="card-header"><span class="card-title">Create Your Account &amp; Digital Contact Page</span></div>
             <div class="card-body">
               <form id="signup-form">
                 <div class="form-group">
