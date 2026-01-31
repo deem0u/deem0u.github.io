@@ -1559,3 +1559,20 @@ body {
 .secret-q-select option:disabled { opacity: 0.25; color: #999; background: #f5f5f5; }
 .secret-q-answer-wrap { margin-top: 0.25rem; }
 .secret-q-answer-wrap.hidden { display: none !important; }
+
+#modal-secrets .modal {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+#modal-secrets .modal-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-footer-secrets {
+  flex-shrink: 0;
+  margin-top: auto;
+  flex-wrap: wrap;
+}

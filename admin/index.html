@@ -379,9 +379,11 @@
         </div>
         <div id="modal-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer modal-footer-secrets">
+        <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()">Save</button>
+        <button type="button" class="btn btn-secondary" onclick="resetSecretsModal()">Reset</button>
+        <button type="button" class="btn btn-ghost" onclick="clearSecretsModal()">Clear</button>
         <button type="button" class="btn btn-secondary" onclick="closeSecretsModal()">Cancel</button>
-        <button type="button" class="btn btn-ghost" onclick="clearSecretsModal()">Clear</button>        <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()">Save</button>
       </div>
     </div>
   </div>
@@ -1241,6 +1243,25 @@ function validateEmailInput(inp, required) {
   return { valid: true };
 }
 
+function validateEmailStrict(val) {
+  var s = (val || '').trim();
+  var msg = 'Please enter a valid email address (e.g. name@example.com).';
+  if (!s) return { valid: true };
+  if (s.length > 320) return { valid: false, message: msg };
+  var atIdx = s.indexOf('@');
+  if (atIdx <= 0 || atIdx >= s.length - 1) return { valid: false, message: msg };
+  var local = s.substring(0, atIdx), domain = s.substring(atIdx + 1);
+  if (local.length > 64 || domain.length > 255) return { valid: false, message: msg };
+  if (/\.\./.test(local) || /^\.|\.$/.test(local)) return { valid: false, message: msg };
+  if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_{|}~-]+$/.test(local)) return { valid: false, message: msg };
+  var domainParts = domain.split('.');
+  if (domainParts.length < 2 || domainParts.some(function(p){ return !p || /^-|-$/.test(p); })) return { valid: false, message: msg };
+  var tld = domainParts[domainParts.length - 1];
+  if (tld.length < 2 || !/^[a-zA-Z0-9-]+$/.test(tld)) return { valid: false, message: msg };
+  if (domainParts.length >= 3 && domainParts[domainParts.length-1] === domainParts[domainParts.length-2]) return { valid: false, message: msg };
+  return { valid: true };
+}
+
 function initEmailValidation() {
   var configs = [
     { id: 'new-email', errId: 'error-new-email', required: false },
@@ -1730,16 +1751,23 @@ function closeQrModal() {
 }
 
 
-var secretsModalFolder = null;
+var secretsModalFolder = null; var lastSavedSecretsData = null;
 var SQ_OPTIONS = [{v:'',t:'- Select question -'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
 
 function syncSecretsModalSqOptions() {
   var v1 = document.getElementById('secrets-sq1').value, v2 = document.getElementById('secrets-sq2').value, v3 = document.getElementById('secrets-sq3').value;
   ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
     var sel = document.getElementById(id);
+    if (!sel) return;
+    var row = sel.closest('.secret-q-row');
+    var wrap = row ? row.querySelector('.secret-q-answer-wrap') : null;
+    var ans = document.getElementById(id + '-answer');
     var exclude = (id === 'secrets-sq1' ? [v2,v3] : id === 'secrets-sq2' ? [v1,v3] : [v1,v2]).filter(Boolean);
     var cur = sel.value;
-    if (cur && exclude.indexOf(cur) >= 0) cur = '';
+    if (cur && exclude.indexOf(cur) >= 0) { cur = ''; if (ans) ans.value = ''; }
+    if (wrap) {
+      if (cur) { wrap.classList.remove('hidden'); } else { wrap.classList.add('hidden'); if (ans) ans.value = ''; var e = document.getElementById('error-' + id + '-answer'); if (e) e.textContent = ''; }
+    }
     sel.innerHTML = SQ_OPTIONS.map(function(o) {
       var dis = o.v && exclude.indexOf(o.v) >= 0 ? ' disabled' : '';
       var sel_ = o.v === cur ? ' selected' : '';
@@ -1754,13 +1782,38 @@ function syncSecretsModalSqOptions() {
 function initSecretsModalValidations(){
   function validateDob(val){var s=(val||'').trim().replace(/\s+/g,'');var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)return{valid:false,message:'Please enter a valid date in dd/mm/yyyy format.'};var d=parseInt(m[1],10),mo=parseInt(m[2],10),y=parseInt(m[3],10);if(d<1||d>31||mo<1||mo>12||y<1900||y>2100)return{valid:false,message:'Please enter a valid date.'};return{valid:true};}
   function validateSecretAnswer(a){var t=(a||'').trim();if(t.length<4)return{valid:false,message:'Answer must be at least 4 characters.'};if(t.length>30)return{valid:false,message:'Answer must be 30 characters or fewer.'};return{valid:true};}
-  var dobInp=document.getElementById('secrets-dob'),dobErr=document.getElementById('error-secrets-dob');
+
+  var accEmInp=document.getElementById('secrets-account-email'),accEmErr=document.getElementById('error-secrets-account-email');
+  if(accEmInp&&accEmErr){
+    accEmInp.addEventListener('blur',function(){var r=validateEmailStrict(accEmInp.value);if(r.valid){accEmErr.textContent='';accEmInp.classList.remove('is-invalid');}else{accEmErr.textContent=r.message;accEmErr.setAttribute('aria-live','polite');accEmInp.classList.add('is-invalid');}});
+    accEmInp.addEventListener('input',function(){if(validateEmailStrict(accEmInp.value).valid){accEmErr.textContent='';accEmInp.classList.remove('is-invalid');}});
+  }  var dobInp=document.getElementById('secrets-dob'),dobErr=document.getElementById('error-secrets-dob');
   if(dobInp&&dobErr){dobInp.addEventListener('blur',function(){var r=validateDob(this.value);if(r.valid){dobErr.textContent='';dobInp.classList.remove('is-invalid');}else{dobErr.textContent=r.message;dobErr.setAttribute('aria-live','polite');dobInp.classList.add('is-invalid');}});dobInp.addEventListener('input',function(){if(validateDob(this.value).valid){dobErr.textContent='';dobInp.classList.remove('is-invalid');}});}
   ['secrets-sq1-answer','secrets-sq2-answer','secrets-sq3-answer'].forEach(function(id){var inp=document.getElementById(id),errEl=document.getElementById('error-'+id);if(!inp||!errEl)return;inp.addEventListener('blur',function(){var r=validateSecretAnswer(this.value);if(r.valid){errEl.textContent='';inp.classList.remove('is-invalid');}else{errEl.textContent=r.message;errEl.setAttribute('aria-live','polite');inp.classList.add('is-invalid');}});inp.addEventListener('input',function(){if(validateSecretAnswer(this.value).valid){errEl.textContent='';inp.classList.remove('is-invalid');}});});
 }
 function closeSecretsModal() {
   document.getElementById('modal-secrets').classList.remove('show');
   secretsModalFolder = null;
+  lastSavedSecretsData = null;
+}
+
+function resetSecretsModal() {
+  if (lastSavedSecretsData && !document.getElementById('modal-secrets-form').classList.contains('hidden')) {
+    var d = lastSavedSecretsData;
+    document.getElementById('secrets-account-email').value = d ? (d.accountEmail || '') : '';
+    document.getElementById('secrets-dob').value = d ? (d.dob || '') : '';
+    var sq = d && Array.isArray(d.secretQuestions) ? d.secretQuestions : [];
+    ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id, i) {
+      var q = sq[i] || {};
+      document.getElementById(id).value = q.questionId ? String(q.questionId) : '';
+      document.getElementById(id + '-answer').value = q.answer || '';
+    });
+    syncSecretsModalSqOptions();
+    document.getElementById('error-secrets-account-email').textContent = '';
+    document.getElementById('error-secrets-dob').textContent = '';
+    ['secrets-sq1-answer','secrets-sq2-answer','secrets-sq3-answer'].forEach(function(id) { var e = document.getElementById('error-' + id); if (e) e.textContent = ''; });
+    document.getElementById('modal-secrets-error').classList.add('hidden');
+  }
 }
 
 async function showSecretsModal(folder) {
@@ -1774,6 +1827,7 @@ async function showSecretsModal(folder) {
   try {
     var r = await fetch(API + '/api/secrets/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
     var d = await r.json();
+    lastSavedSecretsData = { accountEmail: d.accountEmail || '', dob: d.dob || '', secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [] };
     document.getElementById('modal-secrets-loading').classList.add('hidden');
     document.getElementById('modal-secrets-form').classList.remove('hidden');
     document.getElementById('secrets-account-email').value = d.accountEmail || '';
@@ -1800,7 +1854,7 @@ async function saveSecrets() {
   var accEmInp = document.getElementById('secrets-account-email');
   var accEmErr = document.getElementById('error-secrets-account-email');
   if (accountEmail) {
-    var r = validateEmailInput(accEmInp, false);
+    var r = validateEmailStrict(accountEmail);
     if (!r.valid) {
       if (accEmErr) accEmErr.textContent = r.message || 'Please enter a valid email address.';
       if (accEmInp) accEmInp.classList.add('is-invalid');
