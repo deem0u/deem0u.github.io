@@ -1557,3 +1557,5 @@ body {
 .secret-q-select { width: 100%; min-height: 3rem; }
 .secret-q-answer { width: 100%; min-height: 2.5rem; }
 .secret-q-select option:disabled { opacity: 0.25; color: #999; background: #f5f5f5; }
+.secret-q-answer-wrap { margin-top: 0.25rem; }
+.secret-q-answer-wrap.hidden { display: none !important; }
