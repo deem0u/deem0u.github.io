@@ -1181,6 +1181,16 @@ body {
   color: var(--grey-500);
 }
 
+.badge-pink {
+  background: var(--grey-200);
+  color: var(--accent-pink);
+}
+
+.user-status .badge-pink {
+  background: var(--accent-pink);
+  color: var(--white);
+}
+
 /* ========================================
    Alerts & Status
    ======================================== */
