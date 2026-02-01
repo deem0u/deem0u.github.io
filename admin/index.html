@@ -473,9 +473,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           showScreen('dashboard');
         } catch (e) {
           console.error('Dashboard load error:', e);
-          localStorage.removeItem('admin_key');
           showScreen('login');
-          showAlert('login-alert', 'Could not load dashboard. Please sign in again.', 'error');
+          showAlert('login-alert', 'Could not load dashboard. <button type="button" class="btn btn-ghost btn-sm mt-2" onclick="location.reload()">Retry</button>', 'error');
         }
       } else { 
         localStorage.removeItem('admin_key'); 

@@ -826,10 +826,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const folderInput = document.getElementById('folder-input');
   if (folder) folderInput.value = folder;
   
-  // Auto-authenticate if key is in URL
+  // Auto-authenticate if key is in URL or sessionStorage
   if (urlKey) { 
     document.getElementById('edit-key').value = urlKey; 
     authenticate(); 
+  } else {
+    var saved = sessionStorage.getItem('edit_session');
+    if (saved) {
+      try {
+        var s = JSON.parse(saved);
+        if (s.folder && s.editKey) {
+          folder = s.folder;
+          if (folderInput) folderInput.value = folder;
+          document.getElementById('edit-key').value = s.editKey;
+          authenticate();
+        }
+      } catch (e) { sessionStorage.removeItem('edit_session'); }
+    }
   }
 });
 
@@ -855,6 +868,7 @@ async function authenticate() {
     document.getElementById('view-page-link').href = `https://deem0u.github.io/${folder}/`;
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
+    sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, editKey: editKey }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
   } catch (e) { 
     console.error('Auth error:', e);
@@ -863,6 +877,7 @@ async function authenticate() {
 }
 
 function signOut() {
+  sessionStorage.removeItem('edit_session');
   folder = null;
   editKey = null;
   currentSha = null;
