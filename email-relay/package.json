@@ -1,0 +1,9 @@
+{
+  "name": "contact-page-editor-email-relay",
+  "version": "1.0.0",
+  "description": "Nodemailer relay for Contact Page Editor - sends from Gmail via SMTP",
+  "main": "api/send.js",
+  "dependencies": {
+    "nodemailer": "^6.9.7"
+  }
+}

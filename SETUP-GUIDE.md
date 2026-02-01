@@ -11,6 +11,7 @@
 - **Contact Editor** — Users sign in with User Name + Edit Key to edit their page; Access Recovery for forgot key
 - **Backend (Cloudflare Worker)** — API for signup, auth, recovery, page CRUD, secrets, keys
 - **Storage** — GitHub (pages content) + Cloudflare KV (keys, secrets, admin)
+- **Email Relay** (optional) — Vercel serverless function using Nodemailer + Gmail SMTP; enables automated emails (account details, recovery, etc.) from your Gmail
 
 ---
 
@@ -27,6 +28,9 @@ Before starting, you need to obtain:
 | **Worker URL** | After deploying (e.g. `https://contact-page-editor.YOUR-SUBDOMAIN.workers.dev`) | Frontend API calls |
 | **Contact email** | Your choice | "Contact me" in account details, Email Me link |
 | **Admin key + recovery email** | You choose at first-time setup | Admin access |
+| **Gmail App Password** | Google Account → Security → 2-Step Verification → App passwords | Email relay (sends from your Gmail) |
+| **Vercel account** | https://vercel.com | Hosts the email relay |
+| **Email relay URL + secret** | After deploying relay; generate secret | Worker calls relay to send emails |
 
 ---
 
@@ -158,6 +162,23 @@ Use this section to find where to obtain each value, what it looks like, and eve
 
 ---
 
+### 7. Email Relay (optional — for automated emails)
+
+**What it is:** Enables the Worker to send emails programmatically from your Gmail (e.g. `deem0u.github.io@gmail.com`) instead of using mailto links.
+
+**Where to obtain:**
+- **Gmail App Password:** Google Account → Security → 2-Step Verification → App passwords → Generate (for Mail / Other)
+- **RELAY_SECRET:** Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` or `openssl rand -hex 32`
+- **EMAIL_RELAY_URL:** After deploying the `email-relay` folder to Vercel (e.g. `https://your-project.vercel.app/api/send`)
+
+**Where to enter:**
+- **Vercel** (email-relay project): Environment Variables → `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `RELAY_SECRET`
+- **Cloudflare Worker:** Settings → Variables and Secrets → `EMAIL_RELAY_URL`, `EMAIL_RELAY_SECRET` (same value as `RELAY_SECRET`)
+
+**Full step-by-step:** See [EMAIL-SETUP.md](EMAIL-SETUP.md).
+
+---
+
 ### Quick find-and-replace summary
 
 | Search (replace all) | Replace with |
@@ -201,12 +222,13 @@ Use this section to find where to obtain each value, what it looks like, and eve
 4. Select your namespace
 5. **Save**
 
-**Add secret:**
+**Add secrets:**
 1. **Settings** → **Variables and Secrets**
 2. **Add** → **Secret**
 3. Name: `GITHUB_TOKEN`
 4. Value: your GitHub Personal Access Token (with `repo` scope)
 5. **Encrypt** → **Save**
+6. *(Optional, for automated email)* Add `EMAIL_RELAY_URL` and `EMAIL_RELAY_SECRET` — see [Part F](#part-f--email-relay-setup-optional)
 
 ### A5. Note Your Worker URL
 After deploy, your worker URL is shown, e.g.:
@@ -301,7 +323,14 @@ Files to update:
 | `cloudflare-worker/worker.js` | Paste into Worker code editor (or use `npx wrangler deploy`) |
 | `cloudflare-worker/wrangler.toml` | Used by `wrangler deploy`; otherwise configure KV binding and secrets in dashboard |
 
-### D2. GitHub Pages (deem0u.github.io or your repo)
+### D2. Email Relay (optional)
+
+| Source | Action |
+|--------|--------|
+| `email-relay/` | Keep in repo; deploy to Vercel as separate project (or import repo with root dir `email-relay`). See [EMAIL-SETUP.md](EMAIL-SETUP.md). |
+| `EMAIL-SETUP.md` | Keep in repo root; reference for email relay setup. |
+
+### D3. GitHub Pages (deem0u.github.io or your repo)
 
 Upload these files preserving the folder structure:
 
@@ -338,6 +367,23 @@ Upload these files preserving the folder structure:
 
 ---
 
+## Part F — Email Relay Setup (Optional)
+
+Enables automated email sending from your Gmail (account details, recovery codes, etc.). Without this, the site uses mailto links (user's email client).
+
+**Detailed steps:** See [EMAIL-SETUP.md](EMAIL-SETUP.md) for the full walkthrough.
+
+**Summary:**
+1. Gmail: Enable 2-Step Verification, create App Password
+2. Deploy `email-relay` folder to Vercel (or as subfolder of your repo with root dir set)
+3. Add Vercel env vars: `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `RELAY_SECRET`
+4. Add Worker secrets: `EMAIL_RELAY_URL` (e.g. `https://your-project.vercel.app/api/send`), `EMAIL_RELAY_SECRET` (same as above)
+5. Redeploy Worker
+
+The Worker includes a `sendEmail()` helper. Workflow integrations (signup, recovery, etc.) can be added later.
+
+---
+
 ## Verification
 
 | Check | How |
@@ -369,6 +415,9 @@ Upload these files preserving the folder structure:
 | GITHUB_TOKEN error | Secret set in Worker; token has `repo` scope |
 | Users not appearing | User folders have `index.html`; names not reserved |
 | Pages not updating | GitHub Pages can take 1–2 minutes; hard refresh |
+| Email relay 401 | `RELAY_SECRET` matches in Vercel and Worker |
+| Email relay 500 | `GMAIL_USER`, `GMAIL_APP_PASSWORD` set in Vercel; App Password has no spaces |
+| Emails not sending | Email relay URL correct in Worker; Vercel function deployed; see [EMAIL-SETUP.md](EMAIL-SETUP.md) |
 
 ---
 
@@ -381,3 +430,4 @@ Upload these files preserving the folder structure:
 | Contact Editor | `https://YOUR_GITHUB_USERNAME.github.io/edit/` |
 | User page | `https://YOUR_GITHUB_USERNAME.github.io/USERNAME/` |
 | Cloudflare | https://dash.cloudflare.com/ |
+| Email setup (detailed) | [EMAIL-SETUP.md](EMAIL-SETUP.md) in repo |

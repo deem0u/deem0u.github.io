@@ -166,6 +166,36 @@ function generateKey(length = 24) {
   return key;
 }
 
+/**
+ * Send email via the relay (Vercel serverless with Nodemailer + Gmail SMTP).
+ * Requires env: EMAIL_RELAY_URL, EMAIL_RELAY_SECRET.
+ * @param {object} env - Worker env
+ * @param {{ to: string, subject: string, html?: string, text?: string }} opts
+ * @returns {{ ok: boolean, error?: string }}
+ */
+async function sendEmail(env, { to, subject, html, text }) {
+  const url = env.EMAIL_RELAY_URL;
+  const secret = env.EMAIL_RELAY_SECRET;
+  if (!url || !secret) return { ok: false, error: 'Email not configured' };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Relay-Secret': secret
+      },
+      body: JSON.stringify({ to, subject, html: html || text, text: text || '' })
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      return { ok: false, error: err };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
 // ============ Setup & Recovery ============
 
 async function handleSetupStatus(env) {
