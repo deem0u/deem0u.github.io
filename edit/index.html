@@ -28,7 +28,19 @@
   .recovery-actions { margin-top: 1.25rem; }
   .recovery-actions .alert { margin-bottom: 1rem; }
   .recovery-actions .alert:not(.show) { margin-bottom: 0; }
-  </style>
+
+  .editor-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
+  .editor-profile-strip { width: 220px; flex-shrink: 0; background: var(--color-bg-muted, #f8f9fa); border-radius: var(--radius-md, 6px); padding: 1rem; }
+  .editor-profile-strip .profile-title { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.9rem; }
+  .editor-profile-strip .profile-row { margin-bottom: 0.5rem; font-size: 0.85rem; }
+  .editor-profile-strip .profile-label { color: var(--color-text-secondary, #6b7280); }
+  .editor-profile-strip .profile-value { font-weight: 500; }
+  .editor-profile-strip .badge { font-size: 0.7rem; padding: 0.2em 0.5em; }
+  .editor-main { flex: 1; min-width: 0; }
+  .editor-form-disabled { opacity: 0.6; pointer-events: none; }
+  .unverified-banner { background: #fef9e7; border: 1px solid #d4a017; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; }
+  @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-profile-strip { width: 100%; } }
+    </style>
 </head>
 <body>
   <div class="app">
@@ -54,22 +66,34 @@
       <div class="auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Sign In</h1>
-          <p class="auth-subtitle">To access and edit your Digital Contact Page, enter your User Name and Edit Key</p>
+          <p class="auth-subtitle" id="auth-subtitle">To access and edit your Digital Contact Page, enter your Account Email and Password</p>
         </div>
         <form id="auth-form">
-          <div class="form-group">
-            <label class="form-label">User Name</label>
-            <input type="text" id="folder-input" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
-            <span class="form-hint">Your contact page user name (from your email link)</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Edit Key</label>
-            <div class="form-inline-row">
-              <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key" required>
-              <button type="button" class="btn btn-ghost btn-sm" id="edit-key-toggle" aria-label="Show edit key">Show</button>
+          <div id="auth-email-mode">
+            <div class="form-group">
+              <label class="form-label">Account Email</label>
+              <input type="email" id="auth-account-email" class="form-input" placeholder="your@email.com" autocomplete="email">
             </div>
-            <span class="form-hint">Use Show to verify what you enter and avoid paste issues on other devices.</span>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+            </div>
           </div>
+          <div id="auth-key-mode" class="hidden">
+            <div class="form-group">
+              <label class="form-label">User Name</label>
+              <input type="text" id="folder-input" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
+              <span class="form-hint">Your contact page user name</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Edit Key</label>
+              <div class="form-inline-row">
+                <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key">
+                <button type="button" class="btn btn-ghost btn-sm" id="edit-key-toggle" aria-label="Show edit key">Show</button>
+              </div>
+            </div>
+          </div>
+          <p class="text-center recovery-toggle-wrap"><a href="#" id="auth-mode-toggle" class="recovery-toggle">Use User Name and Edit Key instead</a></p>
           <div id="auth-alert" class="alert"></div>
           <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
           <p class="text-center mt-4"><a href="#" id="recovery-link" class="btn btn-ghost btn-sm">I need help Signing In</a></p>
@@ -107,6 +131,11 @@
           </form>
         </div>
         <div id="recovery-step2" class="hidden">
+          <div id="recovery-link-option" class="hidden">
+            <p class="text-secondary mb-3">We can send a recovery link to your verified email. Click below to receive it.</p>
+            <div id="recovery-link-alert" class="alert"></div>
+            <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-send-link-btn" onclick="recoverySendLink()">Send recovery link to my email</button>
+          </div>
           <form id="recovery-form-step2" onsubmit="return false;">
             <div class="form-group" id="recovery-account-email-group">
               <label class="form-label">Account Email</label>
@@ -159,6 +188,19 @@
 
     <main id="screen-editor" class="app-main hidden">
       <div class="app-container">
+      <div class="editor-layout">
+        <aside class="editor-profile-strip">
+          <div class="profile-title">Account</div>
+          <div class="profile-row"><span class="profile-label">First Name:</span> <span class="profile-value" id="profile-first-name">—</span></div>
+          <div class="profile-row"><span class="profile-label">Last Name:</span> <span class="profile-value" id="profile-last-name">—</span></div>
+          <div class="profile-row"><span class="profile-label">Account Email:</span> <span class="profile-value" id="profile-email">—</span> <span id="profile-verified-badge" class="badge hidden"></span></div>
+          <div class="profile-row"><span class="profile-label">DOB:</span> <span class="profile-value" id="profile-dob-masked">—</span></div>
+          <button type="button" class="btn btn-ghost btn-sm mt-2" id="edit-profile-btn">Edit Profile</button>
+        </aside>
+        <div class="editor-main">
+        <div id="unverified-banner" class="unverified-banner hidden">
+          <strong>Verify your email</strong> to edit your Contact Page. <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
+        </div>
         <div class="card card-welcome">
           <div class="card-body">
             <p class="card-welcome-text">
@@ -180,7 +222,7 @@
 
         <div class="card">
           <div class="card-header"><span class="card-title">Your Contact Information</span></div>
-          <div class="card-body">
+          <div class="card-body" id="editor-contact-form-wrap">
             <form id="contact-form">
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
@@ -232,10 +274,25 @@
             </form>
           </div>
         </div>
+        </div>
+      </div>
       </div>
     </main>
 
-  <div id="edit-secrets-modal" class="modal-overlay hidden">
+  
+  <div id="edit-profile-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header"><h3 class="modal-title">Edit Profile</h3></div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">First Name</label><input type="text" id="edit-profile-first-name" class="form-input" maxlength="32"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="edit-profile-last-name" class="form-input" maxlength="32"></div>
+        <div class="form-group"><label class="form-label">Account Email</label><input type="email" id="edit-profile-email" class="form-input"></div>
+        <div id="edit-profile-error" class="alert hidden"></div>
+        <div class="modal-footer"><button type="button" class="btn btn-primary" onclick="saveProfile()">Save</button><button type="button" class="btn btn-secondary" onclick="closeEditProfileModal()">Cancel</button></div>
+      </div>
+    </div>
+  </div>
+    <div id="edit-secrets-modal" class="modal-overlay hidden">
     <div class="modal" style="max-width:480px;">
       <div class="modal-header"><h3 class="modal-title">Set Secrets</h3></div>
       <div class="modal-body">
@@ -802,6 +859,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (rLink) rLink.addEventListener('click', function(e) { e.preventDefault(); document.querySelector('.auth-card').classList.add('hidden'); document.getElementById('recovery-card').classList.remove('hidden'); });
   var rbLink = document.getElementById('recovery-back-link');
   if (rbLink) rbLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-card').classList.add('hidden'); document.querySelector('.auth-card').classList.remove('hidden'); });
+  var authModeToggle = document.getElementById('auth-mode-toggle');
+  if (authModeToggle) authModeToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    var keyMode = document.getElementById('auth-key-mode');
+    var emailMode = document.getElementById('auth-email-mode');
+    var sub = document.getElementById('auth-subtitle');
+    if (keyMode.classList.contains('hidden')) {
+      keyMode.classList.remove('hidden');
+      emailMode.classList.add('hidden');
+      authModeToggle.textContent = 'Use Account Email and Password instead';
+      if (sub) sub.textContent = 'To access and edit your Digital Contact Page, enter your User Name and Edit Key';
+    } else {
+      keyMode.classList.add('hidden');
+      emailMode.classList.remove('hidden');
+      authModeToggle.textContent = 'Use User Name and Edit Key instead';
+      if (sub) sub.textContent = 'To access and edit your Digital Contact Page, enter your Account Email and Password';
+    }
+    hideAlert('auth-alert');
+  });
   var useEmailLink = document.getElementById('recovery-use-email-link');
   if (useEmailLink) useEmailLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-username').classList.add('hidden'); document.getElementById('recovery-step1-email').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your Account Email to reset your Edit Key'; showRecoveryAlert('', ''); });
   var useUsernameLink = document.getElementById('recovery-use-username-link');
@@ -818,6 +894,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   document.getElementById('contact-form').addEventListener('submit', handleSave);
+  var editProfileBtn = document.getElementById('edit-profile-btn');
+  if (editProfileBtn) editProfileBtn.addEventListener('click', openEditProfileModal);
+  var verifyEmailBtn = document.getElementById('verify-email-btn');
+  if (verifyEmailBtn) verifyEmailBtn.addEventListener('click', verifyEmailFromEditor);
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.searchable-select')) {
       document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
@@ -826,7 +906,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const folderInput = document.getElementById('folder-input');
   if (folder) folderInput.value = folder;
   
-  // Auto-authenticate if key is in URL or sessionStorage
+  // Auto-authenticate if key is in URL or sessionStorage - use key mode
+  if (urlKey || (function() { try { var s = JSON.parse(sessionStorage.getItem('edit_session') || '{}'); return s.folder && s.editKey; } catch(e) { return false; } })()) {
+    document.getElementById('auth-email-mode').classList.add('hidden');
+    document.getElementById('auth-key-mode').classList.remove('hidden');
+    var toggle = document.getElementById('auth-mode-toggle');
+    if (toggle) toggle.textContent = 'Use Account Email and Password instead';
+    var sub = document.getElementById('auth-subtitle');
+    if (sub) sub.textContent = 'To access and edit your Digital Contact Page, enter your User Name and Edit Key';
+  }
   if (urlKey) { 
     document.getElementById('edit-key').value = urlKey; 
     authenticate(); 
@@ -847,12 +935,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function authenticate() {
-  editKey = document.getElementById('edit-key').value.trim();
-  if (!editKey) { showAlert('auth-alert', 'Please enter your edit key', 'error'); return; }
-  folder = folder || document.getElementById('folder-input').value.trim().toLowerCase();
-  if (!folder) { showAlert('auth-alert', 'Please enter your user name.', 'error'); return; }
-  showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
-  
+  var useEmailMode = !document.getElementById('auth-key-mode').classList.contains('hidden');
+  if (useEmailMode) {
+    var accountEmail = (document.getElementById('auth-account-email').value || '').trim();
+    var password = (document.getElementById('auth-password').value || '').trim();
+    if (!accountEmail || !accountEmail.includes('@')) { showAlert('auth-alert', 'Please enter your account email.', 'error'); return; }
+    if (!password) { showAlert('auth-alert', 'Please enter your password.', 'error'); return; }
+    showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
+    try {
+      var authRes = await fetch(API + '/api/auth/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accountEmail: accountEmail, password: password }) });
+      var authData = await authRes.json();
+      if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || 'Invalid email or password.', 'error'); return; }
+      folder = authData.folder;
+      editKey = authData.key;
+    } catch (e) { showAlert('auth-alert', 'Connection error. Please try again.', 'error'); return; }
+  } else {
+    editKey = document.getElementById('edit-key').value.trim();
+    if (!editKey) { showAlert('auth-alert', 'Please enter your edit key', 'error'); return; }
+    folder = folder || document.getElementById('folder-input').value.trim().toLowerCase();
+    if (!folder) { showAlert('auth-alert', 'Please enter your user name.', 'error'); return; }
+    showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
+  }
   try {
     const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'X-Edit-Key': editKey } });
     if (!res.ok) { showAlert('auth-alert', 'Invalid edit key. Please check and try again.', 'error'); return; }
@@ -870,10 +973,98 @@ async function authenticate() {
     document.getElementById('screen-editor').classList.remove('hidden');
     sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, editKey: editKey }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
+    loadProfile();
+    applyUnverifiedRestriction();
   } catch (e) { 
     console.error('Auth error:', e);
     showAlert('auth-alert', 'Connection error. Please try again.', 'error'); 
   }
+}
+
+
+var profileData = null;
+async function loadProfile() {
+  if (!folder || !editKey) return;
+  try {
+    var r = await fetch(API + "/api/profile/" + encodeURIComponent(folder), { headers: { "X-Edit-Key": editKey } });
+    if (!r.ok) return;
+    profileData = await r.json();
+    document.getElementById("profile-first-name").textContent = profileData.firstName || "—";
+    document.getElementById("profile-last-name").textContent = profileData.lastName || "—";
+    document.getElementById("profile-email").textContent = profileData.accountEmail || "—";
+    document.getElementById("profile-dob-masked").textContent = profileData.dobMasked || "—";
+    var badge = document.getElementById("profile-verified-badge");
+    if (badge) {
+      badge.textContent = profileData.emailVerified ? "Verified" : "Not verified";
+      badge.className = "badge " + (profileData.emailVerified ? "badge-success" : "badge-warning");
+      badge.classList.remove("hidden");
+    }
+  } catch (e) {}
+}
+function applyUnverifiedRestriction() {
+  if (!profileData) return;
+  var wrap = document.getElementById("editor-contact-form-wrap");
+  var banner = document.getElementById("unverified-banner");
+  if (profileData.emailVerified) {
+    if (wrap) wrap.classList.remove("editor-form-disabled");
+    if (banner) banner.classList.add("hidden");
+  } else {
+    if (wrap) wrap.classList.add("editor-form-disabled");
+    if (banner) banner.classList.remove("hidden");
+  }
+}
+function openEditProfileModal() {
+  if (!profileData) return;
+  document.getElementById("edit-profile-first-name").value = profileData.firstName || "";
+  document.getElementById("edit-profile-last-name").value = profileData.lastName || "";
+  document.getElementById("edit-profile-email").value = profileData.accountEmail || "";
+  document.getElementById("edit-profile-error").classList.add("hidden");
+  document.getElementById("edit-profile-modal").classList.remove("hidden");
+}
+function closeEditProfileModal() {
+  document.getElementById("edit-profile-modal").classList.add("hidden");
+}
+async function saveProfile() {
+  var firstName = document.getElementById("edit-profile-first-name").value.trim();
+  var lastName = document.getElementById("edit-profile-last-name").value.trim();
+  var email = document.getElementById("edit-profile-email").value.trim();
+  var errEl = document.getElementById("edit-profile-error");
+  if (!email || !email.includes("@")) { errEl.textContent = "Valid email required"; errEl.classList.remove("hidden"); return; }
+  try {
+    var r = await fetch(API + "/api/profile/" + encodeURIComponent(folder), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-Edit-Key": editKey },
+      body: JSON.stringify({ firstName, lastName, accountEmail: email })
+    });
+    var d = await r.json();
+    if (r.ok && d.success) {
+      profileData = { ...profileData, firstName, lastName, accountEmail: email };
+      loadProfile();
+      closeEditProfileModal();
+    } else {
+      errEl.textContent = d.error || "Failed to save";
+      errEl.classList.remove("hidden");
+    }
+  } catch (e) {
+    errEl.textContent = "Connection error";
+    errEl.classList.remove("hidden");
+  }
+}
+async function verifyEmailFromEditor() {
+  if (!folder) return;
+  try {
+    var r = await fetch(API + "/api/otp/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folder }) });
+    var d = await r.json();
+    if (d.sent) {
+      var code = prompt("A 6-digit code was sent to your email. Enter it below:");
+      if (code) {
+        var vr = await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folder, code: code.trim().replace(/\D/g, "") }) });
+        var vd = await vr.json();
+        if (vr.ok && vd.success) { profileData.emailVerified = true; applyUnverifiedRestriction(); alert("Email verified!"); }
+        else alert(vd.error || "Invalid code");
+      }
+    } else alert(d.error || "Could not send code");
+  } catch (e) { alert("Connection error"); }
 }
 
 function signOut() {
@@ -888,6 +1079,10 @@ function signOut() {
   document.getElementById('screen-auth').classList.remove('hidden');
   document.getElementById('folder-input').value = '';
   document.getElementById('edit-key').value = '';
+  var authEmail = document.getElementById('auth-account-email');
+  var authPw = document.getElementById('auth-password');
+  if (authEmail) authEmail.value = '';
+  if (authPw) authPw.value = '';
   hideAlert('auth-alert');
   window.history.replaceState({}, '', window.location.origin + '/edit/');
 }

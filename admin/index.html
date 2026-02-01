@@ -379,19 +379,23 @@
       <div class="modal-body">
         <div id="modal-secrets-loading" class="modal-qr-loading"><span class="spinner"></span> Loading...</div>
         <div id="modal-secrets-form" class="hidden">
-          <div class="form-group">
+          <div class="form-group" id="secrets-account-email-group">
             <label class="form-label">Account Email</label>
+            <span id="secrets-email-verified-badge" class="badge hidden"></span>
             <input type="email" id="secrets-account-email" class="form-input" autocomplete="email">
             <span class="form-hint">Please provide a valid email for account management &amp; recovery - Must not be currently used to manage another User account</span>
             <span class="form-error" id="error-secrets-account-email" role="alert"></span>
+            <div class="form-group" style="margin-top:0.5rem;">
+              <label class="consent-group" style="cursor:pointer;"><input type="checkbox" id="secrets-email-verified-admin"> <span>Admin: Email verified</span></label>
+            </div>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="secrets-dob-group">
             <label class="form-label">Date of Birth</label>
             <input type="text" id="secrets-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
             <span class="form-hint">Format: dd/mm/yyyy</span>
             <span class="form-error" id="error-secrets-dob" role="alert"></span>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="secrets-sq-group">
             <label class="form-label">Security Questions</label>
             <span class="form-hint" style="display:block; margin-bottom: 0.5rem;">Select 3 different questions and provide answers (4-30 characters each).</span>
             <div class="secret-q-row"><select id="secrets-sq1" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div></div>
@@ -1855,6 +1859,13 @@ function closeSecretsModal() {
 }
 
 function clearSecretsModal() {
+  document.getElementById('secrets-account-email').readOnly = false;
+  document.getElementById('secrets-dob').readOnly = false;
+  ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
+    var sel = document.getElementById(id), ans = document.getElementById(id+'-answer');
+    if (sel) sel.disabled = false;
+    if (ans) ans.readOnly = false;
+  });
   document.getElementById('secrets-account-email').value = '';
   document.getElementById('secrets-dob').value = '';
   ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
@@ -1892,6 +1903,21 @@ function resetSecretsModal() {
     ['secrets-sq1-answer','secrets-sq2-answer','secrets-sq3-answer'].forEach(function(id) { var e = document.getElementById('error-' + id); if (e) e.textContent = ''; });
     document.getElementById('modal-secrets-error').classList.add('hidden');
   var succ = document.getElementById('modal-secrets-success'); if (succ) succ.classList.add('hidden');
+    var v = d.emailVerified;
+    var vBadge = document.getElementById('secrets-email-verified-badge');
+    if (vBadge) { vBadge.textContent = v ? 'Verified' : 'Not verified'; vBadge.className = 'badge ' + (v ? 'badge-success' : 'badge-warning'); }
+    var adminChk = document.getElementById('secrets-email-verified-admin');
+    if (adminChk) adminChk.checked = !!v;
+    var hasAcc = !!(d.accountEmail && d.accountEmail.trim());
+    var hasDob = !!(d.dob && d.dob.trim());
+    var hasAllSq = sq.length === 3 && sq.every(function(q){ return q.questionId && (q.answer||'').trim().length>=4; });
+    document.getElementById('secrets-account-email').readOnly = hasAcc;
+    document.getElementById('secrets-dob').readOnly = hasDob;
+    ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
+      var sel = document.getElementById(id); var ans = document.getElementById(id+'-answer');
+      if (sel) sel.disabled = hasAllSq;
+      if (ans) ans.readOnly = hasAllSq;
+    });
   }
 }
 
@@ -1907,7 +1933,7 @@ async function showSecretsModal(folder) {
   try {
     var r = await fetch(API + '/api/secrets/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
     var d = await r.json();
-    lastSavedSecretsData = { accountEmail: d.accountEmail || '', dob: d.dob || '', secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [] };
+    lastSavedSecretsData = { accountEmail: d.accountEmail || '', dob: d.dob || '', secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [], emailVerified: !!d.emailVerified };
     document.getElementById('modal-secrets-loading').classList.add('hidden');
     document.getElementById('modal-secrets-form').classList.remove('hidden');
     document.getElementById('secrets-account-email').value = d.accountEmail || '';
@@ -1919,6 +1945,20 @@ async function showSecretsModal(folder) {
       document.getElementById(id + '-answer').value = q.answer || '';
     });
     syncSecretsModalSqOptions();
+    var verifiedBadge = document.getElementById('secrets-email-verified-badge');
+    if (verifiedBadge) { verifiedBadge.textContent = d.emailVerified ? 'Verified' : 'Not verified'; verifiedBadge.className = 'badge ' + (d.emailVerified ? 'badge-success' : 'badge-warning'); verifiedBadge.classList.remove('hidden'); }
+    var adminCheck = document.getElementById('secrets-email-verified-admin');
+    if (adminCheck) adminCheck.checked = !!d.emailVerified;
+    var hasAcc = !!(d.accountEmail && d.accountEmail.trim());
+    var hasDob = !!(d.dob && d.dob.trim());
+    var hasAllSq = sq.length === 3 && sq.every(function(q){ return q.questionId && (q.answer||'').trim().length>=4; });
+    document.getElementById('secrets-account-email').readOnly = hasAcc;
+    document.getElementById('secrets-dob').readOnly = hasDob;
+    ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
+      var sel = document.getElementById(id); var ans = document.getElementById(id+'-answer');
+      if (sel) sel.disabled = hasAllSq;
+      if (ans) ans.readOnly = hasAllSq;
+    });
   } catch (e) {
     document.getElementById('modal-secrets-loading').classList.add('hidden');
     document.getElementById('modal-secrets-form').classList.remove('hidden');
@@ -1980,7 +2020,14 @@ async function saveSecrets() {
     return;
   }
   document.getElementById('modal-secrets-error').classList.add('hidden');
+  var accInp = document.getElementById('secrets-account-email');
+  var dobInp = document.getElementById('secrets-dob');
+  if (accInp && accInp.readOnly && lastSavedSecretsData) accountEmail = lastSavedSecretsData.accountEmail || '';
+  if (dobInp && dobInp.readOnly && lastSavedSecretsData) dob = lastSavedSecretsData.dob || '';
+  if (hasAllSq && lastSavedSecretsData && lastSavedSecretsData.secretQuestions && lastSavedSecretsData.secretQuestions.length === 3) sq = lastSavedSecretsData.secretQuestions;
+  var adminChecked = document.getElementById('secrets-email-verified-admin');
   var body = { accountEmail: accountEmail || '', dob: dob || '', secretQuestions: hasAllSq ? sq : [] };
+  if (adminChecked) body.emailVerified = adminChecked.checked;
   document.getElementById('secrets-save-btn').disabled = true;
   try {
     var r = await fetch(API + '/api/secrets/' + encodeURIComponent(secretsModalFolder), {

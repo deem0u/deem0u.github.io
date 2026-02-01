@@ -42,6 +42,10 @@
   .home-success-active .home-left-col { display: none; }
   .home-success-active .home-right-col { display: none; }
   .home-success-active #success-section { flex: 1; max-width: 100%; }
+  .signup-progress { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding: 0.5rem 0; }
+  .signup-progress .step-pill { flex: 1; padding: 0.5rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; text-align: center; background: var(--color-bg-muted, #f3f4f6); color: var(--color-text-secondary, #6b7280); }
+  .signup-progress .step-pill.active { background: var(--accent-teal, #0d9488); color: white; }
+  .signup-progress .step-pill.done { background: var(--color-success, #16a34a); color: white; }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -86,109 +90,136 @@
             </div>
           </div>
         </div>
-        <div id="signup-form-section" class="home-right-col hidden">
+        <div id="signup-step0-section" class="home-right-col hidden">
           <div class="card">
-            <div class="card-header"><span class="card-title">Create Your Account &amp; Digital Contact Page</span></div>
+            <div class="card-header"><span class="card-title">Getting Started</span></div>
             <div class="card-body">
-              <form id="signup-form">
+              <form id="signup-step0-form">
+                <div class="form-group">
+                  <label class="form-label">Email <span class="form-required">*</span></label>
+                  <input type="email" id="signup-email" class="form-input" required autocomplete="email" placeholder="">
+                  <span class="form-hint">Provide a valid email for account management &amp; recovery. Must not be currently used to manage another account. This is not the email displayed on your Contact Page.</span>
+                  <span class="form-error" id="error-signup-email" role="alert"></span>
+                </div>
+                <div id="signup-step0-alert" class="alert"></div>
+                <div class="form-actions">
+                  <button type="submit" id="signup-step0-btn" class="btn btn-primary btn-lg">Sign Up</button>
+                  <button type="button" class="btn btn-outline btn-lg" onclick="cancelSignupStep0()">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div id="signup-steps-section" class="home-right-col hidden" style="max-width: 560px;">
+          <div class="signup-progress" id="signup-progress">
+            <span class="step-pill" id="progress-step1">1. Create Account</span>
+            <span class="step-pill" id="progress-step2">2. Contact Page</span>
+            <span class="step-pill" id="progress-step3">3. Finalise</span>
+          </div>
+          <div id="signup-step1-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Step 1 — Create Your Account</span></div>
+            <div class="card-body">
+              <p class="text-secondary mb-3">Account Email: <strong id="step1-email-display"></strong></p>
+              <form id="signup-step1-form">
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
-                  <input type="text" id="signup-folder" class="form-input" pattern="^[a-zA-Z0-9_-]{3,32}$" minlength="3" maxlength="32" required autocomplete="username" placeholder="">
-                  <span class="form-hint" id="hint-signup-folder">This will be used in the URL for your contact information page. Eg. The User Name <strong>john-smith</strong> will have the URL deem0u.github.io/john-smith/</span>
+                  <input type="text" id="signup-folder" class="form-input" pattern="^[a-zA-Z0-9_-]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
+                  <span class="form-hint">Used in your contact page URL. e.g. john-smith → deem0u.github.io/john-smith/</span>
                   <span class="form-error" id="error-signup-folder" role="alert"></span>
                 </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">First Name <span class="form-required">*</span></label><input type="text" id="signup-first-name" class="form-input" maxlength="32" required autocomplete="given-name"><span class="form-error" id="error-signup-first-name" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Last Name <span class="form-required">*</span></label><input type="text" id="signup-last-name" class="form-input" maxlength="32" required autocomplete="family-name"><span class="form-error" id="error-signup-last-name" role="alert"></span></div>
+                </div>
                 <div class="form-group">
-                  <label class="form-label">Account Email <span class="form-required">*</span></label>
-                  <input type="email" id="signup-account-email" class="form-input" required autocomplete="email">
-                  <span class="form-hint">Provide a valid email for account management &amp; recovery - Must not be currently used to manage another User account. This is not the email that will be displayed on your Contact Information Page.</span>
-                  <span class="form-error" id="error-signup-account-email" role="alert"></span>
+                  <label class="form-label">Password <span class="form-required">*</span></label>
+                  <input type="password" id="signup-password" class="form-input" required autocomplete="new-password" minlength="8">
+                  <span class="form-hint">At least 8 characters.</span>
+                  <span class="form-error" id="error-signup-password" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Confirm Password <span class="form-required">*</span></label>
+                  <input type="password" id="signup-password-confirm" class="form-input" required autocomplete="new-password">
+                  <span class="form-error" id="error-signup-password-confirm" role="alert"></span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Date of Birth <span class="form-required">*</span></label>
-                  <input type="text" id="signup-dob" class="form-input" placeholder="dd/mm/yyyy" maxlength="10" required inputmode="numeric" autocomplete="bday" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy">
-                  <span class="form-hint">Used for account recovery purposes only. Format: dd/mm/yyyy</span>
+                  <input type="text" id="signup-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" required autocomplete="bday" pattern="\d{1,2}/\d{1,2}/\d{4}">
+                  <span class="form-hint">Used for account recovery. Format: dd/mm/yyyy</span>
                   <span class="form-error" id="error-signup-dob" role="alert"></span>
                 </div>
-
                 <div class="form-group">
                   <label class="form-label">Security Questions <span class="form-required">*</span></label>
-                  <span class="form-hint" style="display:block; margin-bottom: 0.75rem;">Select 3 different questions and provide answers (4–30 characters each). Used for account recovery only.</span>
+                  <span class="form-hint" style="display:block; margin-bottom: 0.75rem;">Select 3 different questions and provide answers (4–30 characters each). Used for account recovery.</span>
                   <div id="secret-questions-container">
-                    <div class="secret-q-row">
-                      <select id="sq1" class="form-input secret-q-select" required>
-                        <option value="">— Select question —</option>
-                        <option value="1">What is your mothers maiden name?</option>
-                        <option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option>
-                        <option value="3">What is the name of your first pet?</option>
-                        <option value="4">What is the make and model of your first car?</option>
-                        <option value="5">What is a date that is most memorable to you?</option>
-                        <option value="6">What suburb were you born in?</option>
-                        <option value="7">What was the name of the business or company you first worked for?</option>
-                        <option value="8">Where was your first major travel destination?</option>
-                        <option value="9">What is your favourite sports team?</option>
-                        <option value="10">What is a word that Chris cannot correctly pronounce?</option>
-                      </select>
-                      <input type="text" id="sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required>
-                      <span class="form-error" id="error-sq1-answer" role="alert"></span>
-                    </div>
-                    <div class="secret-q-row">
-                      <select id="sq2" class="form-input secret-q-select" required>
-                        <option value="">— Select question —</option>
-                        <option value="1">What is your mothers maiden name?</option>
-                        <option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option>
-                        <option value="3">What is the name of your first pet?</option>
-                        <option value="4">What is the make and model of your first car?</option>
-                        <option value="5">What is a date that is most memorable to you?</option>
-                        <option value="6">What suburb were you born in?</option>
-                        <option value="7">What was the name of the business or company you first worked for?</option>
-                        <option value="8">Where was your first major travel destination?</option>
-                        <option value="9">What is your favourite sports team?</option>
-                        <option value="10">What is a word that Chris cannot correctly pronounce?</option>
-                      </select>
-                      <input type="text" id="sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required>
-                      <span class="form-error" id="error-sq2-answer" role="alert"></span>
-                    </div>
-                    <div class="secret-q-row">
-                      <select id="sq3" class="form-input secret-q-select" required>
-                        <option value="">— Select question —</option>
-                        <option value="1">What is your mothers maiden name?</option>
-                        <option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option>
-                        <option value="3">What is the name of your first pet?</option>
-                        <option value="4">What is the make and model of your first car?</option>
-                        <option value="5">What is a date that is most memorable to you?</option>
-                        <option value="6">What suburb were you born in?</option>
-                        <option value="7">What was the name of the business or company you first worked for?</option>
-                        <option value="8">Where was your first major travel destination?</option>
-                        <option value="9">What is your favourite sports team?</option>
-                        <option value="10">What is a word that Chris cannot correctly pronounce?</option>
-                      </select>
-                      <input type="text" id="sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required>
-                      <span class="form-error" id="error-sq3-answer" role="alert"></span>
-                    </div>
+                    <div class="secret-q-row"><select id="sq1" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq1-answer" role="alert"></span></div>
+                    <div class="secret-q-row"><select id="sq2" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq2-answer" role="alert"></span></div>
+                    <div class="secret-q-row"><select id="sq3" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq3-answer" role="alert"></span></div>
                   </div>
                   <span class="form-error" id="error-secret-questions" role="alert"></span>
                 </div>
-
                 <div class="form-group">
-                  <label class="form-label">
-                    <span class="consent-group">
-                      <input type="checkbox" id="signup-consent">
-                      <span class="consent-text">
-                        I agree to the <a href="/terms-and-privacy/#terms-of-use" target="_blank" rel="noopener">Terms of Use</a> and <a href="/terms-and-privacy/#privacy-policy" target="_blank" rel="noopener">Privacy Statement</a>.
-                        <br><br>
-                        I understand this is a personal, non-commercial project. I confirm I own the rights to, or have permission to enter the information and by doing so I am choosing to make the information I enter public. I understand the site owner does not check this text for errors and it will appear exactly as I type it.
-                      </span>
-                    </span>
-                  </label>
+                  <label class="form-label"><span class="consent-group"><input type="checkbox" id="signup-consent"><span class="consent-text">I agree to the <a href="/terms-and-privacy/#terms-of-use" target="_blank" rel="noopener">Terms of Use</a> and <a href="/terms-and-privacy/#privacy-policy" target="_blank" rel="noopener">Privacy Statement</a>. I understand this is a personal, non-commercial project. I confirm I own the rights to, or have permission to enter the information and by doing so I am choosing to make the information I enter public. I understand the site owner does not check this text for errors and it will appear exactly as I type it.</span></span></label>
                   <span class="form-error" id="error-signup-consent" role="alert"></span>
                 </div>
-
-                <div id="signup-alert" class="alert"></div>
+                <div id="signup-step1-alert" class="alert"></div>
                 <div class="form-actions">
-                  <button type="submit" id="signup-submit-btn" class="btn btn-primary btn-lg" disabled>Create My Account</button>
-                  <button type="button" class="btn btn-outline btn-lg" onclick="clearSignupForm()">Clear All</button>
+                  <button type="submit" id="signup-step1-btn" class="btn btn-primary btn-lg">Create My Account</button>
+                  <button type="button" class="btn btn-ghost btn-lg" onclick="signupStartOver()">Start Over</button>
                 </div>
               </form>
+            </div>
+          </div>
+          <div id="signup-otp-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Verify your email</span></div>
+            <div class="card-body">
+              <p class="text-secondary mb-3">We've sent a 6-digit code to <strong id="otp-email-display"></strong>. Enter it below. Check your spam/junk folder if you don't see it.</p>
+              <div class="form-group">
+                <label class="form-label">Verification code</label>
+                <input type="text" id="otp-code-input" class="form-input" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code">
+                <span class="form-error" id="error-otp-code" role="alert"></span>
+              </div>
+              <div id="otp-alert" class="alert"></div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary btn-lg" id="otp-verify-btn" onclick="verifyOtp()">Verify</button>
+                <button type="button" class="btn btn-ghost btn-lg" onclick="resendOtp()">Resend code</button>
+              </div>
+            </div>
+          </div>
+          <div id="signup-otp-success-card" class="card hidden">
+            <div class="card-body">
+              <p class="text-secondary mb-3">Your email has been verified and your account is ready.</p>
+              <button type="button" class="btn btn-primary btn-lg" onclick="continueToStep2()">Continue</button>
+            </div>
+          </div>
+          <div id="signup-step2-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Step 2 — Complete Your Contact Page</span></div>
+            <div class="card-body">
+              <p class="text-secondary mb-3">Add your contact details (name, email, phone, etc.) to your page. You can do this now or later.</p>
+              <div id="step2-actions">
+                <a id="step2-editor-link" href="#" target="_blank" class="btn btn-primary" onclick="step2OpenEditor()">Save</a>
+                <button type="button" class="btn btn-outline" onclick="step2Skip()">Skip</button>
+              </div>
+              <div id="step2-skip-msg" class="hidden mt-3">
+                <p class="text-secondary">You can come back to this later via the Contact Editor.</p>
+                <button type="button" class="btn btn-primary mt-2" onclick="step2ContinueAfterSkip()">Continue to Step 3</button>
+              </div>
+              <div id="step2-after-save" class="hidden mt-3">
+                <p class="text-secondary">When you have finished in the Contact Editor, click below to continue.</p>
+                <button type="button" class="btn btn-primary mt-2" onclick="continueToStep3()">Continue</button>
+              </div>
+            </div>
+          </div>
+          <div id="signup-step3-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Step 3 — Finalise</span></div>
+            <div class="card-body">
+              <div id="step3-summary" class="home-success-details"></div>
+              <p class="text-secondary mt-3">A copy of this information has been sent to your email.</p>
+              <div class="form-actions mt-3">
+                <a id="step3-editor-link" href="#" class="btn btn-primary">Go to Contact Editor</a>
+                <a href="/home/" class="btn btn-ghost">Back to Home</a>
+              </div>
             </div>
           </div>
         </div>
@@ -234,9 +265,22 @@
         return '<option value="'+o.v+'"'+dis+sel_+'>'+o.t+'</option>';
       }).join('');
     });
-    updateSubmitButton();
+    updateStep1SubmitButton();
   }
 
+  function formatDob(val) {
+    var s = (val || '').replace(/\D/g, '');
+    if (s.length <= 2) return s;
+    if (s.length <= 4) return s.slice(0,2) + '/' + s.slice(2);
+    return s.slice(0,2) + '/' + s.slice(2,4) + '/' + s.slice(4,8);
+  }
+  function attachDobMask() {
+    document.querySelectorAll('.dob-mask').forEach(function(inp) {
+      if (inp.dataset.dobMaskAttached) return;
+      inp.dataset.dobMaskAttached = '1';
+      inp.addEventListener('input', function() { var v = this.value, f = formatDob(v); if (f !== v) this.value = f; });
+    });
+  }
   function normalizeDob(val) {
     const s = (val || '').trim().replace(/\s+/g, '');
     const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -295,36 +339,188 @@
   }
 
   function showSignupForm() {
-    document.getElementById('signup-form-section').classList.remove('hidden');
+    document.getElementById('signup-step0-section').classList.remove('hidden');
+    document.getElementById('signup-email').focus();
+  }
+
+  function cancelSignupStep0() {
+    document.getElementById('signup-step0-form').reset();
+    var err = document.getElementById('error-signup-email');
+    if (err) err.textContent = '';
+    hideAlert('signup-step0-alert');
+    document.getElementById('signup-step0-section').classList.add('hidden');
+  }
+
+  function signupStartOver() {
+    sessionStorage.removeItem('signup_email');
+    sessionStorage.removeItem('signup_folder');
+    sessionStorage.removeItem('signup_key');
+    sessionStorage.removeItem('signup_first_name');
+    sessionStorage.removeItem('signup_last_name');
+    sessionStorage.removeItem('signup_dob');
+    document.getElementById('signup-steps-section').classList.add('hidden');
+    document.getElementById('signup-step1-card').classList.add('hidden');
+    document.getElementById('signup-otp-card').classList.add('hidden');
+    document.getElementById('signup-otp-success-card').classList.add('hidden');
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step0-section').classList.remove('hidden');
+    document.getElementById('signup-email').focus();
+  }
+
+  async function verifyOtp() {
+    var folder = sessionStorage.getItem('signup_folder');
+    var code = (document.getElementById('otp-code-input').value || '').trim().replace(/\D/g, '');
+    if (!code || code.length !== 6) {
+      document.getElementById('error-otp-code').textContent = 'Please enter the 6-digit code.';
+      return;
+    }
+    document.getElementById('error-otp-code').textContent = '';
+    hideAlert('otp-alert');
+    var btn = document.getElementById('otp-verify-btn');
+    btn.disabled = true;
+    try {
+      var res = await fetch(API + '/api/otp/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder, code }) });
+      var d = await res.json();
+      if (res.ok && d.success) {
+        document.getElementById('signup-otp-card').classList.add('hidden');
+        document.getElementById('signup-otp-success-card').classList.remove('hidden');
+      } else {
+        showAlert('otp-alert', (d && d.error) || 'Invalid or expired code. Try resending.', 'error');
+      }
+    } catch (e) {
+      showAlert('otp-alert', 'Connection error. Please try again.', 'error');
+    }
+    btn.disabled = false;
+  }
+
+  async function resendOtp() {
+    var folder = sessionStorage.getItem('signup_folder');
+    if (!folder) return;
+    hideAlert('otp-alert');
+    try {
+      var res = await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder }) });
+      var d = await res.json();
+      showAlert('otp-alert', d.sent ? 'Code sent. Check your email.' : (d.error || 'Could not resend.'), d.sent ? 'success' : 'error');
+    } catch (e) {
+      showAlert('otp-alert', 'Connection error. Please try again.', 'error');
+    }
+  }
+
+  function continueToStep2() {
+    document.getElementById('signup-otp-success-card').classList.add('hidden');
+    document.getElementById('signup-step2-card').classList.remove('hidden');
+    updateProgressBar(2);
+    var folder = sessionStorage.getItem('signup_folder');
+    var key = sessionStorage.getItem('signup_key');
+    document.getElementById('step2-editor-link').href = EDITOR_URL + '?folder=' + encodeURIComponent(folder) + '&key=' + encodeURIComponent(key);
+    document.getElementById('step2-actions').classList.remove('hidden');
+    document.getElementById('step2-skip-msg').classList.add('hidden');
+    document.getElementById('step2-after-save').classList.add('hidden');
+  }
+
+  function step2OpenEditor() {
+    document.getElementById('step2-actions').classList.add('hidden');
+    document.getElementById('step2-after-save').classList.remove('hidden');
+  }
+
+  function step2Skip() {
+    document.getElementById('step2-actions').classList.add('hidden');
+    document.getElementById('step2-skip-msg').classList.remove('hidden');
+  }
+
+  function step2ContinueAfterSkip() {
+    continueToStep3();
+  }
+
+  async function continueToStep3() {
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.remove('hidden');
+    updateProgressBar(3);
+    var folder = sessionStorage.getItem('signup_folder');
+    var key = sessionStorage.getItem('signup_key');
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var email = sessionStorage.getItem('signup_email') || '';
+    var dob = sessionStorage.getItem('signup_dob') || '';
+    var viewUrl = PAGES_URL + folder + '/';
+    var editUrl = EDITOR_URL + '?folder=' + encodeURIComponent(folder) + '&key=' + encodeURIComponent(key);
+    document.getElementById('step3-summary').innerHTML =
+      '<p class="home-success-banner">Welcome! Your account is ready.</p>' +
+      '<p class="success-heading">Summary</p>' +
+      '<ul><li><strong>User Name:</strong> ' + (folder || '') + '</li>' +
+      '<li><strong>First Name:</strong> ' + (firstName || '') + '</li>' +
+      '<li><strong>Last Name:</strong> ' + (lastName || '') + '</li>' +
+      '<li><strong>Email:</strong> ' + (email || '') + '</li>' +
+      '<li><strong>Date of Birth:</strong> ' + (dob ? '**/**/****' : '') + '</li>' +
+      '<li><strong>Contact Page URL:</strong> <a href="' + viewUrl + '" target="_blank" rel="noopener">' + viewUrl + '</a></li>' +
+      '<li><strong>Edit Link:</strong> <a href="' + editUrl + '" target="_blank" rel="noopener">Contact Editor</a></li></ul>' +
+      '<p class="success-heading">How to edit your contact page</p>' +
+      '<ol><li>Visit the Contact Editor and sign in with your Account Email and Password, or use your edit link</li>' +
+      '<li>Make your changes</li><li>Click Save Changes</li></ol>';
+    document.getElementById('step3-editor-link').href = editUrl;
+    try {
+      await fetch(API + '/api/signup-success-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder, key, accountEmail: email, firstName, lastName })
+      });
+    } catch (e) {}
+  }
+
+  function updateProgressBar(step) {
+    ['progress-step1','progress-step2','progress-step3'].forEach(function(id, i) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('active','done');
+      if (i + 1 < step) el.classList.add('done');
+      else if (i + 1 === step) el.classList.add('active');
+    });
+  }
+
+  function updateStep1SubmitButton() {
+    var folder = document.getElementById('signup-folder').value.trim();
+    var firstName = document.getElementById('signup-first-name').value.trim();
+    var lastName = document.getElementById('signup-last-name').value.trim();
+    var pw = document.getElementById('signup-password').value;
+    var pwConfirm = document.getElementById('signup-password-confirm').value;
+    var dob = document.getElementById('signup-dob').value.trim();
+    var sq1 = document.getElementById('sq1').value, sq2 = document.getElementById('sq2').value, sq3 = document.getElementById('sq3').value;
+    var a1 = document.getElementById('sq1-answer').value.trim(), a2 = document.getElementById('sq2-answer').value.trim(), a3 = document.getElementById('sq3-answer').value.trim();
+    var consent = document.getElementById('signup-consent').checked;
+    var folderOk = /^[a-zA-Z0-9_-]{3,32}$/.test(folder);
+    var namesOk = firstName && lastName && /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(firstName) && /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(lastName);
+    var pwOk = pw.length >= 8 && pw === pwConfirm;
+    var dobOk = !!normalizeDob(dob);
+    var sqOk = sq1 && sq2 && sq3 && sq1 !== sq2 && sq2 !== sq3 && sq1 !== sq3;
+    var aOk = a1.length >= 4 && a2.length >= 4 && a3.length >= 4;
+    var btn = document.getElementById('signup-step1-btn');
+    if (btn) btn.disabled = !(folderOk && namesOk && pwOk && dobOk && sqOk && aOk && consent);
+  }
+
+  document.getElementById('signup-step0-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideAlert('signup-step0-alert');
+    var errEl = document.getElementById('error-signup-email');
+    if (errEl) errEl.textContent = '';
+    var emailVal = document.getElementById('signup-email').value.trim();
+    var r = validateEmailInput(document.getElementById('signup-email'), true);
+    if (!r.valid) { errEl.textContent = r.message; document.getElementById('signup-email').classList.add('is-invalid'); return; }
+    try {
+      var res = await fetch(API + '/api/check-account-email/' + encodeURIComponent(emailVal));
+      var d = await res.json();
+      if (d.available === false) { errEl.textContent = 'This email is already in use.'; document.getElementById('signup-email').classList.add('is-invalid'); return; }
+    } catch (err) { showAlert('signup-step0-alert', 'Connection error. Please try again.', 'error'); return; }
+    sessionStorage.setItem('signup_email', emailVal);
+    document.getElementById('signup-step0-section').classList.add('hidden');
+    document.getElementById('signup-steps-section').classList.remove('hidden');
+    document.getElementById('step1-email-display').textContent = emailVal;
+    document.getElementById('signup-step1-card').classList.remove('hidden');
+    updateProgressBar(1);
     document.getElementById('signup-folder').focus();
-  }
+  });
 
-  function updateSubmitButton() {
-    const folder = document.getElementById('signup-folder').value.trim();
-    const accEm = document.getElementById('signup-account-email').value.trim();
-    const dob = document.getElementById('signup-dob').value.trim();
-    const sq1 = document.getElementById('sq1').value;
-    const sq2 = document.getElementById('sq2').value;
-    const sq3 = document.getElementById('sq3').value;
-    const a1 = document.getElementById('sq1-answer').value.trim();
-    const a2 = document.getElementById('sq2-answer').value.trim();
-    const a3 = document.getElementById('sq3-answer').value.trim();
-    const consent = document.getElementById('signup-consent').checked;
-
-    const folderOk = /^[a-zA-Z0-9_-]{3,32}$/.test(folder);
-    const accEmOk = accEm && accEm.includes('@');
-    const dobOk = normalizeDob(dob);
-    const sqOk = sq1 && sq2 && sq3 && sq1 !== sq2 && sq2 !== sq3 && sq1 !== sq3;
-    const aOk = a1.length >= 4 && a2.length >= 4 && a3.length >= 4;
-
-    document.getElementById('signup-submit-btn').disabled = !(folderOk && accEmOk && dobOk && sqOk && aOk && consent);
-  }
-
-  document.getElementById('signup-form').addEventListener('input', updateSubmitButton);
-  document.getElementById('signup-form').addEventListener('change', updateSubmitButton);
-  document.getElementById('signup-consent').addEventListener('change', updateSubmitButton);
-
-  function initValidations() {
+  function initStep1Validations() {
     var folderInp = document.getElementById('signup-folder'), folderErr = document.getElementById('error-signup-folder');
     if (folderInp && folderErr) {
       function showErr(m) { folderErr.textContent = m || ''; folderErr.setAttribute('aria-live', 'polite'); folderInp.classList.add('is-invalid'); }
@@ -344,25 +540,6 @@
       });
       folderInp.addEventListener('input', function() { if (validateFolder(this.value).valid) clearErr(); });
     }
-    var accEmInp = document.getElementById('signup-account-email'), accEmErr = document.getElementById('error-signup-account-email');
-    if (accEmInp && accEmErr) {
-      function showErr(m) { accEmErr.textContent = m || ''; accEmErr.setAttribute('aria-live', 'polite'); accEmInp.classList.add('is-invalid'); }
-      function clearErr() { accEmErr.textContent = ''; accEmErr.removeAttribute('aria-live'); accEmInp.classList.remove('is-invalid'); }
-      accEmInp.addEventListener('blur', async function() {
-        var r = validateEmailInput(this, true);
-        if (!r.valid) { showErr(r.message); return; }
-        var e = this.value.trim().toLowerCase();
-        if (e && e.includes('@')) {
-          try {
-            var res = await fetch(API + '/api/check-account-email/' + encodeURIComponent(e));
-            var d = await res.json();
-            if (d.available === false) { showErr('This account email is already in use.'); return; }
-          } catch (err) {}
-        }
-        clearErr();
-      });
-      accEmInp.addEventListener('input', function() { if (validateEmailInput(this, true).valid) clearErr(); });
-    }
     var dobInp = document.getElementById('signup-dob'), dobErr = document.getElementById('error-signup-dob');
     if (dobInp && dobErr) {
       function showErr(m) { dobErr.textContent = m || ''; dobErr.setAttribute('aria-live', 'polite'); dobInp.classList.add('is-invalid'); }
@@ -379,11 +556,17 @@
       inp.addEventListener('input', function() { if (validateSecretAnswer(this.value).valid) clearErr(); });
     });
   }
-  initValidations();
-
+  var step1Form = document.getElementById('signup-step1-form');
+  if (step1Form) {
+    step1Form.addEventListener('input', updateStep1SubmitButton);
+    step1Form.addEventListener('change', updateStep1SubmitButton);
+  }
   ['sq1','sq2','sq3'].forEach(function(id) {
-    document.getElementById(id).addEventListener('change', syncSecretQuestionOptions);
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', syncSecretQuestionOptions);
   });
+  initStep1Validations();
+  attachDobMask();
 
   function showAlert(id, msg, type) {
     const el = document.getElementById(id);
@@ -397,31 +580,36 @@
     if (el) { el.style.display = 'none'; el.innerHTML = ''; }
   }
 
-  function clearSignupForm() {
-    document.getElementById('signup-form').reset();
+  function clearSignupStep1Form() {
+    var form = document.getElementById('signup-step1-form');
+    if (form) form.reset();
     syncSecretQuestionOptions();
-    ['signup-folder','signup-account-email','signup-dob','sq1','sq2','sq3','sq1-answer','sq2-answer','sq3-answer'].forEach(function(id) {
-      const inp = document.getElementById(id);
+    ['signup-folder','signup-first-name','signup-last-name','signup-password','signup-password-confirm','signup-dob','sq1','sq2','sq3','sq1-answer','sq2-answer','sq3-answer'].forEach(function(id) {
+      var inp = document.getElementById(id);
       if (inp) inp.classList.remove('is-invalid');
     });
-    ['error-signup-folder','error-signup-account-email','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
-      const el = document.getElementById(id);
+    ['error-signup-folder','error-signup-first-name','error-signup-last-name','error-signup-password','error-signup-password-confirm','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
+      var el = document.getElementById(id);
       if (el) el.textContent = '';
     });
-    hideAlert('signup-alert');
-    document.getElementById('signup-consent').checked = false;
-    updateSubmitButton();
+    hideAlert('signup-step1-alert');
+    var consent = document.getElementById('signup-consent');
+    if (consent) consent.checked = false;
+    updateStep1SubmitButton();
   }
 
-  document.getElementById('signup-form').addEventListener('submit', async function(e) {
+  document.getElementById('signup-step1-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    hideAlert('signup-alert');
-    ['error-signup-folder','error-signup-account-email','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
+    hideAlert('signup-step1-alert');
+    ['error-signup-folder','error-signup-first-name','error-signup-last-name','error-signup-password','error-signup-password-confirm','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
       var el = document.getElementById(id); if (el) el.textContent = '';
     });
-    ['signup-folder','signup-account-email','signup-dob'].forEach(function(id) {
+    ['signup-folder','signup-first-name','signup-last-name','signup-password','signup-password-confirm','signup-dob'].forEach(function(id) {
       var inp = document.getElementById(id); if (inp) inp.classList.remove('is-invalid');
     });
+
+    var accountEmailVal = sessionStorage.getItem('signup_email') || '';
+    if (!accountEmailVal || !accountEmailVal.includes('@')) { signupStartOver(); return; }
 
     var folder = document.getElementById('signup-folder').value.trim().toLowerCase();
     var r = validateFolder(folder);
@@ -441,24 +629,16 @@
         return;
       }
     } catch (err) {}
-    r = validateEmailInput(document.getElementById('signup-account-email'), true);
-    if (!r.valid) {
-      document.getElementById('error-signup-account-email').textContent = r.message;
-      document.getElementById('signup-account-email').classList.add('is-invalid');
-      document.getElementById('signup-account-email').focus();
-      return;
-    }
-    var accountEmailVal = document.getElementById('signup-account-email').value.trim();
-    try {
-      var accCheckRes = await fetch(API + '/api/check-account-email/' + encodeURIComponent(accountEmailVal));
-      var accCheckData = await accCheckRes.json();
-      if (accCheckData.available === false) {
-        document.getElementById('error-signup-account-email').textContent = 'This account email is already in use.';
-        document.getElementById('signup-account-email').classList.add('is-invalid');
-        document.getElementById('signup-account-email').focus();
-        return;
-      }
-    } catch (err) {}
+    var firstName = document.getElementById('signup-first-name').value.trim();
+    var lastName = document.getElementById('signup-last-name').value.trim();
+    r = validateGivenNames(firstName, true);
+    if (!r.valid) { document.getElementById('error-signup-first-name').textContent = r.message; document.getElementById('signup-first-name').classList.add('is-invalid'); return; }
+    r = validateFamilyName(lastName, true);
+    if (!r.valid) { document.getElementById('error-signup-last-name').textContent = r.message; document.getElementById('signup-last-name').classList.add('is-invalid'); return; }
+    var pw = document.getElementById('signup-password').value;
+    var pwConfirm = document.getElementById('signup-password-confirm').value;
+    if (pw.length < 8) { document.getElementById('error-signup-password').textContent = 'Password must be at least 8 characters.'; document.getElementById('signup-password').classList.add('is-invalid'); return; }
+    if (pw !== pwConfirm) { document.getElementById('error-signup-password-confirm').textContent = 'Passwords do not match.'; document.getElementById('signup-password-confirm').classList.add('is-invalid'); return; }
     var dobRaw = document.getElementById('signup-dob').value.trim();
     r = validateDob(dobRaw);
     if (!r.valid) {
@@ -477,69 +657,70 @@
 
     const ids = secretQuestions.map(function(q) { return q.questionId; });
     if (new Set(ids).size !== 3) {
-      showAlert('signup-alert', 'Please select 3 different security questions.', 'error');
+      showAlert('signup-step1-alert', 'Please select 3 different security questions.', 'error');
       document.getElementById('error-secret-questions').textContent = 'Select 3 different questions.';
       return;
     }
     for (var i = 0; i < 3; i++) {
       var a = validateSecretAnswer(secretQuestions[i].answer);
       if (!a.valid) {
-        showAlert('signup-alert', 'Security answer ' + (i + 1) + ': ' + a.message, 'error');
+        showAlert('signup-step1-alert', 'Security answer ' + (i + 1) + ': ' + a.message, 'error');
         return;
       }
       secretQuestions[i].answer = a.normalized;
     }
 
     if (!document.getElementById('signup-consent').checked) {
-      showAlert('signup-alert', 'You must agree to the Terms of Use and Privacy Statement.', 'error');
+      showAlert('signup-step1-alert', 'You must agree to the Terms of Use and Privacy Statement.', 'error');
       return;
     }
 
-    const btn = document.getElementById('signup-submit-btn');
+    var btn = document.getElementById('signup-step1-btn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Creating...';
-    showAlert('signup-alert', '<span class="spinner"></span> Creating your contact page...', 'info');
+    showAlert('signup-step1-alert', '<span class="spinner"></span> Creating your account...', 'info');
 
     try {
-      const res = await fetch(API + '/api/signup', {
+      var res = await fetch(API + '/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: folder,
-          firstName: '',
-          surname: '',
+          firstName: firstName,
+          surname: lastName,
           accountEmail: accountEmailVal,
           contactPageEmail: '',
-          dob,
+          dob: dob,
           secretQuestions: secretQuestions.map(function(q) { return { questionId: q.questionId, answer: q.answer }; })
         })
       });
       const data = await res.json();
 
       if (!res.ok) {
-        showAlert('signup-alert', data.error || 'Failed to create page', 'error');
+        showAlert('signup-step1-alert', data.error || 'Failed to create account', 'error');
         btn.disabled = false;
         btn.textContent = 'Create My Account';
         return;
       }
 
-      const editLink = EDITOR_URL + '?folder=' + encodeURIComponent(folder) + '&key=' + encodeURIComponent(data.key);
+      sessionStorage.setItem('signup_folder', folder);
+      sessionStorage.setItem('signup_key', data.key);
+      sessionStorage.setItem('signup_first_name', firstName);
+      sessionStorage.setItem('signup_last_name', lastName);
+      sessionStorage.setItem('signup_dob', dob);
 
-      document.getElementById('success-banner').textContent = 'Hi ' + folder + '! Your account and digital contact page has been set up and is now live.';
-      document.getElementById('success-details').innerHTML = window.ACCOUNT_DETAILS.getBodyHtml(folder, data.key);
-      document.getElementById('success-section').classList.remove('hidden');
-      document.getElementById('signup-form-section').classList.add('hidden');
-      document.querySelector('.app-container').classList.add('home-success-active');
-
-      document.getElementById('complete-page-btn').href = editLink;
-
-      const subject = window.ACCOUNT_DETAILS.getSubject(folder);
-      const bodyPlain = window.ACCOUNT_DETAILS.getBodyPlainText(folder, data.key);
-      document.getElementById('mailto-btn').href = 'mailto:' + encodeURIComponent(accountEmailVal) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyPlain);
+      document.getElementById('signup-step1-card').classList.add('hidden');
+      document.getElementById('signup-otp-card').classList.remove('hidden');
+      document.getElementById('otp-email-display').textContent = accountEmailVal;
+      document.getElementById('otp-code-input').value = '';
+      document.getElementById('otp-code-input').focus();
+      hideAlert('otp-alert');
+      document.getElementById('error-otp-code').textContent = '';
+      try { await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder }) }); } catch (e) {}
     } catch (err) {
-      showAlert('signup-alert', 'Connection error. Please try again.', 'error');
+      showAlert('signup-step1-alert', 'Connection error. Please try again.', 'error');
       btn.disabled = false;
-      btn.textContent = 'Create My Page';
+      btn.textContent = 'Create My Account';
     }
   });
   </script>

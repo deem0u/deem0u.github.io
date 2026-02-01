@@ -11,3 +11,4 @@ id = "6cb625208ddb4313b95972ca16693098"
 # Optional (for automated email):
 # EMAIL_RELAY_URL - Vercel relay URL, e.g. https://your-project.vercel.app/api/send
 # EMAIL_RELAY_SECRET - Same value as RELAY_SECRET in Vercel
+# EMAIL_SEND_RESTRICTED - When not 'false', all emails go to deem0u.github.io@gmail.com (set to 'false' when live)
