@@ -1294,6 +1294,7 @@ async function handleGetSecrets(folder, request, env) {
   const dob = await env.EDIT_KEYS_KV.get('user_dob:' + folder);
   const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + folder);
   const emailVerified = (await env.EDIT_KEYS_KV.get('email_verified:' + folder)) === '1';
+  const passwordSet = !!(await env.EDIT_KEYS_KV.get('user_password_hash:' + folder));
   let secretQuestions = [];
   if (recoveryRaw) {
     try {
@@ -1301,7 +1302,7 @@ async function handleGetSecrets(folder, request, env) {
       secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : [];
     } catch (_) {}
   }
-  return jsonResponse({ accountEmail: accountEmail || '', dob: dob || '', secretQuestions, emailVerified });
+  return jsonResponse({ accountEmail: accountEmail || '', dob: dob || '', secretQuestions, emailVerified, passwordSet });
 }
 
 async function handlePutSecrets(folder, request, env) {
@@ -1319,9 +1320,13 @@ async function handlePutSecrets(folder, request, env) {
     return jsonResponse({ error: 'Invalid request body' }, 400);
   }
   const accountEmail = (body.accountEmail || '').trim();
+  const password = (body.password || '').trim();
   const dobRaw = (body.dob || '').trim();
   const secretQuestions = Array.isArray(body.secretQuestions) ? body.secretQuestions : [];
 
+  if (password && password.length < 8) {
+    return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  }
   if (accountEmail && !accountEmail.includes('@')) {
     return jsonResponse({ error: 'Valid account email required' }, 400);
   }
@@ -1374,6 +1379,10 @@ async function handlePutSecrets(folder, request, env) {
     }));
   } else {
     await env.EDIT_KEYS_KV.delete('user_recovery:' + folder);
+  }
+  if (password) {
+    const pwHash = await hashPassword(password);
+    await env.EDIT_KEYS_KV.put('user_password_hash:' + folder, pwHash);
   }
   if (auth.isAdmin && typeof body.emailVerified === 'boolean') {
     if (body.emailVerified) {

@@ -389,6 +389,12 @@
               <label class="consent-group" style="cursor:pointer;"><input type="checkbox" id="secrets-email-verified-admin"> <span>Admin: Email verified</span></label>
             </div>
           </div>
+          <div class="form-group" id="secrets-password-group">
+            <label class="form-label">Password (User Contact Editor sign-in)</label>
+            <input type="password" id="secrets-password" class="form-input" autocomplete="new-password" placeholder="Leave blank to keep existing">
+            <span class="form-hint">Min 8 characters. Used to sign in to Contact Editor with Account Email.</span>
+            <span class="form-error" id="error-secrets-password" role="alert"></span>
+          </div>
           <div class="form-group" id="secrets-dob-group">
             <label class="form-label">Date of Birth</label>
             <input type="text" id="secrets-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
@@ -1868,6 +1874,7 @@ function clearSecretsModal() {
   });
   document.getElementById('secrets-account-email').value = '';
   document.getElementById('secrets-dob').value = '';
+  var pw = document.getElementById('secrets-password'); if (pw) pw.value = '';
   ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
     document.getElementById(id).value = '';
     document.getElementById(id + '-answer').value = '';
@@ -1904,6 +1911,7 @@ function resetSecretsModal() {
     document.getElementById('modal-secrets-error').classList.add('hidden');
   var succ = document.getElementById('modal-secrets-success'); if (succ) succ.classList.add('hidden');
     var v = d.emailVerified;
+    var pwInpR = document.getElementById('secrets-password'); if (pwInpR) { pwInpR.value = ''; pwInpR.placeholder = d.passwordSet ? 'Password is set — enter new to change' : 'Leave blank to keep existing'; }
     var vBadge = document.getElementById('secrets-email-verified-badge');
     if (vBadge) { vBadge.textContent = v ? 'Verified' : 'Not verified'; vBadge.className = 'badge ' + (v ? 'badge-success' : 'badge-warning'); }
     var adminChk = document.getElementById('secrets-email-verified-admin');
@@ -1933,7 +1941,7 @@ async function showSecretsModal(folder) {
   try {
     var r = await fetch(API + '/api/secrets/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
     var d = await r.json();
-    lastSavedSecretsData = { accountEmail: d.accountEmail || '', dob: d.dob || '', secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [], emailVerified: !!d.emailVerified };
+    lastSavedSecretsData = { accountEmail: d.accountEmail || '', dob: d.dob || '', secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [], emailVerified: !!d.emailVerified, passwordSet: !!d.passwordSet };
     document.getElementById('modal-secrets-loading').classList.add('hidden');
     document.getElementById('modal-secrets-form').classList.remove('hidden');
     document.getElementById('secrets-account-email').value = d.accountEmail || '';
@@ -1947,6 +1955,8 @@ async function showSecretsModal(folder) {
     syncSecretsModalSqOptions();
     var verifiedBadge = document.getElementById('secrets-email-verified-badge');
     if (verifiedBadge) { verifiedBadge.textContent = d.emailVerified ? 'Verified' : 'Not verified'; verifiedBadge.className = 'badge ' + (d.emailVerified ? 'badge-success' : 'badge-warning'); verifiedBadge.classList.remove('hidden'); }
+    var pwInp = document.getElementById('secrets-password');
+    if (pwInp) pwInp.placeholder = d.passwordSet ? 'Password is set — enter new to change' : 'Leave blank to keep existing';
     var adminCheck = document.getElementById('secrets-email-verified-admin');
     if (adminCheck) adminCheck.checked = !!d.emailVerified;
     var hasAcc = !!(d.accountEmail && d.accountEmail.trim());
@@ -2025,8 +2035,16 @@ async function saveSecrets() {
   if (accInp && accInp.readOnly && lastSavedSecretsData) accountEmail = lastSavedSecretsData.accountEmail || '';
   if (dobInp && dobInp.readOnly && lastSavedSecretsData) dob = lastSavedSecretsData.dob || '';
   if (hasAllSq && lastSavedSecretsData && lastSavedSecretsData.secretQuestions && lastSavedSecretsData.secretQuestions.length === 3) sq = lastSavedSecretsData.secretQuestions;
+  var password = (function(){ var p = document.getElementById('secrets-password'); return p ? p.value : ''; })();
+  if (password && password.length < 8) {
+    document.getElementById('modal-secrets-error').textContent = 'Password must be at least 8 characters.';
+    document.getElementById('modal-secrets-error').classList.remove('hidden');
+    document.getElementById('secrets-save-btn').disabled = false;
+    return;
+  }
   var adminChecked = document.getElementById('secrets-email-verified-admin');
   var body = { accountEmail: accountEmail || '', dob: dob || '', secretQuestions: hasAllSq ? sq : [] };
+  if (password) body.password = password;
   if (adminChecked) body.emailVerified = adminChecked.checked;
   document.getElementById('secrets-save-btn').disabled = true;
   try {
