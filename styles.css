@@ -703,6 +703,23 @@ body {
   box-shadow: 0 0 0 3px rgba(55, 235, 243, 0.4);
 }
 
+.btn-pink {
+  background: var(--accent-pink);
+  color: var(--white);
+  border: 1px solid rgba(180, 60, 130, 0.85);
+}
+
+.btn-pink:hover:not(:disabled) {
+  background: var(--accent-pink);
+  filter: brightness(1.05);
+  color: var(--white);
+  border-color: rgba(180, 60, 130, 0.85);
+}
+
+.btn-pink:focus {
+  box-shadow: 0 0 0 3px rgba(228, 85, 174, 0.4);
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--color-text-secondary);
@@ -1001,10 +1018,11 @@ body {
 }
 
 .user-status-badges {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: var(--space-1);
-  justify-items: end;
+  justify-content: center;
 }
 
 .user-status .badge-success {
@@ -1019,10 +1037,16 @@ body {
   border: 1px solid rgba(196, 176, 0, 0.55);
 }
 
-.user-status .badge-pink {
+.user-status .badge-pink,
+.user-name-value-line .badge-pink {
   background: var(--accent-pink);
   color: var(--white);
   border: 1px solid rgba(180, 60, 130, 0.85);
+}
+
+.user-name-value-line .badge-pink {
+  margin-left: var(--space-2);
+  vertical-align: middle;
 }
 
 .user-card-actions {

@@ -1096,15 +1096,14 @@ function renderList(t) {
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
-          <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span></div>
+          <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}</div>
           <div class="${emailMetaClass}">${escapeHtml(emailDisplay)}</div>
           <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${isNew ? '<span class="badge badge-pink">New</span>' : ''}
-            ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
             ${!hk ? '<span class="badge badge-secondary">View Only</span>' : ''}
+            ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
             ${secretsNotSet ? '<span class="badge badge-error">Secrets Not Set</span>' : ''}
           </div>
         </div>
@@ -1133,8 +1132,8 @@ function renderList(t) {
             <div class="action-row-buttons">
               ${!hk
                 ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Grant Access</button>`
-                : `<button class="btn btn-cyan btn-sm" onclick="confirmRegenerate('${f}')">Reset Access</button>
-                   <button class="btn btn-cyan btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
+                : `<button class="btn btn-pink btn-sm" onclick="confirmRegenerate('${f}')">Reset Access</button>
+                   <button class="btn btn-pink btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
             </div>
           </div>
           ${hk ? `<div class="action-combo-group">
@@ -1158,10 +1157,10 @@ async function generateKey(f) {
   catch { showAlert('alert-manage', 'Error', 'error'); }
 }
 
-function confirmRegenerate(f) { showModal('Regenerate?', 'Their current link will stop working.', 'btn-warning', 'Regenerate', () => regenerateKey(f)); }
+function confirmRegenerate(f) { showModal('Regenerate?', 'Their current link will stop working.', 'btn-pink', 'Regenerate', () => regenerateKey(f)); }
 async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; fetchAccountEmailsAndRefresh(); showAlert('alert-manage', 'New link created', 'success'); } } catch {} }
 
-function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-cyan', 'Revoke', () => removeKey(f)); }
+function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-pink', 'Revoke', () => removeKey(f)); }
 async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); delete editKeys[f]; populateUI(); showAlert('alert-manage', 'Access removed', 'success'); } catch {} }
 
 function confirmDeleteUser(f) {
