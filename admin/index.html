@@ -202,9 +202,9 @@
               <form id="new-user-form">
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
-                  <input type="text" id="new-folder" class="form-input" pattern="^[a-zA-Z0-9_-]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
-                  <span class="form-hint" id="hint-new-folder"></span>
-                  <span class="form-error" id="error-new-folder" role="alert"></span>
+                  <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_-]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
+                  <span class="form-hint" id="hint-new-username"></span>
+                  <span class="form-error" id="error-new-username" role="alert"></span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Account Email</label>
@@ -513,7 +513,7 @@ function applyFormDescriptions() {
   if (!c) return;
   var keys = ['folder','first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
   keys.forEach(function(key) {
-    var ids = key === 'folder' ? ['new-folder'] : [key, 'new-' + key];
+    var ids = key === 'folder' ? ['new-username'] : [key, 'new-' + key];
     ids.forEach(function(id) {
       var el = document.getElementById(id);
       if (!el) return;
@@ -813,7 +813,7 @@ async function fetchAccountEmailsAndRefresh() {
       userInfo[f].accountEmail = accountEmails[f] || null;
       userInfo[f].accountDetailsSent = !!accountDetailsSent[f];
     }
-    var sr = await fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ folders: pages || [] }) });
+    var sr = await fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: pages || [] }) });
     if (sr && sr.ok) {
       var sd = await sr.json();
       var statuses = (sd && sd.statuses) ? sd.statuses : {};
@@ -1208,7 +1208,7 @@ function showNewUserForm() {
   document.querySelectorAll('#page-select-options .searchable-select-option').forEach(function(opt) { opt.classList.remove('selected'); });
   document.getElementById('page-select-search').value = '';
   filterPageOptions();
-  document.getElementById('new-folder').focus();
+  document.getElementById('new-username').focus();
 }
 
 function hideNewUserForm() {
@@ -1221,7 +1221,7 @@ function hideNewUserForm() {
     if (e) { e.textContent = ''; e.removeAttribute('aria-live'); }
     if (i) i.classList.remove('is-invalid');
   }
-  clearErr('new-folder', 'error-new-folder');
+  clearErr('new-username', 'error-new-username');
   clearErr('new-account-email', 'error-new-account-email');
   clearErr('new-first-name', 'error-new-first-name');
   clearErr('new-surname', 'error-new-surname');
@@ -1239,8 +1239,8 @@ function validateFolder(val) {
 }
 
 function initFolderValidation() {
-  var inp = document.getElementById('new-folder');
-  var errEl = document.getElementById('error-new-folder');
+  var inp = document.getElementById('new-username');
+  var errEl = document.getElementById('error-new-username');
   if (!inp || !errEl) return;
   function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
   function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
@@ -1422,18 +1422,18 @@ function initDestinationEmailValidation() {
 async function handleCreateUser(e) {
   e.preventDefault();
   const btn = document.getElementById('create-btn');
-  const folderInput = document.getElementById('new-folder');
-  const folder = folderInput.value.trim().toLowerCase();
-  var r = validateFolder(folderInput.value);
-  var errEl = document.getElementById('error-new-folder');
+  const usernameInput = document.getElementById('new-username');
+  const username = usernameInput.value.trim().toLowerCase();
+  var r = validateFolder(usernameInput.value);
+  var errEl = document.getElementById('error-new-username');
   if (!r.valid) {
     if (errEl) { errEl.textContent = r.message; errEl.setAttribute('aria-live', 'polite'); }
-    folderInput.classList.add('is-invalid');
-    folderInput.focus();
+    usernameInput.classList.add('is-invalid');
+    usernameInput.focus();
     return;
   }
   if (errEl) errEl.textContent = '';
-  folderInput.classList.remove('is-invalid');
+  usernameInput.classList.remove('is-invalid');
 
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
   
@@ -1442,24 +1442,24 @@ async function handleCreateUser(e) {
     const r = await fetch(`${API}/api/page`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({ folder, content, accountEmail: document.getElementById("new-account-email").value.trim() })
+      body: JSON.stringify({ username, content, accountEmail: document.getElementById("new-account-email").value.trim() })
     });
     const d = await r.json();
     
     if (r.ok) {
-      pages.push(folder);
+      pages.push(username);
       const now = new Date().toISOString();
-      userInfo[folder] = {
+      userInfo[username] = {
         firstName: document.getElementById('new-first-name').value.trim(),
         surname: document.getElementById('new-surname').value.trim(),
         email: document.getElementById('new-email').value.trim(),
-        folder,
+        username,
         lastUpdated: now,
         updatedBy: 'admin'
       };
       populateUI();
       hideNewUserForm();
-      showAlert('alert-manage', `Created ${folder}. <a href="${d.url}" target="_blank">View page ?</a>`, 'success');
+      showAlert('alert-manage', `Created ${username}. <a href="${d.url}" target="_blank">View page ?</a>`, 'success');
       switchTab('manage');
     } else {
       showAlert('alert-new-user', d.error || 'Failed to create', 'error');
