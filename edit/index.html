@@ -110,7 +110,7 @@
             </div>
             <div class="recovery-actions">
               <div id="recovery-alert" class="alert"></div>
-              <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-check-btn" onclick="recoveryCheckStep1()">Reset Edit Key</button>
+              <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-check-btn" onclick="recoveryCheckStep1()">Recover Access</button>
             </div>
             <p class="text-center mt-4"><a href="#" id="recovery-back-link" class="btn btn-ghost btn-sm">Back to Sign In</a></p>
           </form>
@@ -145,7 +145,7 @@
             </div>
             <div class="recovery-actions">
               <div id="recovery-verify-alert" class="alert"></div>
-              <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-verify-btn" onclick="recoveryVerify()">Reset Edit Key</button>
+              <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-verify-btn" onclick="recoveryVerify()">Recover Access</button>
             </div>
             <p class="text-center mt-4"><a href="#" onclick="recoveryBackToStep1(); return false;" class="btn btn-ghost btn-sm">Back</a></p>
           </form>
@@ -422,7 +422,7 @@ function recoveryCheckUsername() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: username })
   }).then(function(r) { return r.json(); }).then(function(d) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
     if (!d.exists) {
       showRecoveryAlert('No account with the User Name exists. Forgot your User Name? Try entering your Account Email instead.', 'error');
       return;
@@ -437,7 +437,7 @@ function recoveryCheckUsername() {
     recoveryQuestionIds = null;
     showRecoveryStep2();
   }).catch(function() {
-    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
     showRecoveryAlert('Connection error. Please try again.', 'error');
   });
 }
@@ -456,7 +456,7 @@ function recoveryCheckByEmail() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ accountEmail: email })
   }).then(function(r) { return r.json(); }).then(function(d) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
     if (!d.exists) {
       showRecoveryAlert('No account with this email.', 'error');
       return;
@@ -472,7 +472,7 @@ function recoveryCheckByEmail() {
     recoveryAccountEmail = email;
     showRecoveryStep2();
   }).catch(function() {
-    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
     showRecoveryAlert('Connection error. Please try again.', 'error');
   });
 }
@@ -480,7 +480,7 @@ function showRecoveryStep2() {
   document.getElementById('recovery-step1').classList.add('hidden');
   document.getElementById('recovery-step2').classList.remove('hidden');
   var sub = document.getElementById('recovery-subtitle');
-  if (sub) sub.textContent = 'Verify your account details to reset your Edit Key';
+  if (sub) sub.textContent = 'Verify your account details to recover access';
   document.getElementById('recovery-dob').value = '';
   document.getElementById('recovery-sq-answer').value = '';
   document.getElementById('recovery-sq2-answer').value = '';
@@ -558,7 +558,7 @@ function recoveryVerify() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   }).then(function(r) { return r.json(); }).then(function(d) {
-    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
     if (d.error || !d.success) {
       showRecoveryVerifyAlert(d.error || 'Recovery verification failed.', 'error');
       return;
@@ -566,7 +566,7 @@ function recoveryVerify() {
     if (recoveryPath === 'username') recoveryAccountEmail = accEm;
     showRecoverySuccess(d.folder, d.token);
   }).catch(function() {
-    if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
     showRecoveryVerifyAlert('Connection error. Please try again.', 'error');
   });
 }
@@ -844,25 +844,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (rLink) rLink.addEventListener('click', function(e) { e.preventDefault(); document.querySelector('.auth-card').classList.add('hidden'); document.getElementById('recovery-card').classList.remove('hidden'); });
   var rbLink = document.getElementById('recovery-back-link');
   if (rbLink) rbLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-card').classList.add('hidden'); document.querySelector('.auth-card').classList.remove('hidden'); });
-  var authModeToggle = document.getElementById('auth-mode-toggle');
-  if (authModeToggle) authModeToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    var keyMode = document.getElementById('auth-key-mode');
-    var emailMode = document.getElementById('auth-email-mode');
-    var sub = document.getElementById('auth-subtitle');
-    if (keyMode.classList.contains('hidden')) {
-      keyMode.classList.remove('hidden');
-      emailMode.classList.add('hidden');
-      authModeToggle.textContent = 'Use Account Email and Password instead';
-      if (sub) sub.textContent = 'To access and edit your Digital Contact Page, enter your User Name and Edit Key';
-    } else {
-      keyMode.classList.add('hidden');
-      emailMode.classList.remove('hidden');
-      authModeToggle.textContent = 'Use User Name and Edit Key instead';
-      if (sub) sub.textContent = 'To access and edit your Digital Contact Page, enter your Account Email and Password';
-    }
-    hideAlert('auth-alert');
-  });
   var useEmailLink = document.getElementById('recovery-use-email-link');
   if (useEmailLink) useEmailLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-username').classList.add('hidden'); document.getElementById('recovery-step1-email').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your Account Email to recover access'; showRecoveryAlert('', ''); });
   var useUsernameLink = document.getElementById('recovery-use-username-link');
@@ -928,7 +909,7 @@ async function authenticate() {
   }
   try {
     const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) { showAlert('auth-alert', 'Invalid edit key. Please check and try again.', 'error'); return; }
+    if (!res.ok) { showAlert('auth-alert', 'Sign in failed. Please check your email and password.', 'error'); return; }
     
     const data = await res.json();
     currentSha = data.sha;
