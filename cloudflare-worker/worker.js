@@ -1039,15 +1039,16 @@ async function handleGetAccountEmails(request, env) {
     return jsonResponse({ error: 'Admin access required' }, 401);
   }
   if (!env.EDIT_KEYS_KV) {
-    return jsonResponse({ accountEmails: {}, accountDetailsSent: {} });
+    return jsonResponse({ accountEmails: {}, accountDetailsSent: {}, emailVerification: {} });
   }
   const list = await env.EDIT_KEYS_KV.list({ prefix: 'account_email:' });
   const accountEmails = {};
+  const usernames = [];
   for (const key of list.keys) {
     if (key.name.startsWith('account_email_to_folder:')) continue;
     const username = key.name.replace('account_email:', '');
     const value = await env.EDIT_KEYS_KV.get(key.name);
-    if (value && username) accountEmails[username] = value;
+    if (value && username) { accountEmails[username] = value; usernames.push(username); }
   }
   const sentList = await env.EDIT_KEYS_KV.list({ prefix: 'account_details_sent:' });
   const accountDetailsSent = {};
@@ -1055,7 +1056,13 @@ async function handleGetAccountEmails(request, env) {
     const username = key.name.replace('account_details_sent:', '');
     if (username) accountDetailsSent[username] = true;
   }
-  return jsonResponse({ accountEmails, accountDetailsSent });
+  const emailVerification = {};
+  for (const username of usernames) {
+    const byAdmin = (await env.EDIT_KEYS_KV.get('email_verified_admin:' + username)) === '1';
+    const byUser = (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
+    emailVerification[username] = byAdmin ? 'admin' : byUser ? 'user' : null;
+  }
+  return jsonResponse({ accountEmails, accountDetailsSent, emailVerification });
 }
 
 async function handleGetAccountProfiles(request, env) {
@@ -1405,8 +1412,10 @@ async function handlePutSecrets(username, request, env) {
   if (auth.isAdmin && typeof body.emailVerified === 'boolean') {
     if (body.emailVerified) {
       await env.EDIT_KEYS_KV.put('email_verified:' + username, '1');
+      await env.EDIT_KEYS_KV.put('email_verified_admin:' + username, '1');
     } else {
       await env.EDIT_KEYS_KV.delete('email_verified:' + username);
+      await env.EDIT_KEYS_KV.delete('email_verified_admin:' + username);
     }
   }
   return jsonResponse({ success: true });
