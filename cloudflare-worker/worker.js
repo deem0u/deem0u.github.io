@@ -19,6 +19,31 @@ const CONFIG = {
   branch: 'main'
 };
 
+/** All user accounts and contact pages live under this folder. */
+const USER_PAGES_PREFIX = 'user';
+
+/** GitHub repo path for a contact page: user/<username>/<contactpagename>.html */
+function pagePath(username, contactpagename) {
+  const name = (contactpagename || 'index').trim() || 'index';
+  return `${USER_PAGES_PREFIX}/${username}/${name}.html`;
+}
+
+/** Public URL for a contact page (e.g. https://deem0u.github.io/user/chriscam/ or .../user/chriscam/work-card.html) */
+function pageUrl(username, contactpagename) {
+  const base = `https://${CONFIG.owner}.github.io/${USER_PAGES_PREFIX}/${username}`;
+  const name = (contactpagename || 'index').trim() || 'index';
+  return name === 'index' ? `${base}/` : `${base}/${name}.html`;
+}
+
+/** Parse path after /api/page/ into username and optional contactpagename (default 'index'). */
+function parsePagePath(path) {
+  const suffix = path.replace(/^\/api\/page\//, '').replace(/\/$/, '').trim();
+  const parts = suffix.split('/').filter(Boolean);
+  const username = parts[0] || '';
+  const contactpagename = (parts[1] && /^[a-zA-Z0-9_-]+$/.test(parts[1])) ? parts[1] : 'index';
+  return { username, contactpagename };
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -140,20 +165,20 @@ export default {
         return await handleCreatePage(request, env);
       }
 
-      // Route: DELETE /api/page/{username} - Delete page (admin only)
+      // Route: DELETE /api/page/{username} or /api/page/{username}/{contactpagename} - Delete page (admin only)
       if (request.method === 'DELETE' && path.startsWith('/api/page/')) {
-        const username = path.replace('/api/page/', '').replace(/\/$/, '');
-        return await handleDeletePage(username, request, env);
+        const { username, contactpagename } = parsePagePath(path);
+        return await handleDeletePage(username, contactpagename, request, env);
       }
 
-      // Page routes
+      // Page routes: GET/POST /api/page/{username} or /api/page/{username}/{contactpagename}
       if (request.method === 'GET' && path.startsWith('/api/page/')) {
-        const username = path.replace('/api/page/', '').replace(/\/$/, '');
-        return await handleGetPage(username, request, env);
+        const { username, contactpagename } = parsePagePath(path);
+        return await handleGetPage(username, contactpagename, request, env);
       }
       if (request.method === 'POST' && path.startsWith('/api/page/')) {
-        const username = path.replace('/api/page/', '').replace(/\/$/, '');
-        return await handleUpdatePage(username, request, env);
+        const { username, contactpagename } = parsePagePath(path);
+        return await handleUpdatePage(username, contactpagename, request, env);
       }
 
       // Admin routes
@@ -457,7 +482,7 @@ async function handleCheckUsername(username, env) {
   if (!username || !/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
     return jsonResponse({ available: false, error: 'Invalid username format' });
   }
-  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy'];
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
   if (reserved.includes(username.toLowerCase())) {
     return jsonResponse({ available: false });
   }
@@ -465,7 +490,7 @@ async function handleCheckUsername(username, env) {
     return jsonResponse({ available: true });
   }
   const res = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}?ref=${CONFIG.branch}`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
     {
       headers: {
         'Authorization': 'token ' + env.GITHUB_TOKEN,
@@ -536,13 +561,13 @@ async function handleSignup(request, env) {
     }
   }
 
-  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'styles.css', 'countries-data.js', 'form-descriptions.js'];
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user', 'styles.css', 'countries-data.js', 'form-descriptions.js'];
   if (reserved.includes(username)) {
     return jsonResponse({ error: 'This username is reserved' }, 400);
   }
 
   const checkRes = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}?ref=${CONFIG.branch}`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
     {
       headers: {
         'Authorization': `token ${env.GITHUB_TOKEN}`,
@@ -556,8 +581,9 @@ async function handleSignup(request, env) {
   }
 
   const content = generateContactPageHTML(firstName, surname, contactPageEmail || '', '', '', '', '', '', '', '', '');
+  const filePath = pagePath(username, 'index');
   const createRes = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}/index.html`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
     {
       method: 'PUT',
       headers: {
@@ -598,8 +624,9 @@ async function handleSignup(request, env) {
   return jsonResponse({
     success: true,
     username,
+    contactpagename: 'index',
     token,
-    viewLink: `https://${CONFIG.owner}.github.io/${username}/`
+    viewLink: pageUrl(username, 'index')
   });
 }
 
@@ -641,7 +668,7 @@ async function handleSignupSuccessEmail(request, env) {
   const lastName = (body.lastName || body.surname || '').trim();
   if (!username || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
   const baseUrl = `https://${CONFIG.owner}.github.io`;
-  const viewLink = `${baseUrl}/${username}/`;
+  const viewLink = pageUrl(username, 'index');
   const editUrl = `${baseUrl}/edit/`;
   const subject = `Your Digital Contact Page - ${username} - Account Details`;
   const text = `Below are details related to your account you should keep handy.\n\n\t• User Name: ${username}\n\t• Your Digital Contact Page URL: ${viewLink}\n\nHOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n\t1. Visit the Contact Editor (${editUrl}) and sign in with your Account Email and Password\n\t2. Make your changes\n\t3. Click "Save Changes"\n\nIf you wish to have your account deleted, contact deem0u.github.io@gmail.com`;
@@ -772,13 +799,18 @@ async function handleCreatePage(request, env) {
   }
 
   // Check reserved names
-  if (['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'styles.css', 'countries-data.js', 'form-descriptions.js'].includes(username.toLowerCase())) {
+  if (['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user', 'styles.css', 'countries-data.js', 'form-descriptions.js'].includes(username.toLowerCase())) {
     return jsonResponse({ error: 'This username name is reserved' }, 400);
   }
 
-  // Check if username already exists
+  const contactpagename = (body.contactpagename || 'index').trim() || 'index';
+  if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
+    return jsonResponse({ error: 'Invalid contact page name' }, 400);
+  }
+
+  // Check if user folder or this contact page already exists
   const checkResponse = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}?ref=${CONFIG.branch}`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${pagePath(username, contactpagename)}?ref=${CONFIG.branch}`,
     {
       headers: {
         'Authorization': `token ${env.GITHUB_TOKEN}`,
@@ -792,9 +824,10 @@ async function handleCreatePage(request, env) {
     return jsonResponse({ error: 'A page with this name already exists' }, 409);
   }
 
-  // Create the file
+  // Create the file at user/<username>/<contactpagename>.html
+  const filePath = pagePath(username, contactpagename);
   const response = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}/index.html`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
     {
       method: 'PUT',
       headers: {
@@ -804,7 +837,7 @@ async function handleCreatePage(request, env) {
         'User-Agent': 'ContactPageEditor/1.0'
       },
       body: JSON.stringify({
-        message: `Create contact page: ${username}`,
+        message: `Create contact page: ${username}/${contactpagename}`,
         content: encodeBase64(content),
         branch: CONFIG.branch
       })
@@ -832,22 +865,23 @@ async function handleCreatePage(request, env) {
   return jsonResponse({
     success: true,
     username,
+    contactpagename,
     sha: data.content.sha,
-    url: `https://${CONFIG.owner}.github.io/${username}/`
+    url: pageUrl(username, contactpagename)
   });
 }
 
 /**
- * DELETE /api/page/{username} - Delete a contact page (admin only)
+ * DELETE /api/page/{username} - Delete entire user (all contact pages under user/{username}/) and KV (admin only)
  */
-async function handleDeletePage(username, request, env) {
+async function handleDeletePage(username, _contactpagename, request, env) {
   if (!await isAdmin(request, env)) {
     return jsonResponse({ error: 'Admin access required' }, 401);
   }
 
-  // Get the file's SHA first
-  const getResponse = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}/index.html?ref=${CONFIG.branch}`,
+  // List all files under user/username/
+  const listResponse = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
     {
       headers: {
         'Authorization': `token ${env.GITHUB_TOKEN}`,
@@ -857,34 +891,36 @@ async function handleDeletePage(username, request, env) {
     }
   );
 
-  if (!getResponse.ok) {
+  if (!listResponse.ok) {
     return jsonResponse({ error: 'Page not found' }, 404);
   }
 
-  const fileData = await getResponse.json();
+  const files = await listResponse.json();
+  const htmlFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name && f.name.endsWith('.html')) : [];
 
-  // Delete the file
-  const deleteResponse = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}/index.html`,
-    {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `token ${env.GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-        'User-Agent': 'ContactPageEditor/1.0'
-      },
-      body: JSON.stringify({
-        message: `Delete contact page: ${username}`,
-        sha: fileData.sha,
-        branch: CONFIG.branch
-      })
+  for (const file of htmlFiles) {
+    const filePath = `${USER_PAGES_PREFIX}/${username}/${file.name}`;
+    const deleteResponse = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `token ${env.GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'ContactPageEditor/1.0'
+        },
+        body: JSON.stringify({
+          message: `Delete contact page: ${username}/${file.name}`,
+          sha: file.sha,
+          branch: CONFIG.branch
+        })
+      }
+    );
+    if (!deleteResponse.ok) {
+      const error = await deleteResponse.json();
+      return jsonResponse({ error: error.message || 'Failed to delete page' }, deleteResponse.status);
     }
-  );
-
-  if (!deleteResponse.ok) {
-    const error = await deleteResponse.json();
-    return jsonResponse({ error: error.message || 'Failed to delete page' }, deleteResponse.status);
   }
 
   // Also delete all KV data for this user
@@ -911,14 +947,15 @@ async function handleDeletePage(username, request, env) {
   });
 }
 
-async function handleGetPage(username, request, env) {
+async function handleGetPage(username, contactpagename, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
+  const filePath = pagePath(username, contactpagename);
   const response = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}/index.html?ref=${CONFIG.branch}`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
     {
       headers: {
         'Authorization': `token ${env.GITHUB_TOKEN}`,
@@ -935,10 +972,10 @@ async function handleGetPage(username, request, env) {
   const data = await response.json();
   const content = decodeBase64(data.content);
 
-  return jsonResponse({ content, sha: data.sha, username });
+  return jsonResponse({ content, sha: data.sha, username, contactpagename });
 }
 
-async function handleUpdatePage(username, request, env) {
+async function handleUpdatePage(username, contactpagename, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -951,8 +988,9 @@ async function handleUpdatePage(username, request, env) {
     return jsonResponse({ error: 'Missing content or sha' }, 400);
   }
 
+  const filePath = pagePath(username, contactpagename);
   const response = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}/index.html`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
     {
       method: 'PUT',
       headers: {
@@ -979,7 +1017,7 @@ async function handleUpdatePage(username, request, env) {
   return jsonResponse({
     success: true,
     sha: data.content.sha,
-    url: `https://${CONFIG.owner}.github.io/${username}/`
+    url: pageUrl(username, contactpagename)
   });
 }
 
@@ -991,7 +1029,7 @@ async function handleListPages(request, env) {
   }
 
   const response = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents?ref=${CONFIG.branch}`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}?ref=${CONFIG.branch}`,
     {
       headers: {
         'Authorization': `token ${env.GITHUB_TOKEN}`,
@@ -1006,15 +1044,15 @@ async function handleListPages(request, env) {
   }
 
   const contents = await response.json();
-  const usernames = contents
-    .filter(item => item.type === 'dir' && !item.name.startsWith('.') && !['admin', 'edit', 'signup', 'home', 'terms-and-privacy'].includes(item.name.toLowerCase()))
+  const usernames = (Array.isArray(contents) ? contents : [])
+    .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
     .map(item => item.name);
 
   const pages = [];
   for (const username of usernames) {
     try {
       const usernameResponse = await fetch(
-        `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}?ref=${CONFIG.branch}`,
+        `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
         {
           headers: {
             'Authorization': `token ${env.GITHUB_TOKEN}`,
@@ -1024,7 +1062,8 @@ async function handleListPages(request, env) {
         }
       );
       const usernameContents = await usernameResponse.json();
-      if (usernameContents.some(f => f.name === 'index.html')) {
+      const files = Array.isArray(usernameContents) ? usernameContents : [];
+      if (files.some(f => f.name && f.name.endsWith('.html'))) {
         pages.push(username);
       }
     } catch (e) {}
