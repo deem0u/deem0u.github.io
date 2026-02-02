@@ -354,7 +354,7 @@
   function signupStartOver() {
     sessionStorage.removeItem('signup_email');
     sessionStorage.removeItem('signup_folder');
-    sessionStorage.removeItem('signup_key');
+    sessionStorage.removeItem('signup_token');
     sessionStorage.removeItem('signup_first_name');
     sessionStorage.removeItem('signup_last_name');
     sessionStorage.removeItem('signup_dob');
@@ -412,8 +412,7 @@
     document.getElementById('signup-step2-card').classList.remove('hidden');
     updateProgressBar(2);
     var folder = sessionStorage.getItem('signup_folder');
-    var key = sessionStorage.getItem('signup_key');
-    document.getElementById('step2-editor-link').href = EDITOR_URL + '?folder=' + encodeURIComponent(folder) + '&key=' + encodeURIComponent(key);
+    document.getElementById('step2-editor-link').href = EDITOR_URL;
     document.getElementById('step2-actions').classList.remove('hidden');
     document.getElementById('step2-skip-msg').classList.add('hidden');
     document.getElementById('step2-after-save').classList.add('hidden');
@@ -438,13 +437,12 @@
     document.getElementById('signup-step3-card').classList.remove('hidden');
     updateProgressBar(3);
     var folder = sessionStorage.getItem('signup_folder');
-    var key = sessionStorage.getItem('signup_key');
     var firstName = sessionStorage.getItem('signup_first_name') || '';
     var lastName = sessionStorage.getItem('signup_last_name') || '';
     var email = sessionStorage.getItem('signup_email') || '';
     var dob = sessionStorage.getItem('signup_dob') || '';
     var viewUrl = PAGES_URL + folder + '/';
-    var editUrl = EDITOR_URL + '?folder=' + encodeURIComponent(folder) + '&key=' + encodeURIComponent(key);
+    var editUrl = EDITOR_URL;
     document.getElementById('step3-summary').innerHTML =
       '<p class="home-success-banner">Welcome! Your account is ready.</p>' +
       '<p class="success-heading">Summary</p>' +
@@ -454,16 +452,16 @@
       '<li><strong>Email:</strong> ' + (email || '') + '</li>' +
       '<li><strong>Date of Birth:</strong> ' + (dob ? '**/**/****' : '') + '</li>' +
       '<li><strong>Contact Page URL:</strong> <a href="' + viewUrl + '" target="_blank" rel="noopener">' + viewUrl + '</a></li>' +
-      '<li><strong>Edit Link:</strong> <a href="' + editUrl + '" target="_blank" rel="noopener">Contact Editor</a></li></ul>' +
+      '<li><strong>Contact Editor:</strong> <a href="' + editUrl + '" target="_blank" rel="noopener">Sign in to edit</a></li></ul>' +
       '<p class="success-heading">How to edit your contact page</p>' +
-      '<ol><li>Visit the Contact Editor and sign in with your Account Email and Password, or use your edit link</li>' +
+      '<ol><li>Visit the Contact Editor and sign in with your Account Email and Password</li>' +
       '<li>Make your changes</li><li>Click Save Changes</li></ol>';
     document.getElementById('step3-editor-link').href = editUrl;
     try {
       await fetch(API + '/api/signup-success-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folder, key, accountEmail: email, firstName, lastName })
+        body: JSON.stringify({ folder, accountEmail: email, firstName, lastName })
       });
     } catch (e) {}
   }
@@ -704,7 +702,10 @@
       }
 
       sessionStorage.setItem('signup_folder', folder);
-      sessionStorage.setItem('signup_key', data.key);
+      if (data.token) {
+        sessionStorage.setItem('signup_token', data.token);
+        sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, token: data.token }));
+      }
       sessionStorage.setItem('signup_first_name', firstName);
       sessionStorage.setItem('signup_last_name', lastName);
       sessionStorage.setItem('signup_dob', dob);

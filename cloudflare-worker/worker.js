@@ -7,7 +7,7 @@
  * - GitHub integration for page updates
  * 
  * KV Storage Structure:
- * - edit_key:{folder} = user's edit key
+ * - user_password_hash:{folder} = hashed password for login
  * - admin:key = admin password
  * - admin:email = admin recovery email
  * - admin:setup_complete = "true" if setup is done
@@ -22,9 +22,48 @@ const CONFIG = {
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Edit-Key, X-Admin-Key',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Edit-Key, X-Admin-Key, Authorization',
   'Access-Control-Max-Age': '86400',
 };
+
+const JWT_EXPIRY_DAYS = 7;
+
+function base64UrlEncode(buffer) {
+  const b64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecode(str) {
+  let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
+async function signJwt(payload, secret) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const enc = new TextEncoder();
+  const headerB64 = base64UrlEncode(enc.encode(JSON.stringify(header)));
+  const payloadB64 = base64UrlEncode(enc.encode(JSON.stringify(payload)));
+  const message = headerB64 + '.' + payloadB64;
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+  return message + '.' + base64UrlEncode(sig);
+}
+
+async function verifyJwt(token, secret) {
+  const parts = (token || '').split('.');
+  if (parts.length !== 3) return null;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  const message = parts[0] + '.' + parts[1];
+  const sigBytes = base64UrlDecode(parts[2]);
+  const valid = await crypto.subtle.verify('HMAC', key, sigBytes, enc.encode(message));
+  if (!valid) return null;
+  const payloadJson = new TextDecoder().decode(base64UrlDecode(parts[1]));
+  const payload = JSON.parse(payloadJson);
+  if (payload.exp && payload.exp * 1000 < Date.now()) return null;
+  return payload;
+}
 
 export default {
   async fetch(request, env, ctx) {
@@ -134,17 +173,13 @@ export default {
       if (request.method === 'GET' && path === '/api/keys') {
         return await handleGetKeys(request, env);
       }
-      if (request.method === 'POST' && path.startsWith('/api/keys/')) {
-        const folder = path.replace('/api/keys/', '').replace(/\/$/, '');
-        return await handleCreateKey(folder, request, env);
-      }
       if (request.method === 'PUT' && path.startsWith('/api/keys/')) {
         const folder = path.replace('/api/keys/', '').replace(/\/$/, '');
-        return await handleRegenerateKey(folder, request, env);
+        return await handleResetAccess(folder, request, env);
       }
       if (request.method === 'DELETE' && path.startsWith('/api/keys/')) {
         const folder = path.replace('/api/keys/', '').replace(/\/$/, '');
-        return await handleDeleteKey(folder, request, env);
+        return await handleRevokeAccess(folder, request, env);
       }
       if (request.method === 'GET' && path.startsWith('/api/profile/')) {
         const folder = path.replace('/api/profile/', '').replace(/\/$/, '');
@@ -386,6 +421,8 @@ async function handleAuth(request, env) {
 
 async function handleAuthUser(request, env) {
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!secret) return jsonResponse({ error: 'Auth not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
   const accountEmail = (body.accountEmail || '').trim().toLowerCase();
   const password = (body.password || '').trim();
@@ -394,13 +431,16 @@ async function handleAuthUser(request, env) {
   }
   const folder = await env.EDIT_KEYS_KV.get(`account_email_to_folder:${accountEmail}`);
   if (!folder) return jsonResponse({ error: 'Invalid email or password' }, 401);
+  if ((await env.EDIT_KEYS_KV.get(`access_revoked:${folder}`)) === '1') {
+    return jsonResponse({ error: 'Access has been revoked. Please contact support.' }, 403);
+  }
   const pwHash = await env.EDIT_KEYS_KV.get(`user_password_hash:${folder}`);
-  if (!pwHash) return jsonResponse({ error: 'Account does not have a password. Use User Name and Edit Key to sign in.' }, 401);
+  if (!pwHash) return jsonResponse({ error: 'Account does not have a password. Set one via Set Secrets or sign up.' }, 401);
   const valid = await verifyPassword(password, pwHash);
   if (!valid) return jsonResponse({ error: 'Invalid email or password' }, 401);
-  const editKey = await env.EDIT_KEYS_KV.get(`edit_key:${folder}`);
-  if (!editKey) return jsonResponse({ error: 'Account not found' }, 401);
-  return jsonResponse({ success: true, folder, key: editKey });
+  const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
+  const token = await signJwt({ folder, exp }, secret);
+  return jsonResponse({ success: true, folder, token });
 }
 // ============ Signup (User-driven page creation) ============
 
@@ -531,13 +571,11 @@ async function handleSignup(request, env) {
     return jsonResponse({ error: err.message || 'Failed to create page' }, createRes.status);
   }
 
-  const newKey = generateKey();
   const password = (body.password || '').trim();
   if (password.length >= 8) {
     const pwHash = await hashPassword(password);
     await env.EDIT_KEYS_KV.put(`user_password_hash:${folder}`, pwHash);
   }
-  await env.EDIT_KEYS_KV.put(`edit_key:${folder}`, newKey);
   await env.EDIT_KEYS_KV.put(`account_email_to_folder:${accountEmailLower}`, folder);
   await env.EDIT_KEYS_KV.put(`account_email:${folder}`, accountEmail);
   await env.EDIT_KEYS_KV.put(`user_first_name:${folder}`, firstName);
@@ -548,12 +586,13 @@ async function handleSignup(request, env) {
     secretQuestions: secretQuestions.map(q => ({ questionId: q.questionId, answer: (q.answer || '').trim() }))
   }));
 
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const token = secret ? await signJwt({ folder, exp: Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400) }, secret) : null;
   return jsonResponse({
     success: true,
     folder,
-    key: newKey,
-    viewLink: `https://${CONFIG.owner}.github.io/${folder}/`,
-    editLink: `https://${CONFIG.owner}.github.io/edit/?folder=${folder}&key=${newKey}`
+    token,
+    viewLink: `https://${CONFIG.owner}.github.io/${folder}/`
   });
 }
 
@@ -590,17 +629,16 @@ async function handleOtpVerify(request, env) {
 async function handleSignupSuccessEmail(request, env) {
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
   const folder = (body.folder || '').trim();
-  const key = (body.key || '').trim();
   const accountEmail = (body.accountEmail || '').trim();
   const firstName = (body.firstName || '').trim();
   const lastName = (body.lastName || '').trim();
-  if (!folder || !key || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
+  if (!folder || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
   const baseUrl = `https://${CONFIG.owner}.github.io`;
   const viewLink = `${baseUrl}/${folder}/`;
-  const editLink = `${baseUrl}/edit/?folder=${encodeURIComponent(folder)}&key=${encodeURIComponent(key)}`;
+  const editUrl = `${baseUrl}/edit/`;
   const subject = `Your Digital Contact Page - ${folder} - Account Details`;
-  const text = `Below are details related to your account you should keep handy.\n\n\t• User Name: ${folder}\n\t• Edit Key: ${key}\n\t• Your Digital Contact Page URL: ${viewLink}\n\t• Your personalised edit link: ${editLink}\n\nIMPORTANT: This personalised edit link and Edit Key is unique to you. Keep it private. Sign in with your Account Email and Password at the Contact Editor.\n\nHOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n\t1. Visit the Contact Editor (${baseUrl}/edit/) and Sign In with your Account Email and Password, or use your edit link above\n\t2. Make your changes\n\t3. Click "Save Changes"\n\nIf you wish to have your account deleted, contact deem0u.github.io@gmail.com`;
-  const html = `<p>Below are details related to your account you should keep handy.</p><ul><li><strong>User Name:</strong> ${folder}</li><li><strong>Edit Key:</strong> ${key}</li><li><strong>Contact Page URL:</strong> <a href="${viewLink}">${viewLink}</a></li><li><strong>Edit link:</strong> <a href="${editLink}">${editLink}</a></li></ul><p><strong>IMPORTANT:</strong> Keep your edit link and Edit Key private. Sign in with Account Email and Password at the Contact Editor.</p><p>If you wish to have your account deleted, contact deem0u.github.io@gmail.com</p>`;
+  const text = `Below are details related to your account you should keep handy.\n\n\t• User Name: ${folder}\n\t• Your Digital Contact Page URL: ${viewLink}\n\nHOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n\t1. Visit the Contact Editor (${editUrl}) and sign in with your Account Email and Password\n\t2. Make your changes\n\t3. Click "Save Changes"\n\nIf you wish to have your account deleted, contact deem0u.github.io@gmail.com`;
+  const html = `<p>Below are details related to your account you should keep handy.</p><ul><li><strong>User Name:</strong> ${folder}</li><li><strong>Contact Page URL:</strong> <a href="${viewLink}">${viewLink}</a></li></ul><p><strong>HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</strong></p><ol><li>Visit the <a href="${editUrl}">Contact Editor</a> and sign in with your Account Email and Password</li><li>Make your changes</li><li>Click "Save Changes"</li></ol><p>If you wish to have your account deleted, contact deem0u.github.io@gmail.com</p>`;
   const sent = await sendEmail(env, { to: accountEmail, subject, text, html });
   return jsonResponse({ ok: sent.ok, error: sent.error });
 }
@@ -657,14 +695,8 @@ async function isAdmin(request, env) {
   return storedKey && adminKey === storedKey;
 }
 
-async function getEditKey(folder, env) {
-  if (!env.EDIT_KEYS_KV) return null;
-  return await env.EDIT_KEYS_KV.get(`edit_key:${folder}`);
-}
-
 async function validateAuth(folder, request, env) {
   const adminKey = request.headers.get('X-Admin-Key');
-  const editKey = request.headers.get('X-Edit-Key');
 
   // Check admin
   if (adminKey && env.EDIT_KEYS_KV) {
@@ -674,10 +706,16 @@ async function validateAuth(folder, request, env) {
     }
   }
 
-  // Check user key
-  if (editKey && env.EDIT_KEYS_KV) {
-    const storedKey = await env.EDIT_KEYS_KV.get(`edit_key:${folder}`);
-    if (storedKey && editKey === storedKey) {
+  // Check JWT (Bearer token)
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (token && secret) {
+    const payload = await verifyJwt(token, secret);
+    if (payload && payload.folder === folder) {
+      if (env.EDIT_KEYS_KV && (await env.EDIT_KEYS_KV.get(`access_revoked:${folder}`)) === '1') {
+        return { authorized: false, isAdmin: false };
+      }
       return { authorized: true, isAdmin: false };
     }
   }
@@ -837,7 +875,7 @@ async function handleDeletePage(folder, request, env) {
   // Also delete all KV data for this user
   if (env.EDIT_KEYS_KV) {
     const accountEmail = await env.EDIT_KEYS_KV.get(`account_email:${folder}`);
-    await env.EDIT_KEYS_KV.delete(`edit_key:${folder}`);
+    await env.EDIT_KEYS_KV.delete(`access_revoked:${folder}`);
     await env.EDIT_KEYS_KV.delete(`account_email:${folder}`);
     await env.EDIT_KEYS_KV.delete(`user_password_hash:${folder}`);
     await env.EDIT_KEYS_KV.delete(`user_first_name:${folder}`);
@@ -1050,37 +1088,15 @@ async function handleGetKeys(request, env) {
     return jsonResponse({ editKeys: {} });
   }
 
-  const list = await env.EDIT_KEYS_KV.list({ prefix: 'edit_key:' });
+  const list = await env.EDIT_KEYS_KV.list({ prefix: 'user_password_hash:' });
   const editKeys = {};
-
   for (const key of list.keys) {
-    const folder = key.name.replace('edit_key:', '');
-    const value = await env.EDIT_KEYS_KV.get(key.name);
-    if (value) editKeys[folder] = value;
+    const folder = key.name.replace('user_password_hash:', '');
+    if (!folder) continue;
+    const revoked = await env.EDIT_KEYS_KV.get(`access_revoked:${folder}`);
+    if (revoked !== '1') editKeys[folder] = '1';
   }
-
   return jsonResponse({ editKeys });
-}
-
-async function handleCreateKey(folder, request, env) {
-  if (!await isAdmin(request, env)) {
-    return jsonResponse({ error: 'Admin access required' }, 401);
-  }
-
-  if (!env.EDIT_KEYS_KV) {
-    return jsonResponse({ error: 'KV not configured' }, 500);
-  }
-
-  const existing = await env.EDIT_KEYS_KV.get(`edit_key:${folder}`);
-  if (existing) {
-    return jsonResponse({ error: 'Key exists. Use PUT to regenerate.' }, 409);
-  }
-
-  const newKey = generateKey();
-  await env.EDIT_KEYS_KV.put(`edit_key:${folder}`, newKey);
-  await env.EDIT_KEYS_KV.delete(`account_details_sent:${folder}`);
-
-  return jsonResponse({ success: true, folder, key: newKey });
 }
 
 async function handleAccountDetailsSent(folder, request, env) {
@@ -1099,8 +1115,8 @@ async function handleRecoveryCheck(request, env) {
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
   const username = (body.username || '').trim().toLowerCase();
   if (!username || username.length < 3) return jsonResponse({ exists: false, canRecover: false });
-  const existingKey = await env.EDIT_KEYS_KV.get('edit_key:' + username);
-  if (!existingKey) return jsonResponse({ exists: false, canRecover: false });
+  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
+  if (!pwHash) return jsonResponse({ exists: false, canRecover: false });
   const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
   const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
   const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
@@ -1123,8 +1139,8 @@ async function handleRecoveryCheckByEmail(request, env) {
   if (!accountEmail || !accountEmail.includes('@')) return jsonResponse({ exists: false, canRecover: false });
   const folder = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmail);
   if (!folder) return jsonResponse({ exists: false, canRecover: false });
-  const existingKey = await env.EDIT_KEYS_KV.get('edit_key:' + folder);
-  if (!existingKey) return jsonResponse({ exists: false, canRecover: false });
+  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + folder);
+  if (!pwHash) return jsonResponse({ exists: false, canRecover: false });
   const storedEmail = await env.EDIT_KEYS_KV.get('account_email:' + folder);
   const dob = await env.EDIT_KEYS_KV.get('user_dob:' + folder);
   const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + folder);
@@ -1169,10 +1185,10 @@ async function handleRecoveryVerify(request, env) {
       const q = secretQuestions.find(x => x && String(x.questionId) === String(qid));
       if (!q || (q.answer || '').trim().toLowerCase() !== ans.toLowerCase()) return jsonResponse({ error: 'Recovery verification failed' }, 401);
     }
-    const newKey = generateKey();
-    await env.EDIT_KEYS_KV.put('edit_key:' + username, newKey);
     await env.EDIT_KEYS_KV.delete('account_details_sent:' + username);
-    return jsonResponse({ success: true, folder: username, key: newKey });
+    const secret = env.JWT_SECRET || env.SESSION_SECRET;
+    const token = secret ? await signJwt({ folder: username, exp: Math.floor(Date.now() / 1000) + 900 }, secret) : null;
+    return jsonResponse({ success: true, folder: username, token });
   }
 
   if (!username || !accountEmail || !dobRaw || !questionId || !answer) return jsonResponse({ error: 'Recovery verification failed' }, 401);
@@ -1186,51 +1202,23 @@ async function handleRecoveryVerify(request, env) {
   let secretQuestions = []; if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : []; } catch (_) {} }
   const q = secretQuestions.find(x => x && String(x.questionId) === String(questionId));
   if (!q || (q.answer || '').trim().toLowerCase() !== answer.toLowerCase()) return jsonResponse({ error: 'Recovery verification failed' }, 401);
-  const newKey = generateKey();
-  await env.EDIT_KEYS_KV.put('edit_key:' + username, newKey);
   await env.EDIT_KEYS_KV.delete('account_details_sent:' + username);
-  return jsonResponse({ success: true, folder: username, key: newKey });
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const token = secret ? await signJwt({ folder: username, exp: Math.floor(Date.now() / 1000) + 900 }, secret) : null;
+  return jsonResponse({ success: true, folder: username, token });
 }
 
-async function handleRegenerateKey(folder, request, env) {
-  if (!await isAdmin(request, env)) {
-    return jsonResponse({ error: 'Admin access required' }, 401);
-  }
-
-  if (!env.EDIT_KEYS_KV) {
-    return jsonResponse({ error: 'KV not configured' }, 500);
-  }
-
-  const newKey = generateKey();
-  await env.EDIT_KEYS_KV.put(`edit_key:${folder}`, newKey);
-  await env.EDIT_KEYS_KV.delete(`account_details_sent:${folder}`);
-
-  return jsonResponse({ success: true, folder, key: newKey });
+async function handleResetAccess(folder, request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  await env.EDIT_KEYS_KV.delete(`access_revoked:${folder}`);
+  return jsonResponse({ success: true, folder });
 }
 
-async function handleDeleteKey(folder, request, env) {
-  if (!await isAdmin(request, env)) {
-    return jsonResponse({ error: 'Admin access required' }, 401);
-  }
-
-  if (!env.EDIT_KEYS_KV) {
-    return jsonResponse({ error: 'KV not configured' }, 500);
-  }
-
-  const accountEmail = await env.EDIT_KEYS_KV.get(`account_email:${folder}`);
-  await env.EDIT_KEYS_KV.delete(`edit_key:${folder}`);
-  await env.EDIT_KEYS_KV.delete(`account_email:${folder}`);
-  await env.EDIT_KEYS_KV.delete(`user_password_hash:${folder}`);
-  await env.EDIT_KEYS_KV.delete(`user_first_name:${folder}`);
-  await env.EDIT_KEYS_KV.delete(`user_last_name:${folder}`);
-  await env.EDIT_KEYS_KV.delete(`email_verified:${folder}`);
-  if (accountEmail && accountEmail.includes('@')) {
-    await env.EDIT_KEYS_KV.delete(`account_email_to_folder:${accountEmail.toLowerCase().trim()}`);
-  }
-  await env.EDIT_KEYS_KV.delete(`user_dob:${folder}`);
-  await env.EDIT_KEYS_KV.delete(`user_recovery:${folder}`);
-  await env.EDIT_KEYS_KV.delete(`account_details_sent:${folder}`);
-
+async function handleRevokeAccess(folder, request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  await env.EDIT_KEYS_KV.put(`access_revoked:${folder}`, '1');
   return jsonResponse({ success: true, folder });
 }
 

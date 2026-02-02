@@ -79,21 +79,6 @@
               <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" autocomplete="current-password">
             </div>
           </div>
-          <div id="auth-key-mode" class="hidden">
-            <div class="form-group">
-              <label class="form-label">User Name</label>
-              <input type="text" id="folder-input" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
-              <span class="form-hint">Your contact page user name</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Edit Key</label>
-              <div class="form-inline-row">
-                <input type="password" id="edit-key" class="form-input" placeholder="Enter your edit key">
-                <button type="button" class="btn btn-ghost btn-sm" id="edit-key-toggle" aria-label="Show edit key">Show</button>
-              </div>
-            </div>
-          </div>
-          <p class="text-center recovery-toggle-wrap"><a href="#" id="auth-mode-toggle" class="recovery-toggle">Use User Name and Edit Key instead</a></p>
           <div id="auth-alert" class="alert"></div>
           <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
           <p class="text-center mt-4"><a href="#" id="recovery-link" class="btn btn-ghost btn-sm">I need help Signing In</a></p>
@@ -103,7 +88,7 @@
       <div id="recovery-card" class="auth-card hidden">
         <div class="auth-header">
           <h2 class="auth-title">Access Recovery</h2>
-          <p class="auth-subtitle" id="recovery-subtitle">Enter your User Name to reset your Edit Key</p>
+          <p class="auth-subtitle" id="recovery-subtitle">Enter your User Name to recover access</p>
         </div>
         <div id="recovery-step1">
           <form id="recovery-form-step1" onsubmit="return false;">
@@ -331,7 +316,7 @@
 <script src="edit-secrets.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
-let folder = null, editKey = null, currentSha = null;
+let folder = null, token = null, currentSha = null;
 const PAGES_URL = 'https://deem0u.github.io/';
 const EDITOR_URL = 'https://deem0u.github.io/edit/';
 const RECOVERY_SQ_OPTIONS = {1:'What is your mothers maiden name?',2:'What is the name of the educational institution which you have obtained your highest level of qualification?',3:'What is the name of your first pet?',4:'What is the make and model of your first car?',5:'What is a date that is most memorable to you?',6:'What suburb were you born in?',7:'What was the name of the business or company you first worked for?',8:'Where was your first major travel destination?',9:'What is your favourite sports team?',10:'What is a word that Chris cannot correctly pronounce?'};
@@ -527,7 +512,7 @@ function recoveryBackToStep1() {
   document.getElementById('recovery-step1-username').classList.remove('hidden');
   document.getElementById('recovery-step1-email').classList.add('hidden');
   var sub = document.getElementById('recovery-subtitle');
-  if (sub) sub.textContent = 'Enter your User Name to reset your Edit Key';
+  if (sub) sub.textContent = 'Enter your User Name to recover access';
   showRecoveryAlert('', '');
 }
 
@@ -579,19 +564,20 @@ function recoveryVerify() {
       return;
     }
     if (recoveryPath === 'username') recoveryAccountEmail = accEm;
-    showRecoverySuccess(d.folder, d.key);
+    showRecoverySuccess(d.folder, d.token);
   }).catch(function() {
     if (btn) { btn.disabled = false; btn.textContent = 'Reset Edit Key'; }
     showRecoveryVerifyAlert('Connection error. Please try again.', 'error');
   });
 }
 
-function showRecoverySuccess(folder, newKey) {
-  document.getElementById('recovery-success-banner').textContent = 'Hi ' + folder + '! Your Edit Key has been reset. Your old Edit Key and Personalised Edit Link no longer work and have been replaced by new ones noted below:';
-  document.getElementById('recovery-success-details').innerHTML = window.ACCOUNT_DETAILS.getBodyHtml(folder, newKey);
+function showRecoverySuccess(folder, token) {
+  document.getElementById('recovery-success-banner').textContent = 'Hi ' + folder + '! You can now sign in again with your Account Email and Password.';
+  document.getElementById('recovery-success-details').innerHTML = window.ACCOUNT_DETAILS.getBodyHtml(folder);
   var subject = window.ACCOUNT_DETAILS.getSubject(folder);
-  var bodyPlain = window.ACCOUNT_DETAILS.getBodyPlainText(folder, newKey);
+  var bodyPlain = window.ACCOUNT_DETAILS.getBodyPlainText(folder);
   document.getElementById('recovery-mailto-btn').href = 'mailto:' + encodeURIComponent(recoveryAccountEmail || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyPlain);
+  if (token) sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, token: token }));
   document.getElementById('screen-auth').classList.add('hidden');
   document.getElementById('screen-recovery-success').classList.remove('hidden');
 }
@@ -843,7 +829,6 @@ function selectCountryEdit(value) {
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   folder = params.get('folder');
-  const urlKey = params.get('key');
   
   attachContactNumberMask();
   attachDobMask();
@@ -879,20 +864,9 @@ document.addEventListener('DOMContentLoaded', () => {
     hideAlert('auth-alert');
   });
   var useEmailLink = document.getElementById('recovery-use-email-link');
-  if (useEmailLink) useEmailLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-username').classList.add('hidden'); document.getElementById('recovery-step1-email').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your Account Email to reset your Edit Key'; showRecoveryAlert('', ''); });
+  if (useEmailLink) useEmailLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-username').classList.add('hidden'); document.getElementById('recovery-step1-email').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your Account Email to recover access'; showRecoveryAlert('', ''); });
   var useUsernameLink = document.getElementById('recovery-use-username-link');
-  if (useUsernameLink) useUsernameLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-email').classList.add('hidden'); document.getElementById('recovery-step1-username').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your User Name to reset your Edit Key'; showRecoveryAlert('', ''); });
-  const editKeyToggle = document.getElementById('edit-key-toggle');
-  if (editKeyToggle) {
-    editKeyToggle.addEventListener('click', () => {
-      const inp = document.getElementById('edit-key');
-      if (!inp) return;
-      const hidden = inp.type === 'password';
-      inp.type = hidden ? 'text' : 'password';
-      editKeyToggle.textContent = hidden ? 'Hide' : 'Show';
-      editKeyToggle.setAttribute('aria-label', hidden ? 'Hide edit key' : 'Show edit key');
-    });
-  }
+  if (useUsernameLink) useUsernameLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-email').classList.add('hidden'); document.getElementById('recovery-step1-username').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your User Name to recover access'; showRecoveryAlert('', ''); });
   document.getElementById('contact-form').addEventListener('submit', handleSave);
   var editProfileBtn = document.getElementById('edit-profile-btn');
   if (editProfileBtn) editProfileBtn.addEventListener('click', openEditProfileModal);
@@ -903,40 +877,42 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
     }
   });
-  const folderInput = document.getElementById('folder-input');
-  if (folder) folderInput.value = folder;
-  
-  // Auto-authenticate if key is in URL or sessionStorage - use key mode
-  if (urlKey || (function() { try { var s = JSON.parse(sessionStorage.getItem('edit_session') || '{}'); return s.folder && s.editKey; } catch(e) { return false; } })()) {
-    document.getElementById('auth-email-mode').classList.add('hidden');
-    document.getElementById('auth-key-mode').classList.remove('hidden');
-    var toggle = document.getElementById('auth-mode-toggle');
-    if (toggle) toggle.textContent = 'Use Account Email and Password instead';
-    var sub = document.getElementById('auth-subtitle');
-    if (sub) sub.textContent = 'To access and edit your Digital Contact Page, enter your User Name and Edit Key';
-  }
-  if (urlKey) { 
-    document.getElementById('edit-key').value = urlKey; 
-    authenticate(); 
-  } else {
-    var saved = sessionStorage.getItem('edit_session');
-    if (saved) {
-      try {
-        var s = JSON.parse(saved);
-        if (s.folder && s.editKey) {
-          folder = s.folder;
-          if (folderInput) folderInput.value = folder;
-          document.getElementById('edit-key').value = s.editKey;
-          authenticate();
-        }
-      } catch (e) { sessionStorage.removeItem('edit_session'); }
+  try {
+    var s = JSON.parse(sessionStorage.getItem('edit_session') || '{}');
+    if (s.folder && s.token) {
+      folder = s.folder;
+      token = s.token;
+      authenticateWithStoredSession();
     }
-  }
+  } catch (e) {}
 });
 
+
+async function authenticateWithStoredSession() {
+  if (!folder || !token) return;
+  try {
+    const res = await fetch(API + '/api/page/' + encodeURIComponent(folder), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) throw new Error('Session expired');
+    const data = await res.json();
+    currentSha = data.sha;
+    populateFormFromPage(data);
+    document.getElementById('screen-auth').classList.add('hidden');
+    document.getElementById('signout-btn').classList.remove('hidden');
+    document.getElementById('screen-editor').classList.remove('hidden');
+    document.getElementById('view-page-link').href = 'https://deem0u.github.io/' + folder + '/';
+    sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, token: token }));
+    if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
+    loadProfile();
+    applyUnverifiedRestriction();
+  } catch (e) {
+    sessionStorage.removeItem('edit_session');
+    folder = null;
+    token = null;
+  }
+}
+
 async function authenticate() {
-  var useEmailMode = !document.getElementById('auth-key-mode').classList.contains('hidden');
-  if (useEmailMode) {
+  {
     var accountEmail = (document.getElementById('auth-account-email').value || '').trim();
     var password = (document.getElementById('auth-password').value || '').trim();
     if (!accountEmail || !accountEmail.includes('@')) { showAlert('auth-alert', 'Please enter your account email.', 'error'); return; }
@@ -947,17 +923,11 @@ async function authenticate() {
       var authData = await authRes.json();
       if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || 'Invalid email or password.', 'error'); return; }
       folder = authData.folder;
-      editKey = authData.key;
+      token = authData.token;
     } catch (e) { showAlert('auth-alert', 'Connection error. Please try again.', 'error'); return; }
-  } else {
-    editKey = document.getElementById('edit-key').value.trim();
-    if (!editKey) { showAlert('auth-alert', 'Please enter your edit key', 'error'); return; }
-    folder = folder || document.getElementById('folder-input').value.trim().toLowerCase();
-    if (!folder) { showAlert('auth-alert', 'Please enter your user name.', 'error'); return; }
-    showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
   }
   try {
-    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'X-Edit-Key': editKey } });
+    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) { showAlert('auth-alert', 'Invalid edit key. Please check and try again.', 'error'); return; }
     
     const data = await res.json();
@@ -971,7 +941,7 @@ async function authenticate() {
     document.getElementById('view-page-link').href = `https://deem0u.github.io/${folder}/`;
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
-    sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, editKey: editKey }));
+    sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, token: token }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
     loadProfile();
     applyUnverifiedRestriction();
@@ -984,9 +954,9 @@ async function authenticate() {
 
 var profileData = null;
 async function loadProfile() {
-  if (!folder || !editKey) return;
+  if (!folder || !token) return;
   try {
-    var r = await fetch(API + "/api/profile/" + encodeURIComponent(folder), { headers: { "X-Edit-Key": editKey } });
+    var r = await fetch(API + "/api/profile/" + encodeURIComponent(folder), { headers: { "Authorization": "Bearer " + token } });
     if (!r.ok) return;
     profileData = await r.json();
     document.getElementById("profile-first-name").textContent = profileData.firstName || "—";
@@ -1033,7 +1003,7 @@ async function saveProfile() {
   try {
     var r = await fetch(API + "/api/profile/" + encodeURIComponent(folder), {
       method: "PUT",
-      headers: { "Content-Type": "application/json", "X-Edit-Key": editKey },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({ firstName, lastName, accountEmail: email })
     });
     var d = await r.json();
@@ -1070,15 +1040,14 @@ async function verifyEmailFromEditor() {
 function signOut() {
   sessionStorage.removeItem('edit_session');
   folder = null;
-  editKey = null;
+  token = null;
   currentSha = null;
   document.title = 'Contact Editor - User';
   document.getElementById('header-logo-text').textContent = 'Contact Editor - User';
   document.getElementById('signout-btn').classList.add('hidden');
   document.getElementById('screen-editor').classList.add('hidden');
   document.getElementById('screen-auth').classList.remove('hidden');
-  document.getElementById('folder-input').value = '';
-  document.getElementById('edit-key').value = '';
+  
   var authEmail = document.getElementById('auth-account-email');
   var authPw = document.getElementById('auth-password');
   if (authEmail) authEmail.value = '';
@@ -1160,7 +1129,7 @@ function fillForm(h) {
 async function resetForm() {
   showAlert('editor-alert', '<span class="spinner"></span> Reloading...', 'info');
   try {
-    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'X-Edit-Key': editKey } });
+    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'Authorization': 'Bearer ' + token } });
     if (res.ok) {
       const d = await res.json();
       currentSha = d.sha;
@@ -1223,7 +1192,7 @@ async function handleSave(e) {
     const content = generateHTML();
     const res = await fetch(`${API}/api/page/${folder}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Edit-Key': editKey },
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ content, sha: currentSha })
     });
     const data = await res.json();

@@ -1141,7 +1141,7 @@ function renderList(t) {
             <span class="action-row-label">Edit Access</span>
             <div class="action-row-buttons">
               ${!hk
-                ? `<button class="btn btn-success btn-sm" onclick="generateKey('${f}')">Grant Access</button>`
+                ? ''
                 : `<button class="btn btn-pink btn-sm" onclick="confirmRegenerate('${f}')">Reset Access</button>
                    <button class="btn btn-pink btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
             </div>
@@ -1163,15 +1163,15 @@ function filterUsers(t) { renderList(t); }
 
 async function generateKey(f) {
   showAlert('alert-manage', '<span class="spinner"></span> Generating...', 'info');
-  try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'POST', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; fetchAccountEmailsAndRefresh(); showAlert('alert-manage', `Access granted`, 'success'); } else showAlert('alert-manage', d.error, 'error'); }
+  try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'POST', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { fetchAccountEmailsAndRefresh(); showAlert('alert-manage', `Access granted`, 'success'); } else showAlert('alert-manage', d.error, 'error'); }
   catch { showAlert('alert-manage', 'Error', 'error'); }
 }
 
-function confirmRegenerate(f) { showModal('Regenerate?', 'Their current link will stop working.', 'btn-pink', 'Regenerate', () => regenerateKey(f)); }
-async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { editKeys[f] = d.key; fetchAccountEmailsAndRefresh(); showAlert('alert-manage', 'New link created', 'success'); } } catch {} }
+function confirmRegenerate(f) { showModal('Reset Access?', 'This will allow the user to sign in again if they were revoked.', 'btn-pink', 'Reset', () => regenerateKey(f)); }
+async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { fetchAccountEmailsAndRefresh(); showAlert('alert-manage', 'Access reset', 'success'); } } catch {} }
 
 function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-pink', 'Revoke', () => removeKey(f)); }
-async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); delete editKeys[f]; populateUI(); showAlert('alert-manage', 'Access removed', 'success'); } catch {} }
+async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); fetchAccountEmailsAndRefresh(); showAlert('alert-manage', 'Access revoked', 'success'); } catch {} }
 
 function confirmDeleteUser(f) {
   const u = userInfo[f] || {};
@@ -1793,12 +1793,12 @@ async function sendViaEmail(f) {
 }
 function generateMailto(u, f) {
   const subject = window.ACCOUNT_DETAILS.getSubject(f);
-  const body = window.ACCOUNT_DETAILS.getBodyPlainText(f, editKeys[f]);
+  const body = window.ACCOUNT_DETAILS.getBodyPlainText(f);
   return `mailto:${u.accountEmail || u.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function copyLink(f, btn) {
-  navigator.clipboard.writeText(`${EDITOR_URL}?folder=${f}&key=${editKeys[f]}`).then(() => {
+  navigator.clipboard.writeText(EDITOR_URL).then(() => {
     const o = btn.innerHTML; btn.innerHTML = '? Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-primary');
     setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-primary'); }, 2000);
   });
