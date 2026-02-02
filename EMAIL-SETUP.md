@@ -112,7 +112,7 @@ openssl rand -hex 32
 1. Open a terminal (PowerShell, Command Prompt, or Git Bash).
 2. Navigate to the `email-relay` folder. Example (adjust the path to match your machine):
    ```bash
-   cd d:\Users\Daniel\Cursor\Workspaces\Proj.DigitalLuggageTags\repos\Github\deem0u.github.io\email-relay
+   cd d:\Users\Daniel\Cursor\Workspaces\Proj.DigitalLuggageTags\email-relay
    ```
 3. Install Vercel CLI if needed:
    ```bash

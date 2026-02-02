@@ -1,0 +1,42 @@
+---
+description: Digital Luggage Tags workspace layout, repo structure, and recent changes
+alwaysApply: true
+---
+
+# Digital Luggage Tags — Workspace Context
+
+## Workspace layout
+
+The workspace root **is** the GitHub Pages repo (deem0u.github.io). Live at https://deem0u.github.io/
+
+- **`admin/index.html`** — Admin dashboard (manage users, keys, edit any page)
+- **`edit/index.html`** — Self-service editor (users update their contact page via unique link)
+- **`styles.css`** — Shared styles for admin and edit
+- **`user/<username>/<contactpagename>.html`** — Per-user contact pages (e.g. `user/danielmounnarath/index.html`)
+- **`cloudflare-worker/`** — API backend (Worker + wrangler). Deploy to Cloudflare Workers.
+- **`release/`** — Packaged deployable artifacts (`digital-luggage-tags-artifacts.zip`)
+- **`SETUP-GUIDE.md`** — Setup, daily usage, troubleshooting
+
+## Recent modifications (repository)
+
+- **Additional Information (optional)** — New free-text field on all contact forms:
+  - Admin: New User form and Edit Contact form (`admin/index.html`)
+  - Self-service: Edit form (`edit/index.html`)
+  - Live contact page: New row after "Destination Details" (EN: "Additional Information", ZH: "补充信息"). Uses `.form-textarea`, `.form-label-optional`, existing CSS.
+- **Admin Dashboard** — Recovery cluster on its own row; Contact Page cluster has a searchable dropdown for contact cards per user; Worker `GET /api/contact-pages/:username` lists pages for a user.
+- **SETUP-GUIDE.md** — Updated with Additional Information feature, editing notes, and deploy file list.
+- **Artifacts** — `release/digital-luggage-tags-artifacts.zip` includes SETUP-GUIDE, worker, wrangler, styles, admin and edit HTML.
+
+## Deploy mapping
+
+| Local path | Deploy target |
+|------------|---------------|
+| `admin/index.html` | `deem0u.github.io` repo → `admin/index.html` |
+| `edit/index.html` | `edit/index.html` |
+| `styles.css` | `styles.css` |
+| `cloudflare-worker/worker.js` | Cloudflare Worker `contact-page-editor` |
+
+## Git and push
+
+- **Pull:** From workspace root: `git pull`.
+- **Push:** From workspace root: `git push`. The workspace root and the remote are the same repo (deem0u.github.io).
