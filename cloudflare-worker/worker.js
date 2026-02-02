@@ -495,7 +495,7 @@ async function handleSignup(request, env) {
   }
   const username = (body.username || '').trim().toLowerCase();
   const firstName = (body.firstName || '').trim();
-  const surname = (body.surname || '').trim();
+  const surname = (body.surname || body.lastName || '').trim();
   const accountEmail = (body.accountEmail || '').trim();
   const contactPageEmail = (body.contactPageEmail || '').trim();
   const dob = (body.dob || '').trim();
@@ -551,7 +551,7 @@ async function handleSignup(request, env) {
     return jsonResponse({ error: 'A page with this username already exists' }, 409);
   }
 
-  const content = generateContactPageHTML(firstName, surname, contactPageEmail, '', '', '', '', '', '', '', '');
+  const content = generateContactPageHTML(firstName, surname, contactPageEmail || '', '', '', '', '', '', '', '', '');
   const createRes = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${username}/index.html`,
     {
@@ -634,7 +634,7 @@ async function handleSignupSuccessEmail(request, env) {
   const username = (body.username || body.folder || '').trim();
   const accountEmail = (body.accountEmail || '').trim();
   const firstName = (body.firstName || '').trim();
-  const lastName = (body.lastName || '').trim();
+  const lastName = (body.lastName || body.surname || '').trim();
   if (!username || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
   const baseUrl = `https://${CONFIG.owner}.github.io`;
   const viewLink = `${baseUrl}/${username}/`;
@@ -655,7 +655,7 @@ function normalizeDob(input) {
   return String(d).padStart(2, '0') + '/' + String(mo).padStart(2, '0') + '/' + y;
 }
 
-function generateContactPageHTML(firstName, surname, email, mobile, mobileLink, homeCountry, destName, destAddress, destPhone, destEmail, additionalInfo) {
+function generateContactPageHTML(givenName, familyName, contactEmail, mobile, mobileLink, homeCountry, destName, destAddress, destPhone, destEmail, additionalInfo) {
   const esc = s => (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   const em = String.fromCharCode(0x2014);
   const now = new Date().toISOString();
@@ -686,7 +686,7 @@ function generateContactPageHTML(firstName, surname, email, mobile, mobileLink, 
   const lblDest = 'Destination Details \u00b7 D\u00e9tails de la destination \u00b7 \u76ee\u7684\u5730\u8be6\u60c5';
   const lblAdditional = 'Additional Information \u00b7 Informations suppl\u00e9mentaires \u00b7 \u9644\u52a0\u4fe1\u606f';
   const script = '<script>(function(){function f(i,u){if(!i)return"";var d=new Date(i);return d.toLocaleString()+(u?" by "+u:"")}document.querySelectorAll(".last-updated-display").forEach(function(e){var i=e.getAttribute("data-timestamp"),u=e.getAttribute("data-updated-by");if(i)e.textContent=f(i,u)})})();<\/script>';
-  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(firstName) + ' ' + esc(surname) + '</title><style>' + css + '</style></head><body><div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(firstName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(surname) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(email) + '">' + esc(email) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + '</body></html>';
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(givenName) + ' ' + esc(familyName) + '</title><style>' + css + '</style></head><body><div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(givenName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(familyName) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(contactEmail) + '">' + esc(contactEmail) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + '</body></html>';
 }
 
 // ============ Auth Helpers ============
@@ -1268,7 +1268,7 @@ async function handlePutProfile(username, request, env) {
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const firstName = (body.firstName || '').trim();
-  const lastName = (body.lastName || '').trim();
+  const lastName = (body.lastName || body.surname || '').trim();
   const accountEmail = (body.accountEmail || '').trim();
   if (accountEmail && !accountEmail.includes('@')) return jsonResponse({ error: 'Valid account email required' }, 400);
   if (accountEmail) {

@@ -2,6 +2,12 @@
  * Single source of truth for form labels and hints.
  * New Form (Add New User) is canonical; Edit form and user edit page use these.
  * Keep this file UTF-8; do not re-save as other encodings.
+ *
+ * CONTACT PAGE context (keys first-name, surname, email):
+ *   first-name -> givenName (Given Names, shown on contact page)
+ *   surname -> familyName (Family Name, shown on contact page)
+ *   email -> contactEmail (Contact Page Email, shown on contact page)
+ * ACCOUNT context uses: accountEmail, firstName, lastName (not in this file).
  */
 window.FORM_DESCRIPTIONS = {
   'folder': {
@@ -10,15 +16,15 @@ window.FORM_DESCRIPTIONS = {
   },
   'first-name': {
     label: 'Given Names',
-    hint: 'Your first name including any middle names (if applicable) as it appears on your ID.'
+    hint: 'Your first name including any middle names (if applicable) as it appears on your ID. Shown on your contact page.'
   },
   'surname': {
     label: 'Family Name',
-    hint: 'Your surname as it appears on your ID.'
+    hint: 'Your surname as it appears on your ID. Shown on your contact page.'
   },
   'email': {
     label: 'Email',
-    hint: 'A valid email address which you have access to.'
+    hint: 'Email shown on your contact page. Distinct from Account Email used for sign-in and recovery.'
   },
   'mobile': {
     label: 'Contact Number',

@@ -14,10 +14,9 @@ Reference forms: **Add New User** (admin), **Edit Contact Information** (admin),
 |-------|----------------|----------------------|---------------------|-------|
 | **User Name** | `required`, `pattern="^[a-zA-Z0-9_-]{3,32}$"`, `minlength="3"`, `maxlength="32"`, proactive (blur/input), inline error | — | — | Alphanumeric, hyphens, underscores only; 3–32 chars. |
 | **Account Email** | Optional. No `required`. Not same as Contact Page Email. | — | — | For account management & recovery. Distinct from Contact Page Email. |
-| **Contact Page Email** | Optional. `type="email"`, proactive (blur/input), inline error | Same | — | Shown on the live contact page. |
-| **Email** | — | Optional. Same as Contact Page Email | Required. `type="email"`, proactive; submit blocked if invalid. | In Edit/User Contact Editor this is the Contact Page Email. |
-| **Given Names** | Optional. `pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$"`, `maxlength="32"`, proactive | Same | Required. Same pattern, maxlength, proactive; submit blocked if invalid. | Letters, spaces, apostrophes, hyphens, periods; max 32; must start with letter. |
-| **Family Name** | Optional. Same as Given Names | Same | Required. Same; submit blocked if invalid. | Same rules. |
+| **Contact Page Email** | Optional. `type="email"`, proactive (blur/input), inline error | Optional. Same | Required. `type="email"`, proactive; submit blocked if invalid. | Variable: contactEmail. Shown on live contact page. Label: Contact Page Email. |
+| **Given Names** | Optional. `pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$"`, `maxlength="32"`, proactive | Same | Required. Same pattern, maxlength, proactive; submit blocked if invalid. | Variable: givenName. Letters, spaces, apostrophes, hyphens, periods; max 32; must start with letter. |
+| **Family Name** | Optional. Same as Given Names | Same | Required. Same; submit blocked if invalid. | Variable: familyName. Same rules as Given Names. |
 | **Contact Number** | Optional. `pattern="\+[0-9]{8,20}"`, `maxlength="21"`, mask, proactive | Same | Same | Mask: `+` prefix, digits only, 8–20. |
 | **Home Country** | Optional. Searchable select; from list or "Leave empty" | Same | Same | No proactive validation. |
 | **Destination Name** | Optional. `maxlength="200"` | Same | Same | Free text. |
@@ -63,7 +62,7 @@ Reference forms: **Add New User** (admin), **Edit Contact Information** (admin),
 
 - **Add New User:** `handleCreateUser` validates User Name via `validateFolder()` before create; blocks submit and shows inline error if invalid. Account Email and Contact Page Email optional.
 - **Edit Contact (admin):** `handleSave` does not enforce validation; admin can leave fields blank.
-- **User Contact Editor:** `handleSave` validates Given Names, Family Name, and Email; blocks submit and shows inline error if any invalid.
+- **User Contact Editor:** `handleSave` validates Given Names, Family Name, and Contact Page Email; blocks submit and shows inline error if any invalid.
 - **Home signup:** Validates User Name (including uniqueness), Account Email (including in-use check), DOB, 3 Security Questions + answers, consent before API call. Blocks submit on any failure.
 - **Set Secrets (admin):** `saveSecrets` allows saving with all empty (clears secrets). When Account Email provided, `validateEmailStrict`. When 3 SQ provided, must be exactly 3 complete or all empty ("or leave all empty").
 - **Set Secrets (edit):** `saveEditSecrets` requires at least one of Account Email, DOB, or 3 Secret Questions. When provided, validates format.
