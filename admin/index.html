@@ -961,14 +961,14 @@ function populatePageSelect() {
   const options = document.getElementById('page-select-options');
   const sorted = pages.slice().sort((a, b) => {
     const uA = userInfo[a] || {}, uB = userInfo[b] || {};
-    const nameA = uA.firstName && uA.lastName ? `${uA.firstName} ${uA.lastName}` : a;
-    const nameB = uB.firstName && uB.lastName ? `${uB.firstName} ${uB.lastName}` : b;
+    const nameA = getDisplayName(uA, a);
+    const nameB = getDisplayName(uB, b);
     return nameA.localeCompare(nameB);
   });
   
   options.innerHTML = sorted.map(f => {
     const u = userInfo[f] || {};
-    const displayName = u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : f;
+    const displayName = getDisplayName(u, f);
     const line1 = `${displayName} (${f})`;
     const line2 = u.accountEmail || 'No account email';
     return `<div class="searchable-select-option" data-value="${f}" data-name="${line1}" data-email="${u.accountEmail || ''}" onclick="selectPage('${f}')">
@@ -1033,7 +1033,7 @@ function filterPageOptions() {
 function selectPage(folder) {
   document.getElementById('page-select').value = folder;
   const u = userInfo[folder] || {};
-  const displayName = u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : folder;
+  const displayName = getDisplayName(u, folder);
   const textEl = document.getElementById('page-select-text');
   textEl.textContent = `${displayName} (${folder})`;
   textEl.classList.remove('searchable-select-placeholder');
@@ -1055,7 +1055,19 @@ document.addEventListener('click', (e) => {
   }
 });
 
-function getInitials(u) { return u.firstName && u.lastName ? (u.firstName[0] + u.lastName[0]).toUpperCase() : (u.folder ? u.folder[0].toUpperCase() : '?'); }
+function getDisplayName(u, folder) {
+  if (!u) return folder || '';
+  if (u.firstName && u.lastName) return u.firstName + ' ' + u.lastName;
+  if (u.pageGivenName || u.pageFamilyName) return `${(u.pageGivenName || '').trim()} ${(u.pageFamilyName || '').trim()}`.trim();
+  return folder || '';
+}
+
+function getInitials(u) {
+  if (u.firstName && u.lastName) return (u.firstName[0] + u.lastName[0]).toUpperCase();
+  if (u.pageGivenName && u.pageFamilyName) return ((u.pageGivenName[0] || '') + (u.pageFamilyName[0] || '')).toUpperCase();
+  if (u.pageGivenName || u.pageFamilyName) return ((u.pageGivenName || u.pageFamilyName || '').trim()[0] || '?').toUpperCase();
+  return (u.folder ? u.folder[0].toUpperCase() : '?');
+}
 
 function renderList(t) {
   const c = document.getElementById(`list-${t}`);
@@ -1077,8 +1089,8 @@ function renderList(t) {
   var sortVal = sortEl ? sortEl.value : 'name-asc';
   fl.sort((a, b) => {
     const uA = userInfo[a] || {}, uB = userInfo[b] || {};
-    const nameA = (uA.firstName && uA.lastName ? uA.firstName + ' ' + uA.lastName : a).toLowerCase();
-    const nameB = (uB.firstName && uB.lastName ? uB.firstName + ' ' + uB.lastName : b).toLowerCase();
+    const nameA = getDisplayName(uA, a).toLowerCase();
+    const nameB = getDisplayName(uB, b).toLowerCase();
     const folderA = (a || '').toLowerCase(), folderB = (b || '').toLowerCase();
     if (sortVal === 'name-asc') return nameA.localeCompare(nameB);
     if (sortVal === 'name-desc') return nameB.localeCompare(nameA);
@@ -1089,7 +1101,7 @@ function renderList(t) {
   if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }
   c.innerHTML = fl.map(f => {
     const u = userInfo[f] || { firstName: '', lastName: '', accountEmail: null, folder: f }, hk = !!editKeys[f];
-    const displayName = u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : f;
+    const displayName = getDisplayName(u, f);
     let lastUpdatedDisplay = 'Never updated';
     if (u.lastUpdated) {
       try {
@@ -1100,7 +1112,7 @@ function renderList(t) {
     } else if (u.updatedBy) {
       lastUpdatedDisplay = 'Unknown (old format)';
     }
-    const namePart = `${u.firstName || '?'} ${u.lastName || '?'}`.trim();
+    const namePart = displayName || '? ?';
     const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
     const emailDisplay = u.accountEmail || 'No account email';
     const secretsNotSet = !(u.secretsComplete === true);
@@ -1178,7 +1190,7 @@ async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method
 
 function confirmDeleteUser(f) {
   const u = userInfo[f] || {};
-  const displayName = u.firstName && u.lastName ? `${u.firstName} ${u.lastName}` : f;
+  const displayName = getDisplayName(u, f);
   showModal('Delete User?', `This will permanently delete ${displayName}'s contact page. This cannot be undone.`, 'btn-danger', 'Delete', () => deleteUser(f));
 }
 
@@ -1445,7 +1457,13 @@ async function handleCreateUser(e) {
     const r = await fetch(`${API}/api/page`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({ username, content, accountEmail: document.getElementById("new-account-email").value.trim() })
+      body: JSON.stringify({
+        username,
+        content,
+        accountEmail: document.getElementById("new-account-email").value.trim(),
+        firstName: document.getElementById("new-first-name").value.trim(),
+        lastName: document.getElementById("new-surname").value.trim()
+      })
     });
     const d = await r.json();
     

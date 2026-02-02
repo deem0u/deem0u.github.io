@@ -740,6 +740,8 @@ async function handleCreatePage(request, env) {
   const username = (body.username || body.folder || '').trim();
   const content = body.content;
   const accountEmail = body.accountEmail;
+  const firstName = (body.firstName || '').trim();
+  const lastName = (body.lastName || body.surname || '').trim();
 
   if (!username || !content) {
     return jsonResponse({ error: 'Missing username or content' }, 400);
@@ -812,11 +814,15 @@ async function handleCreatePage(request, env) {
 
   const data = await response.json();
 
-  // Store account email in KV (user secrets) when provided
-  if (accountEmailVal && accountEmailVal.includes('@') && env.EDIT_KEYS_KV) {
-    const accountEmailLower = accountEmailVal.toLowerCase();
-    await env.EDIT_KEYS_KV.put('account_email:' + usernameTrim, accountEmailVal);
-    await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmailLower, usernameTrim);
+  // Store account email and profile names in KV when provided
+  if (env.EDIT_KEYS_KV) {
+    if (accountEmailVal && accountEmailVal.includes('@')) {
+      const accountEmailLower = accountEmailVal.toLowerCase();
+      await env.EDIT_KEYS_KV.put('account_email:' + usernameTrim, accountEmailVal);
+      await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmailLower, usernameTrim);
+    }
+    if (firstName) await env.EDIT_KEYS_KV.put('user_first_name:' + usernameTrim, firstName);
+    if (lastName) await env.EDIT_KEYS_KV.put('user_last_name:' + usernameTrim, lastName);
   }
 
   return jsonResponse({
