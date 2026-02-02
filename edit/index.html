@@ -37,7 +37,7 @@
   .editor-profile-strip .profile-value { font-weight: 500; }
   .editor-profile-strip .badge { font-size: 0.7rem; padding: 0.2em 0.5em; }
   .editor-main { flex: 1; min-width: 0; }
-  .editor-form-disabled { opacity: 0.6; pointer-events: none; }
+  .editor-form-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.3); }
   .unverified-banner { background: #fef9e7; border: 1px solid #d4a017; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; }
   @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-profile-strip { width: 100%; } }
     </style>
@@ -316,7 +316,7 @@
 <script src="edit-secrets.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
-let folder = null, token = null, currentSha = null;
+let username = null, token = null, currentSha = null;
 const PAGES_URL = 'https://deem0u.github.io/';
 const EDITOR_URL = 'https://deem0u.github.io/edit/';
 const RECOVERY_SQ_OPTIONS = {1:'What is your mothers maiden name?',2:'What is the name of the educational institution which you have obtained your highest level of qualification?',3:'What is the name of your first pet?',4:'What is the make and model of your first car?',5:'What is a date that is most memorable to you?',6:'What suburb were you born in?',7:'What was the name of the business or company you first worked for?',8:'Where was your first major travel destination?',9:'What is your favourite sports team?',10:'What is a word that Chris cannot correctly pronounce?'};
@@ -564,20 +564,20 @@ function recoveryVerify() {
       return;
     }
     if (recoveryPath === 'username') recoveryAccountEmail = accEm;
-    showRecoverySuccess(d.folder, d.token);
+    showRecoverySuccess(d.username || d.folder, d.token);
   }).catch(function() {
     if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
     showRecoveryVerifyAlert('Connection error. Please try again.', 'error');
   });
 }
 
-function showRecoverySuccess(folder, token) {
-  document.getElementById('recovery-success-banner').textContent = 'Hi ' + folder + '! You can now sign in again with your Account Email and Password.';
-  document.getElementById('recovery-success-details').innerHTML = window.ACCOUNT_DETAILS.getBodyHtml(folder);
-  var subject = window.ACCOUNT_DETAILS.getSubject(folder);
-  var bodyPlain = window.ACCOUNT_DETAILS.getBodyPlainText(folder);
+function showRecoverySuccess(username, token) {
+  document.getElementById('recovery-success-banner').textContent = 'Hi ' + username + '! You can now sign in again with your Account Email and Password.';
+  document.getElementById('recovery-success-details').innerHTML = window.ACCOUNT_DETAILS.getBodyHtml(username);
+  var subject = window.ACCOUNT_DETAILS.getSubject(username);
+  var bodyPlain = window.ACCOUNT_DETAILS.getBodyPlainText(username);
   document.getElementById('recovery-mailto-btn').href = 'mailto:' + encodeURIComponent(recoveryAccountEmail || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyPlain);
-  if (token) sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, token: token }));
+  if (token) sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
   document.getElementById('screen-auth').classList.add('hidden');
   document.getElementById('screen-recovery-success').classList.remove('hidden');
 }
@@ -828,7 +828,7 @@ function selectCountryEdit(value) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-  folder = params.get('folder');
+  username = params.get('username') || params.get('folder');
   
   attachContactNumberMask();
   attachDobMask();
@@ -860,8 +860,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   try {
     var s = JSON.parse(sessionStorage.getItem('edit_session') || '{}');
-    if (s.folder && s.token) {
-      folder = s.folder;
+    if ((s.username || s.folder) && s.token) {
+      username = s.username || s.folder;
       token = s.token;
       authenticateWithStoredSession();
     }
@@ -870,9 +870,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 async function authenticateWithStoredSession() {
-  if (!folder || !token) return;
+  if (!username || !token) return;
   try {
-    const res = await fetch(API + '/api/page/' + encodeURIComponent(folder), { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch(API + '/api/page/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) throw new Error('Session expired');
     const data = await res.json();
     currentSha = data.sha;
@@ -880,14 +880,14 @@ async function authenticateWithStoredSession() {
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
-    document.getElementById('view-page-link').href = 'https://deem0u.github.io/' + folder + '/';
-    sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, token: token }));
+    document.getElementById('view-page-link').href = 'https://deem0u.github.io/' + username + '/';
+    sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
-    loadProfile();
+    await loadProfile();
     applyUnverifiedRestriction();
   } catch (e) {
     sessionStorage.removeItem('edit_session');
-    folder = null;
+    username = null;
     token = null;
   }
 }
@@ -903,28 +903,28 @@ async function authenticate() {
       var authRes = await fetch(API + '/api/auth/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accountEmail: accountEmail, password: password }) });
       var authData = await authRes.json();
       if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || 'Invalid email or password.', 'error'); return; }
-      folder = authData.folder;
+      username = authData.username || authData.username;
       token = authData.token;
     } catch (e) { showAlert('auth-alert', 'Connection error. Please try again.', 'error'); return; }
   }
   try {
-    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch(`${API}/api/page/${username}`, { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) { showAlert('auth-alert', 'Sign in failed. Please check your email and password.', 'error'); return; }
     
     const data = await res.json();
     currentSha = data.sha;
     fillForm(data.content);
     
-    document.getElementById('user-name').textContent = (document.getElementById('first-name').value || folder) + ' (' + folder + ')';
-    document.title = 'Contact Editor - ' + folder;
-    document.getElementById('header-logo-text').textContent = 'Contact Editor - ' + folder;
+    document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
+    document.title = 'Contact Editor - ' + username;
+    document.getElementById('header-logo-text').textContent = 'Contact Editor - ' + username;
     document.getElementById('signout-btn').classList.remove('hidden');
-    document.getElementById('view-page-link').href = `https://deem0u.github.io/${folder}/`;
+    document.getElementById('view-page-link').href = `https://deem0u.github.io/${username}/`;
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
-    sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, token: token }));
+    sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
-    loadProfile();
+    await loadProfile();
     applyUnverifiedRestriction();
   } catch (e) { 
     console.error('Auth error:', e);
@@ -935,9 +935,9 @@ async function authenticate() {
 
 var profileData = null;
 async function loadProfile() {
-  if (!folder || !token) return;
+  if (!username || !token) return;
   try {
-    var r = await fetch(API + "/api/profile/" + encodeURIComponent(folder), { headers: { "Authorization": "Bearer " + token } });
+    var r = await fetch(API + "/api/profile/" + encodeURIComponent(username), { headers: { "Authorization": "Bearer " + token } });
     if (!r.ok) return;
     profileData = await r.json();
     document.getElementById("profile-first-name").textContent = profileData.firstName || "—";
@@ -982,7 +982,7 @@ async function saveProfile() {
   var errEl = document.getElementById("edit-profile-error");
   if (!email || !email.includes("@")) { errEl.textContent = "Valid email required"; errEl.classList.remove("hidden"); return; }
   try {
-    var r = await fetch(API + "/api/profile/" + encodeURIComponent(folder), {
+    var r = await fetch(API + "/api/profile/" + encodeURIComponent(username), {
       method: "PUT",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({ firstName, lastName, accountEmail: email })
@@ -1002,14 +1002,14 @@ async function saveProfile() {
   }
 }
 async function verifyEmailFromEditor() {
-  if (!folder) return;
+  if (!username) return;
   try {
-    var r = await fetch(API + "/api/otp/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folder }) });
+    var r = await fetch(API + "/api/otp/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username }) });
     var d = await r.json();
     if (d.sent) {
       var code = prompt("A 6-digit code was sent to your email. Enter it below:");
       if (code) {
-        var vr = await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folder, code: code.trim().replace(/\D/g, "") }) });
+        var vr = await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, code: code.trim().replace(/\D/g, "") }) });
         var vd = await vr.json();
         if (vr.ok && vd.success) { profileData.emailVerified = true; applyUnverifiedRestriction(); alert("Email verified!"); }
         else alert(vd.error || "Invalid code");
@@ -1020,7 +1020,7 @@ async function verifyEmailFromEditor() {
 
 function signOut() {
   sessionStorage.removeItem('edit_session');
-  folder = null;
+  username = null;
   token = null;
   currentSha = null;
   document.title = 'Contact Editor - User';
@@ -1110,7 +1110,7 @@ function fillForm(h) {
 async function resetForm() {
   showAlert('editor-alert', '<span class="spinner"></span> Reloading...', 'info');
   try {
-    const res = await fetch(`${API}/api/page/${folder}`, { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch(`${API}/api/page/${username}`, { headers: { 'Authorization': 'Bearer ' + token } });
     if (res.ok) {
       const d = await res.json();
       currentSha = d.sha;
@@ -1171,7 +1171,7 @@ async function handleSave(e) {
   
   try {
     const content = generateHTML();
-    const res = await fetch(`${API}/api/page/${folder}`, {
+    const res = await fetch(`${API}/api/page/${username}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ content, sha: currentSha })
@@ -1180,7 +1180,7 @@ async function handleSave(e) {
     
     if (res.ok) {
       currentSha = data.sha;
-      document.getElementById('user-name').textContent = (document.getElementById('first-name').value || folder) + ' (' + folder + ')';
+      document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
       showAlert('editor-alert', 'Changes saved successfully! Use the "View Page" link above to see your updates.', 'success');
     } else { showAlert('editor-alert', data.error || 'Failed to save', 'error'); }
   } catch (e) { showAlert('editor-alert', 'Connection error', 'error'); }

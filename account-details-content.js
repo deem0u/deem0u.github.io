@@ -7,18 +7,18 @@
   const PAGES_URL = 'https://deem0u.github.io/';
   const EDITOR_URL = 'https://deem0u.github.io/edit/';
 
-  function getViewLink(folder) {
-    return PAGES_URL + (folder || '') + '/';
+  function getViewLink(username) {
+    return PAGES_URL + (username || '') + '/';
   }
 
   window.ACCOUNT_DETAILS = {
-    getSubject: function(folder) {
-      return 'Your Digital Contact Page - ' + (folder || '') + ' - Account Details';
+    getSubject: function(username) {
+      return 'Your Digital Contact Page - ' + (username || '') + ' - Account Details';
     },
-    getBodyPlainText: function(folder) {
-      var viewLink = getViewLink(folder);
+    getBodyPlainText: function(username) {
+      var viewLink = getViewLink(username);
       return 'Below are details related to your account you should keep handy.\n\n' +
-        '\t• User Name: ' + (folder || '') + '\n' +
+        '\t• User Name: ' + (username || '') + '\n' +
         '\t• Your Digital Contact Page URL: ' + viewLink + '\n\n' +
         'HOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n' +
         '\t1. Visit the Contact Editor (' + EDITOR_URL + ') and sign in with your Account Email and Password\n' +
@@ -26,10 +26,10 @@
         '\t3. Click "Save Changes" - Your updates will appear on your contact page within a few minutes\n\n' +
         'If at any point you wish to have your account/Digital Contact Page deleted, contact me at deem0u.github.io@gmail.com';
     },
-    getBodyHtml: function(folder) {
-      var viewLink = getViewLink(folder);
+    getBodyHtml: function(username) {
+      var viewLink = getViewLink(username);
       return '<p>Below are details related to your account you should keep handy.</p>' +
-        '<ul><li><strong>User Name:</strong> ' + (folder || '') + '</li>' +
+        '<ul><li><strong>User Name:</strong> ' + (username || '') + '</li>' +
         '<li><strong>Your Digital Contact Page URL:</strong> <a href="' + viewLink + '" target="_blank" rel="noopener">' + viewLink + '</a></li></ul>' +
         '<p class="success-heading">HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</p>' +
         '<ol><li>Visit the Contact Editor (<a href="' + EDITOR_URL + '" target="_blank" rel="noopener">' + EDITOR_URL + '</a>) and sign in with your Account Email and Password</li>' +

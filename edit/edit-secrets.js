@@ -1,8 +1,8 @@
 // Edit page secrets modal - loaded by edit/index.html
 async function checkSecretsStatus() {
-  if (!folder || !token) return;
+  if (!username || !token) return;
   try {
-    const r = await fetch(API + '/api/secrets/' + encodeURIComponent(folder), { headers: { 'Authorization': 'Bearer ' + token } });
+    const r = await fetch(API + '/api/secrets/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
     if (!r.ok) return;
     const d = await r.json();
     const hasAccountEmail = !!(d.accountEmail && d.accountEmail.includes('@'));
@@ -34,7 +34,7 @@ function showEditSecretsModal() {
   m.classList.add('show');
   document.getElementById('edit-secrets-error').classList.add('hidden');
   document.getElementById('edit-secrets-error').textContent = '';
-  fetch(API + '/api/secrets/' + encodeURIComponent(folder), { headers: { 'Authorization': 'Bearer ' + token } })
+  fetch(API + '/api/secrets/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(r) { return r.json(); })
     .then(function(d) {
       document.getElementById('edit-secrets-account-email').value = d.accountEmail || '';
@@ -120,7 +120,7 @@ async function saveEditSecrets() {
   document.getElementById('edit-secrets-save-btn').disabled = true;
   document.getElementById('edit-secrets-error').classList.add('hidden');
   try {
-    var r = await fetch(API + '/api/secrets/' + encodeURIComponent(folder), {
+    var r = await fetch(API + '/api/secrets/' + encodeURIComponent(username), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ accountEmail: accountEmail || '', dob: dob || '', secretQuestions: hasAllSq ? sq : [] })

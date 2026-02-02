@@ -353,7 +353,7 @@
 
   function signupStartOver() {
     sessionStorage.removeItem('signup_email');
-    sessionStorage.removeItem('signup_folder');
+    sessionStorage.removeItem('signup_username');
     sessionStorage.removeItem('signup_token');
     sessionStorage.removeItem('signup_first_name');
     sessionStorage.removeItem('signup_last_name');
@@ -369,7 +369,7 @@
   }
 
   async function verifyOtp() {
-    var folder = sessionStorage.getItem('signup_folder');
+    var username = sessionStorage.getItem('signup_username');
     var code = (document.getElementById('otp-code-input').value || '').trim().replace(/\D/g, '');
     if (!code || code.length !== 6) {
       document.getElementById('error-otp-code').textContent = 'Please enter the 6-digit code.';
@@ -380,7 +380,7 @@
     var btn = document.getElementById('otp-verify-btn');
     btn.disabled = true;
     try {
-      var res = await fetch(API + '/api/otp/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder, code }) });
+      var res = await fetch(API + '/api/otp/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, code }) });
       var d = await res.json();
       if (res.ok && d.success) {
         document.getElementById('signup-otp-card').classList.add('hidden');
@@ -395,11 +395,11 @@
   }
 
   async function resendOtp() {
-    var folder = sessionStorage.getItem('signup_folder');
-    if (!folder) return;
+    var username = sessionStorage.getItem('signup_username');
+    if (!username) return;
     hideAlert('otp-alert');
     try {
-      var res = await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder }) });
+      var res = await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
       var d = await res.json();
       showAlert('otp-alert', d.sent ? 'Code sent. Check your email.' : (d.error || 'Could not resend.'), d.sent ? 'success' : 'error');
     } catch (e) {
@@ -411,7 +411,7 @@
     document.getElementById('signup-otp-success-card').classList.add('hidden');
     document.getElementById('signup-step2-card').classList.remove('hidden');
     updateProgressBar(2);
-    var folder = sessionStorage.getItem('signup_folder');
+    var username = sessionStorage.getItem('signup_username');
     document.getElementById('step2-editor-link').href = EDITOR_URL;
     document.getElementById('step2-actions').classList.remove('hidden');
     document.getElementById('step2-skip-msg').classList.add('hidden');
@@ -436,17 +436,17 @@
     document.getElementById('signup-step2-card').classList.add('hidden');
     document.getElementById('signup-step3-card').classList.remove('hidden');
     updateProgressBar(3);
-    var folder = sessionStorage.getItem('signup_folder');
+    var username = sessionStorage.getItem('signup_username');
     var firstName = sessionStorage.getItem('signup_first_name') || '';
     var lastName = sessionStorage.getItem('signup_last_name') || '';
     var email = sessionStorage.getItem('signup_email') || '';
     var dob = sessionStorage.getItem('signup_dob') || '';
-    var viewUrl = PAGES_URL + folder + '/';
+    var viewUrl = PAGES_URL + username + '/';
     var editUrl = EDITOR_URL;
     document.getElementById('step3-summary').innerHTML =
       '<p class="home-success-banner">Welcome! Your account is ready.</p>' +
       '<p class="success-heading">Summary</p>' +
-      '<ul><li><strong>User Name:</strong> ' + (folder || '') + '</li>' +
+      '<ul><li><strong>User Name:</strong> ' + (username || '') + '</li>' +
       '<li><strong>First Name:</strong> ' + (firstName || '') + '</li>' +
       '<li><strong>Last Name:</strong> ' + (lastName || '') + '</li>' +
       '<li><strong>Email:</strong> ' + (email || '') + '</li>' +
@@ -461,7 +461,7 @@
       await fetch(API + '/api/signup-success-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ folder, accountEmail: email, firstName, lastName })
+        body: JSON.stringify({ username, accountEmail: email, firstName, lastName })
       });
     } catch (e) {}
   }
@@ -477,7 +477,7 @@
   }
 
   function updateStep1SubmitButton() {
-    var folder = document.getElementById('signup-folder').value.trim();
+    var username = document.getElementById('signup-folder').value.trim();
     var firstName = document.getElementById('signup-first-name').value.trim();
     var lastName = document.getElementById('signup-last-name').value.trim();
     var pw = document.getElementById('signup-password').value;
@@ -486,7 +486,7 @@
     var sq1 = document.getElementById('sq1').value, sq2 = document.getElementById('sq2').value, sq3 = document.getElementById('sq3').value;
     var a1 = document.getElementById('sq1-answer').value.trim(), a2 = document.getElementById('sq2-answer').value.trim(), a3 = document.getElementById('sq3-answer').value.trim();
     var consent = document.getElementById('signup-consent').checked;
-    var folderOk = /^[a-zA-Z0-9_-]{3,32}$/.test(folder);
+    var folderOk = /^[a-zA-Z0-9_-]{3,32}$/.test(username);
     var namesOk = firstName && lastName && /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(firstName) && /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(lastName);
     var pwOk = pw.length >= 8 && pw === pwConfirm;
     var dobOk = !!normalizeDob(dob);
@@ -609,8 +609,8 @@
     var accountEmailVal = sessionStorage.getItem('signup_email') || '';
     if (!accountEmailVal || !accountEmailVal.includes('@')) { signupStartOver(); return; }
 
-    var folder = document.getElementById('signup-folder').value.trim().toLowerCase();
-    var r = validateFolder(folder);
+    var username = document.getElementById('signup-folder').value.trim().toLowerCase();
+    var r = validateFolder(username);
     if (!r.valid) {
       document.getElementById('error-signup-folder').textContent = r.message;
       document.getElementById('signup-folder').classList.add('is-invalid');
@@ -618,7 +618,7 @@
       return;
     }
     try {
-      var checkRes = await fetch(API + '/api/check-username/' + encodeURIComponent(folder));
+      var checkRes = await fetch(API + '/api/check-username/' + encodeURIComponent(username));
       var checkData = await checkRes.json();
       if (checkData.available === false) {
         document.getElementById('error-signup-folder').textContent = 'This user name is already taken. Please choose another.';
@@ -683,7 +683,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: folder,
+          username: username,
           firstName: firstName,
           surname: lastName,
           accountEmail: accountEmailVal,
@@ -701,10 +701,10 @@
         return;
       }
 
-      sessionStorage.setItem('signup_folder', folder);
+      sessionStorage.setItem('signup_username', username);
       if (data.token) {
         sessionStorage.setItem('signup_token', data.token);
-        sessionStorage.setItem('edit_session', JSON.stringify({ folder: folder, token: data.token }));
+        sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: data.token }));
       }
       sessionStorage.setItem('signup_first_name', firstName);
       sessionStorage.setItem('signup_last_name', lastName);
@@ -717,7 +717,7 @@
       document.getElementById('otp-code-input').focus();
       hideAlert('otp-alert');
       document.getElementById('error-otp-code').textContent = '';
-      try { await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ folder }) }); } catch (e) {}
+      try { await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) }); } catch (e) {}
     } catch (err) {
       showAlert('signup-step1-alert', 'Connection error. Please try again.', 'error');
       btn.disabled = false;
