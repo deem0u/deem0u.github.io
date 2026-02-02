@@ -6,6 +6,9 @@ compatibility_date = "2024-01-01"
 binding = "EDIT_KEYS_KV"
 id = "6cb625208ddb4313b95972ca16693098"
 
+[vars]
+EMAIL_RELAY_URL = "https://deem0u-github-io.vercel.app/api/send"
+
 # Required secrets (set via Cloudflare dashboard):
 # GITHUB_TOKEN - Your GitHub Personal Access Token with 'repo' scope
 # Optional (for automated email):

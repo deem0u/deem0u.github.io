@@ -39,6 +39,9 @@
   .editor-main { flex: 1; min-width: 0; }
   .editor-form-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.3); }
   .unverified-banner { background: #fef9e7; border: 1px solid #d4a017; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; }
+  .status-banner { margin-bottom: 1rem; }
+  .status-banner.hidden { display: none; }
+  .status-banner.show { display: block; }
   @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-profile-strip { width: 100%; } }
     </style>
 </head>
@@ -193,6 +196,8 @@
             </p>
           </div>
         </div>
+
+        <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
 
         <div id="secrets-banner" class="alert alert-warning hidden secrets-attention-banner">
           <div class="secrets-attention-content">
@@ -1004,18 +1009,32 @@ async function saveProfile() {
 async function verifyEmailFromEditor() {
   if (!username) return;
   try {
+    showStatusBanner('Sending code...', 'loading');
     var r = await fetch(API + "/api/otp/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username }) });
     var d = await r.json();
     if (d.sent) {
+      showStatusBanner('Code sent. Enter the 6-digit code below.', 'success');
       var code = prompt("A 6-digit code was sent to your email. Enter it below:");
       if (code) {
+        showStatusBanner('Verifying...', 'loading');
         var vr = await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, code: code.trim().replace(/\D/g, "") }) });
         var vd = await vr.json();
-        if (vr.ok && vd.success) { profileData.emailVerified = true; applyUnverifiedRestriction(); alert("Email verified!"); }
-        else alert(vd.error || "Invalid code");
+        if (vr.ok && vd.success) {
+          profileData.emailVerified = true;
+          applyUnverifiedRestriction();
+          showStatusBanner('Email verified!', 'success');
+        } else {
+          showStatusBanner(vd.error || 'Invalid code', 'error');
+        }
+      } else {
+        hideStatusBanner();
       }
-    } else alert(d.error || "Could not send code");
-  } catch (e) { alert("Connection error"); }
+    } else {
+      showStatusBanner(d.error || 'Could not send code', 'error');
+    }
+  } catch (e) {
+    showStatusBanner('Connection error', 'error');
+  }
 }
 
 function signOut() {
@@ -1108,14 +1127,14 @@ function fillForm(h) {
 }
 
 async function resetForm() {
-  showAlert('editor-alert', '<span class="spinner"></span> Reloading...', 'info');
+  showStatusBanner('Refreshing...', 'refreshing');
   try {
     const res = await fetch(`${API}/api/page/${username}`, { headers: { 'Authorization': 'Bearer ' + token } });
     if (res.ok) {
       const d = await res.json();
       currentSha = d.sha;
       fillForm(d.content);
-      hideAlert('editor-alert');
+      hideStatusBanner();
       function clearFieldErr(errId, inpId) {
         var e = document.getElementById(errId), i = document.getElementById(inpId);
         if (e) { e.textContent = ''; e.removeAttribute('aria-live'); }
@@ -1128,7 +1147,7 @@ async function resetForm() {
       clearFieldErr('error-dest-phone', 'dest-phone');
       clearFieldErr('error-dest-email', 'dest-email');
     }
-  } catch (e) { showAlert('editor-alert', 'Failed to reload', 'error'); }
+  } catch (e) { showStatusBanner('Failed to reload', 'error'); }
 }
 
 async function handleSave(e) {
@@ -1168,7 +1187,8 @@ async function handleSave(e) {
   emInput.classList.remove('is-invalid');
 
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
-  
+  showStatusBanner('Saving...', 'saving');
+
   try {
     const content = generateHTML();
     const res = await fetch(`${API}/api/page/${username}`, {
@@ -1177,13 +1197,17 @@ async function handleSave(e) {
       body: JSON.stringify({ content, sha: currentSha })
     });
     const data = await res.json();
-    
+
     if (res.ok) {
       currentSha = data.sha;
       document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
-      showAlert('editor-alert', 'Changes saved successfully! Use the "View Page" link above to see your updates.', 'success');
-    } else { showAlert('editor-alert', data.error || 'Failed to save', 'error'); }
-  } catch (e) { showAlert('editor-alert', 'Connection error', 'error'); }
+      showStatusBanner('Saved', 'saved');
+    } else {
+      showStatusBanner(data.error || 'Failed to save', 'error');
+    }
+  } catch (e) {
+    showStatusBanner('Connection error', 'error');
+  }
   finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
 }
 
@@ -1328,6 +1352,19 @@ ${formatTimestampScript}
 
 function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
+
+function showStatusBanner(msg, type) {
+  var el = document.getElementById('status-banner');
+  if (!el) return;
+  if (!msg) { el.classList.add('hidden'); el.className = 'status-banner hidden'; el.innerHTML = ''; return; }
+  var alertType = (type === 'loading' || type === 'saving' || type === 'refreshing') ? 'info' : (type === 'success' || type === 'saved') ? 'success' : 'error';
+  var content = msg;
+  if (type === 'loading' || type === 'saving' || type === 'refreshing') content = '<span class="spinner"></span> ' + msg;
+  el.className = 'status-banner alert alert-' + alertType + ' show';
+  el.innerHTML = '<div class="alert-content">' + content + '</div>';
+  el.classList.remove('hidden');
+}
+function hideStatusBanner() { showStatusBanner('', null); }
 </script>
 </body>
 </html>

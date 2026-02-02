@@ -281,8 +281,13 @@ async function sendEmail(env, { to, subject, html, text }) {
       body: JSON.stringify({ to: effectiveTo, subject: effectiveSubject, html: html || text, text: text || '' })
     });
     if (!res.ok) {
-      const err = await res.text();
-      return { ok: false, error: err };
+      const errText = await res.text();
+      let errMsg = errText;
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson && typeof errJson.error === 'string') errMsg = errJson.error;
+      } catch (_) {}
+      return { ok: false, error: errMsg };
     }
     return { ok: true };
   } catch (e) {
@@ -531,7 +536,6 @@ async function handleSignup(request, env) {
     }
   }
 
-  const username = username;
   const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'styles.css', 'countries-data.js', 'form-descriptions.js'];
   if (reserved.includes(username)) {
     return jsonResponse({ error: 'This username is reserved' }, 400);

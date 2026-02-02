@@ -129,8 +129,7 @@ async function saveEditSecrets() {
     if (r.ok) {
       closeEditSecretsModal();
       checkSecretsStatus();
-      var alertEl = document.getElementById('editor-alert');
-      if (alertEl) { alertEl.className = 'alert alert-success show'; alertEl.innerHTML = '<div class="alert-content">Secrets updated successfully.</div>'; }
+      if (typeof showStatusBanner === 'function') showStatusBanner('Secrets updated successfully.', 'success');
     } else {
       document.getElementById('edit-secrets-error').textContent = d.error || 'Failed to save';
       document.getElementById('edit-secrets-error').classList.remove('hidden');

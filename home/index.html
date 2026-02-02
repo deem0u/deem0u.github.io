@@ -717,7 +717,13 @@
       document.getElementById('otp-code-input').focus();
       hideAlert('otp-alert');
       document.getElementById('error-otp-code').textContent = '';
-      try { await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) }); } catch (e) {}
+      try {
+        var otpRes = await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
+        var otpData = await otpRes.json();
+        showAlert('otp-alert', otpData.sent ? 'Verification code sent. Check your email (and spam/junk).' : (otpData.error || 'Could not send verification email.'), otpData.sent ? 'success' : 'error');
+      } catch (e) {
+        showAlert('otp-alert', 'Could not send verification email. Try Resend code below.', 'error');
+      }
     } catch (err) {
       showAlert('signup-step1-alert', 'Connection error. Please try again.', 'error');
       btn.disabled = false;
