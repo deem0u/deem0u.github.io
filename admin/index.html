@@ -428,7 +428,7 @@ const API = 'https://contact-page-editor.deem0u.workers.dev';
 const EDITOR_URL = 'https://deem0u.github.io/edit/';
 const PAGES_URL = 'https://deem0u.github.io/user/';
 
-let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentSha = null, modalCallback = null;
+let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentContactPageName = 'index', currentSha = null, modalCallback = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Attach all event listeners first
@@ -1050,6 +1050,72 @@ function selectPage(folder) {
   loadPage();
 }
 
+async function toggleContactPagesSelect(username) {
+  const dropdown = document.getElementById('contact-pages-dropdown-' + username);
+  const trigger = document.getElementById('contact-pages-trigger-' + username);
+  const optionsEl = document.getElementById('contact-pages-options-' + username);
+  const isOpen = dropdown && dropdown.classList.contains('show');
+  document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
+  if (isOpen) return;
+  if (optionsEl && optionsEl.children.length === 0) {
+    try {
+      const r = await fetch(`${API}/api/contact-pages/${encodeURIComponent(username)}`, { headers: { 'X-Admin-Key': adminKey } });
+      const d = await r.json();
+      const list = (d.contactPages && d.contactPages.length) ? d.contactPages : ['index'];
+      optionsEl.innerHTML = list.map(name => {
+        const label = name === 'index' ? 'index (default)' : name;
+        return `<div class="searchable-select-option" data-value="${String(name).replace(/"/g, '&quot;')}" data-label="${String(label).replace(/"/g, '&quot;')}">${escapeHtml(label)}</div>`;
+      }).join('');
+      optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
+        opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value));
+      });
+    } catch (e) {
+      optionsEl.innerHTML = '<div class="searchable-select-empty">Failed to load</div>';
+    }
+  }
+  if (dropdown && trigger) {
+    const rect = trigger.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.minWidth = rect.width + 'px';
+    dropdown.classList.add('show');
+  }
+  const searchEl = document.getElementById('contact-pages-search-' + username);
+  if (searchEl) { searchEl.value = ''; filterContactPagesOptions(username); searchEl.focus(); }
+}
+
+function filterContactPagesOptions(username) {
+  const search = (document.getElementById('contact-pages-search-' + username) && document.getElementById('contact-pages-search-' + username).value || '').toLowerCase();
+  const options = document.querySelectorAll('#contact-pages-options-' + username + ' .searchable-select-option');
+  let hasVisible = false;
+  options.forEach(opt => {
+    const label = (opt.dataset.label || opt.textContent || '').toLowerCase();
+    const match = !search || label.includes(search);
+    opt.style.display = match ? '' : 'none';
+    if (match) hasVisible = true;
+  });
+  let emptyEl = document.querySelector('#contact-pages-options-' + username + ' .searchable-select-empty');
+  if (!hasVisible && !emptyEl) {
+    const el = document.createElement('div');
+    el.className = 'searchable-select-empty';
+    el.textContent = 'No pages match';
+    document.getElementById('contact-pages-options-' + username).appendChild(el);
+  } else if (hasVisible && emptyEl) emptyEl.remove();
+}
+
+function selectContactPage(username, contactpagename) {
+  const trigger = document.getElementById('contact-pages-trigger-' + username);
+  const textEl = document.getElementById('contact-pages-text-' + username);
+  const viewLink = document.getElementById('view-live-' + username);
+  if (trigger) { trigger.setAttribute('data-selected-contact', contactpagename || 'index'); }
+  if (textEl) textEl.textContent = contactpagename === 'index' ? 'index' : (contactpagename || 'index');
+  if (viewLink) viewLink.href = (contactpagename === 'index' || !contactpagename) ? `${PAGES_URL}${username}/` : `${PAGES_URL}${username}/${contactpagename}.html`;
+  document.getElementById('contact-pages-dropdown-' + username).classList.remove('show');
+  document.querySelectorAll('#contact-pages-options-' + username + ' .searchable-select-option').forEach(opt => {
+    opt.classList.toggle('selected', (opt.dataset.value || '') === (contactpagename || 'index'));
+  });
+}
+
 // Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.searchable-select')) {
@@ -1121,7 +1187,7 @@ function renderList(t) {
     const isNew = hk && !(u.accountDetailsSent === true);
     const ver = u.emailVerification;
     const emailBadge = ver === 'admin' ? '<span class="badge badge-cyan">Admin Verified</span>' : ver === 'user' ? '<span class="badge badge-cyan">User Verified</span>' : '<span class="badge badge-pink">Not Verified</span>';
-    return `<div class="user-card">
+    return `<div class="user-card" id="user-card-${f}" data-username="${f}">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
@@ -1141,12 +1207,25 @@ function renderList(t) {
         <div class="action-row action-row-combo">
           <div class="action-combo-group">
             <span class="action-row-label">Contact Page</span>
-            <div class="action-row-buttons">
-              <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm">View Live Page</a>
+            <div class="action-row-buttons action-row-with-select">
+              <div class="searchable-select searchable-select-inline" id="contact-pages-container-${f}">
+                <button type="button" class="searchable-select-trigger searchable-select-trigger-sm" id="contact-pages-trigger-${f}" data-selected-contact="index" onclick="toggleContactPagesSelect('${f}')">
+                  <span id="contact-pages-text-${f}" class="searchable-select-value">index</span>
+                </button>
+                <div class="searchable-select-dropdown" id="contact-pages-dropdown-${f}">
+                  <div class="searchable-select-search">
+                    <input type="text" id="contact-pages-search-${f}" placeholder="Search pages..." oninput="filterContactPagesOptions('${f}')">
+                  </div>
+                  <div class="searchable-select-options" id="contact-pages-options-${f}"></div>
+                </div>
+              </div>
+              <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm" id="view-live-${f}">View Live Page</a>
               <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
               <button class="btn btn-primary btn-sm" onclick="showQrModal('${f}')">QR Codes</button>
             </div>
           </div>
+        </div>
+        <div class="action-row action-row-combo">
           <div class="action-combo-group">
             <span class="action-row-label">Recovery</span>
             <div class="action-row-buttons">
@@ -1683,6 +1762,9 @@ ${formatTimestampScript}
 }
 
 function editUser(f) { 
+  const card = document.getElementById('user-card-' + f);
+  const trigger = card && document.getElementById('contact-pages-trigger-' + f);
+  currentContactPageName = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
   selectPage(f);
   switchTab('edit'); 
 }
@@ -1697,12 +1779,14 @@ async function loadPage() {
   newUserCard.classList.add('hidden');
   
   try { 
-    const r = await fetch(`${API}/api/page/${currentFolder}`, { headers: { 'X-Admin-Key': adminKey } }); 
+    const pagePath = currentContactPageName && currentContactPageName !== 'index' ? `${currentFolder}/${currentContactPageName}` : currentFolder;
+    const r = await fetch(`${API}/api/page/${pagePath}`, { headers: { 'X-Admin-Key': adminKey } }); 
     if (!r.ok) throw 0; 
     const d = await r.json(); 
     currentSha = d.sha; 
     fillForm(d.content); 
-    document.getElementById('view-page-link').href = `${PAGES_URL}${currentFolder}/`; 
+    const viewHref = currentContactPageName === 'index' ? `${PAGES_URL}${currentFolder}/` : `${PAGES_URL}${currentFolder}/${currentContactPageName}.html`;
+    document.getElementById('view-page-link').href = viewHref; 
     card.classList.remove('hidden'); 
     hideAlert('alert-editor');
   }
@@ -1767,7 +1851,8 @@ async function handleSave(e) {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
   try {
     const c = generateHTML();
-    const r = await fetch(`${API}/api/page/${currentFolder}`, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Admin-Key': adminKey }, body: JSON.stringify({ content: c, sha: currentSha }) });
+    const pagePath = currentContactPageName && currentContactPageName !== 'index' ? `${currentFolder}/${currentContactPageName}` : currentFolder;
+    const r = await fetch(`${API}/api/page/${pagePath}`, { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Admin-Key': adminKey }, body: JSON.stringify({ content: c, sha: currentSha }) });
     const d = await r.json();
     if (r.ok) { 
       currentSha = d.sha; 
@@ -2126,7 +2211,8 @@ function parseContactFromHtml(html, folder) {
   if (!tel && vals[3]) tel = vals[3];
   if (vals[4]) country = vals[4];
   var fn = [given, family].filter(Boolean).join(' ').trim() || folder;
-  var url = PAGES_URL + folder + '/index.html';
+  var contactpagename = (arguments.length > 2 && arguments[2] !== undefined) ? arguments[2] : 'index';
+  var url = (contactpagename === 'index' || !contactpagename) ? (PAGES_URL + folder + '/') : (PAGES_URL + folder + '/' + contactpagename + '.html');
   var lines = ['Given Name: ' + given, 'Family Name: ' + family, 'Email: ' + email, 'Contact Number: ' + tel, 'Home Country: ' + country];
   var text = lines.join('\r\n');
   var adr = ';;;;;;' + (country || '').replace(/;/g, ',');
@@ -2142,6 +2228,9 @@ function parseContactFromHtml(html, folder) {
 }
 
 async function showQrModal(folder) {
+  var card = document.getElementById('user-card-' + folder);
+  var trigger = card && document.getElementById('contact-pages-trigger-' + folder);
+  var contactPage = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
   var overlay = document.getElementById('modal-qr');
   var loading = document.getElementById('modal-qr-loading');
   var content = document.getElementById('modal-qr-content');
@@ -2155,10 +2244,11 @@ async function showQrModal(folder) {
   qrModalData = { url: '', vcard: '', text: '' };
 
   try {
-    var r = await fetch(API + '/api/page/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+    var pagePath = (contactPage === 'index' || !contactPage) ? folder : (folder + '/' + contactPage);
+    var r = await fetch(API + '/api/page/' + encodeURIComponent(pagePath), { headers: { 'X-Admin-Key': adminKey } });
     if (!r.ok) throw new Error('Could not load page');
     var d = await r.json();
-    var data = parseContactFromHtml(d.content || '', folder);
+    var data = parseContactFromHtml(d.content || '', folder, contactPage);
     qrModalData = { url: data.url, vcard: data.vcard, text: data.text };
 
     var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';

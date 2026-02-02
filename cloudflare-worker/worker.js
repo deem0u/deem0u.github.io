@@ -185,6 +185,10 @@ export default {
       if (request.method === 'GET' && path === '/api/pages') {
         return await handleListPages(request, env);
       }
+      if (request.method === 'GET' && path.startsWith('/api/contact-pages/')) {
+        const username = path.replace('/api/contact-pages/', '').replace(/\/$/, '').trim();
+        return await handleListContactPages(username, request, env);
+      }
       if (request.method === 'GET' && path === '/api/account-emails') {
         return await handleGetAccountEmails(request, env);
       }
@@ -1072,6 +1076,36 @@ async function handleListPages(request, env) {
   return jsonResponse({ pages });
 }
 
+/** GET /api/contact-pages/:username - List contact page names for a user (admin only). */
+async function handleListContactPages(username, request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  const u = (username || '').trim();
+  if (!u || !/^[a-zA-Z0-9_-]+$/.test(u)) {
+    return jsonResponse({ error: 'Invalid username' }, 400);
+  }
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${u}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (!response.ok) {
+    if (response.status === 404) return jsonResponse({ contactPages: [] });
+    return jsonResponse({ error: 'GitHub error' }, 500);
+  }
+  const contents = await response.json();
+  const files = Array.isArray(contents) ? contents : [];
+  const contactPages = files
+    .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html'))
+    .map(item => item.name.replace(/\.html$/i, ''));
+  return jsonResponse({ contactPages });
+}
 
 async function handleGetAccountEmails(request, env) {
   if (!await isAdmin(request, env)) {
