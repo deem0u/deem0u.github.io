@@ -1,4 +1,4 @@
-﻿/* 
+/* 
  * Contact Page Editor - Design System
  * Clean, modern interface with clear visual hierarchy
  */
@@ -28,6 +28,23 @@
   --accent-pink: #e455ae;
   --accent-magenta: #cb1dcd;
   --accent-warm: #d1c5c0;
+  --accent-warm-border: #b8a9a2;
+
+  /* Banner & status semantic colors */
+  --banner-welcome-bg: var(--accent-warm);
+  --banner-welcome-border: var(--accent-warm-border);
+  --banner-info-bg: rgba(55, 235, 243, 0.12);
+  --banner-info-border: var(--accent-cyan);
+  --banner-reminder-bg: #fef9e7;
+  --banner-reminder-border: #d4a017;
+  --banner-critical-bg: rgba(113, 0, 0, 0.08);
+  --banner-critical-border: var(--accent-red);
+  --status-loading-bg: var(--grey-100);
+  --status-loading-border: var(--color-border-strong);
+  --status-success-bg: rgba(26, 197, 176, 0.12);
+  --status-success-border: var(--accent-teal);
+  --status-error-bg: rgba(113, 0, 0, 0.08);
+  --status-error-border: var(--accent-red);
 
   /* Semantic colors */
   --color-bg: var(--white);
@@ -312,9 +329,39 @@ body {
   justify-content: flex-end;
 }
 
+/* ========================================
+   BANNER TYPES (site-wide)
+   ----------------------------------------
+   Welcome:        Static, permanent. accent-warm bg + darker border; .banner-accent = teal.
+   Info/Updates:   .banner-info — cyan, light fill; dismiss with OK.
+   Reminder/Action: .banner-reminder — yellow scheme; until issue fixed.
+   Critical/Error:  .banner-critical — light red (#710000); until addressed.
+   Success outcome: .banner-success — teal border + light teal fill; persistent.
+   Status (inline): .status-banner + .alert-info / .alert-success / .alert-error
+     — Loading: temporary; Success: teal, persistent; Error: light red, persistent.
+   ======================================== */
+
+/* ========================================
+   Welcome Banners (static, permanent)
+   ======================================== */
+
+.banner-welcome {
+  background: var(--banner-welcome-bg);
+  border: 1px solid var(--banner-welcome-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-6);
+  color: var(--color-text);
+}
+
+.banner-welcome .banner-accent,
+.banner-welcome strong {
+  color: var(--accent-teal);
+}
+
 .card-welcome {
-  background: var(--color-bg-subtle);
-  border-color: var(--color-border);
+  background: var(--banner-welcome-bg);
+  border: 1px solid var(--banner-welcome-border);
   margin-bottom: var(--space-6);
 }
 
@@ -330,6 +377,77 @@ body {
 
 .card-welcome-text strong {
   color: var(--accent-teal);
+}
+
+/* ========================================
+   Information / Notification / Action Banners
+   ======================================== */
+
+/* Information, Updates — accent-cyan, light fill; dismiss with OK */
+.banner-info {
+  background: var(--banner-info-bg);
+  border: 1px solid var(--banner-info-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.banner-info .banner-info-content { flex: 1; min-width: 0; }
+.banner-info .banner-info-actions { flex-shrink: 0; }
+
+/* Reminder / Action needed — yellow scheme; until issue fixed */
+.banner-reminder {
+  background: var(--banner-reminder-bg);
+  border: 1px solid var(--banner-reminder-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.banner-reminder .banner-reminder-content { flex: 1; min-width: 0; }
+.banner-reminder .banner-reminder-title { font-weight: 600; margin: 0 0 var(--space-2) 0; }
+.banner-reminder .banner-reminder-message { margin: 0 0 var(--space-2) 0; font-weight: normal; }
+.banner-reminder .banner-reminder-content ul { margin: 0.5rem 0 0 1.5rem; padding-left: 1rem; }
+.banner-reminder .banner-reminder-actions { flex-shrink: 0; }
+
+/* Critical error / issues — light red; until addressed */
+.banner-critical {
+  background: var(--banner-critical-bg);
+  border: 1px solid var(--banner-critical-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+}
+
+.banner-critical .banner-critical-accent {
+  color: var(--accent-red);
+  font-weight: 600;
+}
+
+/* Success outcome (e.g. account ready, recovery complete) — teal, persistent */
+.banner-success {
+  background: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+}
+
+.banner-success .banner-accent {
+  color: var(--accent-teal);
+  font-weight: 600;
 }
 
 /* ========================================
@@ -1293,6 +1411,7 @@ body {
   }
 }
 
+/* Inline/form alerts (generic) */
 .alert-success {
   background: var(--grey-100);
   border: 1px solid var(--color-success);
@@ -1315,6 +1434,31 @@ body {
   background: var(--grey-100);
   border: 1px solid var(--color-primary);
   color: var(--grey-900);
+}
+
+/* ========================================
+   Status Banners (temporary or persistent by context)
+   ======================================== */
+
+/* Loading / Saving / Please wait — temporary, in progress */
+.status-banner.alert-info {
+  background: var(--status-loading-bg);
+  border: 1px solid var(--status-loading-border);
+  color: var(--color-text);
+}
+
+/* Confirmed / Saved / Success — persistent until new action; teal */
+.status-banner.alert-success {
+  background: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
+  color: var(--color-text);
+}
+
+/* Try again / Errors / Failure — persistent until fixed; light red */
+.status-banner.alert-error {
+  background: var(--status-error-bg);
+  border: 1px solid var(--status-error-border);
+  color: var(--color-text);
 }
 
 .alert-icon {

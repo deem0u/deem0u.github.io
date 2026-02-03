@@ -6,7 +6,7 @@
   <title>Contact Editor - User</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-  .edit-recovery-success-banner { background: var(--color-bg-muted, rgba(0,0,0,0.05)); padding: 1rem 1.25rem; border-radius: var(--radius-md, 6px); margin-bottom: 1.5rem; font-weight: 500; }
+  .edit-recovery-success-banner { padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-weight: 500; }
   .edit-recovery-success-details ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
   .edit-recovery-success-details ul li { margin-bottom: 0.5rem; }
   .edit-recovery-success-details .success-important { font-weight: bold; color: #C00000; margin: 1rem 0; }
@@ -16,12 +16,6 @@
   .edit-recovery-success-action { margin-top: 1.5rem; }
   .edit-recovery-success-action p { margin-bottom: 1rem; }
   .edit-recovery-success-buttons { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
-  #secrets-banner.secrets-attention-banner { background: #fef9e7; border: 1px solid #d4a017; border-radius: var(--radius-md, 6px); padding: 1rem 1.25rem; margin-top: 1rem; display: flex; align-items: center; gap: 1.5rem; text-align: left; }
-  #secrets-banner.secrets-attention-banner .secrets-attention-content { flex: 1; }
-  #secrets-banner.secrets-attention-banner .secrets-attention-title { font-weight: 600; margin: 0 0 0.5rem 0; }
-  #secrets-banner.secrets-attention-banner .secrets-attention-message { margin: 0 0 0.5rem 0; font-weight: normal; }
-  #secrets-banner.secrets-attention-banner #secrets-missing-list { margin: 0.5rem 0 0 1.5rem; padding-left: 1rem; }
-  #secrets-banner.secrets-attention-banner .secrets-attention-actions { flex-shrink: 0; margin-left: auto; }
   .recovery-toggle-wrap { margin: 1rem 0; }
   .recovery-toggle { display: inline-block; padding: 0.5rem 1rem; font-size: 0.875rem; color: var(--accent-teal, #1ac5b0); border: 1px solid var(--accent-teal, #1ac5b0); border-radius: 9999px; text-decoration: none; background: transparent; transition: background 0.15s, color 0.15s; }
   .recovery-toggle:hover { background: var(--accent-teal, #1ac5b0); color: white; }
@@ -38,10 +32,10 @@
   .editor-profile-strip .badge { font-size: 0.7rem; padding: 0.2em 0.5em; }
   .editor-main { flex: 1; min-width: 0; }
   .editor-form-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.3); }
-  .unverified-banner { background: #fef9e7; border: 1px solid #d4a017; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; }
   .status-banner { margin-bottom: 1rem; }
   .status-banner.hidden { display: none; }
   .status-banner.show { display: block; }
+  .verify-otp-input { font-size: 1.25rem; letter-spacing: 0.2em; text-align: center; }
   @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-profile-strip { width: 100%; } }
     </style>
 </head>
@@ -160,7 +154,7 @@
       <div class="app-container" style="max-width: 1100px; margin: 0 auto; padding: 1rem;">
         <div class="card">
           <div class="card-body">
-            <div id="recovery-success-banner" class="edit-recovery-success-banner"></div>
+            <div id="recovery-success-banner" class="edit-recovery-success-banner banner-success"></div>
             <div id="recovery-success-details" class="edit-recovery-success-details"></div>
             <div class="edit-recovery-success-action">
               <p>Don't worry — A copy of this will be emailed to you (once I get to it). You may wish to click the "Email Myself a Copy" button below and send yourself a copy now. Proceed with Sign In to your Digital Contact Page otherwise you can do it later via the Contact Editor.</p>
@@ -186,7 +180,7 @@
           <button type="button" class="btn btn-ghost btn-sm mt-2" id="edit-profile-btn">Edit Profile</button>
         </aside>
         <div class="editor-main">
-        <div id="unverified-banner" class="unverified-banner hidden">
+        <div id="unverified-banner" class="banner-reminder hidden">
           <strong>Verify your email</strong> to edit your Contact Page. <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
         </div>
         <div class="card card-welcome">
@@ -199,13 +193,13 @@
 
         <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
 
-        <div id="secrets-banner" class="alert alert-warning hidden secrets-attention-banner">
-          <div class="secrets-attention-content">
-            <p class="secrets-attention-title">There are some items that need your attention</p>
-            <p class="secrets-attention-message">To enable Access Recovery to your Contact Editor, please set the following:</p>
+        <div id="secrets-banner" class="banner-reminder hidden">
+          <div class="banner-reminder-content">
+            <p class="banner-reminder-title">There are some items that need your attention</p>
+            <p class="banner-reminder-message">To enable Access Recovery to your Contact Editor, please set the following:</p>
             <ul id="secrets-missing-list"></ul>
           </div>
-          <div class="secrets-attention-actions">
+          <div class="banner-reminder-actions">
             <button type="button" class="btn btn-primary btn-sm" onclick="showEditSecretsModal()">Set Secrets</button>
           </div>
         </div>
@@ -310,6 +304,24 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeEditSecretsModal()">Cancel</button>
         <button type="button" class="btn btn-primary" id="edit-secrets-save-btn" onclick="saveEditSecrets()">Save</button>
+      </div>
+    </div>
+  </div>
+  <div id="verify-email-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header"><h3 class="modal-title">Verify your email</h3></div>
+      <div class="modal-body">
+        <p>A 6-digit code was sent to your account email. Enter it below.</p>
+        <div class="form-group">
+          <label class="form-label" for="verify-email-code">6-digit code</label>
+          <input type="text" id="verify-email-code" class="form-input verify-otp-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+          <span class="form-error" id="verify-email-error" role="alert"></span>
+        </div>
+        <div id="verify-email-alert" class="alert hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeVerifyEmailModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="verify-email-submit-btn" onclick="submitVerifyEmailCode()">Verify</button>
       </div>
     </div>
   </div>
@@ -858,6 +870,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (editProfileBtn) editProfileBtn.addEventListener('click', openEditProfileModal);
   var verifyEmailBtn = document.getElementById('verify-email-btn');
   if (verifyEmailBtn) verifyEmailBtn.addEventListener('click', verifyEmailFromEditor);
+  var verifyEmailCodeInput = document.getElementById('verify-email-code');
+  if (verifyEmailCodeInput) verifyEmailCodeInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); submitVerifyEmailCode(); } });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.searchable-select')) {
       document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
@@ -1014,26 +1028,75 @@ async function verifyEmailFromEditor() {
     var d = await r.json();
     if (d.sent) {
       showStatusBanner('Code sent. Enter the 6-digit code below.', 'success');
-      var code = prompt("A 6-digit code was sent to your email. Enter it below:");
-      if (code) {
-        showStatusBanner('Verifying...', 'loading');
-        var vr = await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, code: code.trim().replace(/\D/g, "") }) });
-        var vd = await vr.json();
-        if (vr.ok && vd.success) {
-          profileData.emailVerified = true;
-          applyUnverifiedRestriction();
-          showStatusBanner('Email verified!', 'success');
-        } else {
-          showStatusBanner(vd.error || 'Invalid code', 'error');
-        }
-      } else {
-        hideStatusBanner();
-      }
+      openVerifyEmailModal();
     } else {
       showStatusBanner(d.error || 'Could not send code', 'error');
     }
   } catch (e) {
     showStatusBanner('Connection error', 'error');
+  }
+}
+
+function openVerifyEmailModal() {
+  var modal = document.getElementById('verify-email-modal');
+  var input = document.getElementById('verify-email-code');
+  var errEl = document.getElementById('verify-email-error');
+  var alertEl = document.getElementById('verify-email-alert');
+  if (!modal || !input) return;
+  input.value = '';
+  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+  if (alertEl) { alertEl.classList.add('hidden'); alertEl.innerHTML = ''; }
+  modal.classList.remove('hidden');
+  modal.classList.add('show');
+  input.focus();
+}
+
+function closeVerifyEmailModal() {
+  var modal = document.getElementById('verify-email-modal');
+  if (modal) { modal.classList.remove('show'); modal.classList.add('hidden'); }
+}
+
+async function submitVerifyEmailCode() {
+  var input = document.getElementById('verify-email-code');
+  var errEl = document.getElementById('verify-email-error');
+  var alertEl = document.getElementById('verify-email-alert');
+  var btn = document.getElementById('verify-email-submit-btn');
+  var code = (input && input.value) ? input.value.trim().replace(/\D/g, '') : '';
+  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+  if (alertEl) { alertEl.classList.add('hidden'); alertEl.innerHTML = ''; }
+  if (code.length !== 6) {
+    if (errEl) { errEl.textContent = 'Please enter the 6-digit code.'; errEl.classList.remove('hidden'); }
+    if (input) input.focus();
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
+  try {
+    showStatusBanner('Verifying...', 'loading');
+    var vr = await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, code }) });
+    var vd = await vr.json();
+    if (vr.ok && vd.success) {
+      profileData.emailVerified = true;
+      applyUnverifiedRestriction();
+      closeVerifyEmailModal();
+      showStatusBanner('Email verified!', 'success');
+    } else {
+      showStatusBanner('', null);
+      if (alertEl) {
+        alertEl.className = 'alert alert-error show';
+        alertEl.innerHTML = '<div class="alert-content">' + (vd.error || 'Invalid code') + '</div>';
+        alertEl.classList.remove('hidden');
+      }
+      if (input) input.focus();
+    }
+  } catch (e) {
+    showStatusBanner('', null);
+    if (alertEl) {
+      alertEl.className = 'alert alert-error show';
+      alertEl.innerHTML = '<div class="alert-content">Connection error.</div>';
+      alertEl.classList.remove('hidden');
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Verify'; }
   }
 }
 
