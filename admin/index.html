@@ -2172,15 +2172,12 @@ function resetSecretsModal() {
     if (vBadge) { vBadge.textContent = v ? 'Verified' : 'Not verified'; vBadge.className = 'badge ' + (v ? 'badge-success' : 'badge-warning'); }
     var adminChk = document.getElementById('secrets-email-verified-admin');
     if (adminChk) adminChk.checked = !!v;
-    var hasAcc = !!(d.accountEmail && d.accountEmail.trim());
-    var hasDob = !!(d.dob && d.dob.trim());
-    var hasAllSq = sq.length === 3 && sq.every(function(q){ return q.questionId && (q.answer||'').trim().length>=4; });
-    document.getElementById('secrets-account-email').readOnly = hasAcc;
-    document.getElementById('secrets-dob').readOnly = hasDob;
+    document.getElementById('secrets-account-email').readOnly = false;
+    document.getElementById('secrets-dob').readOnly = false;
     ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
       var sel = document.getElementById(id); var ans = document.getElementById(id+'-answer');
-      if (sel) sel.disabled = hasAllSq;
-      if (ans) ans.readOnly = hasAllSq;
+      if (sel) sel.disabled = false;
+      if (ans) ans.readOnly = false;
     });
   }
 }
@@ -2215,15 +2212,12 @@ async function showSecretsModal(folder) {
     if (pwInp) pwInp.placeholder = d.passwordSet ? 'Password is set — enter new to change' : 'Leave blank to keep existing';
     var adminCheck = document.getElementById('secrets-email-verified-admin');
     if (adminCheck) adminCheck.checked = !!d.emailVerified;
-    var hasAcc = !!(d.accountEmail && d.accountEmail.trim());
-    var hasDob = !!(d.dob && d.dob.trim());
-    var hasAllSq = sq.length === 3 && sq.every(function(q){ return q.questionId && (q.answer||'').trim().length>=4; });
-    document.getElementById('secrets-account-email').readOnly = hasAcc;
-    document.getElementById('secrets-dob').readOnly = hasDob;
+    document.getElementById('secrets-account-email').readOnly = false;
+    document.getElementById('secrets-dob').readOnly = false;
     ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
       var sel = document.getElementById(id); var ans = document.getElementById(id+'-answer');
-      if (sel) sel.disabled = hasAllSq;
-      if (ans) ans.readOnly = hasAllSq;
+      if (sel) sel.disabled = false;
+      if (ans) ans.readOnly = false;
     });
   } catch (e) {
     document.getElementById('modal-secrets-loading').classList.add('hidden');
@@ -2286,11 +2280,6 @@ async function saveSecrets() {
     return;
   }
   document.getElementById('modal-secrets-error').classList.add('hidden');
-  var accInp = document.getElementById('secrets-account-email');
-  var dobInp = document.getElementById('secrets-dob');
-  if (accInp && accInp.readOnly && lastSavedSecretsData) accountEmail = lastSavedSecretsData.accountEmail || '';
-  if (dobInp && dobInp.readOnly && lastSavedSecretsData) dob = lastSavedSecretsData.dob || '';
-  if (hasAllSq && lastSavedSecretsData && lastSavedSecretsData.secretQuestions && lastSavedSecretsData.secretQuestions.length === 3) sq = lastSavedSecretsData.secretQuestions;
   var password = (function(){ var p = document.getElementById('secrets-password'); return p ? p.value : ''; })();
   if (password && password.length < 8) {
     document.getElementById('modal-secrets-error').textContent = 'Password must be at least 8 characters.';
