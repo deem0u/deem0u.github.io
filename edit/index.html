@@ -45,6 +45,7 @@
   .contact-page-card.selected { border-color: var(--accent-teal, #1ac5b0); background: rgba(26, 197, 176, 0.08); font-weight: 600; }
   .contact-page-card .page-name { display: block; }
   .contact-page-card .page-slug { font-size: 0.75rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
+  #editor-contact-card .card-header-fields { gap: 0.35rem; }
   .card-header-fields { display: flex; flex-direction: column; gap: 0.5rem; }
   .card-header-field-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
   .card-header-field-row .form-input-header { max-width: 22ch; width: 100%; }
@@ -55,15 +56,30 @@
   .editor-contact-view.hidden { display: none; }
   .editor-contact-edit { display: none; }
   .editor-contact-edit.show { display: block; }
-  .editor-contact-view-toolbar { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+  .editor-contact-view-toolbar { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
   .editor-contact-view-content { font-size: 0.95rem; line-height: 1.5; }
-  .editor-view-row { margin-bottom: 0.6rem; }
-  .editor-view-row .editor-view-label { color: var(--color-text-secondary, #666); margin-right: 0.35rem; }
-  .editor-view-row .editor-view-value { font-weight: 500; }
-  .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
+  .editor-contact-view-content .editor-view-value { font-weight: 500; }
+  .editor-contact-view-content .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
+  .editor-contact-view-content .editor-view-header { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
   .editor-contact-edit .card-header-fields { flex: 1; min-width: 0; }
   .editor-edit-mode-actions { flex-shrink: 0; }
+  /* Compact form container so entire form fits without scrolling */
+  #editor-contact-card .card-header { padding: 0.5rem 0.75rem; }
+  #editor-contact-card .card-body { padding: 0.5rem 0.75rem; }
+  #editor-contact-card .form-group { margin-bottom: 0.4rem; }
+  #editor-contact-card .form-group:last-child { margin-bottom: 0; }
+  #editor-contact-card .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; }
+  #editor-contact-card .form-hint { margin-top: 0.15rem; }
+  #editor-contact-card .form-row { gap: 0.5rem; }
+  #editor-contact-card .form-section { padding: 0.4rem 0.5rem; margin-top: 0.35rem; }
+  #editor-contact-card .form-section .form-group { margin-bottom: 0.35rem; }
+  #editor-contact-card .form-actions { margin-top: 0.5rem; padding-top: 0.5rem; }
+  #editor-contact-card .form-input, #editor-contact-card .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
+  #editor-contact-card .form-textarea.form-textarea-additional { min-height: 4.5rem; }
+  .editor-contact-view-content.editor-contact-view-content { padding: 0.5rem 0.75rem; }
+  .editor-contact-view-content .form-group { margin-bottom: 0.4rem; }
+  .editor-contact-view-content .editor-view-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; }
   @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-sidebar { width: 100%; } .editor-profile-strip { width: 100%; } }
     </style>
 </head>
@@ -247,18 +263,37 @@
               <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit Contact Page</button>
             </div>
             <div class="editor-contact-view-content card-body" id="editor-contact-view-content">
-              <div class="editor-view-row"><span class="editor-view-label">Contact Page Name</span><span class="editor-view-value" id="view-contact-page-name">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Contact Page URL</span><span class="editor-view-value" id="view-contact-page-url">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Given Names</span><span class="editor-view-value" id="view-first-name">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Family Name</span><span class="editor-view-value" id="view-surname">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Email</span><span class="editor-view-value" id="view-email">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Contact Number</span><span class="editor-view-value" id="view-mobile">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Home Country</span><span class="editor-view-value" id="view-home-country">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Destination Name</span><span class="editor-view-value" id="view-dest-name">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Destination Address</span><span class="editor-view-value" id="view-dest-address">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Destination Contact Number</span><span class="editor-view-value" id="view-dest-phone">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Destination Email</span><span class="editor-view-value" id="view-dest-email">—</span></div>
-              <div class="editor-view-row"><span class="editor-view-label">Additional Information</span><span class="editor-view-value editor-view-value-block" id="view-additional-info">—</span></div>
+              <div class="card-header-fields editor-view-header">
+                <div class="card-header-field-row"><span class="editor-view-value" id="view-contact-page-name"></span></div>
+                <div class="card-header-field-row"><span class="editor-view-value" id="view-contact-page-url"></span></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><span class="editor-view-value" id="view-first-name"></span></div>
+                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><span class="editor-view-value" id="view-surname"></span></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><span class="editor-view-value" id="view-email"></span></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><span class="editor-view-value" id="view-mobile"></span></div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Home Country</label>
+                <span class="editor-view-value" id="view-home-country"></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Destination Details</label>
+                <div class="form-section">
+                  <div class="form-group"><label class="form-label">Destination Name</label><span class="editor-view-value" id="view-dest-name"></span></div>
+                  <div class="form-group"><label class="form-label">Destination Address</label><span class="editor-view-value" id="view-dest-address"></span></div>
+                  <div class="form-row">
+                    <div class="form-group"><label class="form-label">Destination Contact Number</label><span class="editor-view-value" id="view-dest-phone"></span></div>
+                    <div class="form-group"><label class="form-label">Destination Email</label><span class="editor-view-value" id="view-dest-email"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Additional Information</label>
+                <span class="editor-view-value editor-view-value-block" id="view-additional-info"></span>
+              </div>
             </div>
           </div>
           <div id="editor-contact-edit" class="editor-contact-edit">
@@ -319,7 +354,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Additional Information</label>
-                <textarea id="additional-info" class="form-textarea form-textarea-additional" rows="8" maxlength="500"></textarea>
+                <textarea id="additional-info" class="form-textarea form-textarea-additional" rows="4" maxlength="500"></textarea>
                 <span class="form-hint">Optional. e.g. emergency contact, special instructions.</span>
               </div>
               <div id="editor-alert" class="alert"></div>
@@ -993,13 +1028,13 @@ function setContactPageMeta(slug, displayName, createMode) {
 
 function refreshViewModeDisplay() {
   function el(id) { var e = document.getElementById(id); return e ? e.value || e.textContent || '' : ''; }
-  function setView(id, text) { var e = document.getElementById(id); if (e) e.textContent = (text != null && String(text).trim() !== '') ? String(text).trim() : '—'; }
+  function setView(id, text) { var e = document.getElementById(id); if (e) e.textContent = (text != null && String(text).trim() !== '') ? String(text).trim() : ''; }
   var nameInp = document.getElementById('contact-page-name');
   var slugInp = document.getElementById('contact-page-url-slug');
   var u = username || '';
   var slug = (slugInp && slugInp.value) ? slugInp.value.trim() : (currentContactpagename === 'index' ? '' : currentContactpagename);
   if (slug && slug.toLowerCase() === 'index') slug = '';
-  var url = u ? (PAGES_URL + u + '/' + (slug ? slug + '.html' : '')) : '—';
+  var url = u ? (PAGES_URL + u + '/' + (slug ? slug + '.html' : '')) : '';
   setView('view-contact-page-name', nameInp ? nameInp.value : '');
   setView('view-contact-page-url', url);
   setView('view-first-name', el('first-name'));
