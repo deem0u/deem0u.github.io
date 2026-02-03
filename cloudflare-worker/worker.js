@@ -983,8 +983,10 @@ async function handleCreatePage(request, env) {
   }
 
   const data = await response.json();
+  const contactPageName = (body.contactPageName != null && typeof body.contactPageName === 'string') ? body.contactPageName.trim() : null;
+  const displayName = (contactPageName && contactPageName.length <= 128) ? contactPageName : (contactpagename === 'index' ? 'Main (index)' : contactpagename);
 
-  // Store account email and profile names in KV when provided
+  // Store account email, profile names, and contact page name in KV when provided
   if (env.EDIT_KEYS_KV) {
     if (accountEmailVal && accountEmailVal.includes('@')) {
       const accountEmailLower = accountEmailVal.toLowerCase();
@@ -993,12 +995,14 @@ async function handleCreatePage(request, env) {
     }
     if (firstName) await env.EDIT_KEYS_KV.put('user_first_name:' + usernameTrim, firstName);
     if (lastName) await env.EDIT_KEYS_KV.put('user_last_name:' + usernameTrim, lastName);
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${usernameTrim}:${contactpagename}`, displayName);
   }
 
   return jsonResponse({
     success: true,
     username,
     contactpagename,
+    contactPageName: displayName,
     sha: data.content.sha,
     url: pageUrl(username, contactpagename)
   });
