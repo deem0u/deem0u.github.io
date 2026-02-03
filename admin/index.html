@@ -1061,13 +1061,14 @@ async function toggleContactPagesSelect(username) {
     try {
       const r = await fetch(`${API}/api/contact-pages/${encodeURIComponent(username)}`, { headers: { 'X-Admin-Key': adminKey } });
       const d = await r.json();
-      const list = (d.contactPages && d.contactPages.length) ? d.contactPages : ['index'];
-      optionsEl.innerHTML = list.map(name => {
-        const label = name === 'index' ? 'index (default)' : name;
-        return `<div class="searchable-select-option" data-value="${String(name).replace(/"/g, '&quot;')}" data-label="${String(label).replace(/"/g, '&quot;')}">${escapeHtml(label)}</div>`;
+      const raw = (d.contactPages && d.contactPages.length) ? d.contactPages : [{ slug: 'index', name: 'index (default)' }];
+      optionsEl.innerHTML = raw.map(item => {
+        const slug = typeof item === 'string' ? item : (item.slug || 'index');
+        const label = typeof item === 'string' ? (item === 'index' ? 'index (default)' : item) : (item.name || item.slug || (slug === 'index' ? 'index (default)' : slug));
+        return `<div class="searchable-select-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(label).replace(/"/g, '&quot;')}">${escapeHtml(label)}</div>`;
       }).join('');
       optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
-        opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value));
+        opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.label));
       });
     } catch (e) {
       optionsEl.innerHTML = '<div class="searchable-select-empty">Failed to load</div>';
@@ -1103,12 +1104,12 @@ function filterContactPagesOptions(username) {
   } else if (hasVisible && emptyEl) emptyEl.remove();
 }
 
-function selectContactPage(username, contactpagename) {
+function selectContactPage(username, contactpagename, displayLabel) {
   const trigger = document.getElementById('contact-pages-trigger-' + username);
   const textEl = document.getElementById('contact-pages-text-' + username);
   const viewLink = document.getElementById('view-live-' + username);
   if (trigger) { trigger.setAttribute('data-selected-contact', contactpagename || 'index'); }
-  if (textEl) textEl.textContent = contactpagename === 'index' ? 'index' : (contactpagename || 'index');
+  if (textEl) textEl.textContent = (displayLabel && String(displayLabel).trim()) ? displayLabel : (contactpagename === 'index' ? 'index' : (contactpagename || 'index'));
   if (viewLink) viewLink.href = (contactpagename === 'index' || !contactpagename) ? `${PAGES_URL}${username}/` : `${PAGES_URL}${username}/${contactpagename}.html`;
   document.getElementById('contact-pages-dropdown-' + username).classList.remove('show');
   document.querySelectorAll('#contact-pages-options-' + username + ' .searchable-select-option').forEach(opt => {
