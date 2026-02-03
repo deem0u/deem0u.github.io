@@ -286,6 +286,9 @@ export default {
       if (request.method === 'GET' && path === '/api/admin/site-settings') {
         return await handleGetSiteSettings(request, env);
       }
+      if (request.method === 'GET' && path === '/api/admin/admin-email') {
+        return await handleGetAdminEmail(request, env);
+      }
       if (request.method === 'PUT' && path === '/api/admin/site-settings') {
         return await handlePutSiteSettings(request, env);
       }
@@ -294,6 +297,9 @@ export default {
       }
       if (request.method === 'PUT' && path === '/api/admin/set-password') {
         return await handlePutAdminPassword(request, env);
+      }
+      if (request.method === 'POST' && path === '/api/admin/verify-otp-set-password') {
+        return await handleVerifyOtpSetPassword(request, env);
       }
 
       if (request.method === 'POST' && path === '/api/recover/verify-reset-token') {
@@ -1376,6 +1382,15 @@ async function handlePutSiteSettings(request, env) {
   return jsonResponse({ success: true });
 }
 
+/** GET /api/admin/admin-email - Admin only. Returns { email, passwordSet }. */
+async function handleGetAdminEmail(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ email: null, passwordSet: false });
+  const email = await env.EDIT_KEYS_KV.get('admin:email');
+  const hash = await env.EDIT_KEYS_KV.get('admin:password_hash');
+  return jsonResponse({ email: email || null, passwordSet: !!hash });
+}
+
 /** PUT /api/admin/admin-key - Admin only. Body: { newAdminKey }. */
 async function handlePutAdminKey(request, env) {
   if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
@@ -1384,6 +1399,33 @@ async function handlePutAdminKey(request, env) {
   const newKey = (body.newAdminKey || '').trim();
   if (newKey.length < 8) return jsonResponse({ error: 'Admin key must be at least 8 characters' }, 400);
   await env.EDIT_KEYS_KV.put('admin:key', newKey);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/admin/verify-otp-set-password - Admin only. Body: { otp, newPassword }. Verifies admin:recovery_code then sets password. */
+async function handleVerifyOtpSetPassword(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const otp = (body.otp || '').trim();
+  const newPassword = body.newPassword;
+  if (!otp) return jsonResponse({ error: 'Code required' }, 400);
+  if (typeof newPassword !== 'string' || newPassword.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  const storedData = await env.EDIT_KEYS_KV.get('admin:recovery_code');
+  if (!storedData) return jsonResponse({ error: 'No recovery code found. Request a new one.' }, 400);
+  const { recoveryCode, expiresAt } = JSON.parse(storedData);
+  if (Date.now() > expiresAt) {
+    await env.EDIT_KEYS_KV.delete('admin:recovery_code');
+    return jsonResponse({ error: 'Code expired. Request a new one.' }, 400);
+  }
+  if (otp !== recoveryCode) return jsonResponse({ error: 'Invalid code.' }, 401);
+  await env.EDIT_KEYS_KV.delete('admin:recovery_code');
+  const saltArr = new Uint8Array(SALT_BYTES);
+  crypto.getRandomValues(saltArr);
+  const saltHex = bufferToHex(saltArr);
+  const hashHex = await hashAdminPassword(newPassword, saltArr);
+  await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+  await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
   return jsonResponse({ success: true });
 }
 

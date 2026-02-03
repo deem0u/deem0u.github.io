@@ -206,22 +206,35 @@
           <div class="card mt-4">
             <div class="card-header"><span class="card-title">Admin account</span></div>
             <div class="card-body">
-              <div style="display:flex; flex-wrap:wrap; align-items:flex-start; gap:1.5rem;">
-                <div class="form-group" style="margin:0;">
-                  <label class="form-label" style="margin-bottom:0.25rem;">Admin key (stored locally)</label>
-                  <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <input type="password" id="dashboard-admin-key" class="form-input" placeholder="Set or change admin key" minlength="8" style="max-width:16rem;">
-                    <button type="button" class="btn btn-secondary" id="save-admin-key-btn">Save key</button>
-                  </div>
-                  <span class="form-hint">Saves to server and this device so you stay signed in.</span>
+              <div class="form-group mb-4">
+                <label class="form-label" style="margin-bottom:0.25rem;">Admin email (for recovery &amp; sign-in)</label>
+                <div id="admin-email-display" class="form-input" style="max-width:20rem; background:var(--color-bg-muted,#f5f5f5);" readonly aria-readonly="true">—</div>
+                <span class="form-hint">Used for password recovery and email sign-in.</span>
+              </div>
+              <div class="form-group mb-4">
+                <label class="form-label" style="margin-bottom:0.25rem;">Admin key (stored locally)</label>
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                  <input type="text" id="dashboard-admin-key" class="form-input" placeholder="Generate a key to set or change" style="max-width:20rem;" readonly aria-readonly="true" autocomplete="off">
+                  <button type="button" class="btn btn-secondary" id="generate-admin-key-btn">Generate</button>
+                  <button type="button" class="btn btn-secondary hidden" id="save-admin-key-btn">Save &amp; Store Locally</button>
+                  <button type="button" class="btn btn-ghost btn-sm hidden" id="reset-admin-key-btn">Reset</button>
                 </div>
-                <div class="form-group" style="margin:0;">
-                  <label class="form-label" style="margin-bottom:0.25rem;">Password for email sign-in</label>
-                  <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <input type="password" id="dashboard-password" class="form-input" placeholder="Set or change password" minlength="8" style="max-width:16rem;">
-                    <button type="button" class="btn btn-secondary" id="save-password-btn">Save password</button>
+                <span class="form-hint">Field is read-only. Generate a key, then save to server and this device.</span>
+              </div>
+              <div class="form-group" id="admin-password-section">
+                <label class="form-label" style="margin-bottom:0.25rem;">Password for email sign-in</label>
+                <div id="admin-password-not-set">
+                  <div style="display:flex; flex-direction:column; gap:0.5rem; max-width:20rem;">
+                    <input type="password" id="dashboard-password-new" class="form-input" placeholder="Password (min 8 characters)" minlength="8" autocomplete="new-password">
+                    <input type="password" id="dashboard-password-confirm" class="form-input" placeholder="Reconfirm password" minlength="8" autocomplete="new-password">
+                    <button type="button" class="btn btn-secondary" id="set-password-btn" disabled>Set Password</button>
                   </div>
-                  <span class="form-hint">Lets you sign in with recovery email + this password.</span>
+                  <span class="form-hint">Enter password twice; button enables when both match and meet criteria.</span>
+                </div>
+                <div id="admin-password-set" class="hidden">
+                  <p class="form-hint" style="margin-bottom:0.5rem;">Password is set for email sign-in.</p>
+                  <button type="button" class="btn btn-secondary" id="reset-password-trigger-btn">Reset</button>
+                  <span class="form-hint" style="display:block; margin-top:0.5rem;">Sends OTP to your admin email; enter code and new password to reset.</span>
                 </div>
               </div>
             </div>
@@ -427,6 +440,32 @@
     </div>
   </div>
 
+  <div id="modal-password-reset" class="modal-overlay hidden">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header"><h3 class="modal-title">Reset password</h3></div>
+      <div class="modal-body">
+        <p class="form-hint mb-2">Enter the 6-digit code sent to your admin email, then set a new password.</p>
+        <div class="form-group">
+          <label class="form-label">Code</label>
+          <input type="text" id="modal-reset-otp" class="form-input form-input-code font-mono" placeholder="000000" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code">
+        </div>
+        <div class="form-group">
+          <label class="form-label">New password</label>
+          <input type="password" id="modal-reset-new-password" class="form-input" placeholder="Min 8 characters" minlength="8" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm password</label>
+          <input type="password" id="modal-reset-confirm-password" class="form-input" placeholder="Same as above" minlength="8" autocomplete="new-password">
+        </div>
+        <div id="modal-password-reset-alert" class="alert"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closePasswordResetModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="modal-password-reset-submit">Set new password</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-qr" class="modal-overlay">
     <div class="modal modal-qr">
       <div class="modal-header"><h3 class="modal-title">QR Codes</h3></div>
@@ -556,6 +595,7 @@ const PAGES_URL = 'https://deem0u.github.io/user/';
 let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentContactPageName = 'index', currentSha = null, modalCallback = null;
 var siteSettings = { divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {} };
 var loginMode = 'key'; // 'key' | 'email'
+var adminEmail = null, adminPasswordSet = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Check for password reset link (?reset=TOKEN)
@@ -611,10 +651,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (recoveryForm2) recoveryForm2.addEventListener('submit', handleRecoveryStep2);
     var resetPwForm = document.getElementById('reset-password-form');
     if (resetPwForm) resetPwForm.addEventListener('submit', handleResetPasswordSubmit);
+    var genKeyBtn = document.getElementById('generate-admin-key-btn');
+    if (genKeyBtn) genKeyBtn.addEventListener('click', handleGenerateAdminKey);
     var saveKeyBtn = document.getElementById('save-admin-key-btn');
     if (saveKeyBtn) saveKeyBtn.addEventListener('click', handleSaveAdminKey);
-    var savePwBtn = document.getElementById('save-password-btn');
-    if (savePwBtn) savePwBtn.addEventListener('click', handleSavePassword);
+    var resetKeyBtn = document.getElementById('reset-admin-key-btn');
+    if (resetKeyBtn) resetKeyBtn.addEventListener('click', handleResetAdminKey);
+    var setPwBtn = document.getElementById('set-password-btn');
+    if (setPwBtn) setPwBtn.addEventListener('click', handleSetPassword);
+    var resetPwTriggerBtn = document.getElementById('reset-password-trigger-btn');
+    if (resetPwTriggerBtn) resetPwTriggerBtn.addEventListener('click', handleResetPasswordTrigger);
+    var pwNew = document.getElementById('dashboard-password-new');
+    var pwConfirm = document.getElementById('dashboard-password-confirm');
+    if (pwNew) pwNew.addEventListener('input', updateSetPasswordButton);
+    if (pwConfirm) pwConfirm.addEventListener('input', updateSetPasswordButton);
+    var modalResetSubmit = document.getElementById('modal-password-reset-submit');
+    if (modalResetSubmit) modalResetSubmit.addEventListener('click', handlePasswordResetModalSubmit);
     if (contactForm) contactForm.addEventListener('submit', handleSave);
     if (newUserForm) newUserForm.addEventListener('submit', handleCreateUser);
   } catch (err) {
@@ -1026,6 +1078,55 @@ async function handleResetPasswordSubmit(e) {
   btn.disabled = false; btn.textContent = 'Set Password';
 }
 
+function loadAdminAccountSection() {
+  var emailEl = document.getElementById('admin-email-display');
+  if (emailEl) emailEl.textContent = adminEmail || '—';
+  var notSet = document.getElementById('admin-password-not-set');
+  var set = document.getElementById('admin-password-set');
+  if (adminPasswordSet) {
+    if (notSet) notSet.classList.add('hidden');
+    if (set) set.classList.remove('hidden');
+  } else {
+    if (notSet) notSet.classList.remove('hidden');
+    if (set) set.classList.add('hidden');
+  }
+  updateSetPasswordButton();
+}
+
+function generateRandomKey() {
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var len = 24;
+  var out = '';
+  var arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  for (var i = 0; i < len; i++) out += chars[arr[i] % chars.length];
+  return out;
+}
+
+function handleGenerateAdminKey() {
+  var inp = document.getElementById('dashboard-admin-key');
+  var genBtn = document.getElementById('generate-admin-key-btn');
+  var saveBtn = document.getElementById('save-admin-key-btn');
+  var resetBtn = document.getElementById('reset-admin-key-btn');
+  if (!inp || !genBtn || !saveBtn || !resetBtn) return;
+  var key = generateRandomKey();
+  inp.value = key;
+  genBtn.classList.add('hidden');
+  saveBtn.classList.remove('hidden');
+  resetBtn.classList.remove('hidden');
+}
+
+function handleResetAdminKey() {
+  var inp = document.getElementById('dashboard-admin-key');
+  var genBtn = document.getElementById('generate-admin-key-btn');
+  var saveBtn = document.getElementById('save-admin-key-btn');
+  var resetBtn = document.getElementById('reset-admin-key-btn');
+  if (inp) inp.value = '';
+  if (genBtn) genBtn.classList.remove('hidden');
+  if (saveBtn) saveBtn.classList.add('hidden');
+  if (resetBtn) resetBtn.classList.add('hidden');
+}
+
 async function handleSaveAdminKey() {
   var inp = document.getElementById('dashboard-admin-key');
   var key = (inp && inp.value) ? inp.value.trim() : '';
@@ -1033,21 +1134,91 @@ async function handleSaveAdminKey() {
   try {
     var r = await fetch(API + '/api/admin/admin-key', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ newAdminKey: key }) });
     var d = await r.json();
-    if (r.ok) { adminKey = key; localStorage.setItem('admin_key', key); inp.value = ''; showAlert('alert-admin-access', 'Admin key saved. You stay signed in on this device.', 'success'); }
-    else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
+    if (r.ok) {
+      adminKey = key;
+      localStorage.setItem('admin_key', key);
+      inp.value = '';
+      document.getElementById('generate-admin-key-btn').classList.remove('hidden');
+      document.getElementById('save-admin-key-btn').classList.add('hidden');
+      document.getElementById('reset-admin-key-btn').classList.add('hidden');
+      showAlert('alert-admin-access', 'Admin key saved. You stay signed in on this device.', 'success');
+    } else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
   } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
-async function handleSavePassword() {
-  var inp = document.getElementById('dashboard-password');
-  var password = (inp && inp.value) || '';
-  if (password.length < 8) { showAlert('alert-admin-access', 'Password must be at least 8 characters.', 'error'); return; }
+function updateSetPasswordButton() {
+  var btn = document.getElementById('set-password-btn');
+  var newPw = document.getElementById('dashboard-password-new');
+  var confirmPw = document.getElementById('dashboard-password-confirm');
+  if (!btn || !newPw || !confirmPw) return;
+  var a = (newPw.value || '').trim();
+  var b = (confirmPw.value || '').trim();
+  var firstValid = a.length >= 8;
+  var valid = firstValid && b.length >= 8 && a === b;
+  btn.disabled = !valid;
+  btn.textContent = valid ? 'Set Password' : 'Reconfirm password';
+}
+
+async function handleSetPassword() {
+  var newPw = document.getElementById('dashboard-password-new');
+  var confirmPw = document.getElementById('dashboard-password-confirm');
+  var pw = (newPw && newPw.value) ? newPw.value.trim() : '';
+  if (pw.length < 8) { showAlert('alert-admin-access', 'Password must be at least 8 characters.', 'error'); return; }
+  if (pw !== (confirmPw && confirmPw.value ? confirmPw.value.trim() : '')) { showAlert('alert-admin-access', 'Passwords do not match.', 'error'); return; }
   try {
-    var r = await fetch(API + '/api/admin/set-password', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ password: password }) });
+    var r = await fetch(API + '/api/admin/set-password', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ password: pw }) });
     var d = await r.json();
-    if (r.ok) { inp.value = ''; showAlert('alert-admin-access', 'Password saved. You can sign in with your recovery email and this password.', 'success'); }
-    else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
+    if (r.ok) {
+      adminPasswordSet = true;
+      if (newPw) newPw.value = '';
+      if (confirmPw) confirmPw.value = '';
+      loadAdminAccountSection();
+      showAlert('alert-admin-access', 'Password saved. You can sign in with your recovery email and this password.', 'success');
+    } else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
   } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
+}
+
+async function handleResetPasswordTrigger() {
+  if (!adminEmail) { showAlert('alert-admin-access', 'No admin email configured.', 'error'); return; }
+  try {
+    var r = await fetch(API + '/api/recover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: adminEmail }) });
+    var d = await r.json();
+    if (r.ok && d.step === 'code_sent') {
+      document.getElementById('modal-reset-otp').value = '';
+      document.getElementById('modal-reset-new-password').value = '';
+      document.getElementById('modal-reset-confirm-password').value = '';
+      document.getElementById('modal-password-reset-alert').className = 'alert';
+      document.getElementById('modal-password-reset-alert').innerHTML = '';
+      document.getElementById('modal-password-reset').classList.remove('hidden');
+    } else { showAlert('alert-admin-access', (d && d.error) || 'Failed to send code.', 'error'); }
+  } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
+}
+
+function closePasswordResetModal() {
+  document.getElementById('modal-password-reset').classList.add('hidden');
+}
+
+async function handlePasswordResetModalSubmit() {
+  var otp = (document.getElementById('modal-reset-otp').value || '').trim();
+  var newPw = document.getElementById('modal-reset-new-password').value || '';
+  var confirmPw = document.getElementById('modal-reset-confirm-password').value || '';
+  var alertEl = document.getElementById('modal-password-reset-alert');
+  if (!otp) { showAlert('modal-password-reset-alert', 'Enter the 6-digit code.', 'error'); return; }
+  if (newPw.length < 8) { showAlert('modal-password-reset-alert', 'Password must be at least 8 characters.', 'error'); return; }
+  if (newPw !== confirmPw) { showAlert('modal-password-reset-alert', 'Passwords do not match.', 'error'); return; }
+  var btn = document.getElementById('modal-password-reset-submit');
+  btn.disabled = true;
+  try {
+    var r = await fetch(API + '/api/admin/verify-otp-set-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ otp: otp, newPassword: newPw }) });
+    var d = await r.json();
+    if (r.ok && d.success) {
+      adminPasswordSet = true;
+      loadAdminAccountSection();
+      closePasswordResetModal();
+      showAlert('alert-admin-access', 'Password reset successfully.', 'success');
+    } else { showAlert('modal-password-reset-alert', (d && d.error) || 'Failed to set password.', 'error'); }
+  } catch (e) { showAlert('modal-password-reset-alert', 'Connection error.', 'error'); }
+  btn.disabled = false;
 }
 
 function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert-2', 'Copied to clipboard!', 'success'); }
@@ -1121,6 +1292,13 @@ async function loadDashboard() {
     if (settingsRes.ok) {
       var settingsData = await settingsRes.json();
       siteSettings = { divertAllGlobal: !!settingsData.divertAllGlobal, maintenanceMode: !!settingsData.maintenanceMode, lockdownMode: !!settingsData.lockdownMode, divertUsers: settingsData.divertUsers || {} };
+    }
+    var adminEmailRes = await fetch(API + '/api/admin/admin-email', { headers: { 'X-Admin-Key': adminKey } });
+    if (adminEmailRes.ok) {
+      var adminEmailData = await adminEmailRes.json();
+      adminEmail = adminEmailData.email || null;
+      adminPasswordSet = !!adminEmailData.passwordSet;
+      loadAdminAccountSection();
     }
     var sdAll = document.getElementById('site-divert-all');
     var sdMaint = document.getElementById('site-maintenance');
@@ -1508,6 +1686,14 @@ function renderList(t) {
         </div>
         <div class="action-row action-row-combo">
           <div class="action-combo-group">
+            <span class="action-row-label">Divert to dev</span>
+            <div class="action-row-buttons">
+              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer; font-size:0.875rem;"><input type="checkbox" class="divert-user-toggle" id="divert-${escapeHtml(f)}" data-username="${escapeHtml(f)}" onchange="toggleDivertUser(this)" ${(siteSettings.divertAllGlobal || siteSettings.divertUsers[f]) ? ' checked' : ''}><span>Divert to dev</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="action-row action-row-combo">
+          <div class="action-combo-group">
             <span class="action-row-label">Edit Access</span>
             <div class="action-row-buttons">
               ${!hk
@@ -1521,7 +1707,6 @@ function renderList(t) {
             <div class="action-row-buttons">
               ${u.accountEmail ? `<button type="button" class="btn btn-primary btn-sm" onclick="sendViaEmail('${f}')">Send via Email</button>` : ''}
               <button class="btn btn-primary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
-              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer; font-size:0.875rem;"><input type="checkbox" class="divert-user-toggle" id="divert-${escapeHtml(f)}" data-username="${escapeHtml(f)}" onchange="toggleDivertUser(this)" ${(siteSettings.divertAllGlobal || siteSettings.divertUsers[f]) ? ' checked' : ''}><span>Divert to dev</span></label>
             </div>
           </div>` : ''}
         </div>
