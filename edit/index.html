@@ -39,16 +39,14 @@
   .editor-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
   .contact-pages-container { background: var(--color-bg-muted, #f8f9fa); border-radius: var(--radius-md, 8px); padding: 1rem; border: 1px solid var(--accent-teal, #1ac5b0); }
   .contact-pages-section .profile-title { margin-bottom: 0.5rem; }
-  .contact-pages-list { display: flex; flex-direction: column; gap: 0.5rem; }
-  .contact-page-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 8px); padding: 0.6rem 0.75rem; cursor: pointer; font-size: 0.85rem; text-align: left; transition: border-color 0.15s, background 0.15s; }
+  .contact-pages-list { display: flex; flex-direction: column; gap: 0.35rem; }
+  .contact-page-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 6px); padding: 0.4rem 0.5rem; cursor: pointer; font-size: 0.75rem; line-height: 1.35; text-align: left; transition: border-color 0.15s, background 0.15s; }
   .contact-page-card:hover { border-color: var(--accent-teal, #1ac5b0); background: var(--color-bg-subtle, #f5f5f5); }
   .contact-page-card.selected { border-color: var(--accent-teal, #1ac5b0); background: rgba(26, 197, 176, 0.08); font-weight: 600; }
-  .contact-page-card .contact-page-card-label { display: block; font-size: 0.7rem; font-weight: 600; color: var(--color-text-secondary, #666); margin-top: 0.35rem; }
-  .contact-page-card .contact-page-card-label:first-child { margin-top: 0; }
-  .contact-page-card .page-name { display: block; margin-top: 0.15rem; }
-  .contact-page-card .page-slug { display: block; font-size: 0.75rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
-  .contact-page-card .contact-page-card-actions { margin-top: 0.5rem; display: flex; justify-content: flex-end; }
-  .contact-page-card .contact-page-card-delete { flex-shrink: 0; }
+  .contact-page-card .contact-page-card-row { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 0.25rem; margin-top: 0.15rem; min-height: 0; }
+  .contact-page-card .contact-page-card-row:first-child { margin-top: 0; }
+  .contact-page-card .contact-page-card-label { flex-shrink: 0; font-size: 0.65rem; font-weight: 600; color: var(--color-text-secondary, #666); }
+  .contact-page-card .contact-page-card-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; }
   #editor-contact-card .card-header-fields { gap: 0.35rem; }
   .card-header-fields { display: flex; flex-direction: column; gap: 0.5rem; }
   .card-header-field-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
@@ -351,11 +349,10 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
-                <span class="form-hint">The slug for this page’s URL. Letters, numbers, hyphens, underscores. Must be unique. Leave blank for main page.</span>
+                <span class="form-hint">The slug for this page’s URL (stored under your user folder). Letters, numbers, hyphens, underscores. 2–28 characters. Must be unique.</span>
                 <div class="contact-page-url-inline">
                   <span class="card-header-url-prefix" aria-hidden="true">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
-                  <input type="text" id="contact-page-url-slug" class="form-input" placeholder="Contact Page URL" pattern="^[a-zA-Z0-9_-]*$" maxlength="28" autocomplete="off" title="Contact Page URL" required>
-                  <span id="contact-page-url-suffix" class="card-header-url-suffix" aria-hidden="true"></span>
+                  <input type="text" id="contact-page-url-slug" class="form-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]+$" maxlength="28" autocomplete="off" title="Contact Page URL" required>
                 </div>
                 <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
               </div>
@@ -411,6 +408,7 @@
               <div class="form-actions form-actions-editor">
                 <button type="submit" id="save-btn" class="btn btn-primary btn-lg" disabled>Save Changes</button>
                 <button type="button" class="btn btn-secondary btn-lg" id="cancel-btn" onclick="cancelForm()" disabled>Cancel</button>
+                <button type="button" class="btn btn-danger btn-lg" id="form-delete-page-btn" onclick="openDeletePageModalForCurrentPage()" style="display:none">Delete</button>
               </div>
             </form>
           </div>
@@ -1064,7 +1062,7 @@ function pageApiPath() {
   return currentContactpagename === 'index' ? `${API}/api/page/${encodeURIComponent(username)}` : `${API}/api/page/${encodeURIComponent(username)}/${encodeURIComponent(currentContactpagename)}`;
 }
 function viewPageHref() {
-  return currentContactpagename === 'index' ? PAGES_URL + username + '/' : PAGES_URL + username + '/' + currentContactpagename + '.html';
+  return currentContactpagename === 'index' ? PAGES_URL + username + '/' : PAGES_URL + username + '/' + currentContactpagename;
 }
 
 function setContactPageMeta(slug, displayName, createMode) {
@@ -1074,11 +1072,11 @@ function setContactPageMeta(slug, displayName, createMode) {
   var nameInp = document.getElementById('contact-page-name');
   if (uEl) uEl.textContent = username || '—';
   if (slugInp) {
-    slugInp.value = (slug === 'index' || !slug) ? '' : slug;
+    slugInp.value = (slug === 'index' || !slug) ? 'index' : slug;
     slugInp.readOnly = !createMode;
     slugInp.disabled = !createMode;
   }
-  if (suffixEl) suffixEl.textContent = (slug === 'index' || !slug) ? '' : '.html';
+  if (suffixEl) suffixEl.textContent = '';
   if (nameInp) nameInp.value = displayName || '';
   document.getElementById('error-contact-page-url-slug').textContent = '';
   document.getElementById('error-contact-page-name').textContent = '';
@@ -1153,6 +1151,8 @@ function enterEditMode() {
   if (!profileData || !profileData.emailVerified) return;
   document.getElementById('editor-contact-view').classList.add('hidden');
   document.getElementById('editor-contact-edit').classList.add('show');
+  var delBtn = document.getElementById('form-delete-page-btn');
+  if (delBtn) delBtn.style.display = '';
   formSnapshot = getFormSnapshot();
   updateFormDirtyState();
 }
@@ -1163,6 +1163,8 @@ function enterViewMode() {
   if (vpl) { vpl.href = viewPageHref(); vpl.style.pointerEvents = isCreateMode ? 'none' : ''; }
   document.getElementById('editor-contact-edit').classList.remove('show');
   document.getElementById('editor-contact-view').classList.remove('hidden');
+  var delBtn = document.getElementById('form-delete-page-btn');
+  if (delBtn) delBtn.style.display = 'none';
 }
 
 function cancelForm() {
@@ -1201,15 +1203,15 @@ async function fetchContactPagesList() {
     list.innerHTML = pages.map(function(p) {
       var slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
       var label = (typeof p === 'object' && p.name != null) ? p.name : (slug === 'index' ? 'Main (index)' : slug);
-      var slugDisplay = slug === 'index' ? '/' + username + '/' : '/' + username + '/' + slug;
+      var slugDisplay = slug === 'index' ? username + '/' : username + '/' + slug;
       var slugAttr = escapeHtml(slug === 'index' ? 'index' : slug);
       var labelAttr = escapeHtml(label);
       var urlAttr = escapeHtml(slugDisplay);
-      return '<div class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + slugAttr + '" role="button" tabindex="0" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><span class="contact-page-card-label">Page Name</span><span class="page-name">' + escapeHtml(label) + '</span><span class="contact-page-card-label">URL</span><span class="page-slug">' + escapeHtml(slugDisplay) + '</span><div class="contact-page-card-actions"><button type="button" class="btn btn-danger btn-sm contact-page-card-delete" data-contactpagename="' + slugAttr + '" data-page-name="' + labelAttr + '" data-url="' + urlAttr + '" onclick="event.stopPropagation(); openDeletePageModal(this)">Delete</button></div></div>';
+      return '<div class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + slugAttr + '" role="button" tabindex="0" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">' + escapeHtml(label) + '</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">' + escapeHtml(slugDisplay) + '</span></div></div>';
     }).join('');
     section.classList.remove('hidden');
   } catch (e) {
-    list.innerHTML = '<div class="contact-page-card selected" data-contactpagename="index" role="button" tabindex="0" onclick="selectContactPage(\'index\')"><span class="contact-page-card-label">Page Name</span><span class="page-name">Main (index)</span><span class="contact-page-card-label">URL</span><span class="page-slug">' + escapeHtml('/' + username + '/') + '</span><div class="contact-page-card-actions"><button type="button" class="btn btn-danger btn-sm contact-page-card-delete" data-contactpagename="index" data-page-name="Main (index)" data-url="' + escapeHtml('/' + username + '/') + '" onclick="event.stopPropagation(); openDeletePageModal(this)">Delete</button></div></div>';
+    list.innerHTML = '<div class="contact-page-card selected" data-contactpagename="index" role="button" tabindex="0" onclick="selectContactPage(\'index\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">Main (index)</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">' + escapeHtml(username + '/') + '</span></div></div>';
     section.classList.remove('hidden');
   }
 }
@@ -1225,6 +1227,8 @@ function enterCreateMode() {
   if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.remove('selected'); });
   document.getElementById('view-page-link').href = '#';
   document.getElementById('view-page-link').style.pointerEvents = 'none';
+  var delBtn = document.getElementById('form-delete-page-btn');
+  if (delBtn) delBtn.style.display = 'none';
   showStatusBanner('Fill in Contact Page URL and Name, then the form. Click Save to create.', 'info');
 }
 function selectContactPage(contactpagename) {
@@ -1448,6 +1452,17 @@ function openDeletePageModal(btn) {
   var urlDisplay = (btn.dataset.url || '').trim();
   deletePageSlugToDelete = slug;
   document.getElementById('delete-page-modal-url').textContent = urlDisplay ? 'URL: ' + urlDisplay : '';
+  document.getElementById('delete-page-modal').classList.remove('hidden');
+  document.getElementById('delete-page-modal').classList.add('show');
+}
+function openDeletePageModalForCurrentPage() {
+  if (!username || !token || isCreateMode) return;
+  var slug = currentContactpagename || 'index';
+  var nameInp = document.getElementById('contact-page-name');
+  var pageName = (nameInp && nameInp.value) ? nameInp.value.trim() : (slug === 'index' ? 'Main (index)' : slug);
+  var urlDisplay = slug === 'index' ? username + '/' : username + '/' + slug;
+  deletePageSlugToDelete = slug;
+  document.getElementById('delete-page-modal-url').textContent = 'URL: ' + urlDisplay;
   document.getElementById('delete-page-modal').classList.remove('hidden');
   document.getElementById('delete-page-modal').classList.add('show');
 }
@@ -1749,7 +1764,7 @@ async function handleSave(e) {
         return;
       }
       if (contactpagename.length < 2 || contactpagename.length > 28) {
-        if (slugErr) slugErr.textContent = 'Page URL must be 2–28 characters (or leave blank for main page).';
+        if (slugErr) slugErr.textContent = 'Page URL must be 2–28 characters.';
         if (slugInp) slugInp.focus();
         return;
       }

@@ -804,21 +804,25 @@ function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementB
 
 async function fetchAccountEmailsAndRefresh() {
   try {
-    var r = await fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey } });
-    if (!r || !r.ok) return;
-    var d = await r.json();
-    var accountEmails = (d && d.accountEmails) ? d.accountEmails : {};
-    var accountDetailsSent = (d && d.accountDetailsSent) ? d.accountDetailsSent : {};
-    var emailVerification = (d && d.emailVerification) ? d.emailVerification : {};
-    for (var f in userInfo) {
-      userInfo[f].accountEmail = accountEmails[f] || null;
-      userInfo[f].accountDetailsSent = !!accountDetailsSent[f];
-      userInfo[f].emailVerification = emailVerification[f] || null;
+    var usernames = Object.keys(userInfo);
+    var emailsPromise = fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey } }).then(function(r) { return r.ok ? r.json() : null; });
+    var profPromise = fetch(API + '/api/account-profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: usernames }) }).then(function(r) { return r.ok ? r.json() : null; });
+    var secretsPromise = fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: pages || [] }) }).then(function(r) { return r.ok ? r.json() : null; });
+    var results = await Promise.all([emailsPromise, profPromise, secretsPromise]);
+    var d = results[0];
+    if (d) {
+      var accountEmails = (d.accountEmails) ? d.accountEmails : {};
+      var accountDetailsSent = (d.accountDetailsSent) ? d.accountDetailsSent : {};
+      var emailVerification = (d.emailVerification) ? d.emailVerification : {};
+      for (var f in userInfo) {
+        userInfo[f].accountEmail = accountEmails[f] || null;
+        userInfo[f].accountDetailsSent = !!accountDetailsSent[f];
+        userInfo[f].emailVerification = emailVerification[f] || null;
+      }
     }
-    var profRes = await fetch(API + '/api/account-profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: Object.keys(userInfo) }) });
-    if (profRes && profRes.ok) {
-      var profData = await profRes.json();
-      var profiles = (profData && profData.profiles) ? profData.profiles : {};
+    var profData = results[1];
+    if (profData && profData.profiles) {
+      var profiles = profData.profiles;
       for (var f in userInfo) {
         if (profiles[f]) {
           userInfo[f].firstName = (profiles[f].firstName || '').trim() || userInfo[f].firstName || '';
@@ -826,36 +830,40 @@ async function fetchAccountEmailsAndRefresh() {
         }
       }
     }
-    var sr = await fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: pages || [] }) });
-    if (sr && sr.ok) {
-      var sd = await sr.json();
-      var statuses = (sd && sd.statuses) ? sd.statuses : {};
+    var sd = results[2];
+    if (sd && sd.statuses) {
+      var statuses = sd.statuses;
       for (var f in userInfo) { userInfo[f].secretsComplete = !!(statuses[f] && statuses[f].secretsComplete); }
     }
     populateUI();
   } catch (e) { /* ignore */ }
 }
 async function loadDashboard() {
-  var pRes = await fetch(API + '/api/pages', { headers: { 'X-Admin-Key': adminKey } });
-  var kRes = await fetch(API + '/api/keys', { headers: { 'X-Admin-Key': adminKey } });
-  if (!pRes.ok) throw new Error('Failed to load pages: ' + pRes.status);
-  if (!kRes.ok) throw new Error('Failed to load keys: ' + kRes.status);
-  var pData = await pRes.json();
-  var kData = await kRes.json();
+  var pRes = fetch(API + '/api/pages', { headers: { 'X-Admin-Key': adminKey } });
+  var kRes = fetch(API + '/api/keys', { headers: { 'X-Admin-Key': adminKey } });
+  var pResOk = await pRes;
+  var kResOk = await kRes;
+  if (!pResOk.ok) throw new Error('Failed to load pages: ' + pResOk.status);
+  if (!kResOk.ok) throw new Error('Failed to load keys: ' + kResOk.status);
+  var pData = await pResOk.json();
+  var kData = await kResOk.json();
   var accountEmails = {};
   pages = pData.pages || [];
   editKeys = kData.editKeys || {};
   userInfo = {};
-  for (var i = 0; i < pages.length; i++) {
-    var f = pages[i];
-    try {
-      var r = await fetch(API + '/api/page/' + f, { headers: { 'X-Admin-Key': adminKey } });
-      if (r.ok) {
-        var d = await r.json();
-        var info = extractInfo(d.content);
-        userInfo[f] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: info.givenName, pageFamilyName: info.familyName, pageEmail: info.contactEmail, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
-      }
-    } catch (e) { /* skip */ }
+  var pagePromises = pages.map(function(f) {
+    return fetch(API + '/api/page/' + encodeURIComponent(f), { headers: { 'X-Admin-Key': adminKey } })
+      .then(function(r) { return r.ok ? r.json().then(function(d) { return { folder: f, data: d }; }) : null; })
+      .catch(function() { return null; });
+  });
+  var pageResults = await Promise.all(pagePromises);
+  for (var i = 0; i < pageResults.length; i++) {
+    var item = pageResults[i];
+    if (item && item.data && item.data.content) {
+      var info = extractInfo(item.data.content);
+      var f = item.folder;
+      userInfo[f] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: info.givenName, pageFamilyName: info.familyName, pageEmail: info.contactEmail, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
+    }
   }
   try {
     populateUI();
