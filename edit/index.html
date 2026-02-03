@@ -47,6 +47,8 @@
   .contact-page-card .contact-page-card-label:first-child { margin-top: 0; }
   .contact-page-card .page-name { display: block; margin-top: 0.15rem; }
   .contact-page-card .page-slug { display: block; font-size: 0.75rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
+  .contact-page-card .contact-page-card-actions { margin-top: 0.5rem; display: flex; justify-content: flex-end; }
+  .contact-page-card .contact-page-card-delete { flex-shrink: 0; }
   #editor-contact-card .card-header-fields { gap: 0.35rem; }
   .card-header-fields { display: flex; flex-direction: column; gap: 0.5rem; }
   .card-header-field-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
@@ -466,6 +468,19 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeVerifyEmailModal()">Cancel</button>
         <button type="button" class="btn btn-primary" id="verify-email-submit-btn" onclick="submitVerifyEmailCode()">Verify</button>
+      </div>
+    </div>
+  </div>
+  <div id="delete-page-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header"><h3 class="modal-title">Delete contact page?</h3></div>
+      <div class="modal-body">
+        <p>This contact page will be permanently deleted and its URL will no longer exist. Any QR codes and tags referencing this Page URL will stop working.</p>
+        <p id="delete-page-modal-url" class="text-secondary" style="font-size:0.9rem;margin-top:0.5rem;"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDeletePageModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="delete-page-confirm-btn" onclick="confirmDeletePage()">Delete</button>
       </div>
     </div>
   </div>
@@ -1186,12 +1201,15 @@ async function fetchContactPagesList() {
     list.innerHTML = pages.map(function(p) {
       var slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
       var label = (typeof p === 'object' && p.name != null) ? p.name : (slug === 'index' ? 'Main (index)' : slug);
-      var slugDisplay = slug === 'index' ? username + '/' : username + '/' + slug;
-      return '<button type="button" class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + (slug === 'index' ? 'index' : slug) + '" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><span class="contact-page-card-label">Contact Page Name</span><span class="page-name">' + escapeHtml(label) + '</span><span class="contact-page-card-label">URL Slug</span><span class="page-slug">' + escapeHtml(slugDisplay) + '</span></button>';
+      var slugDisplay = slug === 'index' ? '/' + username + '/' : '/' + username + '/' + slug;
+      var slugAttr = escapeHtml(slug === 'index' ? 'index' : slug);
+      var labelAttr = escapeHtml(label);
+      var urlAttr = escapeHtml(slugDisplay);
+      return '<div class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + slugAttr + '" role="button" tabindex="0" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><span class="contact-page-card-label">Page Name</span><span class="page-name">' + escapeHtml(label) + '</span><span class="contact-page-card-label">URL</span><span class="page-slug">' + escapeHtml(slugDisplay) + '</span><div class="contact-page-card-actions"><button type="button" class="btn btn-danger btn-sm contact-page-card-delete" data-contactpagename="' + slugAttr + '" data-page-name="' + labelAttr + '" data-url="' + urlAttr + '" onclick="event.stopPropagation(); openDeletePageModal(this)">Delete</button></div></div>';
     }).join('');
     section.classList.remove('hidden');
   } catch (e) {
-    list.innerHTML = '<button type="button" class="contact-page-card selected" data-contactpagename="index" onclick="selectContactPage(\'index\')"><span class="contact-page-card-label">Contact Page Name</span><span class="page-name">Main (index)</span><span class="contact-page-card-label">URL Slug</span><span class="page-slug">' + escapeHtml(username + '/') + '</span></button>';
+    list.innerHTML = '<div class="contact-page-card selected" data-contactpagename="index" role="button" tabindex="0" onclick="selectContactPage(\'index\')"><span class="contact-page-card-label">Page Name</span><span class="page-name">Main (index)</span><span class="contact-page-card-label">URL</span><span class="page-slug">' + escapeHtml('/' + username + '/') + '</span><div class="contact-page-card-actions"><button type="button" class="btn btn-danger btn-sm contact-page-card-delete" data-contactpagename="index" data-page-name="Main (index)" data-url="' + escapeHtml('/' + username + '/') + '" onclick="event.stopPropagation(); openDeletePageModal(this)">Delete</button></div></div>';
     section.classList.remove('hidden');
   }
 }
@@ -1421,6 +1439,63 @@ function exitProfileEditMode() {
 function cancelProfileEdit() {
   exitProfileEditMode();
 }
+
+var deletePageSlugToDelete = null;
+function openDeletePageModal(btn) {
+  if (!btn || !username || !token) return;
+  var slug = (btn.dataset.contactpagename || '').trim();
+  var pageName = (btn.dataset.pageName || '').trim();
+  var urlDisplay = (btn.dataset.url || '').trim();
+  deletePageSlugToDelete = slug;
+  document.getElementById('delete-page-modal-url').textContent = urlDisplay ? 'URL: ' + urlDisplay : '';
+  document.getElementById('delete-page-modal').classList.remove('hidden');
+  document.getElementById('delete-page-modal').classList.add('show');
+}
+function closeDeletePageModal() {
+  document.getElementById('delete-page-modal').classList.remove('show');
+  document.getElementById('delete-page-modal').classList.add('hidden');
+  deletePageSlugToDelete = null;
+}
+async function confirmDeletePage() {
+  if (!deletePageSlugToDelete || !username || !token) { closeDeletePageModal(); return; }
+  var slug = deletePageSlugToDelete;
+  var confirmBtn = document.getElementById('delete-page-confirm-btn');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Deleting...'; }
+  try {
+    var path = API + '/api/page/' + encodeURIComponent(username) + '/' + encodeURIComponent(slug);
+    var r = await fetch(path, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    closeDeletePageModal();
+    if (r.ok && d.success) {
+      if (currentContactpagename === slug) {
+        currentContactpagename = 'index';
+        currentSha = null;
+        var url = pageApiPath();
+        var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) {
+          var data = await res.json();
+          currentSha = data.sha;
+          fillForm(data.content);
+          setContactPageMeta('index', data.contactPageName || 'Main (index)', false);
+          formSnapshot = getFormSnapshot();
+          updateFormDirtyState();
+          enterViewMode();
+        }
+      }
+      await fetchContactPagesList();
+      var list = document.getElementById('contact-pages-list');
+      if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
+      showStatusBanner('Contact page deleted.', 'success');
+    } else {
+      showStatusBanner(d.error || 'Failed to delete page', 'error');
+    }
+  } catch (e) {
+    closeDeletePageModal();
+    showStatusBanner('Connection error', 'error');
+  }
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Delete'; }
+}
+
 async function saveProfileFromStrip() {
   var cur = getProfileEditValues();
   var email = cur.accountEmail;

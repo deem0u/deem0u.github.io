@@ -985,9 +985,63 @@ async function handleUserCreatePage(username, request, env) {
 }
 
 /**
- * DELETE /api/page/{username} - Delete entire user (all contact pages under user/{username}/) and KV (admin only)
+ * DELETE /api/page/{username} - Delete entire user (admin only).
+ * DELETE /api/page/{username}/{contactpagename} - Delete single contact page (Bearer auth, same user, or admin).
  */
-async function handleDeletePage(username, _contactpagename, request, env) {
+async function handleDeletePage(username, contactpagename, request, env) {
+  const path = new URL(request.url).pathname.replace(/\/$/, '');
+  const pathAfter = path.replace(/^\/api\/page\//, '').trim();
+  const segments = pathAfter.split('/').filter(Boolean);
+  const isSinglePageDelete = segments.length >= 2;
+
+  if (isSinglePageDelete) {
+    const slug = segments[1];
+    const auth = await validateAuth(username, request, env);
+    if (!auth.authorized) {
+      return jsonResponse({ error: 'Unauthorized' }, 401);
+    }
+    const filePath = pagePath(username, slug);
+    const getResponse = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
+      {
+        headers: {
+          'Authorization': `token ${env.GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'ContactPageEditor/1.0'
+        }
+      }
+    );
+    if (!getResponse.ok) {
+      return jsonResponse({ error: 'Page not found' }, 404);
+    }
+    const fileData = await getResponse.json();
+    const deleteResponse = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `token ${env.GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'ContactPageEditor/1.0'
+        },
+        body: JSON.stringify({
+          message: `Delete contact page: ${username}/${slug}.html`,
+          sha: fileData.sha,
+          branch: CONFIG.branch
+        })
+      }
+    );
+    if (!deleteResponse.ok) {
+      const err = await deleteResponse.json();
+      return jsonResponse({ error: err.message || 'Failed to delete page' }, deleteResponse.status);
+    }
+    if (env.EDIT_KEYS_KV) {
+      await env.EDIT_KEYS_KV.delete(`contact_page_name:${username}:${slug}`);
+    }
+    return jsonResponse({ success: true, contactpagename: slug, message: 'Contact page deleted' });
+  }
+
   if (!await isAdmin(request, env)) {
     return jsonResponse({ error: 'Admin access required' }, 401);
   }
