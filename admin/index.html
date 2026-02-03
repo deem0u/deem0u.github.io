@@ -186,8 +186,47 @@
     <main id="screen-dashboard" class="app-main hidden">
       <div class="app-container">
         <div class="tabs">
+          <button class="tab" data-tab="admin-access">Admin Access &amp; Site Management</button>
           <button class="tab active" data-tab="manage">Manage Users</button>
           <button class="tab" data-tab="edit">Add Users / Edit Contact Information</button>
+        </div>
+
+        <div id="tab-admin-access" class="tab-content">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Site</span></div>
+            <div class="card-body">
+              <div class="site-settings-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:1rem; padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);">
+                <span class="site-settings-label" style="font-weight:600; margin-right:0.5rem;">Site:</span>
+                <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-divert-all" onchange="toggleDivertAll(this.checked)"><span>Divert all to dev</span></label>
+                <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-maintenance" onchange="toggleMaintenance(this.checked)"><span>Maintenance mode</span></label>
+                <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-lockdown" onchange="toggleLockdown(this.checked)"><span>Lockdown mode</span></label>
+              </div>
+            </div>
+          </div>
+          <div class="card mt-4">
+            <div class="card-header"><span class="card-title">Admin account</span></div>
+            <div class="card-body">
+              <div style="display:flex; flex-wrap:wrap; align-items:flex-start; gap:1.5rem;">
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label" style="margin-bottom:0.25rem;">Admin key (stored locally)</label>
+                  <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <input type="password" id="dashboard-admin-key" class="form-input" placeholder="Set or change admin key" minlength="8" style="max-width:16rem;">
+                    <button type="button" class="btn btn-secondary" id="save-admin-key-btn">Save key</button>
+                  </div>
+                  <span class="form-hint">Saves to server and this device so you stay signed in.</span>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-label" style="margin-bottom:0.25rem;">Password for email sign-in</label>
+                  <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <input type="password" id="dashboard-password" class="form-input" placeholder="Set or change password" minlength="8" style="max-width:16rem;">
+                    <button type="button" class="btn btn-secondary" id="save-password-btn">Save password</button>
+                  </div>
+                  <span class="form-hint">Lets you sign in with recovery email + this password.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="alert-admin-access" class="alert mt-4"></div>
         </div>
 
         <div id="tab-manage" class="tab-content active">
@@ -221,33 +260,6 @@
                 <div class="stat"><span class="stat-value" id="stat-without-access">0</span><span class="stat-label">Without edit access</span></div>
                 <div class="stat"><span class="stat-value" id="stat-incomplete">0</span><span class="stat-label">Incomplete</span></div>
                 <div class="stat"><span class="stat-value" id="stat-secrets-not-set">0</span><span class="stat-label">Secrets not set</span></div>
-              </div>
-            </div>
-            <div class="site-settings-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:1rem; margin-top:1rem; padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);">
-              <span class="site-settings-label" style="font-weight:600; margin-right:0.5rem;">Site:</span>
-              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-divert-all" onchange="toggleDivertAll(this.checked)"><span>Divert all to dev</span></label>
-              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-maintenance" onchange="toggleMaintenance(this.checked)"><span>Maintenance mode</span></label>
-              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-lockdown" onchange="toggleLockdown(this.checked)"><span>Lockdown mode</span></label>
-            </div>
-            <div class="site-settings-row" style="margin-top:1rem; padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);">
-              <span class="site-settings-label" style="font-weight:600; display:block; margin-bottom:0.5rem;">Account:</span>
-              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem;">
-                <div class="form-group" style="margin:0;">
-                  <label class="form-label" style="margin-bottom:0.25rem;">Admin key (stored locally)</label>
-                  <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <input type="password" id="dashboard-admin-key" class="form-input" placeholder="Set or change admin key" minlength="8" style="max-width:16rem;">
-                    <button type="button" class="btn btn-secondary" id="save-admin-key-btn">Save key</button>
-                  </div>
-                  <span class="form-hint">Saves to server and this device so you stay signed in.</span>
-                </div>
-                <div class="form-group" style="margin:0;">
-                  <label class="form-label" style="margin-bottom:0.25rem;">Password for email sign-in</label>
-                  <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <input type="password" id="dashboard-password" class="form-input" placeholder="Set or change password" minlength="8" style="max-width:16rem;">
-                    <button type="button" class="btn btn-secondary" id="save-password-btn">Save password</button>
-                  </div>
-                  <span class="form-hint">Lets you sign in with recovery email + this password.</span>
-                </div>
               </div>
             </div>
           </div>
@@ -1017,25 +1029,25 @@ async function handleResetPasswordSubmit(e) {
 async function handleSaveAdminKey() {
   var inp = document.getElementById('dashboard-admin-key');
   var key = (inp && inp.value) ? inp.value.trim() : '';
-  if (key.length < 8) { showAlert('alert-manage', 'Admin key must be at least 8 characters.', 'error'); return; }
+  if (key.length < 8) { showAlert('alert-admin-access', 'Admin key must be at least 8 characters.', 'error'); return; }
   try {
     var r = await fetch(API + '/api/admin/admin-key', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ newAdminKey: key }) });
     var d = await r.json();
-    if (r.ok) { adminKey = key; localStorage.setItem('admin_key', key); inp.value = ''; showAlert('alert-manage', 'Admin key saved. You stay signed in on this device.', 'success'); }
-    else { showAlert('alert-manage', (d && d.error) || 'Failed to save.', 'error'); }
-  } catch (e) { showAlert('alert-manage', 'Connection error.', 'error'); }
+    if (r.ok) { adminKey = key; localStorage.setItem('admin_key', key); inp.value = ''; showAlert('alert-admin-access', 'Admin key saved. You stay signed in on this device.', 'success'); }
+    else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
+  } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
 async function handleSavePassword() {
   var inp = document.getElementById('dashboard-password');
   var password = (inp && inp.value) || '';
-  if (password.length < 8) { showAlert('alert-manage', 'Password must be at least 8 characters.', 'error'); return; }
+  if (password.length < 8) { showAlert('alert-admin-access', 'Password must be at least 8 characters.', 'error'); return; }
   try {
     var r = await fetch(API + '/api/admin/set-password', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ password: password }) });
     var d = await r.json();
-    if (r.ok) { inp.value = ''; showAlert('alert-manage', 'Password saved. You can sign in with your recovery email and this password.', 'success'); }
-    else { showAlert('alert-manage', (d && d.error) || 'Failed to save.', 'error'); }
-  } catch (e) { showAlert('alert-manage', 'Connection error.', 'error'); }
+    if (r.ok) { inp.value = ''; showAlert('alert-admin-access', 'Password saved. You can sign in with your recovery email and this password.', 'success'); }
+    else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
+  } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
 function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert-2', 'Copied to clipboard!', 'success'); }
@@ -2188,27 +2200,27 @@ async function toggleDivertAll(checked) {
   siteSettings.divertAllGlobal = !!checked;
   try {
     var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ divertAllGlobal: checked }) });
-    if (r.ok) { renderList('manage'); showAlert('alert-manage', checked ? 'All emails will divert to dev.' : 'Divert all turned off.', 'success'); }
-    else { siteSettings.divertAllGlobal = !checked; document.getElementById('site-divert-all').checked = !checked; showAlert('alert-manage', 'Failed to update.', 'error'); }
-  } catch (e) { siteSettings.divertAllGlobal = !checked; document.getElementById('site-divert-all').checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
+    if (r.ok) { renderList('manage'); showAlert('alert-admin-access', checked ? 'All emails will divert to dev.' : 'Divert all turned off.', 'success'); }
+    else { siteSettings.divertAllGlobal = !checked; document.getElementById('site-divert-all').checked = !checked; showAlert('alert-admin-access', 'Failed to update.', 'error'); }
+  } catch (e) { siteSettings.divertAllGlobal = !checked; document.getElementById('site-divert-all').checked = !checked; showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
 async function toggleMaintenance(checked) {
   siteSettings.maintenanceMode = !!checked;
   try {
     var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ maintenanceMode: checked }) });
-    if (r.ok) showAlert('alert-manage', checked ? 'Maintenance mode on. Only contact pages are accessible.' : 'Maintenance mode off.', 'success');
-    else { siteSettings.maintenanceMode = !checked; document.getElementById('site-maintenance').checked = !checked; showAlert('alert-manage', 'Failed to update.', 'error'); }
-  } catch (e) { siteSettings.maintenanceMode = !checked; document.getElementById('site-maintenance').checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
+    if (r.ok) showAlert('alert-admin-access', checked ? 'Maintenance mode on. Only contact pages are accessible.' : 'Maintenance mode off.', 'success');
+    else { siteSettings.maintenanceMode = !checked; document.getElementById('site-maintenance').checked = !checked; showAlert('alert-admin-access', 'Failed to update.', 'error'); }
+  } catch (e) { siteSettings.maintenanceMode = !checked; document.getElementById('site-maintenance').checked = !checked; showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
 async function toggleLockdown(checked) {
   siteSettings.lockdownMode = !!checked;
   try {
     var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ lockdownMode: checked }) });
-    if (r.ok) showAlert('alert-manage', checked ? 'Lockdown on. Site access blocked.' : 'Lockdown off.', 'success');
-    else { siteSettings.lockdownMode = !checked; document.getElementById('site-lockdown').checked = !checked; showAlert('alert-manage', 'Failed to update.', 'error'); }
-  } catch (e) { siteSettings.lockdownMode = !checked; document.getElementById('site-lockdown').checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
+    if (r.ok) showAlert('alert-admin-access', checked ? 'Lockdown on. Site access blocked.' : 'Lockdown off.', 'success');
+    else { siteSettings.lockdownMode = !checked; document.getElementById('site-lockdown').checked = !checked; showAlert('alert-admin-access', 'Failed to update.', 'error'); }
+  } catch (e) { siteSettings.lockdownMode = !checked; document.getElementById('site-lockdown').checked = !checked; showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
 async function toggleDivertUser(checkboxEl) {
