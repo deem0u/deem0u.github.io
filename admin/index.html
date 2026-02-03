@@ -58,11 +58,11 @@
       <div class="auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Sign In</h1>
-          <p class="auth-subtitle" id="login-subtitle">Enter your admin key or use email and password</p>
+          <p class="auth-subtitle" id="login-subtitle">Enter your Admin Key to Sign In</p>
         </div>
-        <div class="mb-4">
-          <button type="button" class="btn btn-ghost btn-sm" id="login-mode-key">Admin key</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="login-mode-email">Email &amp; password</button>
+        <div class="segmented-control mb-4" role="group" aria-label="Sign in method">
+          <button type="button" class="segmented-control-option active" id="login-mode-key">Admin Key</button>
+          <button type="button" class="segmented-control-option" id="login-mode-email">Email &amp; Password</button>
         </div>
         <form id="login-form">
           <div id="login-key-group" class="form-group">
@@ -71,10 +71,10 @@
               <input type="password" id="login-key" class="form-input" placeholder="Enter your admin key" autocomplete="current-password">
               <button type="button" class="btn btn-ghost btn-sm" id="login-toggle-password" aria-label="Show password">Show</button>
             </div>
-            <span class="form-hint">Stored locally so you stay signed in on this device.</span>
+            <span class="form-hint">Admin keys are stored locally on the device you sign in on — You will stay signed in on this device.</span>
           </div>
           <div id="login-email-group" class="form-group hidden">
-            <label class="form-label">Recovery Email</label>
+            <label class="form-label">Email</label>
             <input type="email" id="login-email" class="form-input" placeholder="your@email.com" autocomplete="email">
             <label class="form-label mt-2">Password</label>
             <input type="password" id="login-password" class="form-input" placeholder="Your password" autocomplete="current-password">
@@ -92,13 +92,13 @@
       <div class="auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Password Recovery</h1>
-          <p class="auth-subtitle" id="recovery-subtitle">Enter your recovery email to receive a verification code</p>
+          <p class="auth-subtitle" id="recovery-subtitle">Enter your email to receive a verification code</p>
         </div>
         
         <!-- Step 1: Enter email -->
         <form id="recovery-form-step1" onsubmit="return false;">
           <div class="form-group">
-            <label class="form-label">Recovery Email</label>
+            <label class="form-label">Email</label>
             <input type="email" id="recovery-email" class="form-input" placeholder="your@email.com" required>
           </div>
           <div id="recovery-alert-1" class="alert"></div>
@@ -1071,16 +1071,20 @@ function setLoginMode(mode) {
   var emailGroup = document.getElementById('login-email-group');
   var keyInp = document.getElementById('login-key');
   var subtitle = document.getElementById('login-subtitle');
+  var modeKeyBtn = document.getElementById('login-mode-key');
+  var modeEmailBtn = document.getElementById('login-mode-email');
   if (mode === 'key') {
     if (keyGroup) keyGroup.classList.remove('hidden');
     if (emailGroup) emailGroup.classList.add('hidden');
     if (keyInp) keyInp.required = true;
-    if (subtitle) subtitle.textContent = 'Enter your admin key or use email and password';
+    if (subtitle) subtitle.textContent = 'Enter your Admin Key to Sign In';
+    if (modeKeyBtn) modeKeyBtn.classList.add('active'); if (modeEmailBtn) modeEmailBtn.classList.remove('active');
   } else {
     if (keyGroup) keyGroup.classList.add('hidden');
     if (emailGroup) emailGroup.classList.remove('hidden');
     if (keyInp) keyInp.required = false;
-    if (subtitle) subtitle.textContent = 'Sign in with your recovery email and password';
+    if (subtitle) subtitle.textContent = 'Enter the Admin Email and Password to Sign In';
+    if (modeKeyBtn) modeKeyBtn.classList.remove('active'); if (modeEmailBtn) modeEmailBtn.classList.add('active');
   }
 }
 
