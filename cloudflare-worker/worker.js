@@ -901,13 +901,26 @@ async function handleUserCreatePage(username, request, env) {
 
   const contactpagename = (body.contactpagename || '').trim();
   if (!contactpagename) {
-    return jsonResponse({ error: 'Contact page name is required' }, 400);
+    return jsonResponse({ error: 'Contact page URL (slug) is required' }, 400);
   }
   if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
-    return jsonResponse({ error: 'Contact page name can only use letters, numbers, hyphens, and underscores' }, 400);
+    return jsonResponse({ error: 'Contact page URL can only use letters, numbers, hyphens, and underscores' }, 400);
   }
   if (contactpagename.length < 2 || contactpagename.length > 64) {
-    return jsonResponse({ error: 'Contact page name must be 2–64 characters' }, 400);
+    return jsonResponse({ error: 'Contact page URL must be 2–64 characters' }, 400);
+  }
+  const contactPageName = (body.contactPageName || '').trim();
+  if (contactPageName && contactPageName.length > 128) {
+    return jsonResponse({ error: 'Contact page name must be 128 characters or less' }, 400);
+  }
+  if (env.EDIT_KEYS_KV && contactPageName) {
+    const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+    for (const key of nameList.keys) {
+      const existing = await env.EDIT_KEYS_KV.get(key.name);
+      if (existing && existing.trim().toLowerCase() === contactPageName.trim().toLowerCase()) {
+        return jsonResponse({ error: 'Another contact page already uses this Contact Page Name' }, 409);
+      }
+    }
   }
   const content = body.content;
   if (typeof content !== 'string') {
@@ -927,7 +940,7 @@ async function handleUserCreatePage(username, request, env) {
   );
 
   if (checkResponse.ok) {
-    return jsonResponse({ error: 'A contact page with this name already exists' }, 409);
+    return jsonResponse({ error: 'A contact page with this URL already exists' }, 409);
   }
 
   const response = await fetch(
@@ -954,9 +967,14 @@ async function handleUserCreatePage(username, request, env) {
   }
 
   const data = await response.json();
+  const displayName = contactPageName || (contactpagename === 'index' ? 'Main (index)' : contactpagename);
+  if (env.EDIT_KEYS_KV) {
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${username}:${contactpagename}`, displayName);
+  }
   return jsonResponse({
     success: true,
     contactpagename,
+    contactPageName: displayName,
     sha: data.content.sha,
     url: pageUrl(username, contactpagename)
   });
@@ -1029,6 +1047,10 @@ async function handleDeletePage(username, _contactpagename, request, env) {
     await env.EDIT_KEYS_KV.delete(`user_dob:${username}`);
     await env.EDIT_KEYS_KV.delete(`user_recovery:${username}`);
     await env.EDIT_KEYS_KV.delete(`account_details_sent:${username}`);
+    const nameKeys = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+    for (const key of nameKeys.keys) {
+      await env.EDIT_KEYS_KV.delete(key.name);
+    }
   }
 
   return jsonResponse({
@@ -1062,8 +1084,13 @@ async function handleGetPage(username, contactpagename, request, env) {
 
   const data = await response.json();
   const content = decodeBase64(data.content);
+  let contactPageName = null;
+  if (env.EDIT_KEYS_KV) {
+    contactPageName = await env.EDIT_KEYS_KV.get(`contact_page_name:${username}:${contactpagename}`);
+  }
+  if (!contactPageName) contactPageName = contactpagename === 'index' ? 'Main (index)' : contactpagename;
 
-  return jsonResponse({ content, sha: data.sha, username, contactpagename });
+  return jsonResponse({ content, sha: data.sha, username, contactpagename, contactPageName });
 }
 
 async function handleUpdatePage(username, contactpagename, request, env) {
@@ -1073,10 +1100,26 @@ async function handleUpdatePage(username, contactpagename, request, env) {
   }
 
   const body = await request.json();
-  const { content, sha } = body;
+  const { content, sha, contactPageName } = body;
 
   if (!content || !sha) {
     return jsonResponse({ error: 'Missing content or sha' }, 400);
+  }
+
+  const contactPageNameTrim = (contactPageName != null && typeof contactPageName === 'string') ? contactPageName.trim() : null;
+  if (contactPageNameTrim && contactPageNameTrim.length > 128) {
+    return jsonResponse({ error: 'Contact page name must be 128 characters or less' }, 400);
+  }
+  if (env.EDIT_KEYS_KV && contactPageNameTrim) {
+    const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+    for (const key of nameList.keys) {
+      const slugForKey = key.name.replace(`contact_page_name:${username}:`, '');
+      if (slugForKey === contactpagename) continue;
+      const existing = await env.EDIT_KEYS_KV.get(key.name);
+      if (existing && existing.trim().toLowerCase() === contactPageNameTrim.toLowerCase()) {
+        return jsonResponse({ error: 'Another contact page already uses this Contact Page Name' }, 409);
+      }
+    }
   }
 
   const filePath = pagePath(username, contactpagename);
@@ -1105,6 +1148,9 @@ async function handleUpdatePage(username, contactpagename, request, env) {
   }
 
   const data = await response.json();
+  if (env.EDIT_KEYS_KV && contactPageNameTrim !== null) {
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${username}:${contactpagename}`, contactPageNameTrim || (contactpagename === 'index' ? 'Main (index)' : contactpagename));
+  }
   return jsonResponse({
     success: true,
     sha: data.content.sha,
@@ -1189,9 +1235,16 @@ async function handleListContactPages(username, request, env) {
   }
   const contents = await response.json();
   const files = Array.isArray(contents) ? contents : [];
-  const contactPages = files
+  const slugs = files
     .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html'))
     .map(item => item.name.replace(/\.html$/i, ''));
+  const contactPages = [];
+  for (const slug of slugs) {
+    const name = env.EDIT_KEYS_KV
+      ? (await env.EDIT_KEYS_KV.get(`contact_page_name:${u}:${slug}`)) || (slug === 'index' ? 'Main (index)' : slug)
+      : (slug === 'index' ? 'Main (index)' : slug);
+    contactPages.push({ slug, name });
+  }
   return jsonResponse({ contactPages });
 }
 

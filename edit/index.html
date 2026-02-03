@@ -192,7 +192,7 @@
           <div id="contact-pages-section" class="contact-pages-container hidden">
             <div class="contact-pages-section">
               <div class="profile-title">Contact Pages</div>
-              <button type="button" class="btn btn-primary btn-sm btn-block mb-3" id="new-contact-page-btn" onclick="openCreateContactPageModal()">+ New contact page</button>
+              <button type="button" class="btn btn-primary btn-sm btn-block mb-3" id="new-contact-page-btn" onclick="enterCreateMode()">+ New contact page</button>
               <div id="contact-pages-list" class="contact-pages-list"></div>
             </div>
           </div>
@@ -225,6 +225,24 @@
         <div class="card">
           <div class="card-header"><span class="card-title">Your Contact Information</span></div>
           <div class="card-body" id="editor-contact-form-wrap">
+            <div class="form-section form-section-contact-page-meta" style="margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid var(--color-border, #eee);">
+              <div class="form-group">
+                <label class="form-label">Contact Page URL</label>
+                <div class="contact-page-url-display" style="display:flex; align-items:center; flex-wrap:wrap; gap:0.25rem;">
+                  <span aria-hidden="true">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
+                  <input type="text" id="contact-page-url-slug" class="form-input" placeholder="e.g. work-card (blank for main page)" pattern="^[a-zA-Z0-9_-]*$" maxlength="64" autocomplete="off" style="max-width:12rem;">
+                  <span id="contact-page-url-suffix" aria-hidden="true"></span>
+                </div>
+                <span class="form-hint">Letters, numbers, hyphens, underscores. Unique per account. This is the page’s permanent URL.</span>
+                <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Contact Page Name</label>
+                <input type="text" id="contact-page-name" class="form-input" placeholder="e.g. Work card, Travel 2024" maxlength="128" autocomplete="off">
+                <span class="form-hint">A name to identify this page on your card/tile. Must be unique among your contact pages.</span>
+                <span class="form-error" id="error-contact-page-name" role="alert"></span>
+              </div>
+            </div>
             <form id="contact-form">
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
@@ -343,24 +361,6 @@
       </div>
     </div>
   </div>
-  <div id="create-contact-page-modal" class="modal-overlay hidden">
-    <div class="modal" style="max-width:440px;">
-      <div class="modal-header"><h3 class="modal-title">New contact page</h3></div>
-      <div class="modal-body">
-        <p>Choose a unique name for this contact page. It will be used in the URL: <code>/user/<span id="create-page-username-hint">username</span>/<span id="create-page-slug-hint">contactpagename</span>.html</code></p>
-        <div class="form-group">
-          <label class="form-label" for="new-contactpagename">Contact page name</label>
-          <input type="text" id="new-contactpagename" class="form-input" placeholder="e.g. work-card, travel-2024" pattern="^[a-zA-Z0-9_-]+$" minlength="2" maxlength="64" autocomplete="off">
-          <span class="form-hint">Letters, numbers, hyphens, underscores. 2–64 characters.</span>
-          <span class="form-error" id="create-contact-page-error" role="alert"></span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeCreateContactPageModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" id="create-contact-page-submit-btn" onclick="submitCreateContactPage()">Create</button>
-      </div>
-    </div>
-  </div>
   </div>
 
 <script src="/account-details-content.js"></script>
@@ -370,6 +370,7 @@
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
 let username = null, token = null, currentSha = null, currentContactpagename = 'index';
+let isCreateMode = false;
 const PAGES_URL = 'https://deem0u.github.io/user/';
 const EDITOR_URL = 'https://deem0u.github.io/edit/';
 const RECOVERY_SQ_OPTIONS = {1:'What is your mothers maiden name?',2:'What is the name of the educational institution which you have obtained your highest level of qualification?',3:'What is the name of your first pet?',4:'What is the make and model of your first car?',5:'What is a date that is most memorable to you?',6:'What suburb were you born in?',7:'What was the name of the business or company you first worked for?',8:'Where was your first major travel destination?',9:'What is your favourite sports team?',10:'What is a word that Chris cannot correctly pronounce?'};
@@ -911,8 +912,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (verifyEmailBtn) verifyEmailBtn.addEventListener('click', verifyEmailFromEditor);
   var verifyEmailCodeInput = document.getElementById('verify-email-code');
   if (verifyEmailCodeInput) verifyEmailCodeInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); submitVerifyEmailCode(); } });
-  var newContactpagenameInput = document.getElementById('new-contactpagename');
-  if (newContactpagenameInput) newContactpagenameInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); submitCreateContactPage(); } });
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.searchable-select')) {
       document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
@@ -935,6 +934,24 @@ function pageApiPath() {
 function viewPageHref() {
   return currentContactpagename === 'index' ? PAGES_URL + username + '/' : PAGES_URL + username + '/' + currentContactpagename + '.html';
 }
+
+function setContactPageMeta(slug, displayName, createMode) {
+  var uEl = document.getElementById('contact-page-url-username');
+  var slugInp = document.getElementById('contact-page-url-slug');
+  var suffixEl = document.getElementById('contact-page-url-suffix');
+  var nameInp = document.getElementById('contact-page-name');
+  if (uEl) uEl.textContent = username || '—';
+  if (slugInp) {
+    slugInp.value = (slug === 'index' || !slug) ? '' : slug;
+    slugInp.readOnly = !createMode;
+    slugInp.disabled = !createMode;
+  }
+  if (suffixEl) suffixEl.textContent = (slug === 'index' || !slug) ? '' : '.html';
+  if (nameInp) nameInp.value = displayName || '';
+  document.getElementById('error-contact-page-url-slug').textContent = '';
+  document.getElementById('error-contact-page-name').textContent = '';
+}
+
 async function fetchContactPagesList() {
   var section = document.getElementById('contact-pages-section');
   var list = document.getElementById('contact-pages-list');
@@ -942,12 +959,13 @@ async function fetchContactPagesList() {
   try {
     var r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json();
-    var pages = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : (r.ok ? ['index'] : []);
-    if (pages.length === 0) pages = ['index'];
+    var pages = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : [];
+    if (pages.length === 0) pages = [{ slug: 'index', name: 'Main (index)' }];
     list.innerHTML = pages.map(function(p) {
-      var label = p === 'index' ? 'Main (index)' : p;
-      var slug = p === 'index' ? username + '/' : username + '/' + p + '.html';
-      return '<button type="button" class="contact-page-card' + (p === currentContactpagename ? ' selected' : '') + '" data-contactpagename="' + (p === 'index' ? 'index' : p) + '" onclick="selectContactPage(\'' + (p === 'index' ? 'index' : p.replace(/'/g, "\\'")) + '\')"><span class="page-name">' + escapeHtml(label) + '</span><span class="page-slug">' + escapeHtml(slug) + '</span></button>';
+      var slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
+      var label = (typeof p === 'object' && p.name != null) ? p.name : (slug === 'index' ? 'Main (index)' : slug);
+      var slugDisplay = slug === 'index' ? username + '/' : username + '/' + slug + '.html';
+      return '<button type="button" class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + (slug === 'index' ? 'index' : slug) + '" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><span class="page-name">' + escapeHtml(label) + '</span><span class="page-slug">' + escapeHtml(slugDisplay) + '</span></button>';
     }).join('');
     section.classList.remove('hidden');
   } catch (e) {
@@ -955,12 +973,29 @@ async function fetchContactPagesList() {
     section.classList.remove('hidden');
   }
 }
+
+function enterCreateMode() {
+  isCreateMode = true;
+  currentContactpagename = '';
+  currentSha = null;
+  setContactPageMeta('', '', true);
+  clearFormToBlank();
+  var list = document.getElementById('contact-pages-list');
+  if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.remove('selected'); });
+  document.getElementById('view-page-link').href = '#';
+  document.getElementById('view-page-link').style.pointerEvents = 'none';
+  showStatusBanner('Fill in Contact Page URL and Name, then the form. Click Save to create.', 'info');
+}
 function selectContactPage(contactpagename) {
-  if (!username || !token || contactpagename === currentContactpagename) return;
-  currentContactpagename = contactpagename || 'index';
+  if (!username || !token) return;
+  var slug = contactpagename || 'index';
+  if (slug === currentContactpagename && !isCreateMode) return;
+  isCreateMode = false;
+  currentContactpagename = slug;
   var list = document.getElementById('contact-pages-list');
   if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
   document.getElementById('view-page-link').href = viewPageHref();
+  document.getElementById('view-page-link').style.pointerEvents = '';
   showStatusBanner('Loading...', 'loading');
   var url = pageApiPath();
   fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
@@ -968,29 +1003,11 @@ function selectContactPage(contactpagename) {
     .then(function(data) {
       currentSha = data.sha;
       fillForm(data.content);
+      setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
       document.getElementById('view-page-link').href = viewPageHref();
       hideStatusBanner();
     })
     .catch(function() { showStatusBanner('Failed to load page', 'error'); });
-}
-function openCreateContactPageModal() {
-  var modal = document.getElementById('create-contact-page-modal');
-  var input = document.getElementById('new-contactpagename');
-  var errEl = document.getElementById('create-contact-page-error');
-  var userHint = document.getElementById('create-page-username-hint');
-  var slugHint = document.getElementById('create-page-slug-hint');
-  if (!modal || !input) return;
-  if (userHint) userHint.textContent = username || 'username';
-  if (slugHint) slugHint.textContent = 'contactpagename';
-  input.value = '';
-  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
-  modal.classList.remove('hidden');
-  modal.classList.add('show');
-  input.focus();
-}
-function closeCreateContactPageModal() {
-  var modal = document.getElementById('create-contact-page-modal');
-  if (modal) { modal.classList.remove('show'); modal.classList.add('hidden'); }
 }
 function getMinimalContactPageHTML() {
   var ids = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
@@ -1017,49 +1034,6 @@ function clearFormToBlank() {
   if (homeCountryHidden) homeCountryHidden.value = '';
   document.querySelectorAll('.form-error').forEach(function(el) { el.textContent = ''; el.classList.add('hidden'); });
 }
-async function submitCreateContactPage() {
-  var input = document.getElementById('new-contactpagename');
-  var errEl = document.getElementById('create-contact-page-error');
-  var btn = document.getElementById('create-contact-page-submit-btn');
-  var raw = (input && input.value) ? input.value.trim() : '';
-  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
-  if (!/^[a-zA-Z0-9_-]+$/.test(raw)) {
-    if (errEl) { errEl.textContent = 'Use only letters, numbers, hyphens, and underscores.'; errEl.classList.remove('hidden'); }
-    if (input) input.focus();
-    return;
-  }
-  if (raw.length < 2 || raw.length > 64) {
-    if (errEl) { errEl.textContent = 'Contact page name must be 2–64 characters.'; errEl.classList.remove('hidden'); }
-    if (input) input.focus();
-    return;
-  }
-  if (btn) { btn.disabled = true; btn.textContent = 'Creating...'; }
-  try {
-    var content = getMinimalContactPageHTML();
-    var res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ contactpagename: raw, content: content })
-    });
-    var data = await res.json();
-    if (res.ok && data.success) {
-      closeCreateContactPageModal();
-      currentContactpagename = data.contactpagename;
-      currentSha = data.sha;
-      clearFormToBlank();
-      await fetchContactPagesList();
-      document.getElementById('view-page-link').href = viewPageHref();
-      showStatusBanner('Contact page created. Fill in the form and click Save.', 'success');
-    } else {
-      if (errEl) { errEl.textContent = (data.error || 'Failed to create'); errEl.classList.remove('hidden'); }
-      if (input) input.focus();
-    }
-  } catch (e) {
-    if (errEl) { errEl.textContent = 'Connection error.'; errEl.classList.remove('hidden'); }
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Create'; }
-  }
-}
 async function authenticateWithStoredSession() {
   if (!username || !token) return;
   try {
@@ -1067,12 +1041,15 @@ async function authenticateWithStoredSession() {
     if (!res.ok) throw new Error('Session expired');
     const data = await res.json();
     currentSha = data.sha;
+    isCreateMode = false;
     currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
     fillForm(data.content);
+    setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
     document.getElementById('view-page-link').href = viewPageHref();
+    document.getElementById('view-page-link').style.pointerEvents = '';
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
     await loadProfile();
@@ -1106,14 +1083,16 @@ async function authenticate() {
     
     const data = await res.json();
     currentSha = data.sha;
+    isCreateMode = false;
     currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
     fillForm(data.content);
-    
+    setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
     document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
     document.title = 'Contact Editor - ' + username;
     document.getElementById('header-logo-text').textContent = 'Contact Editor - ' + username;
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('view-page-link').href = viewPageHref();
+    document.getElementById('view-page-link').style.pointerEvents = '';
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
@@ -1366,6 +1345,12 @@ function fillForm(h) {
 }
 
 async function resetForm() {
+  if (isCreateMode) {
+    setContactPageMeta('', '', true);
+    clearFormToBlank();
+    hideStatusBanner();
+    return;
+  }
   showStatusBanner('Refreshing...', 'refreshing');
   try {
     const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
@@ -1373,6 +1358,7 @@ async function resetForm() {
       const d = await res.json();
       currentSha = d.sha;
       fillForm(d.content);
+      setContactPageMeta(d.contactpagename || currentContactpagename, d.contactPageName || null, false);
       hideStatusBanner();
       function clearFieldErr(errId, inpId) {
         var e = document.getElementById(errId), i = document.getElementById(inpId);
@@ -1385,6 +1371,8 @@ async function resetForm() {
       clearFieldErr('error-mobile', 'mobile');
       clearFieldErr('error-dest-phone', 'dest-phone');
       clearFieldErr('error-dest-email', 'dest-email');
+      document.getElementById('error-contact-page-url-slug').textContent = '';
+      document.getElementById('error-contact-page-name').textContent = '';
     }
   } catch (e) { showStatusBanner('Failed to reload', 'error'); }
 }
@@ -1392,6 +1380,68 @@ async function resetForm() {
 async function handleSave(e) {
   e.preventDefault();
   const btn = document.getElementById('save-btn');
+  var slugInp = document.getElementById('contact-page-url-slug');
+  var slugErr = document.getElementById('error-contact-page-url-slug');
+  var nameInp = document.getElementById('contact-page-name');
+  var nameErr = document.getElementById('error-contact-page-name');
+
+  if (isCreateMode) {
+    var rawSlug = (slugInp && slugInp.value) ? slugInp.value.trim() : '';
+    var contactpagename = (rawSlug === '' || rawSlug.toLowerCase() === 'index') ? 'index' : rawSlug;
+    var contactPageNameTrim = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
+    if (contactpagename !== 'index') {
+      if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
+        if (slugErr) slugErr.textContent = 'Use only letters, numbers, hyphens, and underscores.';
+        if (slugInp) slugInp.focus();
+        return;
+      }
+      if (contactpagename.length < 2 || contactpagename.length > 64) {
+        if (slugErr) slugErr.textContent = 'Contact Page URL must be 2–64 characters (or leave blank for main page).';
+        if (slugInp) slugInp.focus();
+        return;
+      }
+    }
+    if (nameErr) nameErr.textContent = '';
+    if (slugErr) slugErr.textContent = '';
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
+    showStatusBanner('Creating contact page...', 'saving');
+    try {
+      var content = generateHTML();
+      var res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ contactpagename: contactpagename, contactPageName: contactPageNameTrim || undefined, content: content })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        isCreateMode = false;
+        currentContactpagename = data.contactpagename || contactpagename;
+        currentSha = data.sha;
+        setContactPageMeta(currentContactpagename, data.contactPageName || contactPageNameTrim || null, false);
+        document.getElementById('view-page-link').href = viewPageHref();
+        document.getElementById('view-page-link').style.pointerEvents = '';
+        await fetchContactPagesList();
+        document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
+        showStatusBanner('Contact page created.', 'success');
+      } else {
+        var errMsg = data.error || 'Failed to create';
+        if (data.error && (data.error.indexOf('URL') !== -1 || data.error.indexOf('slug') !== -1 || data.error.indexOf('exists') !== -1)) {
+          if (slugErr) slugErr.textContent = errMsg;
+          if (slugInp) slugInp.focus();
+        } else if (data.error && data.error.indexOf('Contact Page Name') !== -1) {
+          if (nameErr) nameErr.textContent = errMsg;
+          if (nameInp) nameInp.focus();
+        } else {
+          showStatusBanner(errMsg, 'error');
+        }
+      }
+    } catch (err) {
+      showStatusBanner('Connection error', 'error');
+    }
+    btn.disabled = false; btn.textContent = 'Save Changes';
+    return;
+  }
+
   var fnInput = document.getElementById('first-name'), fnErr = document.getElementById('error-first-name');
   var snInput = document.getElementById('surname'), snErr = document.getElementById('error-surname');
   var r = validateGivenNames(fnInput.value, true);
@@ -1424,16 +1474,19 @@ async function handleSave(e) {
   }
   if (emErr) emErr.textContent = '';
   emInput.classList.remove('is-invalid');
+  if (nameErr) nameErr.textContent = '';
+  if (slugErr) slugErr.textContent = '';
 
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
   showStatusBanner('Saving...', 'saving');
 
   try {
     const content = generateHTML();
+    const contactPageName = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
     const res = await fetch(pageApiPath(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ content, sha: currentSha })
+      body: JSON.stringify({ content, sha: currentSha, contactPageName: contactPageName || undefined })
     });
     const data = await res.json();
 
@@ -1442,7 +1495,13 @@ async function handleSave(e) {
       document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
       showStatusBanner('Saved', 'saved');
     } else {
-      showStatusBanner(data.error || 'Failed to save', 'error');
+      var errMsg = data.error || 'Failed to save';
+      if (data.error && data.error.indexOf('Contact Page Name') !== -1) {
+        if (nameErr) nameErr.textContent = errMsg;
+        if (nameInp) nameInp.focus();
+      } else {
+        showStatusBanner(errMsg, 'error');
+      }
     }
   } catch (e) {
     showStatusBanner('Connection error', 'error');
