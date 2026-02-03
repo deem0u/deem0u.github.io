@@ -110,7 +110,6 @@
           <div class="alert alert-info show mb-4" id="recovery-step2-info">
             <div class="alert-content">Check your email for the verification code, then enter it here.</div>
           </div>
-          <a id="recovery-mailto" href="#" class="btn btn-primary btn-block btn-lg mb-4 hidden" target="_blank">Open Email with Code (fallback)</a>
           <form id="recovery-form-step2" onsubmit="return false;">
             <div class="form-group">
               <label class="form-label">Enter 6-Digit Code</label>
@@ -143,6 +142,18 @@
             <div class="alert-content">We've sent a password reset link to your email. Click the link to set a new password.</div>
           </div>
           <button type="button" class="btn btn-primary btn-block btn-lg" onclick="resetRecovery(); showScreen('login')">Back to Sign In</button>
+        </div>
+
+        <!-- Failsafe: shown when email relay fails -->
+        <div id="recovery-failsafe" class="hidden mt-4 p-4" style="background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px); text-align:left;">
+          <strong>Failsafe — retrieve admin key from Cloudflare</strong>
+          <ol style="margin:0.5rem 0 0 1rem; padding:0;">
+            <li>Log in at <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener">dash.cloudflare.com</a></li>
+            <li>Workers &amp; Pages → your Worker → Settings → note the KV namespace</li>
+            <li>Workers &amp; Pages → KV → open that namespace</li>
+            <li>Find key <code>admin:key</code> — its value is your admin key</li>
+            <li>Sign in here with that key, then set a new password in Dashboard → Account</li>
+          </ol>
         </div>
         
         <div class="text-center mt-4" id="recovery-back-link">
@@ -908,12 +919,18 @@ async function handleRecoveryStep1(e) {
     var d = { error: 'Request failed' };
     try { d = text ? JSON.parse(text) : d; } catch (_) {}
     if (r.ok && d.step === 'code_sent') {
-      var mailtoEl = document.getElementById('recovery-mailto');
-      if (d.mailto) { mailtoEl.href = d.mailto; mailtoEl.classList.remove('hidden'); } else { mailtoEl.classList.add('hidden'); }
       document.getElementById('recovery-form-step1').classList.add('hidden');
       document.getElementById('recovery-step2').classList.remove('hidden');
       document.getElementById('recovery-subtitle').textContent = 'Check your email for the verification code';
-    } else { showAlert('recovery-alert-1', d.error || 'Request failed', 'error'); }
+      var failsafeEl = document.getElementById('recovery-failsafe');
+      if (failsafeEl) failsafeEl.classList.add('hidden');
+    } else {
+      showAlert('recovery-alert-1', d.error || 'Request failed', 'error');
+      if (d.relayFailed) {
+        var failsafeEl = document.getElementById('recovery-failsafe');
+        if (failsafeEl) failsafeEl.classList.remove('hidden');
+      }
+    }
   } catch (e) {
     var msg = (e && e.message) ? String(e.message) : '';
     showAlert('recovery-alert-1', 'Connection error. Check your internet connection and that you can reach the server. If you\'re on a different network or device, try again from your usual network or later.' + (msg ? ' (' + msg + ')' : ''), 'error');
@@ -942,7 +959,13 @@ async function handleRecoveryStep2(e) {
       document.getElementById('recovery-step3').classList.remove('hidden');
       document.getElementById('recovery-back-link').classList.add('hidden');
       document.getElementById('recovery-subtitle').textContent = 'Password recovered successfully';
-    } else { showAlert('recovery-alert-2', d.error || 'Request failed', 'error'); }
+    } else {
+      showAlert('recovery-alert-2', d.error || 'Request failed', 'error');
+      if (d.relayFailed) {
+        var failsafeEl = document.getElementById('recovery-failsafe');
+        if (failsafeEl) failsafeEl.classList.remove('hidden');
+      }
+    }
   } catch (e) {
     var msg = (e && e.message) ? String(e.message) : '';
     showAlert('recovery-alert-2', 'Connection error. Check your internet connection and try again.' + (msg ? ' (' + msg + ')' : ''), 'error');
@@ -959,6 +982,8 @@ function resetRecovery() {
   document.getElementById('recovery-step3').classList.add('hidden');
   var step3b = document.getElementById('recovery-step3b');
   if (step3b) step3b.classList.add('hidden');
+  var failsafeEl = document.getElementById('recovery-failsafe');
+  if (failsafeEl) failsafeEl.classList.add('hidden');
   document.getElementById('recovery-back-link').classList.remove('hidden');
   document.getElementById('recovery-subtitle').textContent = 'Enter your recovery email to receive a verification code';
   hideAlert('recovery-alert-1');

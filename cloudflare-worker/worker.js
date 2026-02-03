@@ -505,7 +505,7 @@ async function handleRecover(request, env) {
     const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
     if (!emailResult.ok) {
       await env.EDIT_KEYS_KV.delete('admin:reset_token');
-      return jsonResponse({ error: 'Failed to send reset link. Try again or use mailto fallback.' }, 500);
+      return jsonResponse({ error: 'Email could not be sent. Use the failsafe: retrieve your admin key from Cloudflare KV — see SETUP-GUIDE.', relayFailed: true }, 503);
     }
     return jsonResponse({ success: true, step: 'reset_link_sent', message: 'Check your email for the reset link.' });
   }
@@ -520,8 +520,7 @@ async function handleRecover(request, env) {
   const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
   if (!emailResult.ok) {
     await env.EDIT_KEYS_KV.delete('admin:recovery_code');
-    const mailto = `mailto:${storedEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent('Your code: ' + recoveryCode)}`;
-    return jsonResponse({ success: true, step: 'code_sent', mailto, message: 'Email send failed. Use the link below to email yourself the code.' });
+    return jsonResponse({ error: 'Email could not be sent. Use the failsafe: retrieve your admin key from Cloudflare KV — see SETUP-GUIDE.', relayFailed: true }, 503);
   }
   return jsonResponse({ success: true, step: 'code_sent', message: 'Check your email for the verification code.' });
 }
