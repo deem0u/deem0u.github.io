@@ -401,7 +401,7 @@ The Worker includes a `sendEmail()` helper. Workflow integrations (signup, recov
 - **New badge** — Users with a new Edit Key who haven’t had “Send via Email” yet
 - **Edit pages** — Admin → Edit Pages, or users via Contact Editor
 - **Access Recovery** — Edit page → “I need help Signing In” for users who forgot Edit Key
-- **Recover admin key** — Admin → Forgot Key? → enter recovery email
+- **Recover admin** — Admin → Forgot password? → enter recovery email → get OTP by email → enter OTP → get reset link by email → set new password; or sign in with **Email & password** if you set a password. **Failsafe:** see *Failsafe: Retrieve admin key via Cloudflare* below if you lose both key and email access.
 
 ---
 
@@ -418,6 +418,20 @@ The Worker includes a `sendEmail()` helper. Workflow integrations (signup, recov
 | Email relay 401 | `RELAY_SECRET` matches in Vercel and Worker |
 | Email relay 500 | `GMAIL_USER`, `GMAIL_APP_PASSWORD` set in Vercel; App Password has no spaces |
 | Emails not sending | Email relay URL correct in Worker; Vercel function deployed; see [EMAIL-SETUP.md](EMAIL-SETUP.md) |
+
+---
+
+## Failsafe: Retrieve admin key via Cloudflare
+
+If **email login and recovery were not successful** and you no longer have a copy of the admin key (and it was not stored locally), you can still retrieve it from Cloudflare KV:
+
+1. **Log in to Cloudflare** — https://dash.cloudflare.com/
+2. **Workers & Pages** → select your Worker (e.g. `contact-page-editor`) → **Settings** → **Variables and Secrets** — note the KV namespace name (e.g. `EDIT_KEYS_KV`).
+3. **Workers & Pages** → **KV** → open the namespace that is bound to your Worker.
+4. In the namespace, find the key **`admin:key`**. Its **Value** is your admin key (plain text).
+5. Copy that value and use it to sign in at `https://YOUR_GITHUB_USERNAME.github.io/admin/` (Admin key field). Save it somewhere safe and optionally set a new password (Dashboard → Account → Save password) and/or use Dashboard → Account → Save key to store it on this device.
+
+This works because the admin key is stored in KV; only you (with Cloudflare account access) can read it. After recovering, consider setting a password for email sign-in and keeping a backup of the admin key in a password manager.
 
 ---
 

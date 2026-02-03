@@ -8,9 +8,13 @@
  * 
  * KV Storage Structure:
  * - user_password_hash:{username} = hashed password for login
- * - admin:key = admin password
+ * - admin:key = admin password (also used as API key)
  * - admin:email = admin recovery email
  * - admin:setup_complete = "true" if setup is done
+ * - admin:password_salt = hex salt for PBKDF2
+ * - admin:password_hash = hex PBKDF2-SHA256 hash
+ * - admin:recovery_otp = JSON { recoveryCode, expiresAt }
+ * - admin:reset_token = JSON { token, expiresAt }
  */
 
 const CONFIG = {
@@ -21,6 +25,37 @@ const CONFIG = {
 
 /** Public API base for contact-page lockdown check (contact pages are static; they fetch this). */
 const PUBLIC_API_BASE = 'https://contact-page-editor.deem0u.workers.dev';
+
+/** Admin dashboard base URL for password reset links. Override with env.ADMIN_BASE_URL. */
+function getAdminBaseUrl(env) {
+  if (env.ADMIN_BASE_URL) return env.ADMIN_BASE_URL.replace(/\/$/, '');
+  return `https://${CONFIG.owner}.github.io/admin`;
+}
+
+const PBKDF2_ITERATIONS = 100000;
+const SALT_BYTES = 16;
+
+function bufferToHex(buf) {
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function hexToBuffer(hex) {
+  const bytes = [];
+  for (let i = 0; i < hex.length; i += 2) bytes.push(parseInt(hex.slice(i, i + 2), 16));
+  return new Uint8Array(bytes);
+}
+
+async function hashAdminPassword(password, saltBytes) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
+  const salt = saltBytes instanceof Uint8Array ? saltBytes : hexToBuffer(saltBytes);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256);
+  return bufferToHex(bits);
+}
+
+async function verifyAdminPassword(password, saltHex, hashHex) {
+  const derived = await hashAdminPassword(password, saltHex);
+  return derived === hashHex;
+}
 
 /** All user accounts and contact pages live under this folder. */
 const USER_PAGES_PREFIX = 'user';
@@ -246,13 +281,26 @@ export default {
         return await handleAdminRenameUser(request, env);
       }
       if (request.method === 'GET' && path === '/api/site-status') {
-        return await handleGetSiteStatus(env);
+        return await handleGetSiteStatus(request, env);
       }
       if (request.method === 'GET' && path === '/api/admin/site-settings') {
         return await handleGetSiteSettings(request, env);
       }
       if (request.method === 'PUT' && path === '/api/admin/site-settings') {
         return await handlePutSiteSettings(request, env);
+      }
+      if (request.method === 'PUT' && path === '/api/admin/admin-key') {
+        return await handlePutAdminKey(request, env);
+      }
+      if (request.method === 'PUT' && path === '/api/admin/set-password') {
+        return await handlePutAdminPassword(request, env);
+      }
+
+      if (request.method === 'POST' && path === '/api/recover/verify-reset-token') {
+        return await handleVerifyResetToken(request, env);
+      }
+      if (request.method === 'POST' && path === '/api/recover/reset-password') {
+        return await handleResetPasswordWithToken(request, env);
       }
 
       return jsonResponse({ error: 'Not found' }, 404);
@@ -383,7 +431,7 @@ async function handleSetup(request, env) {
   }
 
   const body = await request.json();
-  const { adminKey, adminEmail } = body;
+  const { adminKey, adminEmail, password } = body;
 
   if (!adminKey || adminKey.length < 8) {
     return jsonResponse({ error: 'Admin key must be at least 8 characters' }, 400);
@@ -395,6 +443,15 @@ async function handleSetup(request, env) {
   await env.EDIT_KEYS_KV.put('admin:key', adminKey);
   await env.EDIT_KEYS_KV.put('admin:email', adminEmail.toLowerCase());
   await env.EDIT_KEYS_KV.put('admin:setup_complete', 'true');
+
+  if (password && typeof password === 'string' && password.length >= 8) {
+    const saltArr = new Uint8Array(SALT_BYTES);
+    crypto.getRandomValues(saltArr);
+    const saltHex = bufferToHex(saltArr);
+    const hashHex = await hashAdminPassword(password, saltArr);
+    await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+    await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  }
 
   return jsonResponse({ success: true, message: 'Setup complete' });
 }
@@ -421,52 +478,52 @@ async function handleRecover(request, env) {
     return jsonResponse({ error: 'Email does not match' }, 401);
   }
 
-  // Step 2: Verify code and return password
+  // Step 2: Verify OTP, create reset token, send reset link by email
   if (code) {
     const storedData = await env.EDIT_KEYS_KV.get('admin:recovery_code');
     if (!storedData) {
       return jsonResponse({ error: 'No recovery code found. Please request a new one.' }, 400);
     }
-    
     const { recoveryCode, expiresAt } = JSON.parse(storedData);
-    
     if (Date.now() > expiresAt) {
       await env.EDIT_KEYS_KV.delete('admin:recovery_code');
       return jsonResponse({ error: 'Code expired. Please request a new one.' }, 400);
     }
-    
     if (code !== recoveryCode) {
       return jsonResponse({ error: 'Invalid code. Please check and try again.' }, 401);
     }
-    
-    // Code is valid - delete it and return password
     await env.EDIT_KEYS_KV.delete('admin:recovery_code');
-    const adminKey = await env.EDIT_KEYS_KV.get('admin:key');
-    
-    return jsonResponse({ 
-      success: true,
-      step: 'complete',
-      adminKey,
-      message: 'Recovery successful' 
-    });
+
+    const resetToken = bufferToHex(crypto.getRandomValues(new Uint8Array(32)));
+    const resetExpiresAt = Date.now() + (60 * 60 * 1000); // 1 hour
+    await env.EDIT_KEYS_KV.put('admin:reset_token', JSON.stringify({ token: resetToken, expiresAt: resetExpiresAt }));
+
+    const baseUrl = getAdminBaseUrl(env);
+    const resetLink = `${baseUrl}/?reset=${resetToken}`;
+    const subject = 'Admin Dashboard - Password Reset Link';
+    const text = `Click the link below to set a new password. The link expires in 1 hour.\n\n${resetLink}\n\nIf you did not request this, please ignore this email.`;
+    const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
+    if (!emailResult.ok) {
+      await env.EDIT_KEYS_KV.delete('admin:reset_token');
+      return jsonResponse({ error: 'Failed to send reset link. Try again or use mailto fallback.' }, 500);
+    }
+    return jsonResponse({ success: true, step: 'reset_link_sent', message: 'Check your email for the reset link.' });
   }
 
-  // Step 1: Generate code and return mailto link
+  // Step 1: Generate OTP, store it, send OTP by email
   const recoveryCode = generateRecoveryCode();
   const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
-  
   await env.EDIT_KEYS_KV.put('admin:recovery_code', JSON.stringify({ recoveryCode, expiresAt }));
-  
-  const subject = 'Contact Editor - Recovery Code';
-  const body_text = `Your recovery code is:\n\n${recoveryCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
-  
-  return jsonResponse({ 
-    success: true,
-    step: 'code_sent',
-    email: storedEmail,
-    mailto: `mailto:${storedEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body_text)}`,
-    message: 'Recovery code generated' 
-  });
+
+  const subject = 'Admin Dashboard - Recovery Code';
+  const text = `Your recovery code is: ${recoveryCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
+  const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
+  if (!emailResult.ok) {
+    await env.EDIT_KEYS_KV.delete('admin:recovery_code');
+    const mailto = `mailto:${storedEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent('Your code: ' + recoveryCode)}`;
+    return jsonResponse({ success: true, step: 'code_sent', mailto, message: 'Email send failed. Use the link below to email yourself the code.' });
+  }
+  return jsonResponse({ success: true, step: 'code_sent', message: 'Check your email for the verification code.' });
 }
 
 function generateRecoveryCode() {
@@ -482,14 +539,28 @@ async function handleAuth(request, env) {
   }
 
   const body = await request.json();
-  const { adminKey } = body;
+  const { adminKey, email, password } = body;
+
+  if (email && password) {
+    const storedEmail = await env.EDIT_KEYS_KV.get('admin:email');
+    if (!storedEmail || email.toLowerCase() !== storedEmail.toLowerCase()) {
+      return jsonResponse({ error: 'Invalid email or password' }, 401);
+    }
+    const saltHex = await env.EDIT_KEYS_KV.get('admin:password_salt');
+    const hashHex = await env.EDIT_KEYS_KV.get('admin:password_hash');
+    if (!saltHex || !hashHex) {
+      return jsonResponse({ error: 'Password login not set up. Use admin key or set password in dashboard.' }, 401);
+    }
+    const valid = await verifyAdminPassword(password, saltHex, hashHex);
+    if (!valid) return jsonResponse({ error: 'Invalid email or password' }, 401);
+    const storedKey = await env.EDIT_KEYS_KV.get('admin:key');
+    return jsonResponse({ success: true, adminKey: storedKey });
+  }
 
   const storedKey = await env.EDIT_KEYS_KV.get('admin:key');
-  
   if (!storedKey || adminKey !== storedKey) {
     return jsonResponse({ error: 'Invalid admin key' }, 401);
   }
-
   return jsonResponse({ success: true });
 }
 
@@ -759,7 +830,7 @@ function generateContactPageHTML(givenName, familyName, contactEmail, mobile, mo
   const lblAdditional = 'Additional Information \u00b7 Informations suppl\u00e9mentaires \u00b7 \u9644\u52a0\u4fe1\u606f';
   const script = '<script>(function(){function f(i,u){if(!i)return"";var d=new Date(i);return d.toLocaleString()+(u?" by "+u:"")}document.querySelectorAll(".last-updated-display").forEach(function(e){var i=e.getAttribute("data-timestamp"),u=e.getAttribute("data-updated-by");if(i)e.textContent=f(i,u)})})();<\/script>';
   const lockdownOverlay = '<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>';
-  const lockdownScript = '<script>(function(){var api="' + PUBLIC_API_BASE.replace(/"/g, '&quot;') + '";fetch(api+"/api/site-status").then(function(r){return r.json()}).then(function(d){if(d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';
+  const lockdownScript = '<script>(function(){var api="' + PUBLIC_API_BASE.replace(/"/g, '&quot;') + '";var h={"X-Admin-Key":(typeof localStorage!="undefined"&&localStorage.getItem("admin_key"))||""};fetch(api+"/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';
   return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(givenName) + ' ' + esc(familyName) + '</title><style>' + css + '</style></head><body>' + lockdownOverlay + '<div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(givenName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(familyName) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(contactEmail) + '">' + esc(contactEmail) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + lockdownScript + '</body></html>';
 }
 
@@ -1250,14 +1321,17 @@ async function handleAdminRenameUser(request, env) {
   return jsonResponse({ success: true, oldUsername, newUsername, message: `User renamed to ${newUsername}` });
 }
 
-/** GET /api/site-status - Public. Returns maintenance and lockdown for edit/admin/signup pages. */
-async function handleGetSiteStatus(env) {
+/** GET /api/site-status - Public. Returns maintenance and lockdown. If X-Admin-Key is valid, returns isAdmin: true and no blocking. */
+async function handleGetSiteStatus(request, env) {
+  if (await isAdmin(request, env)) {
+    return jsonResponse({ maintenanceMode: false, lockdownMode: false, isAdmin: true });
+  }
   if (!env.EDIT_KEYS_KV) {
-    return jsonResponse({ maintenanceMode: false, lockdownMode: false });
+    return jsonResponse({ maintenanceMode: false, lockdownMode: false, isAdmin: false });
   }
   const maintenance = (await env.EDIT_KEYS_KV.get('site:maintenance')) === '1';
   const lockdown = (await env.EDIT_KEYS_KV.get('site:lockdown')) === '1';
-  return jsonResponse({ maintenanceMode: maintenance, lockdownMode: lockdown });
+  return jsonResponse({ maintenanceMode: maintenance, lockdownMode: lockdown, isAdmin: false });
 }
 
 /** GET /api/admin/site-settings - Admin only. Returns divert, maintenance, lockdown, per-user divert. */
@@ -1300,6 +1374,71 @@ async function handlePutSiteSettings(request, env) {
       else await env.EDIT_KEYS_KV.delete('divert_email:' + u);
     }
   }
+  return jsonResponse({ success: true });
+}
+
+/** PUT /api/admin/admin-key - Admin only. Body: { newAdminKey }. */
+async function handlePutAdminKey(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const newKey = (body.newAdminKey || '').trim();
+  if (newKey.length < 8) return jsonResponse({ error: 'Admin key must be at least 8 characters' }, 400);
+  await env.EDIT_KEYS_KV.put('admin:key', newKey);
+  return jsonResponse({ success: true });
+}
+
+/** PUT /api/admin/set-password - Admin only. Body: { password }. */
+async function handlePutAdminPassword(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const password = body.password;
+  if (typeof password !== 'string' || password.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  const saltArr = new Uint8Array(SALT_BYTES);
+  crypto.getRandomValues(saltArr);
+  const saltHex = bufferToHex(saltArr);
+  const hashHex = await hashAdminPassword(password, saltArr);
+  await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+  await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/recover/verify-reset-token - No auth. Body: { token }. */
+async function handleVerifyResetToken(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ valid: false }, 400); }
+  const token = (body.token || '').trim();
+  if (!token) return jsonResponse({ valid: false }, 400);
+  const stored = await env.EDIT_KEYS_KV.get('admin:reset_token');
+  if (!stored) return jsonResponse({ valid: false }, 400);
+  const { token: storedToken, expiresAt } = JSON.parse(stored);
+  if (storedToken !== token || Date.now() > expiresAt) return jsonResponse({ valid: false }, 400);
+  return jsonResponse({ valid: true });
+}
+
+/** POST /api/recover/reset-password - No auth. Body: { token, newPassword }. */
+async function handleResetPasswordWithToken(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const token = (body.token || '').trim();
+  const newPassword = body.newPassword;
+  if (!token) return jsonResponse({ error: 'Token required' }, 400);
+  if (typeof newPassword !== 'string' || newPassword.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  const stored = await env.EDIT_KEYS_KV.get('admin:reset_token');
+  if (!stored) return jsonResponse({ error: 'Invalid or expired reset link' }, 400);
+  const { token: storedToken, expiresAt } = JSON.parse(stored);
+  if (storedToken !== token || Date.now() > expiresAt) {
+    await env.EDIT_KEYS_KV.delete('admin:reset_token');
+    return jsonResponse({ error: 'Invalid or expired reset link' }, 400);
+  }
+  const saltArr = new Uint8Array(SALT_BYTES);
+  crypto.getRandomValues(saltArr);
+  const saltHex = bufferToHex(saltArr);
+  const hashHex = await hashAdminPassword(newPassword, saltArr);
+  await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+  await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  await env.EDIT_KEYS_KV.delete('admin:reset_token');
   return jsonResponse({ success: true });
 }
 

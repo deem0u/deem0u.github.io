@@ -1016,16 +1016,20 @@ function selectCountryEdit(value) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    var statusRes = await fetch(API + '/api/site-status');
+    var adminKey = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_key') : null;
+    var headers = {};
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+    var statusRes = await fetch(API + '/api/site-status', { headers: headers });
     var statusData = await statusRes.json();
-    if (statusData.lockdownMode) {
+    if (statusData.isAdmin) { /* admin bypasses maintenance and lockdown */ }
+    else if (statusData.lockdownMode) {
       var el = document.getElementById('site-unavailable');
       if (el) { el.style.display = 'flex'; el.classList.remove('hidden'); }
       var app = document.querySelector('.app');
       if (app) app.style.display = 'none';
       return;
     }
-    if (statusData.maintenanceMode) {
+    else if (statusData.maintenanceMode) {
       var maint = document.getElementById('site-maintenance');
       if (maint) { maint.style.display = 'flex'; maint.classList.remove('hidden'); }
       var app = document.querySelector('.app');
@@ -2083,7 +2087,7 @@ ${lastUpdatedBlockHtml}
 <div class="info additional-info"><span class="label">${lblBoth('additional-info')}</span>${additionalHtml}</div>
 </div>
 ${formatTimestampScript}
-<script>(function(){fetch("${API}/api/site-status").then(function(r){return r.json()}).then(function(d){if(d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
+<script>(function(){var h={"X-Admin-Key":(typeof localStorage!=="undefined"&&localStorage.getItem("admin_key"))||""};fetch("${API}/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
 </body>
 </html>`;
 }
