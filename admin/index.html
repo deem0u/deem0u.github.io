@@ -195,11 +195,17 @@
           <div class="card">
             <div class="card-header"><span class="card-title">Site</span></div>
             <div class="card-body">
-              <div class="site-settings-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:1rem; padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);">
-                <span class="site-settings-label" style="font-weight:600; margin-right:0.5rem;">Site:</span>
-                <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-divert-all" onchange="toggleDivertAll(this.checked)"><span>Divert all to dev</span></label>
-                <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-maintenance" onchange="toggleMaintenance(this.checked)"><span>Maintenance mode</span></label>
-                <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-lockdown" onchange="toggleLockdown(this.checked)"><span>Lockdown mode</span></label>
+              <div class="form-group mb-4">
+                <label class="form-label" style="margin-bottom:0.5rem;">Site options</label>
+                <div class="site-settings-row">
+                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-divert-all"><span>Divert all to dev</span></label>
+                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-maintenance"><span>Maintenance mode</span></label>
+                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-lockdown"><span>Lockdown mode</span></label>
+                </div>
+                <span class="form-hint" style="display:block; margin-top:0.5rem;">Maintenance and lockdown are mutually exclusive. Changes apply when you click Confirm.</span>
+              </div>
+              <div class="form-group mb-0">
+                <button type="button" class="btn btn-primary" id="site-settings-confirm-btn">Confirm</button>
               </div>
             </div>
           </div>
@@ -246,6 +252,40 @@
                   <span class="form-hint" style="display:block; margin-top:0.5rem;">Sends OTP to your admin email; enter code and new password to reset.</span>
                 </div>
               </div>
+            </div>
+          </div>
+          <div class="card mt-4">
+            <div class="card-header"><span class="card-title">KV storage cleanup</span></div>
+            <div class="card-body">
+              <p class="form-hint mb-4">Find and remove orphaned KV keys (users no longer in the repo) and expired temporary keys (e.g. recovery codes). Source of truth is the GitHub user folder list.</p>
+              <div class="form-group mb-4">
+                <button type="button" class="btn btn-secondary" id="kv-orphans-refresh-btn">Check for orphaned keys</button>
+              </div>
+              <div id="kv-orphans-report" class="hidden">
+                <div class="kv-report-summary mb-3" style="padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);"></div>
+                <details class="mb-3" id="kv-orphans-details">
+                  <summary>Show key names</summary>
+                  <pre id="kv-orphans-keys" class="mt-2 p-2 font-mono text-sm" style="background:var(--color-bg,#fff); border:1px solid var(--color-border,#ddd); border-radius:var(--radius-sm,4px); max-height:12rem; overflow:auto;"></pre>
+                </details>
+                <div id="kv-cleanup-actions" class="hidden">
+                  <div class="form-group mb-3">
+                    <button type="button" class="btn btn-secondary" id="kv-cleanup-dry-run-btn">Dry run (preview delete)</button>
+                    <span class="form-hint ml-2" id="kv-dry-run-result"></span>
+                  </div>
+                  <div id="kv-cleanup-confirm-block" class="hidden" style="padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);">
+                    <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.5rem;">
+                      <input type="checkbox" id="kv-cleanup-confirm-checkbox">
+                      <span>I have reviewed the list and want to permanently delete these keys</span>
+                    </label>
+                    <div>
+                      <button type="button" class="btn btn-primary" id="kv-cleanup-delete-btn" disabled>Delete these keys</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="kv-orphans-empty" class="hidden form-hint">No orphaned or expired keys.</div>
+              <div id="kv-orphans-loading" class="hidden form-hint">Loading…</div>
+              <div id="kv-orphans-error" class="alert hidden"></div>
             </div>
           </div>
           <div id="alert-admin-access" class="alert mt-4"></div>
@@ -672,6 +712,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (resetPwTriggerBtn) resetPwTriggerBtn.addEventListener('click', handleResetPasswordTrigger);
     var saveEmailBtn = document.getElementById('save-admin-email-btn');
     if (saveEmailBtn) saveEmailBtn.addEventListener('click', handleSaveAdminEmail);
+    var kvRefreshBtn = document.getElementById('kv-orphans-refresh-btn');
+    if (kvRefreshBtn) kvRefreshBtn.addEventListener('click', refreshKvOrphansReport);
+    var kvDryRunBtn = document.getElementById('kv-cleanup-dry-run-btn');
+    if (kvDryRunBtn) kvDryRunBtn.addEventListener('click', runKvCleanupDryRun);
+    var kvConfirmCheck = document.getElementById('kv-cleanup-confirm-checkbox');
+    if (kvConfirmCheck) kvConfirmCheck.addEventListener('change', updateKvCleanupDeleteButton);
+    var kvDeleteBtn = document.getElementById('kv-cleanup-delete-btn');
+    if (kvDeleteBtn) kvDeleteBtn.addEventListener('click', runKvCleanupDelete);
+    var siteMaint = document.getElementById('site-maintenance');
+    var siteLock = document.getElementById('site-lockdown');
+    if (siteMaint) siteMaint.addEventListener('change', function() { if (this.checked && siteLock) siteLock.checked = false; });
+    if (siteLock) siteLock.addEventListener('change', function() { if (this.checked && siteMaint) siteMaint.checked = false; });
+    var siteConfirmBtn = document.getElementById('site-settings-confirm-btn');
+    if (siteConfirmBtn) siteConfirmBtn.addEventListener('click', applySiteSettings);
     var pwNew = document.getElementById('dashboard-password-new');
     var pwConfirm = document.getElementById('dashboard-password-confirm');
     if (pwNew) pwNew.addEventListener('input', updateSetPasswordButton);
@@ -1127,6 +1181,126 @@ async function handleSaveAdminEmail() {
   } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
+var kvOrphansReportData = null;
+
+function showKvOrphansState(which) {
+  var report = document.getElementById('kv-orphans-report');
+  var empty = document.getElementById('kv-orphans-empty');
+  var loading = document.getElementById('kv-orphans-loading');
+  var errEl = document.getElementById('kv-orphans-error');
+  if (report) report.classList.add('hidden');
+  if (empty) empty.classList.add('hidden');
+  if (loading) loading.classList.add('hidden');
+  if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+  if (which === 'report') report.classList.remove('hidden');
+  else if (which === 'empty') empty.classList.remove('hidden');
+  else if (which === 'loading') loading.classList.remove('hidden');
+  else if (which === 'error') errEl.classList.remove('hidden');
+}
+
+async function refreshKvOrphansReport() {
+  showKvOrphansState('loading');
+  var confirmBlock = document.getElementById('kv-cleanup-confirm-block');
+  var confirmCheck = document.getElementById('kv-cleanup-confirm-checkbox');
+  var deleteBtn = document.getElementById('kv-cleanup-delete-btn');
+  var dryRunResult = document.getElementById('kv-dry-run-result');
+  var actions = document.getElementById('kv-cleanup-actions');
+  if (confirmBlock) confirmBlock.classList.add('hidden');
+  if (confirmCheck) confirmCheck.checked = false;
+  if (deleteBtn) deleteBtn.disabled = true;
+  if (dryRunResult) dryRunResult.textContent = '';
+  if (actions) actions.classList.add('hidden');
+  kvOrphansReportData = null;
+  try {
+    var r = await fetch(API + '/api/admin/kv-orphans', { headers: { 'X-Admin-Key': adminKey } });
+    var d = await r.json();
+    if (!r.ok) {
+      document.getElementById('kv-orphans-error').textContent = (d && d.error) || 'Request failed';
+      showKvOrphansState('error');
+      return;
+    }
+    kvOrphansReportData = d;
+    var total = (d.orphanedKeys && d.orphanedKeys.length) + (d.expiredTemp && d.expiredTemp.length) || 0;
+    if (total === 0) {
+      showKvOrphansState('empty');
+      return;
+    }
+    var summaryEl = document.querySelector('#kv-orphans-report .kv-report-summary');
+    if (summaryEl) {
+      summaryEl.textContent = 'Valid user folders: ' + (d.validUsernamesCount ?? 0) + '. Orphaned keys: ' + (d.orphanedKeys && d.orphanedKeys.length) + '. Expired temporary keys: ' + (d.expiredTemp && d.expiredTemp.length) + '. Total to delete: ' + total + '.';
+    }
+    var keysPre = document.getElementById('kv-orphans-keys');
+    if (keysPre) {
+      var all = [].concat(d.orphanedKeys || [], d.expiredTemp || []);
+      keysPre.textContent = all.join('\n');
+    }
+    document.getElementById('kv-cleanup-actions').classList.remove('hidden');
+    showKvOrphansState('report');
+  } catch (e) {
+    document.getElementById('kv-orphans-error').textContent = 'Connection error.';
+    showKvOrphansState('error');
+  }
+}
+
+async function runKvCleanupDryRun() {
+  var dryRunResult = document.getElementById('kv-dry-run-result');
+  if (!dryRunResult) return;
+  dryRunResult.textContent = 'Running dry run…';
+  try {
+    var r = await fetch(API + '/api/admin/kv-cleanup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body: JSON.stringify({ dryRun: true })
+    });
+    var d = await r.json();
+    if (r.ok) {
+      dryRunResult.textContent = 'Would delete ' + (d.deleted || 0) + ' keys. Review the list above, then confirm below to delete for real.';
+      document.getElementById('kv-cleanup-confirm-block').classList.remove('hidden');
+    } else {
+      dryRunResult.textContent = (d && d.error) || 'Dry run failed';
+    }
+  } catch (e) {
+    dryRunResult.textContent = 'Connection error';
+  }
+}
+
+function updateKvCleanupDeleteButton() {
+  var check = document.getElementById('kv-cleanup-confirm-checkbox');
+  var btn = document.getElementById('kv-cleanup-delete-btn');
+  if (btn) btn.disabled = !(check && check.checked);
+}
+
+async function runKvCleanupDelete() {
+  var check = document.getElementById('kv-cleanup-confirm-checkbox');
+  if (!check || !check.checked) return;
+  var btn = document.getElementById('kv-cleanup-delete-btn');
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch(API + '/api/admin/kv-cleanup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body: JSON.stringify({ dryRun: false })
+    });
+    var d = await r.json();
+    if (r.ok) {
+      showAlert('alert-admin-access', 'Deleted ' + (d.deleted || 0) + ' keys.', 'success');
+      kvOrphansReportData = null;
+      showKvOrphansState('empty');
+      document.getElementById('kv-orphans-report').classList.add('hidden');
+      document.getElementById('kv-cleanup-actions').classList.add('hidden');
+      document.getElementById('kv-cleanup-confirm-block').classList.add('hidden');
+      document.getElementById('kv-dry-run-result').textContent = '';
+      if (document.getElementById('kv-cleanup-confirm-checkbox')) document.getElementById('kv-cleanup-confirm-checkbox').checked = false;
+    } else {
+      showAlert('alert-admin-access', (d && d.error) || 'Delete failed.', 'error');
+      if (btn) btn.disabled = false;
+    }
+  } catch (e) {
+    showAlert('alert-admin-access', 'Connection error.', 'error');
+    if (btn) btn.disabled = false;
+  }
+}
+
 function generateRandomKey() {
   var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var len = 24;
@@ -1337,6 +1511,7 @@ async function loadDashboard() {
     var sdAll = document.getElementById('site-divert-all');
     var sdMaint = document.getElementById('site-maintenance');
     var sdLock = document.getElementById('site-lockdown');
+    if (siteSettings.maintenanceMode && siteSettings.lockdownMode) siteSettings.maintenanceMode = false;
     if (sdAll) sdAll.checked = siteSettings.divertAllGlobal;
     if (sdMaint) sdMaint.checked = siteSettings.maintenanceMode;
     if (sdLock) sdLock.checked = siteSettings.lockdownMode;
@@ -2413,6 +2588,39 @@ function copyLink(f, btn) {
     const o = btn.innerHTML; btn.innerHTML = '? Copied'; btn.classList.add('btn-success'); btn.classList.remove('btn-primary');
     setTimeout(() => { btn.innerHTML = o; btn.classList.remove('btn-success'); btn.classList.add('btn-primary'); }, 2000);
   });
+}
+
+async function applySiteSettings() {
+  var sdAll = document.getElementById('site-divert-all');
+  var sdMaint = document.getElementById('site-maintenance');
+  var sdLock = document.getElementById('site-lockdown');
+  var divertAll = !!(sdAll && sdAll.checked);
+  var maintenance = !!(sdMaint && sdMaint.checked);
+  var lockdown = !!(sdLock && sdLock.checked);
+  if (maintenance && lockdown) lockdown = false;
+  if (sdLock) sdLock.checked = lockdown;
+  var btn = document.getElementById('site-settings-confirm-btn');
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch(API + '/api/admin/site-settings', {
+      method: 'PUT',
+      headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ divertAllGlobal: divertAll, maintenanceMode: maintenance, lockdownMode: lockdown })
+    });
+    var d = r.ok ? null : await r.json();
+    if (r.ok) {
+      siteSettings.divertAllGlobal = divertAll;
+      siteSettings.maintenanceMode = maintenance;
+      siteSettings.lockdownMode = lockdown;
+      renderList('manage');
+      showAlert('alert-admin-access', 'Site settings saved.', 'success');
+    } else {
+      showAlert('alert-admin-access', (d && d.error) || 'Failed to update.', 'error');
+    }
+  } catch (e) {
+    showAlert('alert-admin-access', 'Connection error.', 'error');
+  }
+  if (btn) btn.disabled = false;
 }
 
 async function toggleDivertAll(checked) {
