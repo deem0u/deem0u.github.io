@@ -1750,6 +1750,34 @@ body {
 .ml-auto { margin-left: auto; }
 .hidden { display: none !important; }
 
+/* Admin dashboard: contact form matches Contact Editor (compact layout, same sections) */
+#admin-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; }
+#admin-contact-edit .card-header > div:first-child { flex: 1; min-width: 0; }
+#admin-contact-edit .card-body { padding: 0.5rem 0.75rem; }
+#admin-contact-edit .form-group { margin-bottom: 0.4rem; }
+#admin-contact-edit .form-group:last-child { margin-bottom: 0; }
+#admin-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
+#admin-contact-edit .form-hint { margin-top: 0.15rem; }
+#admin-contact-edit .form-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+#admin-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0.35rem; }
+#admin-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
+#admin-contact-edit .form-actions { margin-top: 0.5rem; padding-top: 0.5rem; }
+#admin-contact-edit .form-input,
+#admin-contact-edit .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
+#admin-contact-edit .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
+#admin-contact-edit .searchable-select-trigger { padding: 0.35rem 0.5rem; font-size: 0.875rem; min-height: 2.25rem; box-sizing: border-box; }
+#admin-contact-edit #home-country-edit-container .searchable-select-search { padding: 0.25rem 0.35rem; }
+#admin-contact-edit #home-country-edit-container .searchable-select-search input { padding: 0.25rem 0.35rem; font-size: 0.8125rem; min-height: 1.75rem; }
+#admin-contact-edit #home-country-edit-container .searchable-select-options { max-height: 160px; }
+#admin-contact-edit #home-country-edit-container .searchable-select-option { padding: 0.25rem 0.35rem; font-size: 0.8125rem; }
+#admin-contact-view .editor-view-header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.35rem; }
+#admin-contact-view .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
+#admin-contact-view .editor-view-value.editor-view-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: var(--accent-purple, #9370db); }
+#admin-contact-view .form-group { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border); }
+#admin-contact-view .form-section { padding: 0.4rem 0; margin-top: 0.35rem; }
+#admin-contact-view .form-row { display: flex; flex-wrap: wrap; gap: 1rem; }
+#admin-contact-view .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
+
 .form-row-inline {
   display: flex;
   gap: var(--space-4);
