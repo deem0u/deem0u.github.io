@@ -1555,18 +1555,21 @@ async function fetchAccountEmailsAndRefresh() {
       var accountDetailsSent = (d.accountDetailsSent) ? d.accountDetailsSent : {};
       var emailVerification = (d.emailVerification) ? d.emailVerification : {};
       for (var f in userInfo) {
-        userInfo[f].accountEmail = accountEmails[f] || null;
-        userInfo[f].accountDetailsSent = !!accountDetailsSent[f];
-        userInfo[f].emailVerification = emailVerification[f] || null;
+        var fLower = (f || '').toLowerCase();
+        userInfo[f].accountEmail = accountEmails[f] || accountEmails[fLower] || null;
+        userInfo[f].accountDetailsSent = !!accountDetailsSent[f] || !!accountDetailsSent[fLower];
+        userInfo[f].emailVerification = emailVerification[f] || emailVerification[fLower] || null;
       }
     }
     var profData = results[1];
     if (profData && profData.profiles) {
       var profiles = profData.profiles;
       for (var f in userInfo) {
-        if (profiles[f]) {
-          userInfo[f].firstName = (profiles[f].firstName || '').trim() || userInfo[f].firstName || '';
-          userInfo[f].lastName = (profiles[f].lastName || '').trim() || userInfo[f].lastName || '';
+        var prof = profiles[f] || profiles[(f || '').toLowerCase()];
+        if (prof) {
+          userInfo[f].firstName = (prof.firstName || '').trim() || userInfo[f].firstName || '';
+          userInfo[f].lastName = (prof.lastName || '').trim() || userInfo[f].lastName || '';
+          if ((prof.accountEmail || '').trim()) userInfo[f].accountEmail = userInfo[f].accountEmail || (prof.accountEmail || '').trim();
         }
       }
     }
@@ -2270,6 +2273,7 @@ function renderList(t) {
               <button class="btn btn-primary btn-sm" onclick="showProfileModal('${f}')">Edit Account &amp; Name</button>
               <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
               <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="debugUserApi('${escapeHtml(f).replace(/'/g, "\\'")}')" title="See what the API returns for this user">Debug API</button>
             </div>
           </div>
         </div>
@@ -3203,6 +3207,20 @@ function closeSecretsModal() {
   lastSavedSecretsData = null;
 }
 
+async function debugUserApi(folder) {
+  try {
+    var r = await fetch(API + '/api/admin/debug-user/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+    var data = await r.json();
+    console.log('Debug user API response:', data);
+    var d = data.debug || data;
+    var msg = (d.resolvedEmail ? 'Resolved email: ' + d.resolvedEmail : 'No email found in KV.') + '\nFirst: ' + (d.firstName || '(none)') + ', Last: ' + (d.lastName || '(none)') + '\nFull response in console (F12).';
+    showModal('Debug: ' + folder, msg, 'btn-primary', 'OK', function() {});
+  } catch (e) {
+    console.error('Debug user API error:', e);
+    showModal('Debug failed', (e && e.message) || 'Check console (F12).', 'btn-primary', 'OK', function() {});
+  }
+}
+
 async function showProfileModal(folder) {
   profileModalFolder = folder;
   document.getElementById('modal-profile-title').textContent = 'Edit Account & Name - ' + folder;
@@ -3379,9 +3397,14 @@ async function showSecretsModal(folder) {
   try {
     var r = await fetch(API + '/api/secrets/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
     var d = await r.json();
-    lastSavedSecretsData = { accountEmail: d.accountEmail || '', dob: d.dob || '', secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [], emailVerified: !!d.emailVerified, passwordSet: !!d.passwordSet };
     document.getElementById('modal-secrets-loading').classList.add('hidden');
     document.getElementById('modal-secrets-form').classList.remove('hidden');
+    if (!r.ok) {
+      document.getElementById('modal-secrets-error').textContent = (d && d.error) || 'Failed to load secrets.';
+      document.getElementById('modal-secrets-error').classList.remove('hidden');
+      return;
+    }
+    lastSavedSecretsData = { accountEmail: d.accountEmail || '', dob: d.dob || '', secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [], emailVerified: !!d.emailVerified, passwordSet: !!d.passwordSet };
     document.getElementById('secrets-account-email').value = d.accountEmail || '';
     document.getElementById('secrets-dob').value = d.dob || '';
     var sq = Array.isArray(d.secretQuestions) ? d.secretQuestions : [];

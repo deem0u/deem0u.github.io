@@ -262,19 +262,27 @@ export default {
         return await handleRevokeAccess(username, request, env);
       }
       if (request.method === 'GET' && path.startsWith('/api/profile/')) {
-        const username = path.replace('/api/profile/', '').replace(/\/$/, '');
+        const raw = path.replace('/api/profile/', '').replace(/\/$/, '');
+        let username = raw || '';
+        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
         return await handleGetProfile(username, request, env);
       }
       if (request.method === 'PUT' && path.startsWith('/api/profile/')) {
-        const username = path.replace('/api/profile/', '').replace(/\/$/, '');
+        const raw = path.replace('/api/profile/', '').replace(/\/$/, '');
+        let username = raw || '';
+        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
         return await handlePutProfile(username, request, env);
       }
       if (request.method === 'GET' && path.startsWith('/api/secrets/')) {
-        const username = path.replace('/api/secrets/', '').replace(/\/$/, '');
+        const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
+        let username = raw || '';
+        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
         return await handleGetSecrets(username, request, env);
       }
       if (request.method === 'PUT' && path.startsWith('/api/secrets/')) {
-        const username = path.replace('/api/secrets/', '').replace(/\/$/, '');
+        const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
+        let username = raw || '';
+        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
         return await handlePutSecrets(username, request, env);
       }
       if (request.method === 'POST' && path === '/api/admin/rename-user') {
@@ -322,6 +330,11 @@ export default {
       }
       if (request.method === 'POST' && path === '/api/admin/kv-cleanup') {
         return await handleKvCleanup(request, env);
+      }
+      if (request.method === 'GET' && path.startsWith('/api/admin/debug-user/')) {
+        const raw = path.replace('/api/admin/debug-user/', '').replace(/\/$/, '');
+        const username = raw ? decodeURIComponent(raw).trim() : '';
+        return await handleDebugUser(username, request, env);
       }
 
       return jsonResponse({ error: 'Not found' }, 404);
@@ -1901,26 +1914,43 @@ async function handleGetAccountEmails(request, env) {
   if (!env.EDIT_KEYS_KV) {
     return jsonResponse({ accountEmails: {}, accountDetailsSent: {}, emailVerification: {} });
   }
-  const list = await env.EDIT_KEYS_KV.list({ prefix: 'account_email:' });
+  const keyNames = await listAllKvKeys(env, 'account_email:');
   const accountEmails = {};
-  const usernames = [];
-  for (const key of list.keys) {
-    if (key.name.startsWith('account_email_to_folder:')) continue;
-    const username = key.name.replace('account_email:', '');
-    const value = await env.EDIT_KEYS_KV.get(key.name);
-    if (value && username) { accountEmails[username] = value; usernames.push(username); }
+  const originalSuffixByLower = {};
+  for (const keyName of keyNames) {
+    if (keyName.startsWith('account_email_to_folder:')) continue;
+    const username = keyName.replace('account_email:', '');
+    const value = await env.EDIT_KEYS_KV.get(keyName);
+    if (value && username) {
+      const keyLower = (username || '').trim().toLowerCase();
+      accountEmails[keyLower] = value;
+      originalSuffixByLower[keyLower] = username;
+    }
   }
-  const sentList = await env.EDIT_KEYS_KV.list({ prefix: 'account_details_sent:' });
+  const toFolderKeys = await listAllKvKeys(env, 'account_email_to_folder:');
+  for (const keyName of toFolderKeys) {
+    const email = keyName.replace('account_email_to_folder:', '').trim();
+    const username = await env.EDIT_KEYS_KV.get(keyName);
+    if (email && email.includes('@') && username) {
+      const uLower = (username || '').trim().toLowerCase();
+      if (!accountEmails[uLower]) {
+        accountEmails[uLower] = email;
+        if (!originalSuffixByLower[uLower]) originalSuffixByLower[uLower] = username;
+      }
+    }
+  }
+  const sentKeyNames = await listAllKvKeys(env, 'account_details_sent:');
   const accountDetailsSent = {};
-  for (const key of sentList.keys) {
-    const username = key.name.replace('account_details_sent:', '');
-    if (username) accountDetailsSent[username] = true;
+  for (const keyName of sentKeyNames) {
+    const username = keyName.replace('account_details_sent:', '');
+    if (username) accountDetailsSent[username.toLowerCase()] = true;
   }
   const emailVerification = {};
-  for (const username of usernames) {
-    const byAdmin = (await env.EDIT_KEYS_KV.get('email_verified_admin:' + username)) === '1';
-    const byUser = (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
-    emailVerification[username] = byAdmin ? 'admin' : byUser ? 'user' : null;
+  for (const keyLower of Object.keys(accountEmails)) {
+    const orig = originalSuffixByLower[keyLower] || keyLower;
+    const byAdmin = (await env.EDIT_KEYS_KV.get('email_verified_admin:' + orig)) === '1';
+    const byUser = (await env.EDIT_KEYS_KV.get('email_verified:' + orig)) === '1';
+    emailVerification[keyLower] = byAdmin ? 'admin' : byUser ? 'user' : null;
   }
   return jsonResponse({ accountEmails, accountDetailsSent, emailVerification });
 }
@@ -1931,13 +1961,77 @@ async function handleGetAccountProfiles(request, env) {
   const usernames = Array.isArray(body.usernames) ? body.usernames : [];
   const profiles = {};
   if (!env.EDIT_KEYS_KV) return jsonResponse({ profiles });
+  const lowerToOriginal = {};
+  const addSuffix = (keyName, prefix) => {
+    const suffix = keyName.replace(prefix, '');
+    if (suffix) {
+      const key = suffix.trim().toLowerCase();
+      lowerToOriginal[key] = suffix;
+    }
+  };
+  const firstNamesKeys = await listAllKvKeys(env, 'user_first_name:');
+  for (const keyName of firstNamesKeys) addSuffix(keyName, 'user_first_name:');
+  const lastNamesKeys = await listAllKvKeys(env, 'user_last_name:');
+  for (const keyName of lastNamesKeys) addSuffix(keyName, 'user_last_name:');
+  const accountEmailKeys = await listAllKvKeys(env, 'account_email:');
+  for (const keyName of accountEmailKeys) {
+    if (!keyName.startsWith('account_email_to_folder:')) addSuffix(keyName, 'account_email:');
+  }
+  const getFirst = async (u) => (await env.EDIT_KEYS_KV.get('user_first_name:' + u)) || '';
+  const getLast = async (u) => (await env.EDIT_KEYS_KV.get('user_last_name:' + u)) || '';
+  const getEmail = async (u) => (await env.EDIT_KEYS_KV.get('account_email:' + u)) || '';
   for (const username of usernames) {
-    const firstName = await env.EDIT_KEYS_KV.get('user_first_name:' + username);
-    const lastName = await env.EDIT_KEYS_KV.get('user_last_name:' + username);
-    const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
-    profiles[username] = { firstName: firstName || '', lastName: lastName || '', accountEmail: accountEmail || '' };
+    const u = (username || '').trim();
+    const uLower = u.toLowerCase();
+    const canonical = lowerToOriginal[uLower] || u;
+    const firstName = (await getFirst(canonical)) || (await getFirst(uLower)) || '';
+    const lastName = (await getLast(canonical)) || (await getLast(uLower)) || '';
+    const accountEmail = (await getEmail(canonical)) || (await getEmail(uLower)) || '';
+    profiles[username] = { firstName, lastName, accountEmail };
   }
   return jsonResponse({ profiles });
+}
+
+async function handleDebugUser(username, request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ debug: { username, message: 'KV not configured' } });
+  const u = username.trim();
+  const uLower = u.toLowerCase();
+  const accountEmailFromKey = await env.EDIT_KEYS_KV.get('account_email:' + u) || await env.EDIT_KEYS_KV.get('account_email:' + uLower);
+  const firstName = await env.EDIT_KEYS_KV.get('user_first_name:' + u) || await env.EDIT_KEYS_KV.get('user_first_name:' + uLower);
+  const lastName = await env.EDIT_KEYS_KV.get('user_last_name:' + u) || await env.EDIT_KEYS_KV.get('user_last_name:' + uLower);
+  const toFolderKeys = await listAllKvKeys(env, 'account_email_to_folder:');
+  const toFolderEntries = [];
+  for (const keyName of toFolderKeys) {
+    const email = keyName.replace('account_email_to_folder:', '').trim();
+    const folder = await env.EDIT_KEYS_KV.get(keyName);
+    const folderTrimmed = (folder || '').trim();
+    const folderLower = folderTrimmed.toLowerCase();
+    if (folderTrimmed === u || folderTrimmed === uLower || folderLower === uLower) {
+      toFolderEntries.push({ email, folder: folderTrimmed });
+    }
+  }
+  const allAccountEmailKeys = await listAllKvKeys(env, 'account_email:');
+  const matchingAccountEmailKeys = allAccountEmailKeys.filter((keyName) => {
+    if (keyName.startsWith('account_email_to_folder:')) return false;
+    const suffix = keyName.replace('account_email:', '');
+    return suffix.trim().toLowerCase() === uLower;
+  });
+  const resolvedEmail = accountEmailFromKey || (toFolderEntries.length ? toFolderEntries[0].email : null);
+  return jsonResponse({
+    debug: {
+      username: u,
+      usernameLower: uLower,
+      accountEmailFromKey: accountEmailFromKey || null,
+      accountEmailFromToFolder: toFolderEntries.length ? toFolderEntries[0].email : null,
+      resolvedEmail: resolvedEmail || null,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      toFolderEntries,
+      matchingAccountEmailKeys
+    }
+  });
 }
 
 async function handleSecretsStatus(request, env) {
@@ -1956,10 +2050,24 @@ async function handleSecretsStatus(request, env) {
     for (const f of usernames) statuses[f] = { hasAccountEmail: false, hasDob: false, hasSecretQuestions: false, secretsComplete: false };
     return jsonResponse({ statuses });
   }
+  const lowerToOriginal = {};
+  const accountEmailKeys = await listAllKvKeys(env, 'account_email:');
+  for (const keyName of accountEmailKeys) {
+    if (!keyName.startsWith('account_email_to_folder:')) {
+      const suffix = keyName.replace('account_email:', '');
+      if (suffix) lowerToOriginal[suffix.toLowerCase()] = suffix;
+    }
+  }
   for (const username of usernames) {
-    const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
-    const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
-    const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+    const u = (username || '').trim();
+    const uLower = u.toLowerCase();
+    const canonical = lowerToOriginal[uLower] || u;
+    let accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + canonical);
+    if (accountEmail == null) accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + uLower);
+    let dob = await env.EDIT_KEYS_KV.get('user_dob:' + canonical);
+    if (dob == null) dob = await env.EDIT_KEYS_KV.get('user_dob:' + uLower);
+    let recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + canonical);
+    if (recoveryRaw == null) recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + uLower);
     let secretQuestions = [];
     if (recoveryRaw) {
       try {

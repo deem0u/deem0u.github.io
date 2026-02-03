@@ -286,6 +286,10 @@ body {
   color: var(--color-text-secondary);
 }
 
+#auth-form #auth-email-mode {
+  margin-bottom: var(--space-4);
+}
+
 /* Segmented control (e.g. sign-in method: Admin Key | Email & Password) */
 .segmented-control {
   display: inline-flex;
