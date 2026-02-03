@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Contact Editor - User</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='24' font-size='24'>✉</text></svg>">
   <link rel="stylesheet" href="/styles.css">
   <style>
   .edit-recovery-success-banner { padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-weight: 500; }
@@ -1328,11 +1329,16 @@ async function authenticate() {
     showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
     try {
       var authRes = await fetch(API + '/api/auth/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accountEmail: accountEmail, password: password }) });
-      var authData = await authRes.json();
-      if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || 'Invalid email or password.', 'error'); return; }
+      var authData;
+      try { authData = await authRes.json(); } catch (_) { authData = {}; }
+      if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || ('Sign-in failed (' + authRes.status + '). Try again or use recovery.'), 'error'); return; }
       username = authData.username;
       token = authData.token;
-    } catch (e) { showAlert('auth-alert', 'Connection error. Please try again.', 'error'); return; }
+    } catch (e) {
+      console.error('Sign-in request failed:', e);
+      showAlert('auth-alert', 'Cannot reach sign-in service. Check your connection, then try again. (Open Console (F12) for details.)', 'error');
+      return;
+    }
   }
   try {
     const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
@@ -1373,7 +1379,7 @@ async function authenticate() {
     await fetchContactPagesList();
   } catch (e) {
     console.error('Auth error:', e);
-    showAlert('auth-alert', 'Connection error. Please try again.', 'error');
+    showAlert('auth-alert', 'Error after sign-in. Open Console (F12) for details.', 'error');
   }
 }
 
