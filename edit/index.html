@@ -43,8 +43,10 @@
   .contact-page-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 8px); padding: 0.6rem 0.75rem; cursor: pointer; font-size: 0.85rem; text-align: left; transition: border-color 0.15s, background 0.15s; }
   .contact-page-card:hover { border-color: var(--accent-teal, #1ac5b0); background: var(--color-bg-subtle, #f5f5f5); }
   .contact-page-card.selected { border-color: var(--accent-teal, #1ac5b0); background: rgba(26, 197, 176, 0.08); font-weight: 600; }
-  .contact-page-card .page-name { display: block; }
-  .contact-page-card .page-slug { font-size: 0.75rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
+  .contact-page-card .contact-page-card-label { display: block; font-size: 0.7rem; font-weight: 600; color: var(--color-text-secondary, #666); margin-top: 0.35rem; }
+  .contact-page-card .contact-page-card-label:first-child { margin-top: 0; }
+  .contact-page-card .page-name { display: block; margin-top: 0.15rem; }
+  .contact-page-card .page-slug { display: block; font-size: 0.75rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
   #editor-contact-card .card-header-fields { gap: 0.35rem; }
   .card-header-fields { display: flex; flex-direction: column; gap: 0.5rem; }
   .card-header-field-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
@@ -1076,7 +1078,7 @@ function refreshViewModeDisplay() {
   var u = username || '';
   var slug = (slugInp && slugInp.value) ? slugInp.value.trim() : (currentContactpagename === 'index' ? '' : currentContactpagename);
   if (slug && slug.toLowerCase() === 'index') slug = '';
-  var url = u ? (PAGES_URL + u + '/' + (slug ? slug + '.html' : '')) : '';
+  var url = u ? (PAGES_URL + u + '/' + (slug || '')) : '';
   setView('view-contact-page-name', nameInp ? nameInp.value : '');
   setView('view-contact-page-url', url);
   setView('view-first-name', el('first-name'));
@@ -1133,6 +1135,7 @@ function updateFormDirtyState() {
 }
 
 function enterEditMode() {
+  if (!profileData || !profileData.emailVerified) return;
   document.getElementById('editor-contact-view').classList.add('hidden');
   document.getElementById('editor-contact-edit').classList.add('show');
   formSnapshot = getFormSnapshot();
@@ -1183,17 +1186,18 @@ async function fetchContactPagesList() {
     list.innerHTML = pages.map(function(p) {
       var slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
       var label = (typeof p === 'object' && p.name != null) ? p.name : (slug === 'index' ? 'Main (index)' : slug);
-      var slugDisplay = slug === 'index' ? username + '/' : username + '/' + slug + '.html';
-      return '<button type="button" class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + (slug === 'index' ? 'index' : slug) + '" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><span class="page-name">' + escapeHtml(label) + '</span><span class="page-slug">' + escapeHtml(slugDisplay) + '</span></button>';
+      var slugDisplay = slug === 'index' ? username + '/' : username + '/' + slug;
+      return '<button type="button" class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + (slug === 'index' ? 'index' : slug) + '" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><span class="contact-page-card-label">Contact Page Name</span><span class="page-name">' + escapeHtml(label) + '</span><span class="contact-page-card-label">URL Slug</span><span class="page-slug">' + escapeHtml(slugDisplay) + '</span></button>';
     }).join('');
     section.classList.remove('hidden');
   } catch (e) {
-    list.innerHTML = '<button type="button" class="contact-page-card selected" data-contactpagename="index" onclick="selectContactPage(\'index\')"><span class="page-name">Main (index)</span><span class="page-slug">' + escapeHtml(username + '/') + '</span></button>';
+    list.innerHTML = '<button type="button" class="contact-page-card selected" data-contactpagename="index" onclick="selectContactPage(\'index\')"><span class="contact-page-card-label">Contact Page Name</span><span class="page-name">Main (index)</span><span class="contact-page-card-label">URL Slug</span><span class="page-slug">' + escapeHtml(username + '/') + '</span></button>';
     section.classList.remove('hidden');
   }
 }
 
 function enterCreateMode() {
+  if (!profileData || !profileData.emailVerified) return;
   isCreateMode = true;
   currentContactpagename = '';
   currentSha = null;
@@ -1352,12 +1356,20 @@ function applyUnverifiedRestriction() {
   if (!profileData) return;
   var wrap = document.getElementById("editor-contact-form-wrap");
   var banner = document.getElementById("unverified-banner");
+  var editBtn = document.getElementById("edit-contact-page-btn");
+  var newPageBtn = document.getElementById("new-contact-page-btn");
   if (profileData.emailVerified) {
     if (wrap) wrap.classList.remove("editor-form-disabled");
     if (banner) banner.classList.add("hidden");
+    if (editBtn) editBtn.disabled = false;
+    if (newPageBtn) newPageBtn.disabled = false;
   } else {
     if (wrap) wrap.classList.add("editor-form-disabled");
     if (banner) banner.classList.remove("hidden");
+    if (editBtn) editBtn.disabled = true;
+    if (newPageBtn) newPageBtn.disabled = true;
+    var editPanel = document.getElementById("editor-contact-edit");
+    if (editPanel && editPanel.classList.contains("show")) enterViewMode();
   }
 }
 var profileSnapshot = null;
@@ -1425,6 +1437,7 @@ async function saveProfileFromStrip() {
     if (r.ok && d.success) {
       profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email };
       await loadProfile();
+      applyUnverifiedRestriction();
       exitProfileEditMode();
     }
   } catch (e) {}
