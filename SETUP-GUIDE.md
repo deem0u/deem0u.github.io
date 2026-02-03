@@ -421,6 +421,86 @@ The Worker includes a `sendEmail()` helper. Workflow integrations (signup, recov
 
 ---
 
+## Backend-only: set admin email / password (no key)
+
+You can set or change the **admin email** and **password** (and optionally the **admin key**) without knowing the current admin key, via an endpoint that is **not exposed on the site** and is protected by a secret.
+
+1. **Set the secret in the Worker**  
+   Cloudflare Worker → **Settings** → **Variables and Secrets** → add a **Secret**:  
+   Name: `ADMIN_SETUP_SECRET`  
+   Value: a long random string (e.g. `openssl rand -hex 32`). Keep this private; do not use it in frontend or public docs.
+
+2. **Call the endpoint from your machine or scripts** (e.g. curl), **not from the dashboard or any page**:
+
+   ```bash
+   curl -X POST "https://YOUR-WORKER-URL/api/internal/set-admin-credentials" \
+     -H "Content-Type: application/json" \
+     -H "X-Setup-Secret: YOUR_ADMIN_SETUP_SECRET" \
+     -d '{"email":"you@example.com","password":"your-new-password"}'
+   ```
+
+   Or set only email, only password, or only admin key. All are optional but at least one is required:
+
+   - `email` — admin recovery / sign-in email (must be valid).
+   - `password` — min 8 characters (for email sign-in).
+   - `adminKey` — min 8 characters (new admin key).
+
+   Example: set email and password only:  
+   `-d '{"email":"admin@example.com","password":"secret123"}'`  
+
+   Example: set a new admin key as well:  
+   `-d '{"email":"admin@example.com","password":"secret123","adminKey":"my-new-admin-key"}'`
+
+   You can also use `Authorization: Bearer YOUR_ADMIN_SETUP_SECRET` instead of `X-Setup-Secret`.
+
+3. **Security**  
+   Do not link or document this URL on the public site. Only call it from a secure environment (your machine, CI, or a backend you control). If `ADMIN_SETUP_SECRET` is not set in the Worker, the endpoint returns 501 and does nothing.
+
+---
+
+## Reinstate access (step-by-step)
+
+Use this when you cannot sign in to the admin dashboard (lost key, lost password, or email recovery not working). You need either your **ADMIN_SETUP_SECRET** (recommended) or access to **Cloudflare** to read KV.
+
+### Option A: You have ADMIN_SETUP_SECRET (recommended)
+
+1. **Get your Worker URL**  
+   Example: `https://contact-page-editor.deem0u.workers.dev` (replace with your Worker URL from Cloudflare).
+
+2. **Open a terminal** on your computer (PowerShell, Command Prompt, or bash).
+
+3. **Set a new admin email and password** (and optionally a new admin key) with one request. Replace `YOUR-WORKER-URL`, `YOUR_ADMIN_SETUP_SECRET`, `your@email.com`, `YourNewPassword8`, and `YourNewAdminKeyMin8Chars`, then run **one** of these (same thing, different shells):
+
+   **One line (works in PowerShell, CMD, bash):**
+   ```bash
+   curl -X POST "https://YOUR-WORKER-URL/api/internal/set-admin-credentials" -H "Content-Type: application/json" -H "X-Setup-Secret: YOUR_ADMIN_SETUP_SECRET" -d "{\"email\":\"your@email.com\",\"password\":\"YourNewPassword8\",\"adminKey\":\"YourNewAdminKeyMin8Chars\"}"
+   ```
+
+   **Or set only email and password** (no new key; you will still need to recover the existing key from KV or use email sign-in):
+   ```bash
+   curl -X POST "https://YOUR-WORKER-URL/api/internal/set-admin-credentials" -H "Content-Type: application/json" -H "X-Setup-Secret: YOUR_ADMIN_SETUP_SECRET" -d "{\"email\":\"your@email.com\",\"password\":\"YourNewPassword8\"}"
+   ```
+
+   Use a **strong password** (min 8 characters). If you include `adminKey`, use at least 8 characters and store it safely.
+
+4. **Check the response**  
+   You should see something like: `{"success":true,"updated":["email","password","adminKey"]}`.  
+   If you see `401 Unauthorized`, the secret is wrong. If you see `501`, the Worker does not have `ADMIN_SETUP_SECRET` set.
+
+5. **Sign in to the admin dashboard**  
+   - Open: `https://YOUR_GITHUB_USERNAME.github.io/admin/`
+   - Sign in with **Email & password** (your new email and password) **or** with **Admin key** (your new admin key).
+   - After signing in, you can use **Admin Access & Site Management** to save the admin key locally if you used it.
+
+6. **Save the new key locally (optional)**  
+   If you set a new admin key and want this browser to stay signed in: after login, go to **Admin Access & Site Management** → Admin key → **Generate** → **Save & Store Locally**.
+
+### Option B: You do not have ADMIN_SETUP_SECRET
+
+Use the **Failsafe: Retrieve admin key via Cloudflare** section below to read the current admin key from KV, then sign in with that key. You cannot set a new email or password without the secret or the current key; you can only recover the existing key from KV.
+
+---
+
 ## Failsafe: Retrieve admin key via Cloudflare
 
 If **email login and recovery were not successful** and you no longer have a copy of the admin key (and it was not stored locally), you can still retrieve it from Cloudflare KV:

@@ -289,6 +289,9 @@ export default {
       if (request.method === 'GET' && path === '/api/admin/admin-email') {
         return await handleGetAdminEmail(request, env);
       }
+      if (request.method === 'PUT' && path === '/api/admin/admin-email') {
+        return await handlePutAdminEmail(request, env);
+      }
       if (request.method === 'PUT' && path === '/api/admin/site-settings') {
         return await handlePutSiteSettings(request, env);
       }
@@ -307,6 +310,11 @@ export default {
       }
       if (request.method === 'POST' && path === '/api/recover/reset-password') {
         return await handleResetPasswordWithToken(request, env);
+      }
+
+      // Backend-only: set admin email/password/key with secret (not public-facing, no UI)
+      if (request.method === 'POST' && path === '/api/internal/set-admin-credentials') {
+        return await handleInternalSetAdminCredentials(request, env);
       }
 
       return jsonResponse({ error: 'Not found' }, 404);
@@ -442,12 +450,11 @@ async function handleSetup(request, env) {
   if (!adminKey || adminKey.length < 8) {
     return jsonResponse({ error: 'Admin key must be at least 8 characters' }, 400);
   }
-  if (!adminEmail || !adminEmail.includes('@')) {
-    return jsonResponse({ error: 'Valid email required for recovery' }, 400);
+  if (adminEmail && typeof adminEmail === 'string' && adminEmail.includes('@')) {
+    await env.EDIT_KEYS_KV.put('admin:email', adminEmail.toLowerCase());
   }
 
   await env.EDIT_KEYS_KV.put('admin:key', adminKey);
-  await env.EDIT_KEYS_KV.put('admin:email', adminEmail.toLowerCase());
   await env.EDIT_KEYS_KV.put('admin:setup_complete', 'true');
 
   if (password && typeof password === 'string' && password.length >= 8) {
@@ -1389,6 +1396,49 @@ async function handleGetAdminEmail(request, env) {
   const email = await env.EDIT_KEYS_KV.get('admin:email');
   const hash = await env.EDIT_KEYS_KV.get('admin:password_hash');
   return jsonResponse({ email: email || null, passwordSet: !!hash });
+}
+
+/** POST /api/internal/set-admin-credentials - Secret auth only (X-Setup-Secret or Authorization: Bearer). Not public-facing. Body: { email?, password?, adminKey? }. Sets/updates admin email, password, and/or key without needing the current admin key. Requires env.ADMIN_SETUP_SECRET. */
+async function handleInternalSetAdminCredentials(request, env) {
+  const secret = env.ADMIN_SETUP_SECRET;
+  if (!secret) return jsonResponse({ error: 'Not configured' }, 501);
+  const headerSecret = request.headers.get('X-Setup-Secret');
+  const bearer = request.headers.get('Authorization');
+  const token = (bearer && bearer.startsWith('Bearer ')) ? bearer.slice(7) : null;
+  if (!headerSecret && !token) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const provided = (headerSecret || token || '').trim();
+  if (provided !== secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const email = (body.email != null && body.email !== '') ? String(body.email).trim().toLowerCase() : null;
+  const password = typeof body.password === 'string' ? body.password : null;
+  const newAdminKey = (body.adminKey != null && body.adminKey !== '') ? String(body.adminKey).trim() : null;
+  if (!email && !password && !newAdminKey) return jsonResponse({ error: 'Provide at least one of email, password, adminKey' }, 400);
+  if (email && !email.includes('@')) return jsonResponse({ error: 'Valid email required' }, 400);
+  if (password && password.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  if (newAdminKey && newAdminKey.length < 8) return jsonResponse({ error: 'adminKey must be at least 8 characters' }, 400);
+  if (email) await env.EDIT_KEYS_KV.put('admin:email', email);
+  if (password) {
+    const saltArr = new Uint8Array(SALT_BYTES);
+    crypto.getRandomValues(saltArr);
+    const saltHex = bufferToHex(saltArr);
+    const hashHex = await hashAdminPassword(password, saltArr);
+    await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+    await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  }
+  if (newAdminKey) await env.EDIT_KEYS_KV.put('admin:key', newAdminKey);
+  return jsonResponse({ success: true, updated: [ email && 'email', password && 'password', newAdminKey && 'adminKey' ].filter(Boolean) });
+}
+
+/** PUT /api/admin/admin-email - Admin only. Body: { email }. Sets or updates admin email. Dashboard may only set when empty; once set, change via this API (e.g. curl) only. */
+async function handlePutAdminEmail(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const email = (body.email || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) return jsonResponse({ error: 'Valid email required' }, 400);
+  await env.EDIT_KEYS_KV.put('admin:email', email);
+  return jsonResponse({ success: true, email });
 }
 
 /** PUT /api/admin/admin-key - Admin only. Body: { newAdminKey }. */

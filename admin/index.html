@@ -39,9 +39,9 @@
             <span class="form-hint">Choose a secure password you'll remember</span>
           </div>
           <div class="form-group">
-            <label class="form-label">Recovery Email</label>
-            <input type="email" id="setup-email" class="form-input" placeholder="your@email.com" required>
-            <span class="form-hint">Used to recover your password if forgotten</span>
+            <label class="form-label">Recovery Email <span class="form-hint">(optional)</span></label>
+            <input type="email" id="setup-email" class="form-input" placeholder="your@email.com">
+            <span class="form-hint">Set now or later in Admin Access &amp; Site Management. Used for recovery and email sign-in.</span>
           </div>
           <div class="form-group">
             <label class="form-label">Password for email sign-in <span class="form-hint">(optional)</span></label>
@@ -208,8 +208,17 @@
             <div class="card-body">
               <div class="form-group mb-4">
                 <label class="form-label" style="margin-bottom:0.25rem;">Admin email (for recovery &amp; sign-in)</label>
-                <div id="admin-email-display" class="form-input" style="max-width:20rem; background:var(--color-bg-muted,#f5f5f5);" readonly aria-readonly="true">—</div>
-                <span class="form-hint">Used for password recovery and email sign-in.</span>
+                <div id="admin-email-not-set">
+                  <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                    <input type="email" id="admin-email-input" class="form-input" placeholder="your@email.com" style="max-width:20rem;" autocomplete="email">
+                    <button type="button" class="btn btn-secondary" id="save-admin-email-btn">Save</button>
+                  </div>
+                  <span class="form-hint">Set once from dashboard. Used for password recovery and email sign-in.</span>
+                </div>
+                <div id="admin-email-set" class="hidden">
+                  <div id="admin-email-display" class="form-input" style="max-width:20rem; background:var(--color-bg-muted,#f5f5f5);" readonly aria-readonly="true">—</div>
+                  <span class="form-hint">To change, use the Worker API: <code>PUT /api/admin/admin-email</code> with <code>X-Admin-Key</code> and body <code>{ "email": "your@email.com" }</code>.</span>
+                </div>
               </div>
               <div class="form-group mb-4">
                 <label class="form-label" style="margin-bottom:0.25rem;">Admin key (stored locally)</label>
@@ -661,6 +670,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (setPwBtn) setPwBtn.addEventListener('click', handleSetPassword);
     var resetPwTriggerBtn = document.getElementById('reset-password-trigger-btn');
     if (resetPwTriggerBtn) resetPwTriggerBtn.addEventListener('click', handleResetPasswordTrigger);
+    var saveEmailBtn = document.getElementById('save-admin-email-btn');
+    if (saveEmailBtn) saveEmailBtn.addEventListener('click', handleSaveAdminEmail);
     var pwNew = document.getElementById('dashboard-password-new');
     var pwConfirm = document.getElementById('dashboard-password-confirm');
     if (pwNew) pwNew.addEventListener('input', updateSetPasswordButton);
@@ -1079,8 +1090,19 @@ async function handleResetPasswordSubmit(e) {
 }
 
 function loadAdminAccountSection() {
-  var emailEl = document.getElementById('admin-email-display');
-  if (emailEl) emailEl.textContent = adminEmail || '—';
+  var emailNotSet = document.getElementById('admin-email-not-set');
+  var emailSet = document.getElementById('admin-email-set');
+  var emailInp = document.getElementById('admin-email-input');
+  var emailDisplay = document.getElementById('admin-email-display');
+  if (adminEmail) {
+    if (emailNotSet) emailNotSet.classList.add('hidden');
+    if (emailSet) emailSet.classList.remove('hidden');
+    if (emailDisplay) emailDisplay.textContent = adminEmail;
+  } else {
+    if (emailNotSet) emailNotSet.classList.remove('hidden');
+    if (emailSet) emailSet.classList.add('hidden');
+    if (emailInp) emailInp.value = '';
+  }
   var notSet = document.getElementById('admin-password-not-set');
   var set = document.getElementById('admin-password-set');
   if (adminPasswordSet) {
@@ -1091,6 +1113,18 @@ function loadAdminAccountSection() {
     if (set) set.classList.add('hidden');
   }
   updateSetPasswordButton();
+}
+
+async function handleSaveAdminEmail() {
+  var inp = document.getElementById('admin-email-input');
+  var email = (inp && inp.value) ? inp.value.trim() : '';
+  if (!email || email.indexOf('@') === -1) { showAlert('alert-admin-access', 'Enter a valid email.', 'error'); return; }
+  try {
+    var r = await fetch(API + '/api/admin/admin-email', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ email: email }) });
+    var d = await r.json();
+    if (r.ok) { adminEmail = (d.email || email).toLowerCase(); loadAdminAccountSection(); showAlert('alert-admin-access', 'Admin email set. To change it later, use the Worker API.', 'success'); }
+    else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
+  } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
 function generateRandomKey() {
