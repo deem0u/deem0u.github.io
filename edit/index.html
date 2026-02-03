@@ -1352,7 +1352,7 @@ async function authenticateWithStoredSession() {
 
 async function authenticate() {
   {
-    var accountEmail = (document.getElementById('auth-account-email').value || '').trim();
+    var accountEmail = (document.getElementById('auth-account-email').value || '').trim().toLowerCase();
     var password = (document.getElementById('auth-password').value || '').trim();
     if (!accountEmail || !accountEmail.includes('@')) { showAlert('auth-alert', 'Please enter your account email.', 'error'); return; }
     if (!password) { showAlert('auth-alert', 'Please enter your password.', 'error'); return; }

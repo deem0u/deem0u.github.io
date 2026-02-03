@@ -595,9 +595,6 @@ async function handleAuthUser(request, env) {
   }
   const username = await env.EDIT_KEYS_KV.get(`account_email_to_folder:${accountEmail}`);
   if (!username) return jsonResponse({ error: 'Invalid email or password' }, 401);
-  if ((await env.EDIT_KEYS_KV.get(`access_revoked:${username}`)) === '1') {
-    return jsonResponse({ error: 'Access has been revoked. Please contact support.' }, 403);
-  }
   const pwHash = await env.EDIT_KEYS_KV.get(`user_password_hash:${username}`);
   if (!pwHash) return jsonResponse({ error: 'Account does not have a password. Set one via Set Secrets or sign up.' }, 401);
   const valid = await verifyPassword(password, pwHash);
@@ -862,6 +859,13 @@ async function isAdmin(request, env) {
   return storedKey && adminKey === storedKey;
 }
 
+/** Returns true if user has verified their email (or admin bypass). Used to gate add/edit/delete contact pages. */
+async function requireEmailVerifiedForEdit(username, auth, env) {
+  if (auth.isAdmin) return true;
+  if (!env.EDIT_KEYS_KV) return false;
+  return (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
+}
+
 async function validateAuth(username, request, env) {
   const adminKey = request.headers.get('X-Admin-Key');
 
@@ -1122,6 +1126,10 @@ async function handleDeletePage(username, contactpagename, request, env) {
     const auth = await validateAuth(username, request, env);
     if (!auth.authorized) {
       return jsonResponse({ error: 'Unauthorized' }, 401);
+    }
+    const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
+    if (!canEdit) {
+      return jsonResponse({ error: 'Verify your email to delete contact pages.' }, 403);
     }
     const filePath = pagePath(username, slug);
     const getResponse = await fetch(
@@ -1732,6 +1740,10 @@ async function handleUpdatePage(username, contactpagename, request, env) {
   if (!auth.authorized) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
+  const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
+  if (!canEdit) {
+    return jsonResponse({ error: 'Verify your email to edit contact pages.' }, 403);
+  }
 
   const body = await request.json();
   const { content, sha, contactPageName } = body;
@@ -1978,8 +1990,7 @@ async function handleGetKeys(request, env) {
   for (const key of list.keys) {
     const username = key.name.replace('user_password_hash:', '');
     if (!username) continue;
-    const revoked = await env.EDIT_KEYS_KV.get(`access_revoked:${username}`);
-    if (revoked !== '1') editKeys[username] = '1';
+    editKeys[username] = '1';
   }
   return jsonResponse({ editKeys });
 }

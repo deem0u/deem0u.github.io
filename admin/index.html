@@ -331,7 +331,7 @@
               </div>
               <div class="user-list-stats">
                 <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Users</span></div>
-                <div class="stat"><span class="stat-value" id="stat-without-access">0</span><span class="stat-label">Without edit access</span></div>
+                <div class="stat"><span class="stat-value" id="stat-without-access">0</span><span class="stat-label">Cannot sign in</span></div>
                 <div class="stat"><span class="stat-value" id="stat-incomplete">0</span><span class="stat-label">Incomplete</span></div>
                 <div class="stat"><span class="stat-value" id="stat-secrets-not-set">0</span><span class="stat-label">Secrets not set</span></div>
               </div>
@@ -2236,7 +2236,6 @@ function renderList(t) {
         </div>
         <div class="user-status">
           <div class="user-status-badges">
-            ${!hk ? '<span class="badge badge-secondary">View Only</span>' : ''}
             ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
             ${secretsNotSet ? '<span class="badge badge-error">Secrets Not Set</span>' : ''}
           </div>
@@ -2284,18 +2283,15 @@ function renderList(t) {
         </div>
         <div class="action-row action-row-combo">
           <div class="action-combo-group">
-            <span class="action-row-label">Edit Access</span>
+            <span class="action-row-label">Sign-in</span>
             <div class="action-row-buttons">
-              ${!hk
-                ? ''
-                : `<button class="btn btn-pink btn-sm" onclick="confirmRegenerate('${f}')">Reset Access</button>
-                   <button class="btn btn-pink btn-sm" onclick="confirmRemove('${f}')">Revoke Access</button>`}
+              <span class="form-hint" style="margin:0; font-size:0.875rem;">${hk ? 'Email &amp; password' : 'Set Secrets to enable sign-in'}</span>
             </div>
           </div>
-          ${hk ? `<div class="action-combo-group">
+          ${u.accountEmail ? `<div class="action-combo-group">
             <span class="action-row-label">Share Links</span>
             <div class="action-row-buttons">
-              ${u.accountEmail ? `<button type="button" class="btn btn-primary btn-sm" onclick="sendViaEmail('${f}')">Send via Email</button>` : ''}
+              <button type="button" class="btn btn-primary btn-sm" onclick="sendViaEmail('${f}')">Send via Email</button>
               <button class="btn btn-primary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
             </div>
           </div>` : ''}
@@ -3297,6 +3293,7 @@ async function saveProfile() {
       userInfo[profileModalFolder].firstName = firstName;
       userInfo[profileModalFolder].lastName = lastName;
     }
+    renderList('manage');
     await fetchAccountEmailsAndRefresh();
     var succ = document.getElementById('modal-profile-success');
     if (succ) { succ.classList.remove('hidden'); succ.textContent = 'Saved successfully.'; }
@@ -3489,6 +3486,7 @@ async function saveSecrets() {
     var d = await r.json();
     if (r.ok) {
       if (userInfo[secretsModalFolder]) userInfo[secretsModalFolder].accountEmail = accountEmail || null;
+      renderList('manage');
       await fetchAccountEmailsAndRefresh();
       closeSecretsModal();
       showAlert('alert-manage', 'Secrets updated', 'success');
