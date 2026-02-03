@@ -373,6 +373,37 @@
     </div>
   </div>
 
+  <div id="modal-profile" class="modal-overlay">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header"><h3 class="modal-title" id="modal-profile-title">Edit Account &amp; Name</h3></div>
+      <div class="modal-body">
+        <div id="modal-profile-loading" class="modal-qr-loading"><span class="spinner"></span> Loading...</div>
+        <div id="modal-profile-form" class="hidden">
+          <div class="form-group">
+            <label class="form-label">Account Username</label>
+            <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_-]{3,32}" maxlength="32" autocomplete="username">
+            <span class="form-hint">3–32 characters: letters, numbers, hyphens, underscores. Changing this renames the user folder and URL.</span>
+            <span class="form-error" id="error-profile-username" role="alert"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" id="profile-first-name" class="form-input" placeholder="First name" maxlength="32">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" id="profile-last-name" class="form-input" placeholder="Last name" maxlength="32">
+          </div>
+        </div>
+        <div id="modal-profile-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
+        <div id="modal-profile-success" class="alert alert-success hidden" style="margin-top:0.5rem">Saved successfully.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="profile-save-btn" onclick="saveProfile()">Save</button>
+        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-secrets" class="modal-overlay">
     <div class="modal" style="max-width: 480px;">
       <div class="modal-header"><h3 class="modal-title" id="modal-secrets-title">Set Secrets</h3></div>
@@ -1238,6 +1269,7 @@ function renderList(t) {
           <div class="action-combo-group">
             <span class="action-row-label">Recovery</span>
             <div class="action-row-buttons">
+              <button class="btn btn-primary btn-sm" onclick="showProfileModal('${f}')">Edit Account &amp; Name</button>
               <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
               <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
             </div>
@@ -1945,6 +1977,7 @@ function closeQrModal() {
 
 
 var secretsModalFolder = null; var lastSavedSecretsData = null;
+var profileModalFolder = null;
 var SQ_OPTIONS = [{v:'',t:'- Select question -'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
 
 function syncSecretsModalSqOptions() {
@@ -1988,6 +2021,103 @@ function closeSecretsModal() {
   document.getElementById('modal-secrets').classList.remove('show');
   secretsModalFolder = null;
   lastSavedSecretsData = null;
+}
+
+async function showProfileModal(folder) {
+  profileModalFolder = folder;
+  document.getElementById('modal-profile-title').textContent = 'Edit Account & Name - ' + folder;
+  document.getElementById('modal-profile-loading').classList.remove('hidden');
+  document.getElementById('modal-profile-form').classList.add('hidden');
+  document.getElementById('modal-profile-error').classList.add('hidden');
+  document.getElementById('modal-profile-error').textContent = '';
+  var succ = document.getElementById('modal-profile-success');
+  if (succ) succ.classList.add('hidden');
+  document.getElementById('modal-profile').classList.add('show');
+  var saveBtn = document.getElementById('profile-save-btn');
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+  try {
+    var r = await fetch(API + '/api/profile/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+    var d = await r.json();
+    document.getElementById('modal-profile-loading').classList.add('hidden');
+    document.getElementById('modal-profile-form').classList.remove('hidden');
+    document.getElementById('profile-username').value = folder;
+    document.getElementById('profile-first-name').value = d.firstName || '';
+    document.getElementById('profile-last-name').value = d.lastName || '';
+    document.getElementById('error-profile-username').textContent = '';
+  } catch (e) {
+    document.getElementById('modal-profile-loading').classList.add('hidden');
+    document.getElementById('modal-profile-form').classList.remove('hidden');
+    document.getElementById('modal-profile-error').textContent = 'Failed to load. Please try again.';
+    document.getElementById('modal-profile-error').classList.remove('hidden');
+  }
+}
+
+function closeProfileModal() {
+  document.getElementById('modal-profile').classList.remove('show');
+  profileModalFolder = null;
+}
+
+async function saveProfile() {
+  if (!profileModalFolder) return;
+  var newUsername = (document.getElementById('profile-username').value || '').trim().toLowerCase();
+  var firstName = (document.getElementById('profile-first-name').value || '').trim();
+  var lastName = (document.getElementById('profile-last-name').value || '').trim();
+  var errEl = document.getElementById('modal-profile-error');
+  var unErr = document.getElementById('error-profile-username');
+  errEl.classList.add('hidden');
+  errEl.textContent = '';
+  if (unErr) unErr.textContent = '';
+  if (!newUsername) {
+    errEl.textContent = 'Account username is required.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUsername)) {
+    errEl.textContent = 'Username must be 3–32 characters: letters, numbers, hyphens, underscores.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  var btn = document.getElementById('profile-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  try {
+    var currentUsername = profileModalFolder;
+    if (newUsername !== currentUsername) {
+      var renameRes = await fetch(API + '/api/admin/rename-user', {
+        method: 'POST',
+        headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldUsername: currentUsername, newUsername: newUsername })
+      });
+      var renameData = await renameRes.json();
+      if (!renameRes.ok) {
+        errEl.textContent = renameData.error || 'Rename failed.';
+        errEl.classList.remove('hidden');
+        if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+        return;
+      }
+      profileModalFolder = newUsername;
+      await fetchAccountEmailsAndRefresh();
+    }
+    var putRes = await fetch(API + '/api/profile/' + encodeURIComponent(profileModalFolder), {
+      method: 'PUT',
+      headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firstName: firstName, lastName: lastName })
+    });
+    var putData = await putRes.json();
+    if (!putRes.ok) {
+      errEl.textContent = putData.error || 'Failed to save profile.';
+      errEl.classList.remove('hidden');
+      if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+      return;
+    }
+    var succ = document.getElementById('modal-profile-success');
+    if (succ) { succ.classList.remove('hidden'); succ.textContent = 'Saved successfully.'; }
+    await fetchAccountEmailsAndRefresh();
+    closeProfileModal();
+  } catch (e) {
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.classList.remove('hidden');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
 }
 
 function clearSecretsModal() {

@@ -239,6 +239,9 @@ export default {
         const username = path.replace('/api/secrets/', '').replace(/\/$/, '');
         return await handlePutSecrets(username, request, env);
       }
+      if (request.method === 'POST' && path === '/api/admin/rename-user') {
+        return await handleAdminRenameUser(request, env);
+      }
 
       return jsonResponse({ error: 'Not found' }, 404);
     } catch (error) {
@@ -1116,6 +1119,109 @@ async function handleDeletePage(username, contactpagename, request, env) {
     username,
     message: `Page ${username} deleted`
   });
+}
+
+/**
+ * POST /api/admin/rename-user (admin only). Body: { oldUsername, newUsername }.
+ * Renames user folder on GitHub and migrates all KV keys to new username.
+ */
+async function handleAdminRenameUser(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  let body;
+  try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const oldUsername = (body.oldUsername || '').trim().toLowerCase();
+  const newUsername = (body.newUsername || '').trim().toLowerCase();
+  if (!oldUsername || !newUsername) return jsonResponse({ error: 'oldUsername and newUsername required' }, 400);
+  if (oldUsername === newUsername) return jsonResponse({ error: 'New username must be different' }, 400);
+  if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUsername)) {
+    return jsonResponse({ error: 'New username must be 3-32 characters, letters, numbers, hyphens, underscores' }, 400);
+  }
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
+  if (reserved.includes(newUsername)) return jsonResponse({ error: 'This username is reserved' }, 400);
+
+  if (env.GITHUB_TOKEN) {
+    const existingRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${newUsername}?ref=${CONFIG.branch}`,
+      { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+    );
+    if (existingRes.ok) return jsonResponse({ error: 'A user with this username already exists' }, 409);
+  }
+
+  const listRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${oldUsername}?ref=${CONFIG.branch}`,
+    { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+  );
+  if (!listRes.ok) return jsonResponse({ error: 'User folder not found' }, 404);
+  const files = await listRes.json();
+  const htmlFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name && f.name.endsWith('.html')) : [];
+
+  for (const file of htmlFiles) {
+    const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
+    const getRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}?ref=${CONFIG.branch}`,
+      { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+    );
+    if (!getRes.ok) return jsonResponse({ error: 'Failed to read file: ' + file.name }, 500);
+    const fileData = await getRes.json();
+    const contentBase64 = fileData.content ? fileData.content.replace(/\n/g, '') : '';
+    const newPath = `${USER_PAGES_PREFIX}/${newUsername}/${file.name}`;
+    const putRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${newPath}`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'ContactPageEditor/1.0' },
+        body: JSON.stringify({ message: `Rename user: ${oldUsername} -> ${newUsername}`, content: contentBase64, branch: CONFIG.branch })
+      }
+    );
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      return jsonResponse({ error: err.message || 'Failed to create file: ' + file.name }, putRes.status);
+    }
+  }
+  for (const file of htmlFiles) {
+    const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
+    const delRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}`,
+      {
+        method: 'DELETE',
+        headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'ContactPageEditor/1.0' },
+        body: JSON.stringify({ message: `Rename user: remove ${oldUsername}`, sha: file.sha, branch: CONFIG.branch })
+      }
+    );
+    if (!delRes.ok) return jsonResponse({ error: 'Failed to delete old file: ' + file.name }, 500);
+  }
+
+  if (env.EDIT_KEYS_KV) {
+    const kvKeys = [
+      'account_email', 'user_first_name', 'user_last_name', 'user_dob', 'user_recovery', 'user_password_hash',
+      'email_verified', 'access_revoked', 'account_details_sent'
+    ];
+    for (const prefix of kvKeys) {
+      const val = await env.EDIT_KEYS_KV.get(prefix + ':' + oldUsername);
+      if (val != null) {
+        await env.EDIT_KEYS_KV.put(prefix + ':' + newUsername, val);
+        await env.EDIT_KEYS_KV.delete(prefix + ':' + oldUsername);
+      }
+    }
+    const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + newUsername);
+    if (accountEmail && accountEmail.includes('@')) {
+      await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + accountEmail.toLowerCase().trim());
+      await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmail.toLowerCase().trim(), newUsername);
+    }
+    const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${oldUsername}:` });
+    for (const key of nameList.keys) {
+      const slug = key.name.replace(`contact_page_name:${oldUsername}:`, '');
+      const val = await env.EDIT_KEYS_KV.get(key.name);
+      if (val != null) {
+        await env.EDIT_KEYS_KV.put(`contact_page_name:${newUsername}:${slug}`, val);
+        await env.EDIT_KEYS_KV.delete(key.name);
+      }
+    }
+  }
+
+  return jsonResponse({ success: true, oldUsername, newUsername, message: `User renamed to ${newUsername}` });
 }
 
 async function handleGetPage(username, contactpagename, request, env) {
