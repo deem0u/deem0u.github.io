@@ -60,7 +60,15 @@
   .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
   .editor-contact-view-content { font-size: 0.95rem; line-height: 1.5; }
   .editor-contact-view-content .editor-view-value { font-weight: 500; }
-  .editor-contact-view-content .editor-view-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; }
+  .editor-contact-view-content .editor-view-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: #9370db; }
+  .editor-profile-strip .profile-title, .contact-pages-section .profile-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: #9370db; }
+  .editor-profile-strip .profile-row { display: block; margin-bottom: 0.5rem; }
+  .editor-profile-strip .profile-label { display: block; margin-bottom: 0.15rem; font-size: 0.8rem; }
+  .editor-profile-strip .profile-value { display: block; font-weight: 500; }
+  .editor-profile-strip .profile-email-row { display: block; }
+  .editor-profile-strip .profile-email-row .profile-value-wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.15rem; }
+  .editor-profile-strip .profile-email-row .profile-value-wrap .profile-value { display: inline; }
+  .editor-profile-strip .profile-email-row .profile-value-wrap .badge { flex-shrink: 0; }
   .editor-contact-view-content .form-required { display: none; }
   .editor-contact-view-content .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
   .editor-contact-view-content .form-label { font-weight: 700; }
@@ -71,6 +79,11 @@
   .editor-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
   .editor-contact-edit .card-header-fields { flex: 1; min-width: 0; }
   .editor-edit-mode-actions { flex-shrink: 0; }
+  .profile-edit.hidden { display: none; }
+  .profile-edit .form-group { margin-bottom: 0.4rem; }
+  .profile-edit .form-label { font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.2rem; }
+  .profile-edit .form-input { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
+  .profile-edit-actions { display: flex; gap: 0.35rem; margin-top: 0.5rem; }
   .contact-page-url-inline { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem; }
   .contact-page-url-inline .form-input { flex: 1; min-width: 8ch; }
   .contact-page-url-inline .card-header-url-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
@@ -231,12 +244,24 @@
       <div class="editor-layout">
         <div class="editor-sidebar">
           <aside class="editor-profile-strip">
-            <div class="profile-title">Account</div>
-            <div class="profile-row"><span class="profile-label">First Name:</span> <span class="profile-value" id="profile-first-name">—</span></div>
-            <div class="profile-row"><span class="profile-label">Last Name:</span> <span class="profile-value" id="profile-last-name">—</span></div>
-            <div class="profile-row"><span class="profile-label">Account Email:</span> <span class="profile-value" id="profile-email">—</span> <span id="profile-verified-badge" class="badge hidden"></span></div>
-            <div class="profile-row"><span class="profile-label">DOB:</span> <span class="profile-value" id="profile-dob-masked">—</span></div>
-            <button type="button" class="btn btn-ghost btn-sm mt-2" id="edit-profile-btn">Edit Profile</button>
+            <div class="profile-title">Account Profile</div>
+            <div id="profile-view" class="profile-view">
+              <div class="profile-row"><span class="profile-label">First Name</span><span class="profile-value" id="profile-first-name">—</span></div>
+              <div class="profile-row"><span class="profile-label">Last Name</span><span class="profile-value" id="profile-last-name">—</span></div>
+              <div class="profile-row profile-email-row"><span class="profile-label">Account Email</span><span class="profile-value-wrap"><span class="profile-value" id="profile-email">—</span><span id="profile-verified-badge" class="badge hidden"></span></span></div>
+              <div class="profile-row"><span class="profile-label">Date Of Birth</span><span class="profile-value" id="profile-dob-masked">—</span></div>
+              <button type="button" class="btn btn-primary btn-sm mt-2" id="edit-profile-btn" onclick="enterProfileEditMode()">Edit Profile</button>
+            </div>
+            <div id="profile-edit" class="profile-edit hidden">
+              <div class="form-group"><label class="form-label">First Name</label><input type="text" id="profile-edit-first-name" class="form-input" maxlength="32"></div>
+              <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="profile-edit-last-name" class="form-input" maxlength="32"></div>
+              <div class="form-group"><label class="form-label">Account Email</label><input type="email" id="profile-edit-email" class="form-input"></div>
+              <div class="form-group"><span class="form-label">Date Of Birth</span><span class="profile-value" id="profile-edit-dob-masked">—</span></div>
+              <div class="profile-edit-actions">
+                <button type="button" class="btn btn-primary btn-sm" id="profile-save-btn" onclick="saveProfileFromStrip()" disabled>Save</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="profile-cancel-btn" onclick="cancelProfileEdit()">Cancel</button>
+              </div>
+            </div>
           </aside>
           <div id="contact-pages-section" class="contact-pages-container hidden">
             <div class="contact-pages-section">
@@ -393,18 +418,6 @@
     </main>
 
   
-  <div id="edit-profile-modal" class="modal-overlay hidden">
-    <div class="modal" style="max-width:400px;">
-      <div class="modal-header"><h3 class="modal-title">Edit Profile</h3></div>
-      <div class="modal-body">
-        <div class="form-group"><label class="form-label">First Name</label><input type="text" id="edit-profile-first-name" class="form-input" maxlength="32"></div>
-        <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="edit-profile-last-name" class="form-input" maxlength="32"></div>
-        <div class="form-group"><label class="form-label">Account Email</label><input type="email" id="edit-profile-email" class="form-input"></div>
-        <div id="edit-profile-error" class="alert hidden"></div>
-        <div class="modal-footer"><button type="button" class="btn btn-primary" onclick="saveProfile()">Save</button><button type="button" class="btn btn-secondary" onclick="closeEditProfileModal()">Cancel</button></div>
-      </div>
-    </div>
-  </div>
     <div id="edit-secrets-modal" class="modal-overlay hidden">
     <div class="modal" style="max-width:480px;">
       <div class="modal-header"><h3 class="modal-title">Set Secrets</h3></div>
@@ -1005,7 +1018,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('contact-page-name').addEventListener('input', updateFormDirtyState);
   document.getElementById('contact-page-url-slug').addEventListener('input', updateFormDirtyState);
   var editProfileBtn = document.getElementById('edit-profile-btn');
-  if (editProfileBtn) editProfileBtn.addEventListener('click', openEditProfileModal);
+  if (editProfileBtn) editProfileBtn.addEventListener('click', enterProfileEditMode);
+  ['profile-edit-first-name', 'profile-edit-last-name', 'profile-edit-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.addEventListener('input', updateProfileDirtyState); el.addEventListener('change', updateProfileDirtyState); }
+  });
   var verifyEmailBtn = document.getElementById('verify-email-btn');
   if (verifyEmailBtn) verifyEmailBtn.addEventListener('click', verifyEmailFromEditor);
   var verifyEmailCodeInput = document.getElementById('verify-email-code');
@@ -1207,6 +1224,9 @@ function selectContactPage(contactpagename) {
       fillForm(data.content);
       setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
       document.getElementById('view-page-link').href = viewPageHref();
+      formSnapshot = getFormSnapshot();
+      updateFormDirtyState();
+      enterViewMode();
       hideStatusBanner();
     })
     .catch(function() { showStatusBanner('Failed to load page', 'error'); });
@@ -1322,7 +1342,7 @@ async function loadProfile() {
     document.getElementById("profile-dob-masked").textContent = profileData.dobMasked || "—";
     var badge = document.getElementById("profile-verified-badge");
     if (badge) {
-      badge.textContent = profileData.emailVerified ? "Verified" : "Not verified";
+      badge.textContent = profileData.emailVerified ? "Verified" : "Not Verified";
       badge.className = "badge " + (profileData.emailVerified ? "badge-success" : "badge-warning");
       badge.classList.remove("hidden");
     }
@@ -1340,42 +1360,75 @@ function applyUnverifiedRestriction() {
     if (banner) banner.classList.remove("hidden");
   }
 }
-function openEditProfileModal() {
+var profileSnapshot = null;
+function getProfileEditValues() {
+  var fn = document.getElementById("profile-edit-first-name");
+  var ln = document.getElementById("profile-edit-last-name");
+  var em = document.getElementById("profile-edit-email");
+  return {
+    firstName: (fn && fn.value) ? fn.value.trim() : "",
+    lastName: (ln && ln.value) ? ln.value.trim() : "",
+    accountEmail: (em && em.value) ? em.value.trim() : ""
+  };
+}
+function isProfileDirty() {
+  if (!profileSnapshot) return false;
+  var cur = getProfileEditValues();
+  return cur.firstName !== profileSnapshot.firstName || cur.lastName !== profileSnapshot.lastName || cur.accountEmail !== profileSnapshot.accountEmail;
+}
+function updateProfileDirtyState() {
+  var editEl = document.getElementById("profile-edit");
+  if (!editEl || editEl.classList.contains("hidden")) return;
+  var saveBtn = document.getElementById("profile-save-btn");
+  var cancelBtn = document.getElementById("profile-cancel-btn");
+  var dirty = isProfileDirty();
+  if (saveBtn) saveBtn.disabled = !dirty;
+  if (cancelBtn) cancelBtn.disabled = !dirty;
+}
+function enterProfileEditMode() {
   if (!profileData) return;
-  document.getElementById("edit-profile-first-name").value = profileData.firstName || "";
-  document.getElementById("edit-profile-last-name").value = profileData.lastName || "";
-  document.getElementById("edit-profile-email").value = profileData.accountEmail || "";
-  document.getElementById("edit-profile-error").classList.add("hidden");
-  document.getElementById("edit-profile-modal").classList.remove("hidden");
+  var viewEl = document.getElementById("profile-view");
+  var editEl = document.getElementById("profile-edit");
+  if (!viewEl || !editEl) return;
+  document.getElementById("profile-edit-first-name").value = profileData.firstName || "";
+  document.getElementById("profile-edit-last-name").value = profileData.lastName || "";
+  document.getElementById("profile-edit-email").value = profileData.accountEmail || "";
+  document.getElementById("profile-edit-dob-masked").textContent = profileData.dobMasked || "—";
+  profileSnapshot = getProfileEditValues();
+  viewEl.classList.add("hidden");
+  editEl.classList.remove("hidden");
+  updateProfileDirtyState();
 }
-function closeEditProfileModal() {
-  document.getElementById("edit-profile-modal").classList.add("hidden");
+function exitProfileEditMode() {
+  var viewEl = document.getElementById("profile-view");
+  var editEl = document.getElementById("profile-edit");
+  if (viewEl) viewEl.classList.remove("hidden");
+  if (editEl) editEl.classList.add("hidden");
+  profileSnapshot = null;
 }
-async function saveProfile() {
-  var firstName = document.getElementById("edit-profile-first-name").value.trim();
-  var lastName = document.getElementById("edit-profile-last-name").value.trim();
-  var email = document.getElementById("edit-profile-email").value.trim();
-  var errEl = document.getElementById("edit-profile-error");
-  if (!email || !email.includes("@")) { errEl.textContent = "Valid email required"; errEl.classList.remove("hidden"); return; }
+function cancelProfileEdit() {
+  exitProfileEditMode();
+}
+async function saveProfileFromStrip() {
+  var cur = getProfileEditValues();
+  var email = cur.accountEmail;
+  if (!email || !email.includes("@")) { return; }
+  var saveBtn = document.getElementById("profile-save-btn");
+  if (saveBtn) saveBtn.disabled = true;
   try {
     var r = await fetch(API + "/api/profile/" + encodeURIComponent(username), {
       method: "PUT",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-      body: JSON.stringify({ firstName, lastName, accountEmail: email })
+      body: JSON.stringify({ firstName: cur.firstName, lastName: cur.lastName, accountEmail: email })
     });
     var d = await r.json();
     if (r.ok && d.success) {
-      profileData = { ...profileData, firstName, lastName, accountEmail: email };
-      loadProfile();
-      closeEditProfileModal();
-    } else {
-      errEl.textContent = d.error || "Failed to save";
-      errEl.classList.remove("hidden");
+      profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email };
+      await loadProfile();
+      exitProfileEditMode();
     }
-  } catch (e) {
-    errEl.textContent = "Connection error";
-    errEl.classList.remove("hidden");
-  }
+  } catch (e) {}
+  updateProfileDirtyState();
 }
 async function verifyEmailFromEditor() {
   if (!username) return;
@@ -1433,6 +1486,8 @@ async function submitVerifyEmailCode() {
     var vd = await vr.json();
     if (vr.ok && vd.success) {
       profileData.emailVerified = true;
+      var badge = document.getElementById('profile-verified-badge');
+      if (badge) { badge.textContent = 'Verified'; badge.className = 'badge badge-success'; badge.classList.remove('hidden'); }
       applyUnverifiedRestriction();
       closeVerifyEmailModal();
       showStatusBanner('Email verified!', 'success');
@@ -1635,6 +1690,8 @@ async function handleSave(e) {
         formSnapshot = getFormSnapshot();
         updateFormDirtyState();
         showStatusBanner('Contact page created.', 'success');
+        btn.textContent = 'Save Changes';
+        return;
       } else {
         var errMsg = data.error || 'Failed to create';
         if (data.error && (data.error.indexOf('URL') !== -1 || data.error.indexOf('slug') !== -1 || data.error.indexOf('exists') !== -1)) {
@@ -1650,7 +1707,8 @@ async function handleSave(e) {
     } catch (err) {
       showStatusBanner('Connection error', 'error');
     }
-    btn.disabled = false; btn.textContent = 'Save Changes';
+    btn.textContent = 'Save Changes';
+    updateFormDirtyState();
     return;
   }
 
@@ -1725,7 +1783,10 @@ async function handleSave(e) {
   } catch (e) {
     showStatusBanner('Connection error', 'error');
   }
-  finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
+  finally {
+    btn.textContent = 'Save Changes';
+    updateFormDirtyState();
+  }
 }
 
 function generateHTML() {
