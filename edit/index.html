@@ -1286,18 +1286,27 @@ async function authenticateWithStoredSession() {
   if (!username || !token) return;
   try {
     const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) throw new Error('Session expired');
-    const data = await res.json();
-    currentSha = data.sha;
-    isCreateMode = false;
-    currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
-    fillForm(data.content);
-    setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
+    if (res.ok) {
+      const data = await res.json();
+      currentSha = data.sha;
+      isCreateMode = false;
+      currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
+      fillForm(data.content);
+      setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
+    } else if (res.status === 404) {
+      currentSha = null;
+      isCreateMode = true;
+      currentContactpagename = 'index';
+      fillForm('');
+      setContactPageMeta('index', null, true);
+    } else {
+      throw new Error('Session expired');
+    }
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
     document.getElementById('view-page-link').href = viewPageHref();
-    document.getElementById('view-page-link').style.pointerEvents = '';
+    document.getElementById('view-page-link').style.pointerEvents = isCreateMode ? 'none' : '';
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
     await loadProfile();
@@ -1321,26 +1330,40 @@ async function authenticate() {
       var authRes = await fetch(API + '/api/auth/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accountEmail: accountEmail, password: password }) });
       var authData = await authRes.json();
       if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || 'Invalid email or password.', 'error'); return; }
-      username = authData.username || authData.username;
+      username = authData.username;
       token = authData.token;
     } catch (e) { showAlert('auth-alert', 'Connection error. Please try again.', 'error'); return; }
   }
   try {
     const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) { showAlert('auth-alert', 'Sign in failed. Please check your email and password.', 'error'); return; }
-    
-    const data = await res.json();
-    currentSha = data.sha;
-    isCreateMode = false;
-    currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
-    fillForm(data.content);
-    setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
+    if (res.status === 401) {
+      showAlert('auth-alert', 'Sign in failed. Please check your email and password.', 'error');
+      return;
+    }
+    if (res.ok) {
+      const data = await res.json();
+      currentSha = data.sha;
+      isCreateMode = false;
+      currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
+      fillForm(data.content);
+      setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
+    } else if (res.status === 404) {
+      // Main contact page (index) does not exist yet – show editor in create mode
+      currentSha = null;
+      isCreateMode = true;
+      currentContactpagename = 'index';
+      fillForm('');
+      setContactPageMeta('index', null, true);
+    } else {
+      showAlert('auth-alert', 'Connection error. Please try again.', 'error');
+      return;
+    }
     document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
     document.title = 'Contact Editor - ' + username;
     document.getElementById('header-logo-text').textContent = 'Contact Editor - ' + username;
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('view-page-link').href = viewPageHref();
-    document.getElementById('view-page-link').style.pointerEvents = '';
+    document.getElementById('view-page-link').style.pointerEvents = isCreateMode ? 'none' : '';
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
@@ -1350,7 +1373,7 @@ async function authenticate() {
     await fetchContactPagesList();
   } catch (e) {
     console.error('Auth error:', e);
-    showAlert('auth-alert', 'Connection error. Please try again.', 'error'); 
+    showAlert('auth-alert', 'Connection error. Please try again.', 'error');
   }
 }
 
