@@ -192,28 +192,73 @@
         </div>
 
         <div id="tab-admin-access" class="tab-content">
+          <div id="alert-admin-access" class="alert mb-4" role="status" aria-live="polite"></div>
+
           <div class="card">
-            <div class="card-header"><span class="card-title">Site</span></div>
+            <div class="card-header"><span class="card-title">Site Management</span></div>
             <div class="card-body">
               <div class="form-group mb-4">
-                <label class="form-label" style="margin-bottom:0.5rem;">Site options</label>
+                <label class="form-label">Site Settings</label>
+                <p class="form-hint mb-3">Apply changes with Confirm. Maintenance and Lockdown are mutually exclusive. When Divert Emails is off, per-user divert (set on each user card in Manage Users) applies. To set from a local terminal or Cursor: send a PUT request to your Worker URL <code>/api/admin/site-settings</code> with header <code>X-Admin-Key</code> and JSON body e.g. <code>{"divertAllGlobal": true}</code>.</p>
                 <div class="site-settings-row">
-                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-divert-all"><span>Divert all to dev</span></label>
-                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-maintenance"><span>Maintenance mode</span></label>
-                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-lockdown"><span>Lockdown mode</span></label>
+                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;">
+                    <input type="checkbox" id="site-divert-all">
+                    <span>Divert Emails</span>
+                  </label>
+                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;">
+                    <input type="checkbox" id="site-maintenance">
+                    <span>Maintenance</span>
+                  </label>
+                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;">
+                    <input type="checkbox" id="site-lockdown">
+                    <span>Lockdown</span>
+                  </label>
                 </div>
-                <span class="form-hint" style="display:block; margin-top:0.5rem;">Maintenance and lockdown are mutually exclusive. Changes apply when you click Confirm.</span>
-              </div>
-              <div class="form-group mb-0">
+                <ul class="form-hint mt-2 mb-3" style="list-style:none; padding-left:0;">
+                  <li><strong>Divert Emails</strong> — Send all notification emails to the dev address instead of recipients.</li>
+                  <li><strong>Maintenance</strong> — Only contact pages are accessible; editor and signup are blocked.</li>
+                  <li><strong>Lockdown</strong> — Site access blocked for everyone except admins.</li>
+                </ul>
                 <button type="button" class="btn btn-primary" id="site-settings-confirm-btn">Confirm</button>
+              </div>
+
+              <hr class="card-divider" style="margin:var(--space-5) 0; border:0; border-top:1px solid var(--color-border);">
+              <div class="form-group mb-0">
+                <label class="form-label">KV storage cleanup</label>
+                <p class="form-hint mb-3">Find and remove orphaned KV keys (users no longer in the repo) and expired temporary keys (e.g. recovery codes). Source of truth is the GitHub user folder list.</p>
+                <button type="button" class="btn btn-secondary" id="kv-orphans-refresh-btn">Check for orphaned keys</button>
+                <div id="kv-orphans-report" class="hidden mt-3">
+                <div class="kv-report-summary mb-3" style="padding:0.75rem; background:var(--color-bg-muted); border-radius:var(--radius-md);"></div>
+                <details class="mb-3" id="kv-orphans-details">
+                  <summary class="form-hint">Show key names</summary>
+                  <pre id="kv-orphans-keys" class="mt-2 p-2 font-mono text-sm" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); max-height:12rem; overflow:auto;"></pre>
+                </details>
+                <div id="kv-cleanup-actions" class="hidden">
+                  <div class="form-group mb-3">
+                    <button type="button" class="btn btn-secondary" id="kv-cleanup-dry-run-btn">Dry run (preview delete)</button>
+                    <span class="form-hint" style="margin-left:0.5rem;" id="kv-dry-run-result"></span>
+                  </div>
+                  <div id="kv-cleanup-confirm-block" class="mb-3" style="padding:0.75rem; background:var(--color-bg-muted); border-radius:var(--radius-md);">
+                    <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.5rem;">
+                      <input type="checkbox" id="kv-cleanup-confirm-checkbox">
+                      <span>I have reviewed the list and want to permanently delete these keys</span>
+                    </label>
+                      <button type="button" class="btn btn-primary" id="kv-cleanup-delete-btn" disabled>Delete these keys</button>
+                    </div>
+                  </div>
+                </div>
+                <div id="kv-orphans-empty" class="hidden form-hint mt-2">No orphaned or expired keys.</div>
+                <div id="kv-orphans-loading" class="hidden form-hint mt-2">Loading…</div>
+                <div id="kv-orphans-error" class="alert hidden mt-2"></div>
               </div>
             </div>
           </div>
+
           <div class="card mt-4">
-            <div class="card-header"><span class="card-title">Admin account</span></div>
+            <div class="card-header"><span class="card-title">Administrator Account</span></div>
             <div class="card-body">
               <div class="form-group mb-4">
-                <label class="form-label" style="margin-bottom:0.25rem;">Admin email (for recovery &amp; sign-in)</label>
+                <label class="form-label">Administrator Email (For Recovery &amp; Sign In)</label>
                 <div id="admin-email-not-set">
                   <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
                     <input type="email" id="admin-email-input" class="form-input" placeholder="your@email.com" style="max-width:20rem;" autocomplete="email">
@@ -222,22 +267,13 @@
                   <span class="form-hint">Set once from dashboard. Used for password recovery and email sign-in.</span>
                 </div>
                 <div id="admin-email-set" class="hidden">
-                  <div id="admin-email-display" class="form-input" style="max-width:20rem; background:var(--color-bg-muted,#f5f5f5);" readonly aria-readonly="true">—</div>
-                  <span class="form-hint">To change, use the Worker API: <code>PUT /api/admin/admin-email</code> with <code>X-Admin-Key</code> and body <code>{ "email": "your@email.com" }</code>.</span>
+                  <div id="admin-email-display" class="form-input" style="max-width:20rem; background:var(--color-bg-muted);" readonly aria-readonly="true">—</div>
+                  <span class="form-hint">To change from a local terminal or Cursor: PUT to your Worker URL <code>/api/admin/admin-email</code> with header <code>X-Admin-Key</code> and JSON body <code>{"email":"your@email.com"}</code>.</span>
                 </div>
               </div>
-              <div class="form-group mb-4">
-                <label class="form-label" style="margin-bottom:0.25rem;">Admin key (stored locally)</label>
-                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                  <input type="text" id="dashboard-admin-key" class="form-input" placeholder="Generate a key to set or change" style="max-width:20rem;" readonly aria-readonly="true" autocomplete="off">
-                  <button type="button" class="btn btn-secondary" id="generate-admin-key-btn">Generate</button>
-                  <button type="button" class="btn btn-secondary hidden" id="save-admin-key-btn">Save &amp; Store Locally</button>
-                  <button type="button" class="btn btn-ghost btn-sm hidden" id="reset-admin-key-btn">Reset</button>
-                </div>
-                <span class="form-hint">Field is read-only. Generate a key, then save to server and this device.</span>
-              </div>
-              <div class="form-group" id="admin-password-section">
-                <label class="form-label" style="margin-bottom:0.25rem;">Password for email sign-in</label>
+              <div class="form-group mb-4" id="admin-password-section">
+                <label class="form-label">Administrator Email Password</label>
+                <span id="admin-password-badge" class="badge badge-success hidden" style="margin-left:0.5rem;">Password Set</span>
                 <div id="admin-password-not-set">
                   <div style="display:flex; flex-direction:column; gap:0.5rem; max-width:20rem;">
                     <input type="password" id="dashboard-password-new" class="form-input" placeholder="Password (min 8 characters)" minlength="8" autocomplete="new-password">
@@ -252,43 +288,19 @@
                   <span class="form-hint" style="display:block; margin-top:0.5rem;">Sends OTP to your admin email; enter code and new password to reset.</span>
                 </div>
               </div>
-            </div>
-          </div>
-          <div class="card mt-4">
-            <div class="card-header"><span class="card-title">KV storage cleanup</span></div>
-            <div class="card-body">
-              <p class="form-hint mb-4">Find and remove orphaned KV keys (users no longer in the repo) and expired temporary keys (e.g. recovery codes). Source of truth is the GitHub user folder list.</p>
-              <div class="form-group mb-4">
-                <button type="button" class="btn btn-secondary" id="kv-orphans-refresh-btn">Check for orphaned keys</button>
-              </div>
-              <div id="kv-orphans-report" class="hidden">
-                <div class="kv-report-summary mb-3" style="padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);"></div>
-                <details class="mb-3" id="kv-orphans-details">
-                  <summary>Show key names</summary>
-                  <pre id="kv-orphans-keys" class="mt-2 p-2 font-mono text-sm" style="background:var(--color-bg,#fff); border:1px solid var(--color-border,#ddd); border-radius:var(--radius-sm,4px); max-height:12rem; overflow:auto;"></pre>
-                </details>
-                <div id="kv-cleanup-actions" class="hidden">
-                  <div class="form-group mb-3">
-                    <button type="button" class="btn btn-secondary" id="kv-cleanup-dry-run-btn">Dry run (preview delete)</button>
-                    <span class="form-hint ml-2" id="kv-dry-run-result"></span>
-                  </div>
-                  <div id="kv-cleanup-confirm-block" class="hidden" style="padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);">
-                    <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.5rem;">
-                      <input type="checkbox" id="kv-cleanup-confirm-checkbox">
-                      <span>I have reviewed the list and want to permanently delete these keys</span>
-                    </label>
-                    <div>
-                      <button type="button" class="btn btn-primary" id="kv-cleanup-delete-btn" disabled>Delete these keys</button>
-                    </div>
-                  </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Local Admin Key (ADMIN_KEY)</label>
+                <span id="admin-key-badge" class="badge badge-success hidden" style="margin-left:0.5rem;">Admin Key Set</span>
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                  <input type="text" id="dashboard-admin-key" class="form-input" placeholder="Generate a key to set or change" style="max-width:20rem; background:var(--color-bg-muted); color:var(--color-text-secondary);" readonly aria-readonly="true" autocomplete="off">
+                  <button type="button" class="btn btn-secondary" id="generate-admin-key-btn">Generate</button>
+                  <button type="button" class="btn btn-secondary hidden" id="save-admin-key-btn">Save &amp; Store Locally</button>
+                  <button type="button" class="btn btn-ghost btn-sm hidden" id="reset-admin-key-btn">Reset</button>
                 </div>
+                <span class="form-hint">Field is read-only. Generate a key, then save to server and this device.</span>
               </div>
-              <div id="kv-orphans-empty" class="hidden form-hint">No orphaned or expired keys.</div>
-              <div id="kv-orphans-loading" class="hidden form-hint">Loading…</div>
-              <div id="kv-orphans-error" class="alert hidden"></div>
             </div>
           </div>
-          <div id="alert-admin-access" class="alert mt-4"></div>
         </div>
 
         <div id="tab-manage" class="tab-content active">
@@ -1246,13 +1258,18 @@ function loadAdminAccountSection() {
   }
   var notSet = document.getElementById('admin-password-not-set');
   var set = document.getElementById('admin-password-set');
+  var passwordBadge = document.getElementById('admin-password-badge');
   if (adminPasswordSet) {
     if (notSet) notSet.classList.add('hidden');
     if (set) set.classList.remove('hidden');
+    if (passwordBadge) passwordBadge.classList.remove('hidden');
   } else {
     if (notSet) notSet.classList.remove('hidden');
     if (set) set.classList.add('hidden');
+    if (passwordBadge) passwordBadge.classList.add('hidden');
   }
+  var keyBadge = document.getElementById('admin-key-badge');
+  if (keyBadge) keyBadge.classList.toggle('hidden', !adminKey);
   updateSetPasswordButton();
 }
 
