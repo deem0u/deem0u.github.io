@@ -31,8 +31,8 @@
   --accent-warm-border: #b8a9a2;
 
   /* Banner & status semantic colors */
-  --banner-welcome-bg: var(--accent-warm);
-  --banner-welcome-border: var(--accent-warm-border);
+  --banner-welcome-bg: var(--grey-200);
+  --banner-welcome-border: var(--grey-300);
   --banner-info-bg: rgba(55, 235, 243, 0.12);
   --banner-info-border: var(--accent-cyan);
   --banner-reminder-bg: #fef9e7;
