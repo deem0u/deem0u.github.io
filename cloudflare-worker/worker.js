@@ -184,6 +184,10 @@ export default {
       }
       if (request.method === 'POST' && path.startsWith('/api/page/')) {
         const { username, contactpagename } = parsePagePath(path);
+        // Fallback: path /api/page/{username}/create can be parsed as contactpagename "create"; treat as create.
+        if (contactpagename === 'create') {
+          return await handleUserCreatePage(username, request, env);
+        }
         return await handleUpdatePage(username, contactpagename, request, env);
       }
 
