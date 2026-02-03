@@ -1076,12 +1076,13 @@ async function handleListPages(request, env) {
   return jsonResponse({ pages });
 }
 
-/** GET /api/contact-pages/:username - List contact page names for a user (admin only). */
+/** GET /api/contact-pages/:username - List contact page names for a user (admin or same user via Bearer). */
 async function handleListContactPages(username, request, env) {
-  if (!await isAdmin(request, env)) {
-    return jsonResponse({ error: 'Admin access required' }, 401);
-  }
   const u = (username || '').trim();
+  const auth = await validateAuth(u, request, env);
+  if (!auth.authorized) {
+    return jsonResponse({ error: auth.isAdmin ? 'Admin access required' : 'Unauthorized' }, 401);
+  }
   if (!u || !/^[a-zA-Z0-9_-]+$/.test(u)) {
     return jsonResponse({ error: 'Invalid username' }, 400);
   }

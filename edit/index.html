@@ -36,6 +36,14 @@
   .status-banner.hidden { display: none; }
   .status-banner.show { display: block; }
   .verify-otp-input { font-size: 1.25rem; letter-spacing: 0.2em; text-align: center; }
+  .contact-pages-section { margin-top: 1.25rem; }
+  .contact-pages-section .profile-title { margin-bottom: 0.5rem; }
+  .contact-pages-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .contact-page-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 8px); padding: 0.6rem 0.75rem; cursor: pointer; font-size: 0.85rem; text-align: left; transition: border-color 0.15s, background 0.15s; }
+  .contact-page-card:hover { border-color: var(--accent-teal, #1ac5b0); background: var(--color-bg-subtle, #f5f5f5); }
+  .contact-page-card.selected { border-color: var(--accent-teal, #1ac5b0); background: rgba(26, 197, 176, 0.08); font-weight: 600; }
+  .contact-page-card .page-name { display: block; }
+  .contact-page-card .page-slug { font-size: 0.75rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
   @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-profile-strip { width: 100%; } }
     </style>
 </head>
@@ -178,6 +186,10 @@
           <div class="profile-row"><span class="profile-label">Account Email:</span> <span class="profile-value" id="profile-email">—</span> <span id="profile-verified-badge" class="badge hidden"></span></div>
           <div class="profile-row"><span class="profile-label">DOB:</span> <span class="profile-value" id="profile-dob-masked">—</span></div>
           <button type="button" class="btn btn-ghost btn-sm mt-2" id="edit-profile-btn">Edit Profile</button>
+          <div id="contact-pages-section" class="contact-pages-section hidden">
+            <div class="profile-title">Contact Pages</div>
+            <div id="contact-pages-list" class="contact-pages-list"></div>
+          </div>
         </aside>
         <div class="editor-main">
         <div id="unverified-banner" class="banner-reminder hidden">
@@ -333,7 +345,7 @@
 <script src="edit-secrets.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
-let username = null, token = null, currentSha = null;
+let username = null, token = null, currentSha = null, currentContactpagename = 'index';
 const PAGES_URL = 'https://deem0u.github.io/user/';
 const EDITOR_URL = 'https://deem0u.github.io/edit/';
 const RECOVERY_SQ_OPTIONS = {1:'What is your mothers maiden name?',2:'What is the name of the educational institution which you have obtained your highest level of qualification?',3:'What is the name of your first pet?',4:'What is the make and model of your first car?',5:'What is a date that is most memorable to you?',6:'What suburb were you born in?',7:'What was the name of the business or company you first worked for?',8:'Where was your first major travel destination?',9:'What is your favourite sports team?',10:'What is a word that Chris cannot correctly pronounce?'};
@@ -351,6 +363,9 @@ function formatDob(val) {
   if (d.length <= 2) return d;
   if (d.length <= 4) return d.substring(0, 2) + '/' + d.substring(2);
   return d.substring(0, 2) + '/' + d.substring(2, 4) + '/' + d.substring(4);
+}
+function escapeHtml(s) {
+  return (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function attachDobMask() {
@@ -888,22 +903,68 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+function pageApiPath() {
+  return currentContactpagename === 'index' ? `${API}/api/page/${encodeURIComponent(username)}` : `${API}/api/page/${encodeURIComponent(username)}/${encodeURIComponent(currentContactpagename)}`;
+}
+function viewPageHref() {
+  return currentContactpagename === 'index' ? PAGES_URL + username + '/' : PAGES_URL + username + '/' + currentContactpagename + '.html';
+}
+async function fetchContactPagesList() {
+  var section = document.getElementById('contact-pages-section');
+  var list = document.getElementById('contact-pages-list');
+  if (!section || !list || !username || !token) return;
+  try {
+    var r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    var pages = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : (r.ok ? ['index'] : []);
+    if (pages.length === 0) pages = ['index'];
+    list.innerHTML = pages.map(function(p) {
+      var label = p === 'index' ? 'Main (index)' : p;
+      var slug = p === 'index' ? username + '/' : username + '/' + p + '.html';
+      return '<button type="button" class="contact-page-card' + (p === currentContactpagename ? ' selected' : '') + '" data-contactpagename="' + (p === 'index' ? 'index' : p) + '" onclick="selectContactPage(\'' + (p === 'index' ? 'index' : p.replace(/'/g, "\\'")) + '\')"><span class="page-name">' + escapeHtml(label) + '</span><span class="page-slug">' + escapeHtml(slug) + '</span></button>';
+    }).join('');
+    section.classList.remove('hidden');
+  } catch (e) {
+    list.innerHTML = '<button type="button" class="contact-page-card selected" data-contactpagename="index" onclick="selectContactPage(\'index\')"><span class="page-name">Main (index)</span><span class="page-slug">' + escapeHtml(username + '/') + '</span></button>';
+    section.classList.remove('hidden');
+  }
+}
+function selectContactPage(contactpagename) {
+  if (!username || !token || contactpagename === currentContactpagename) return;
+  currentContactpagename = contactpagename || 'index';
+  var list = document.getElementById('contact-pages-list');
+  if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
+  document.getElementById('view-page-link').href = viewPageHref();
+  showStatusBanner('Loading...', 'loading');
+  var url = pageApiPath();
+  fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(res) { return res.json().then(function(data) { if (!res.ok) throw new Error(data.error || 'Failed to load'); return data; }); })
+    .then(function(data) {
+      currentSha = data.sha;
+      fillForm(data.content);
+      document.getElementById('view-page-link').href = viewPageHref();
+      hideStatusBanner();
+    })
+    .catch(function() { showStatusBanner('Failed to load page', 'error'); });
+}
 async function authenticateWithStoredSession() {
   if (!username || !token) return;
   try {
-    const res = await fetch(API + '/api/page/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) throw new Error('Session expired');
     const data = await res.json();
     currentSha = data.sha;
-    populateFormFromPage(data);
+    currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
+    fillForm(data.content);
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
-    document.getElementById('view-page-link').href = PAGES_URL + username + '/';
+    document.getElementById('view-page-link').href = viewPageHref();
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
     await loadProfile();
     applyUnverifiedRestriction();
+    await fetchContactPagesList();
   } catch (e) {
     sessionStorage.removeItem('edit_session');
     username = null;
@@ -927,24 +988,26 @@ async function authenticate() {
     } catch (e) { showAlert('auth-alert', 'Connection error. Please try again.', 'error'); return; }
   }
   try {
-    const res = await fetch(`${API}/api/page/${username}`, { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) { showAlert('auth-alert', 'Sign in failed. Please check your email and password.', 'error'); return; }
     
     const data = await res.json();
     currentSha = data.sha;
+    currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
     fillForm(data.content);
     
     document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
     document.title = 'Contact Editor - ' + username;
     document.getElementById('header-logo-text').textContent = 'Contact Editor - ' + username;
     document.getElementById('signout-btn').classList.remove('hidden');
-    document.getElementById('view-page-link').href = PAGES_URL + username + '/';
+    document.getElementById('view-page-link').href = viewPageHref();
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
     if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
     await loadProfile();
     applyUnverifiedRestriction();
+    await fetchContactPagesList();
   } catch (e) {
     console.error('Auth error:', e);
     showAlert('auth-alert', 'Connection error. Please try again.', 'error'); 
@@ -1192,7 +1255,7 @@ function fillForm(h) {
 async function resetForm() {
   showStatusBanner('Refreshing...', 'refreshing');
   try {
-    const res = await fetch(`${API}/api/page/${username}`, { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
     if (res.ok) {
       const d = await res.json();
       currentSha = d.sha;
@@ -1254,7 +1317,7 @@ async function handleSave(e) {
 
   try {
     const content = generateHTML();
-    const res = await fetch(`${API}/api/page/${username}`, {
+    const res = await fetch(pageApiPath(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ content, sha: currentSha })
