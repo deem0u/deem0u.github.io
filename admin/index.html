@@ -1485,11 +1485,13 @@ async function handleResetPasswordTrigger() {
       document.getElementById('modal-password-reset-alert').className = 'alert';
       document.getElementById('modal-password-reset-alert').innerHTML = '';
       document.getElementById('modal-password-reset').classList.remove('hidden');
+      document.getElementById('modal-password-reset').classList.add('show');
     } else { showAlert('alert-admin-access', (d && d.error) || 'Failed to send code.', 'error'); }
   } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
 }
 
 function closePasswordResetModal() {
+  document.getElementById('modal-password-reset').classList.remove('show');
   document.getElementById('modal-password-reset').classList.add('hidden');
 }
 
@@ -3065,7 +3067,8 @@ async function applySiteSettings() {
       headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({ divertAllGlobal: divertAll, maintenanceMode: maintenance, lockdownMode: lockdown })
     });
-    var d = r.ok ? null : await r.json();
+    var d = null;
+    if (!r.ok) { try { d = await r.json(); } catch (_) {} }
     if (r.ok) {
       siteSettings.divertAllGlobal = divertAll;
       siteSettings.maintenanceMode = maintenance;
@@ -3073,7 +3076,9 @@ async function applySiteSettings() {
       renderList('manage');
       showAlert('alert-admin-access', 'Site settings saved.', 'success');
     } else {
-      showAlert('alert-admin-access', (d && d.error) || 'Failed to update.', 'error');
+      var errMsg = (d && d.error) || ('Request failed (' + r.status + ').');
+      if (r.status === 404) errMsg = (d && d.error) || 'Not found. Ensure the Worker is deployed and the API URL is correct.';
+      showAlert('alert-admin-access', errMsg, 'error');
     }
   } catch (e) {
     showAlert('alert-admin-access', 'Connection error.', 'error');
