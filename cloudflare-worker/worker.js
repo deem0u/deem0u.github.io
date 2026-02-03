@@ -171,6 +171,12 @@ export default {
         return await handleDeletePage(username, contactpagename, request, env);
       }
 
+      // Route: POST /api/page/{username}/create - User creates a new contact page (Bearer, same user)
+      if (request.method === 'POST' && path.match(/^\/api\/page\/[^/]+\/create$/)) {
+        const username = path.replace(/^\/api\/page\//, '').replace(/\/create$/, '').trim();
+        return await handleUserCreatePage(username, request, env);
+      }
+
       // Page routes: GET/POST /api/page/{username} or /api/page/{username}/{contactpagename}
       if (request.method === 'GET' && path.startsWith('/api/page/')) {
         const { username, contactpagename } = parsePagePath(path);
@@ -869,6 +875,87 @@ async function handleCreatePage(request, env) {
   return jsonResponse({
     success: true,
     username,
+    contactpagename,
+    sha: data.content.sha,
+    url: pageUrl(username, contactpagename)
+  });
+}
+
+/**
+ * POST /api/page/{username}/create - Create a new contact page (Bearer, same user only).
+ * Body: { contactpagename, content }. contactpagename is the unique identifier (e.g. work-card, travel-2024).
+ * File stored at user/<username>/<contactpagename>.html; URL follows same path.
+ */
+async function handleUserCreatePage(username, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const contactpagename = (body.contactpagename || '').trim();
+  if (!contactpagename) {
+    return jsonResponse({ error: 'Contact page name is required' }, 400);
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
+    return jsonResponse({ error: 'Contact page name can only use letters, numbers, hyphens, and underscores' }, 400);
+  }
+  if (contactpagename.length < 2 || contactpagename.length > 64) {
+    return jsonResponse({ error: 'Contact page name must be 2–64 characters' }, 400);
+  }
+  const content = body.content;
+  if (typeof content !== 'string') {
+    return jsonResponse({ error: 'Content is required' }, 400);
+  }
+
+  const filePath = pagePath(username, contactpagename);
+  const checkResponse = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+
+  if (checkResponse.ok) {
+    return jsonResponse({ error: 'A contact page with this name already exists' }, 409);
+  }
+
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Create contact page: ${username}/${contactpagename}`,
+        content: encodeBase64(content),
+        branch: CONFIG.branch
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    return jsonResponse({ error: error.message || 'Failed to create page' }, response.status);
+  }
+
+  const data = await response.json();
+  return jsonResponse({
+    success: true,
     contactpagename,
     sha: data.content.sha,
     url: pageUrl(username, contactpagename)
