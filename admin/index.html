@@ -168,6 +168,12 @@
                 <div class="stat"><span class="stat-value" id="stat-secrets-not-set">0</span><span class="stat-label">Secrets not set</span></div>
               </div>
             </div>
+            <div class="site-settings-row" style="display:flex; flex-wrap:wrap; align-items:center; gap:1rem; margin-top:1rem; padding:0.75rem; background:var(--color-bg-muted,#f5f5f5); border-radius:var(--radius-md,6px);">
+              <span class="site-settings-label" style="font-weight:600; margin-right:0.5rem;">Site:</span>
+              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-divert-all" onchange="toggleDivertAll(this.checked)"><span>Divert all to dev</span></label>
+              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-maintenance" onchange="toggleMaintenance(this.checked)"><span>Maintenance mode</span></label>
+              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;"><input type="checkbox" id="site-lockdown" onchange="toggleLockdown(this.checked)"><span>Lockdown mode</span></label>
+            </div>
           </div>
           <div id="alert-manage" class="alert"></div>
           <div id="list-manage" class="user-list"></div>
@@ -460,8 +466,10 @@ const EDITOR_URL = 'https://deem0u.github.io/edit/';
 const PAGES_URL = 'https://deem0u.github.io/user/';
 
 let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentContactPageName = 'index', currentSha = null, modalCallback = null;
+var siteSettings = { divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {} };
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Admin is always available (no maintenance/lockdown block)
   // Attach all event listeners first
   try {
     document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
@@ -897,6 +905,17 @@ async function loadDashboard() {
     }
   }
   try {
+    var settingsRes = await fetch(API + '/api/admin/site-settings', { headers: { 'X-Admin-Key': adminKey } });
+    if (settingsRes.ok) {
+      var settingsData = await settingsRes.json();
+      siteSettings = { divertAllGlobal: !!settingsData.divertAllGlobal, maintenanceMode: !!settingsData.maintenanceMode, lockdownMode: !!settingsData.lockdownMode, divertUsers: settingsData.divertUsers || {} };
+    }
+    var sdAll = document.getElementById('site-divert-all');
+    var sdMaint = document.getElementById('site-maintenance');
+    var sdLock = document.getElementById('site-lockdown');
+    if (sdAll) sdAll.checked = siteSettings.divertAllGlobal;
+    if (sdMaint) sdMaint.checked = siteSettings.maintenanceMode;
+    if (sdLock) sdLock.checked = siteSettings.lockdownMode;
     populateUI();
     fetchAccountEmailsAndRefresh();
   } catch (e) {
@@ -1290,6 +1309,7 @@ function renderList(t) {
             <div class="action-row-buttons">
               ${u.accountEmail ? `<button type="button" class="btn btn-primary btn-sm" onclick="sendViaEmail('${f}')">Send via Email</button>` : ''}
               <button class="btn btn-primary btn-sm" onclick="copyLink('${f}',this)">Copy to Clipboard</button>
+              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer; font-size:0.875rem;"><input type="checkbox" class="divert-user-toggle" id="divert-${escapeHtml(f)}" data-username="${escapeHtml(f)}" onchange="toggleDivertUser(this)" ${(siteSettings.divertAllGlobal || siteSettings.divertUsers[f]) ? ' checked' : ''}><span>Divert to dev</span></label>
             </div>
           </div>` : ''}
         </div>
@@ -1786,6 +1806,7 @@ function generatePageHTML(givenName, familyName, contactEmail, mobile, mobileLin
 <style>${css}</style>
 </head>
 <body>
+<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>
 <div class="container">
 ${lastUpdatedBlockHtml}
 <h1>${lblBoth('section-title')}</h1>
@@ -1798,6 +1819,7 @@ ${lastUpdatedBlockHtml}
 <div class="info additional-info"><span class="label">${lblBoth('additional-info')}</span>${additionalHtml}</div>
 </div>
 ${formatTimestampScript}
+<script>(function(){fetch("${API}/api/site-status").then(function(r){return r.json()}).then(function(d){if(d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
 </body>
 </html>`;
 }
@@ -1962,6 +1984,45 @@ function copyLink(f, btn) {
   });
 }
 
+async function toggleDivertAll(checked) {
+  siteSettings.divertAllGlobal = !!checked;
+  try {
+    var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ divertAllGlobal: checked }) });
+    if (r.ok) { renderList('manage'); showAlert('alert-manage', checked ? 'All emails will divert to dev.' : 'Divert all turned off.', 'success'); }
+    else { siteSettings.divertAllGlobal = !checked; document.getElementById('site-divert-all').checked = !checked; showAlert('alert-manage', 'Failed to update.', 'error'); }
+  } catch (e) { siteSettings.divertAllGlobal = !checked; document.getElementById('site-divert-all').checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
+}
+
+async function toggleMaintenance(checked) {
+  siteSettings.maintenanceMode = !!checked;
+  try {
+    var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ maintenanceMode: checked }) });
+    if (r.ok) showAlert('alert-manage', checked ? 'Maintenance mode on. Only contact pages are accessible.' : 'Maintenance mode off.', 'success');
+    else { siteSettings.maintenanceMode = !checked; document.getElementById('site-maintenance').checked = !checked; showAlert('alert-manage', 'Failed to update.', 'error'); }
+  } catch (e) { siteSettings.maintenanceMode = !checked; document.getElementById('site-maintenance').checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
+}
+
+async function toggleLockdown(checked) {
+  siteSettings.lockdownMode = !!checked;
+  try {
+    var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ lockdownMode: checked }) });
+    if (r.ok) showAlert('alert-manage', checked ? 'Lockdown on. Site access blocked.' : 'Lockdown off.', 'success');
+    else { siteSettings.lockdownMode = !checked; document.getElementById('site-lockdown').checked = !checked; showAlert('alert-manage', 'Failed to update.', 'error'); }
+  } catch (e) { siteSettings.lockdownMode = !checked; document.getElementById('site-lockdown').checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
+}
+
+async function toggleDivertUser(checkboxEl) {
+  var username = checkboxEl && checkboxEl.dataset && checkboxEl.dataset.username;
+  if (!username) return;
+  var checked = !!checkboxEl.checked;
+  if (!siteSettings.divertUsers) siteSettings.divertUsers = {};
+  siteSettings.divertUsers[username] = checked;
+  try {
+    var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ divertUsers: { [username]: checked } }) });
+    if (!r.ok) { siteSettings.divertUsers[username] = !checked; checkboxEl.checked = !checked; showAlert('alert-manage', 'Failed to update.', 'error'); }
+  } catch (e) { siteSettings.divertUsers[username] = !checked; checkboxEl.checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
+}
+
 function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); }
 
 function showModal(t, m, bc, bt, cb) { document.getElementById('modal-title').textContent = t; document.getElementById('modal-message').textContent = m; const b = document.getElementById('modal-confirm'); b.className = `btn ${bc}`; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
@@ -2095,7 +2156,7 @@ async function saveProfile() {
         return;
       }
       profileModalFolder = newUsername;
-      await fetchAccountEmailsAndRefresh();
+      await loadDashboard();
     }
     var putRes = await fetch(API + '/api/profile/' + encodeURIComponent(profileModalFolder), {
       method: 'PUT',
@@ -2109,9 +2170,13 @@ async function saveProfile() {
       if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
       return;
     }
+    if (userInfo[profileModalFolder]) {
+      userInfo[profileModalFolder].firstName = firstName;
+      userInfo[profileModalFolder].lastName = lastName;
+    }
+    await fetchAccountEmailsAndRefresh();
     var succ = document.getElementById('modal-profile-success');
     if (succ) { succ.classList.remove('hidden'); succ.textContent = 'Saved successfully.'; }
-    await fetchAccountEmailsAndRefresh();
     closeProfileModal();
   } catch (e) {
     errEl.textContent = 'Connection error. Please try again.';
@@ -2300,8 +2365,8 @@ async function saveSecrets() {
     });
     var d = await r.json();
     if (r.ok) {
-      if (accountEmail && userInfo[secretsModalFolder]) userInfo[secretsModalFolder].accountEmail = accountEmail;
-      fetchAccountEmailsAndRefresh();
+      if (userInfo[secretsModalFolder]) userInfo[secretsModalFolder].accountEmail = accountEmail || null;
+      await fetchAccountEmailsAndRefresh();
       closeSecretsModal();
       showAlert('alert-manage', 'Secrets updated', 'success');
     } else {

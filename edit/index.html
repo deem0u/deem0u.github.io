@@ -114,6 +114,14 @@
     </style>
 </head>
 <body>
+  <div id="site-unavailable" class="hidden" style="display:none; position:fixed; inset:0; background:var(--color-bg,#fff); z-index:9999; align-items:center; justify-content:center; flex-direction:column; padding:2rem; text-align:center;">
+    <h1 style="font-size:1.5rem; margin-bottom:0.5rem;">Site temporarily unavailable</h1>
+    <p style="color:var(--color-text-secondary,#666);">Please try again later.</p>
+  </div>
+  <div id="site-maintenance" class="hidden" style="display:none; position:fixed; inset:0; background:var(--color-bg,#fff); z-index:9999; align-items:center; justify-content:center; flex-direction:column; padding:2rem; text-align:center;">
+    <h1 style="font-size:1.5rem; margin-bottom:0.5rem;">Maintenance in progress</h1>
+    <p style="color:var(--color-text-secondary,#666);">Only contact pages are available. Please try again later.</p>
+  </div>
   <div class="app">
     <header class="app-header">
       <div class="app-header-inner">
@@ -1006,7 +1014,25 @@ function selectCountryEdit(value) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    var statusRes = await fetch(API + '/api/site-status');
+    var statusData = await statusRes.json();
+    if (statusData.lockdownMode) {
+      var el = document.getElementById('site-unavailable');
+      if (el) { el.style.display = 'flex'; el.classList.remove('hidden'); }
+      var app = document.querySelector('.app');
+      if (app) app.style.display = 'none';
+      return;
+    }
+    if (statusData.maintenanceMode) {
+      var maint = document.getElementById('site-maintenance');
+      if (maint) { maint.style.display = 'flex'; maint.classList.remove('hidden'); }
+      var app = document.querySelector('.app');
+      if (app) app.style.display = 'none';
+      return;
+    }
+  } catch (e) {}
   const params = new URLSearchParams(window.location.search);
   username = params.get('username') || params.get('folder');
   
@@ -2044,6 +2070,7 @@ function generateHTML() {
 <style>${css}</style>
 </head>
 <body>
+<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>
 <div class="container">
 ${lastUpdatedBlockHtml}
 <h1>${lblBoth('section-title')}</h1>
@@ -2056,6 +2083,7 @@ ${lastUpdatedBlockHtml}
 <div class="info additional-info"><span class="label">${lblBoth('additional-info')}</span>${additionalHtml}</div>
 </div>
 ${formatTimestampScript}
+<script>(function(){fetch("${API}/api/site-status").then(function(r){return r.json()}).then(function(d){if(d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
 </body>
 </html>`;
 }

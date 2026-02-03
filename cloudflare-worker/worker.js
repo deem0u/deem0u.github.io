@@ -19,6 +19,9 @@ const CONFIG = {
   branch: 'main'
 };
 
+/** Public API base for contact-page lockdown check (contact pages are static; they fetch this). */
+const PUBLIC_API_BASE = 'https://contact-page-editor.deem0u.workers.dev';
+
 /** All user accounts and contact pages live under this folder. */
 const USER_PAGES_PREFIX = 'user';
 
@@ -242,6 +245,15 @@ export default {
       if (request.method === 'POST' && path === '/api/admin/rename-user') {
         return await handleAdminRenameUser(request, env);
       }
+      if (request.method === 'GET' && path === '/api/site-status') {
+        return await handleGetSiteStatus(env);
+      }
+      if (request.method === 'GET' && path === '/api/admin/site-settings') {
+        return await handleGetSiteSettings(request, env);
+      }
+      if (request.method === 'PUT' && path === '/api/admin/site-settings') {
+        return await handlePutSiteSettings(request, env);
+      }
 
       return jsonResponse({ error: 'Not found' }, 404);
     } catch (error) {
@@ -298,19 +310,31 @@ async function verifyPassword(plain, stored) {
 const EMAIL_RESTRICTION_RECIPIENT = 'deem0u.github.io@gmail.com';
 
 /**
+ * Check if email for this user should be diverted to dev (KV overrides env).
+ * When divertAllGlobal is '1', or divert_email:username is '1', or env EMAIL_SEND_RESTRICTED is not 'false', divert.
+ */
+async function shouldDivertEmail(env, username) {
+  if (env.EMAIL_SEND_RESTRICTED !== 'false') return true;
+  if (!env.EDIT_KEYS_KV) return false;
+  const globalOn = (await env.EDIT_KEYS_KV.get('site:divert_all_global')) === '1';
+  if (globalOn) return true;
+  if (username && (await env.EDIT_KEYS_KV.get('divert_email:' + username)) === '1') return true;
+  return false;
+}
+
+/**
  * Send email via the relay (Vercel serverless with Nodemailer + Gmail SMTP).
  * Requires env: EMAIL_RELAY_URL, EMAIL_RELAY_SECRET.
- * When EMAIL_SEND_RESTRICTED is not 'false', all emails go to EMAIL_RESTRICTION_RECIPIENT.
- * To go live: set EMAIL_SEND_RESTRICTED='false' in Worker secrets.
+ * Divert: when shouldDivertEmail(env, opts.username) or EMAIL_SEND_RESTRICTED is not 'false', send to EMAIL_RESTRICTION_RECIPIENT with [DEV] subject.
  * @param {object} env - Worker env
- * @param {{ to: string, subject: string, html?: string, text?: string }} opts
+ * @param {{ to: string, subject: string, html?: string, text?: string, username?: string }} opts
  * @returns {{ ok: boolean, error?: string }}
  */
-async function sendEmail(env, { to, subject, html, text }) {
+async function sendEmail(env, { to, subject, html, text, username }) {
   const url = env.EMAIL_RELAY_URL;
   const secret = env.EMAIL_RELAY_SECRET;
   if (!url || !secret) return { ok: false, error: 'Email not configured' };
-  const restricted = env.EMAIL_SEND_RESTRICTED !== 'false';
+  const restricted = await shouldDivertEmail(env, username);
   const effectiveTo = restricted ? EMAIL_RESTRICTION_RECIPIENT : (to || '');
   const effectiveSubject = restricted ? `[DEV] ${subject} (would go to: ${to || '?'})` : subject;
   try {
@@ -659,7 +683,7 @@ async function handleOtpSend(request, env) {
   const subject = 'Your verification code - Digital Contact Page';
   const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, you can ignore this email.\n\nPlease check your spam/junk folder if you don't see this email.`;
   const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. If you did not request this, you can ignore this email.</p><p>Please check your spam/junk folder if you don't see this email.</p>`;
-  const sent = await sendEmail(env, { to: accountEmail, subject, text, html });
+  const sent = await sendEmail(env, { to: accountEmail, subject, text, html, username });
   if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send' }, 500);
   return jsonResponse({ sent: true });
 }
@@ -690,7 +714,7 @@ async function handleSignupSuccessEmail(request, env) {
   const subject = `Your Digital Contact Page - ${username} - Account Details`;
   const text = `Below are details related to your account you should keep handy.\n\n\t• User Name: ${username}\n\t• Your Digital Contact Page URL: ${viewLink}\n\nHOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n\t1. Visit the Contact Editor (${editUrl}) and sign in with your Account Email and Password\n\t2. Make your changes\n\t3. Click "Save Changes"\n\nIf you wish to have your account deleted, contact deem0u.github.io@gmail.com`;
   const html = `<p>Below are details related to your account you should keep handy.</p><ul><li><strong>User Name:</strong> ${username}</li><li><strong>Contact Page URL:</strong> <a href="${viewLink}">${viewLink}</a></li></ul><p><strong>HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</strong></p><ol><li>Visit the <a href="${editUrl}">Contact Editor</a> and sign in with your Account Email and Password</li><li>Make your changes</li><li>Click "Save Changes"</li></ol><p>If you wish to have your account deleted, contact deem0u.github.io@gmail.com</p>`;
-  const sent = await sendEmail(env, { to: accountEmail, subject, text, html });
+  const sent = await sendEmail(env, { to: accountEmail, subject, text, html, username });
   return jsonResponse({ ok: sent.ok, error: sent.error });
 }
 
@@ -734,7 +758,9 @@ function generateContactPageHTML(givenName, familyName, contactEmail, mobile, mo
   const lblDest = 'Destination Details \u00b7 D\u00e9tails de la destination \u00b7 \u76ee\u7684\u5730\u8be6\u60c5';
   const lblAdditional = 'Additional Information \u00b7 Informations suppl\u00e9mentaires \u00b7 \u9644\u52a0\u4fe1\u606f';
   const script = '<script>(function(){function f(i,u){if(!i)return"";var d=new Date(i);return d.toLocaleString()+(u?" by "+u:"")}document.querySelectorAll(".last-updated-display").forEach(function(e){var i=e.getAttribute("data-timestamp"),u=e.getAttribute("data-updated-by");if(i)e.textContent=f(i,u)})})();<\/script>';
-  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(givenName) + ' ' + esc(familyName) + '</title><style>' + css + '</style></head><body><div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(givenName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(familyName) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(contactEmail) + '">' + esc(contactEmail) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + '</body></html>';
+  const lockdownOverlay = '<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>';
+  const lockdownScript = '<script>(function(){var api="' + PUBLIC_API_BASE.replace(/"/g, '&quot;') + '";fetch(api+"/api/site-status").then(function(r){return r.json()}).then(function(d){if(d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(givenName) + ' ' + esc(familyName) + '</title><style>' + css + '</style></head><body>' + lockdownOverlay + '<div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(givenName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(familyName) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(contactEmail) + '">' + esc(contactEmail) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + lockdownScript + '</body></html>';
 }
 
 // ============ Auth Helpers ============
@@ -1222,6 +1248,59 @@ async function handleAdminRenameUser(request, env) {
   }
 
   return jsonResponse({ success: true, oldUsername, newUsername, message: `User renamed to ${newUsername}` });
+}
+
+/** GET /api/site-status - Public. Returns maintenance and lockdown for edit/admin/signup pages. */
+async function handleGetSiteStatus(env) {
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ maintenanceMode: false, lockdownMode: false });
+  }
+  const maintenance = (await env.EDIT_KEYS_KV.get('site:maintenance')) === '1';
+  const lockdown = (await env.EDIT_KEYS_KV.get('site:lockdown')) === '1';
+  return jsonResponse({ maintenanceMode: maintenance, lockdownMode: lockdown });
+}
+
+/** GET /api/admin/site-settings - Admin only. Returns divert, maintenance, lockdown, per-user divert. */
+async function handleGetSiteSettings(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {} });
+  }
+  const divertAllGlobal = (await env.EDIT_KEYS_KV.get('site:divert_all_global')) === '1';
+  const maintenanceMode = (await env.EDIT_KEYS_KV.get('site:maintenance')) === '1';
+  const lockdownMode = (await env.EDIT_KEYS_KV.get('site:lockdown')) === '1';
+  const divertList = await env.EDIT_KEYS_KV.list({ prefix: 'divert_email:' });
+  const divertUsers = {};
+  for (const key of divertList.keys) {
+    const username = key.name.replace('divert_email:', '');
+    if (username) {
+      const val = await env.EDIT_KEYS_KV.get(key.name);
+      if (val === '1') divertUsers[username] = true;
+    }
+  }
+  return jsonResponse({ divertAllGlobal, maintenanceMode, lockdownMode, divertUsers });
+}
+
+/** PUT /api/admin/site-settings - Admin only. Body: { divertAllGlobal?, maintenanceMode?, lockdownMode?, divertUsers? }. */
+async function handlePutSiteSettings(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  if (body.divertAllGlobal === true) await env.EDIT_KEYS_KV.put('site:divert_all_global', '1');
+  else if (body.divertAllGlobal === false) await env.EDIT_KEYS_KV.delete('site:divert_all_global');
+  if (body.maintenanceMode === true) await env.EDIT_KEYS_KV.put('site:maintenance', '1');
+  else if (body.maintenanceMode === false) await env.EDIT_KEYS_KV.delete('site:maintenance');
+  if (body.lockdownMode === true) await env.EDIT_KEYS_KV.put('site:lockdown', '1');
+  else if (body.lockdownMode === false) await env.EDIT_KEYS_KV.delete('site:lockdown');
+  if (body.divertUsers && typeof body.divertUsers === 'object') {
+    for (const [username, on] of Object.entries(body.divertUsers)) {
+      const u = (username || '').trim();
+      if (!u) continue;
+      if (on === true) await env.EDIT_KEYS_KV.put('divert_email:' + u, '1');
+      else await env.EDIT_KEYS_KV.delete('divert_email:' + u);
+    }
+  }
+  return jsonResponse({ success: true });
 }
 
 async function handleGetPage(username, contactpagename, request, env) {
