@@ -45,6 +45,12 @@
   .contact-page-card.selected { border-color: var(--accent-teal, #1ac5b0); background: rgba(26, 197, 176, 0.08); font-weight: 600; }
   .contact-page-card .page-name { display: block; }
   .contact-page-card .page-slug { font-size: 0.75rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
+  .card-header-fields { display: flex; flex-direction: column; gap: 0.5rem; }
+  .card-header-field-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
+  .card-header-field-row .form-input-header { max-width: 22ch; width: 100%; }
+  .card-header-url-prefix { font-size: 0.85rem; color: var(--color-text-secondary, #666); }
+  .card-header-url-suffix { font-size: 0.85rem; color: var(--color-text-secondary, #666); }
+  .card-header-field-row .form-error-inline { flex-basis: 100%; font-size: 0.8rem; margin-top: -0.25rem; }
   @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-sidebar { width: 100%; } .editor-profile-strip { width: 100%; } }
     </style>
 </head>
@@ -223,26 +229,19 @@
         </div>
 
         <div class="card">
-          <div class="card-header"><span class="card-title">Your Contact Information</span></div>
-          <div class="card-body" id="editor-contact-form-wrap">
-            <div class="form-section form-section-contact-page-meta" style="margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid var(--color-border, #eee);">
-              <div class="form-group">
-                <label class="form-label">Contact Page URL</label>
-                <div class="contact-page-url-display" style="display:flex; align-items:center; flex-wrap:wrap; gap:0.25rem;">
-                  <span aria-hidden="true">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
-                  <input type="text" id="contact-page-url-slug" class="form-input" placeholder="e.g. work-card (blank for main page)" pattern="^[a-zA-Z0-9_-]*$" maxlength="64" autocomplete="off" style="max-width:12rem;">
-                  <span id="contact-page-url-suffix" aria-hidden="true"></span>
-                </div>
-                <span class="form-hint">Letters, numbers, hyphens, underscores. Unique per account. This is the page’s permanent URL.</span>
-                <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Contact Page Name</label>
-                <input type="text" id="contact-page-name" class="form-input" placeholder="e.g. Work card, Travel 2024" maxlength="128" autocomplete="off">
-                <span class="form-hint">A name to identify this page on your card/tile. Must be unique among your contact pages.</span>
-                <span class="form-error" id="error-contact-page-name" role="alert"></span>
-              </div>
+          <div class="card-header card-header-fields">
+            <div class="card-header-field-row">
+              <input type="text" id="contact-page-name" class="form-input form-input-header" placeholder="Contact Page Name" maxlength="32" autocomplete="off" title="Contact Page Name">
+              <span class="form-error form-error-inline" id="error-contact-page-name" role="alert"></span>
             </div>
+            <div class="card-header-field-row">
+              <span class="card-header-url-prefix" aria-hidden="true">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
+              <input type="text" id="contact-page-url-slug" class="form-input form-input-header" placeholder="Contact Page URL" pattern="^[a-zA-Z0-9_-]*$" maxlength="32" autocomplete="off" title="Contact Page URL">
+              <span id="contact-page-url-suffix" class="card-header-url-suffix" aria-hidden="true"></span>
+              <span class="form-error form-error-inline" id="error-contact-page-url-slug" role="alert"></span>
+            </div>
+          </div>
+          <div class="card-body" id="editor-contact-form-wrap">
             <form id="contact-form">
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
