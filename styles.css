@@ -1411,54 +1411,33 @@ body {
   }
 }
 
-/* Inline/form alerts (generic) */
-.alert-success {
-  background: var(--grey-100);
-  border: 1px solid var(--color-success);
-  color: var(--grey-900);
-}
-
-.alert-error {
-  background: var(--grey-100);
-  border: 1px solid var(--color-danger);
-  color: var(--grey-900);
-}
-
-.alert-warning {
-  background: var(--grey-100);
-  border: 1px solid var(--color-warning);
-  color: var(--grey-900);
-}
-
+/* Alerts (forms + status banner) — same semantic colors site-wide */
+/* Loading / Please wait — neutral */
 .alert-info {
-  background: var(--grey-100);
-  border: 1px solid var(--color-primary);
-  color: var(--grey-900);
-}
-
-/* ========================================
-   Status Banners (temporary or persistent by context)
-   ======================================== */
-
-/* Loading / Saving / Please wait — temporary, in progress */
-.status-banner.alert-info {
   background: var(--status-loading-bg);
   border: 1px solid var(--status-loading-border);
   color: var(--color-text);
 }
 
-/* Confirmed / Saved / Success — persistent until new action; teal */
-.status-banner.alert-success {
+/* Success / Saved / Confirmed — teal */
+.alert-success {
   background: var(--status-success-bg);
   border: 1px solid var(--status-success-border);
   color: var(--color-text);
 }
 
-/* Try again / Errors / Failure — persistent until fixed; light red */
-.status-banner.alert-error {
+/* Error / Failure / Try again — light red */
+.alert-error {
   background: var(--status-error-bg);
   border: 1px solid var(--status-error-border);
   color: var(--color-text);
+}
+
+/* Warning / reminder — unchanged */
+.alert-warning {
+  background: var(--grey-100);
+  border: 1px solid var(--color-warning);
+  color: var(--grey-900);
 }
 
 .alert-icon {
