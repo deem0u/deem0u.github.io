@@ -60,7 +60,8 @@
   .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
   .editor-contact-view-content { font-size: 0.95rem; line-height: 1.5; }
   .editor-contact-view-content .editor-view-value { font-weight: 500; }
-  .editor-contact-view-content .editor-view-title { font-size: var(--text-sm, 0.875rem); font-weight: 600; }
+  .editor-contact-view-content .editor-view-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; }
+  .editor-contact-view-content .form-required { display: none; }
   .editor-contact-view-content .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
   .editor-contact-view-content .form-label { font-weight: 700; }
   .editor-contact-view-content .editor-view-header { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
@@ -83,7 +84,7 @@
   #editor-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
   #editor-contact-edit .form-actions { margin-top: 0.5rem; padding-top: 0.5rem; }
   #editor-contact-edit .form-input, #editor-contact-edit .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
-  #editor-contact-edit .form-textarea.form-textarea-additional { min-height: 4.5rem; }
+  #editor-contact-edit .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
   #editor-contact-edit .searchable-select-trigger { padding: 0.35rem 0.5rem; font-size: 0.875rem; min-height: 2.25rem; box-sizing: border-box; }
   #editor-contact-edit #home-country-edit-container .searchable-select-search { padding: 0.25rem 0.35rem; }
   #editor-contact-edit #home-country-edit-container .searchable-select-search input { padding: 0.25rem 0.35rem; font-size: 0.8125rem; min-height: 1.75rem; }
@@ -277,7 +278,7 @@
                   <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit</button>
                 </div>
               </div>
-              <div class="card-header-field-row editor-view-header"><span class="editor-view-value" id="view-contact-page-url"></span></div>
+              <div class="card-header-field-row editor-view-header"><span class="form-label">Page URL</span><span class="editor-view-value" id="view-contact-page-url"></span></div>
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><span class="editor-view-value" id="view-first-name"></span></div>
                 <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><span class="editor-view-value" id="view-surname"></span></div>
@@ -315,6 +316,7 @@
                 <span class="form-error" id="error-contact-page-name" role="alert"></span>
               </div>
               <div class="form-group">
+                <label class="form-label" for="contact-page-url-slug">Page URL</label>
                 <div class="contact-page-url-inline">
                   <span class="card-header-url-prefix" aria-hidden="true">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
                   <input type="text" id="contact-page-url-slug" class="form-input" placeholder="Contact Page URL" pattern="^[a-zA-Z0-9_-]*$" maxlength="32" autocomplete="off" title="Contact Page URL">
