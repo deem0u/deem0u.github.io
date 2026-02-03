@@ -64,6 +64,9 @@
   .editor-contact-view-content .form-required { display: none; }
   .editor-contact-view-content .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
   .editor-contact-view-content .form-label { font-weight: 700; }
+  .editor-view-url-row { display: flex; align-items: baseline; gap: 0.35rem; flex-wrap: nowrap; }
+  .editor-view-url-row .form-label { margin-bottom: 0; flex-shrink: 0; }
+  .editor-view-url-row .editor-view-value { flex: 0 1 auto; min-width: 0; }
   .editor-contact-view-content .editor-view-header { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
   .editor-contact-edit .card-header-fields { flex: 1; min-width: 0; }
@@ -278,7 +281,7 @@
                   <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit</button>
                 </div>
               </div>
-              <div class="card-header-field-row editor-view-header"><span class="form-label">Page URL</span><span class="editor-view-value" id="view-contact-page-url"></span></div>
+              <div class="editor-view-url-row editor-view-header"><span class="form-label">Page URL</span><span class="editor-view-value" id="view-contact-page-url"></span></div>
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><span class="editor-view-value" id="view-first-name"></span></div>
                 <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><span class="editor-view-value" id="view-surname"></span></div>
@@ -312,14 +315,17 @@
           <div class="card-header">
             <div class="card-header-fields">
               <div class="form-group">
-                <input type="text" id="contact-page-name" class="form-input" placeholder="Contact Page Name" maxlength="32" autocomplete="off" title="Contact Page Name">
+                <label class="form-label" for="contact-page-name">Contact Page Name <span class="form-required">*</span></label>
+                <span class="form-hint">A name to identify this page on your card/tile. Must be unique among your contact pages.</span>
+                <input type="text" id="contact-page-name" class="form-input" placeholder="Contact Page Name" maxlength="28" autocomplete="off" title="Contact Page Name" required>
                 <span class="form-error" id="error-contact-page-name" role="alert"></span>
               </div>
               <div class="form-group">
-                <label class="form-label" for="contact-page-url-slug">Page URL</label>
+                <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
+                <span class="form-hint">The slug for this page’s URL. Letters, numbers, hyphens, underscores. Must be unique. Leave blank for main page.</span>
                 <div class="contact-page-url-inline">
                   <span class="card-header-url-prefix" aria-hidden="true">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
-                  <input type="text" id="contact-page-url-slug" class="form-input" placeholder="Contact Page URL" pattern="^[a-zA-Z0-9_-]*$" maxlength="32" autocomplete="off" title="Contact Page URL">
+                  <input type="text" id="contact-page-url-slug" class="form-input" placeholder="Contact Page URL" pattern="^[a-zA-Z0-9_-]*$" maxlength="28" autocomplete="off" title="Contact Page URL" required>
                   <span id="contact-page-url-suffix" class="card-header-url-suffix" aria-hidden="true"></span>
                 </div>
                 <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
@@ -1586,14 +1592,21 @@ async function handleSave(e) {
     var rawSlug = (slugInp && slugInp.value) ? slugInp.value.trim() : '';
     var contactpagename = (rawSlug === '' || rawSlug.toLowerCase() === 'index') ? 'index' : rawSlug;
     var contactPageNameTrim = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
+    if (slugErr) slugErr.textContent = '';
+    if (nameErr) nameErr.textContent = '';
+    if (!contactPageNameTrim) {
+      if (nameErr) nameErr.textContent = 'Contact Page Name is required.';
+      if (nameInp) nameInp.focus();
+      return;
+    }
     if (contactpagename !== 'index') {
       if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
         if (slugErr) slugErr.textContent = 'Use only letters, numbers, hyphens, and underscores.';
         if (slugInp) slugInp.focus();
         return;
       }
-      if (contactpagename.length < 2 || contactpagename.length > 64) {
-        if (slugErr) slugErr.textContent = 'Contact Page URL must be 2–64 characters (or leave blank for main page).';
+      if (contactpagename.length < 2 || contactpagename.length > 28) {
+        if (slugErr) slugErr.textContent = 'Page URL must be 2–28 characters (or leave blank for main page).';
         if (slugInp) slugInp.focus();
         return;
       }
@@ -1673,6 +1686,12 @@ async function handleSave(e) {
   }
   if (emErr) emErr.textContent = '';
   emInput.classList.remove('is-invalid');
+  var contactPageName = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
+  if (!contactPageName) {
+    if (nameErr) nameErr.textContent = 'Contact Page Name is required.';
+    if (nameInp) nameInp.focus();
+    return;
+  }
   if (nameErr) nameErr.textContent = '';
   if (slugErr) slugErr.textContent = '';
 
@@ -1681,11 +1700,10 @@ async function handleSave(e) {
 
   try {
     const content = generateHTML();
-    const contactPageName = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
     const res = await fetch(pageApiPath(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ content, sha: currentSha, contactPageName: contactPageName || undefined })
+      body: JSON.stringify({ content, sha: currentSha, contactPageName: contactPageName })
     });
     const data = await res.json();
 
