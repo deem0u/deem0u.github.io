@@ -329,6 +329,18 @@ body {
   border-radius: var(--radius-md);
 }
 
+/* Admin Access & Site Management tab: compact spacing */
+#tab-admin-access .alert.mb-4 { margin-bottom: var(--space-3); }
+#tab-admin-access .card-body { padding: var(--space-4); }
+#tab-admin-access .form-group { margin-bottom: var(--space-3); }
+#tab-admin-access .form-group.mb-4 { margin-bottom: var(--space-3); }
+#tab-admin-access .form-group.mb-0 { margin-bottom: 0; }
+#tab-admin-access .form-hint.mb-3 { margin-bottom: var(--space-2); }
+#tab-admin-access .site-settings-row { padding: var(--space-2) var(--space-3); gap: var(--space-3); }
+#tab-admin-access .card-divider,
+#tab-admin-access hr.card-divider { margin: var(--space-3) 0; }
+#tab-admin-access .card.mt-4 { margin-top: var(--space-3); }
+
 .card-footer {
   padding: var(--space-4) var(--space-6);
   background: var(--white);

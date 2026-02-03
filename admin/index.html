@@ -199,7 +199,7 @@
             <div class="card-body">
               <div class="form-group mb-4">
                 <label class="form-label">Site Settings</label>
-                <p class="form-hint mb-3">Apply changes with Confirm. Maintenance and Lockdown are mutually exclusive. When Divert Emails is off, per-user divert (set on each user card in Manage Users) applies. To set from a local terminal or Cursor: send a PUT request to your Worker URL <code>/api/admin/site-settings</code> with header <code>X-Admin-Key</code> and JSON body e.g. <code>{"divertAllGlobal": true}</code>.</p>
+                <p class="form-hint mb-3">Apply changes with Confirm. Maintenance and Lockdown are mutually exclusive. When Divert Emails is off, you can still turn on “Divert to dev” for individual users on their cards in Manage Users. To change these from a script or tool, see SETUP-GUIDE for API details.</p>
                 <div class="site-settings-row">
                   <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;">
                     <input type="checkbox" id="site-divert-all">
@@ -222,7 +222,7 @@
                 <button type="button" class="btn btn-primary" id="site-settings-confirm-btn">Confirm</button>
               </div>
 
-              <hr class="card-divider" style="margin:var(--space-5) 0; border:0; border-top:1px solid var(--color-border);">
+              <hr class="card-divider" style="border:0; border-top:1px solid var(--color-border);">
               <div class="form-group mb-0">
                 <label class="form-label">KV storage cleanup</label>
                 <p class="form-hint mb-3">Find and remove orphaned KV keys (users no longer in the repo) and expired temporary keys (e.g. recovery codes). Source of truth is the GitHub user folder list.</p>
@@ -268,7 +268,7 @@
                 </div>
                 <div id="admin-email-set" class="hidden">
                   <div id="admin-email-display" class="form-input" style="max-width:20rem; background:var(--color-bg-muted);" readonly aria-readonly="true">—</div>
-                  <span class="form-hint">To change from a local terminal or Cursor: PUT to your Worker URL <code>/api/admin/admin-email</code> with header <code>X-Admin-Key</code> and JSON body <code>{"email":"your@email.com"}</code>.</span>
+                  <span class="form-hint">To change the email later, use the site API (see SETUP-GUIDE).</span>
                 </div>
               </div>
               <div class="form-group mb-4" id="admin-password-section">
