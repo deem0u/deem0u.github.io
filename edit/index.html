@@ -24,19 +24,20 @@
   .recovery-actions .alert:not(.show) { margin-bottom: 0; }
 
   .editor-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
-  .editor-profile-strip { width: 220px; flex-shrink: 0; background: var(--color-bg-muted, #f8f9fa); border-radius: var(--radius-md, 6px); padding: 1rem; }
+  .editor-profile-strip { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--color-bg-muted, #f8f9fa); border-radius: var(--radius-md, 6px); padding: 1rem; }
   .editor-profile-strip .profile-title { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.9rem; }
   .editor-profile-strip .profile-row { margin-bottom: 0.5rem; font-size: 0.85rem; }
   .editor-profile-strip .profile-label { color: var(--color-text-secondary, #6b7280); }
   .editor-profile-strip .profile-value { font-weight: 500; }
   .editor-profile-strip .badge { font-size: 0.7rem; padding: 0.2em 0.5em; }
-  .editor-main { flex: 1; min-width: 0; }
+  .editor-main { flex: 1; min-width: 0; max-width: 640px; }
   .editor-form-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.3); }
   .status-banner { margin-bottom: 1rem; }
   .status-banner.hidden { display: none; }
   .status-banner.show { display: block; }
   .verify-otp-input { font-size: 1.25rem; letter-spacing: 0.2em; text-align: center; }
-  .contact-pages-section { margin-top: 1.25rem; }
+  .editor-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
+  .contact-pages-container { background: var(--color-bg-muted, #f8f9fa); border-radius: var(--radius-md, 8px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
   .contact-pages-section .profile-title { margin-bottom: 0.5rem; }
   .contact-pages-list { display: flex; flex-direction: column; gap: 0.5rem; }
   .contact-page-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 8px); padding: 0.6rem 0.75rem; cursor: pointer; font-size: 0.85rem; text-align: left; transition: border-color 0.15s, background 0.15s; }
@@ -44,7 +45,7 @@
   .contact-page-card.selected { border-color: var(--accent-teal, #1ac5b0); background: rgba(26, 197, 176, 0.08); font-weight: 600; }
   .contact-page-card .page-name { display: block; }
   .contact-page-card .page-slug { font-size: 0.75rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
-  @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-profile-strip { width: 100%; } }
+  @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-sidebar { width: 100%; } .editor-profile-strip { width: 100%; } }
     </style>
 </head>
 <body>
@@ -179,18 +180,22 @@
     <main id="screen-editor" class="app-main hidden">
       <div class="app-container">
       <div class="editor-layout">
-        <aside class="editor-profile-strip">
-          <div class="profile-title">Account</div>
-          <div class="profile-row"><span class="profile-label">First Name:</span> <span class="profile-value" id="profile-first-name">—</span></div>
-          <div class="profile-row"><span class="profile-label">Last Name:</span> <span class="profile-value" id="profile-last-name">—</span></div>
-          <div class="profile-row"><span class="profile-label">Account Email:</span> <span class="profile-value" id="profile-email">—</span> <span id="profile-verified-badge" class="badge hidden"></span></div>
-          <div class="profile-row"><span class="profile-label">DOB:</span> <span class="profile-value" id="profile-dob-masked">—</span></div>
-          <button type="button" class="btn btn-ghost btn-sm mt-2" id="edit-profile-btn">Edit Profile</button>
-          <div id="contact-pages-section" class="contact-pages-section hidden">
-            <div class="profile-title">Contact Pages</div>
-            <div id="contact-pages-list" class="contact-pages-list"></div>
+        <div class="editor-sidebar">
+          <aside class="editor-profile-strip">
+            <div class="profile-title">Account</div>
+            <div class="profile-row"><span class="profile-label">First Name:</span> <span class="profile-value" id="profile-first-name">—</span></div>
+            <div class="profile-row"><span class="profile-label">Last Name:</span> <span class="profile-value" id="profile-last-name">—</span></div>
+            <div class="profile-row"><span class="profile-label">Account Email:</span> <span class="profile-value" id="profile-email">—</span> <span id="profile-verified-badge" class="badge hidden"></span></div>
+            <div class="profile-row"><span class="profile-label">DOB:</span> <span class="profile-value" id="profile-dob-masked">—</span></div>
+            <button type="button" class="btn btn-ghost btn-sm mt-2" id="edit-profile-btn">Edit Profile</button>
+          </aside>
+          <div id="contact-pages-section" class="contact-pages-container hidden">
+            <div class="contact-pages-section">
+              <div class="profile-title">Contact Pages</div>
+              <div id="contact-pages-list" class="contact-pages-list"></div>
+            </div>
           </div>
-        </aside>
+        </div>
         <div class="editor-main">
         <div id="unverified-banner" class="banner-reminder hidden">
           <strong>Verify your email</strong> to edit your Contact Page. <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
