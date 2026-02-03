@@ -56,7 +56,8 @@
   .editor-contact-view.hidden { display: none; }
   .editor-contact-edit { display: none; }
   .editor-contact-edit.show { display: block; }
-  .editor-contact-view-toolbar { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+  .editor-view-header-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+  .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
   .editor-contact-view-content { font-size: 0.95rem; line-height: 1.5; }
   .editor-contact-view-content .editor-view-value { font-weight: 500; }
   .editor-contact-view-content .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
@@ -259,14 +260,15 @@
 
         <div class="card" id="editor-contact-card">
           <div id="editor-contact-view" class="editor-contact-view">
-            <div class="editor-contact-view-toolbar">
-              <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit Contact Page</button>
-            </div>
             <div class="editor-contact-view-content card-body" id="editor-contact-view-content">
-              <div class="card-header-fields editor-view-header">
-                <div class="card-header-field-row"><span class="editor-view-value" id="view-contact-page-name"></span></div>
-                <div class="card-header-field-row"><span class="editor-view-value" id="view-contact-page-url"></span></div>
+              <div class="editor-view-header-row">
+                <span class="editor-view-value" id="view-contact-page-name"></span>
+                <div class="editor-view-actions">
+                  <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost btn-sm">View Page</a>
+                  <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit</button>
+                </div>
               </div>
+              <div class="card-header-field-row editor-view-header"><span class="editor-view-value" id="view-contact-page-url"></span></div>
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><span class="editor-view-value" id="view-first-name"></span></div>
                 <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><span class="editor-view-value" id="view-surname"></span></div>
@@ -311,7 +313,7 @@
               </div>
             </div>
             <div class="editor-edit-mode-actions">
-              <button type="button" class="btn btn-ghost btn-sm" id="view-mode-btn" onclick="enterViewMode()">View mode</button>
+              <button type="button" class="btn btn-primary btn-sm" id="view-mode-btn" onclick="backToViewMode()">Back to View Mode</button>
             </div>
           </div>
           <div class="card-body" id="editor-contact-form-wrap">
@@ -359,9 +361,8 @@
               </div>
               <div id="editor-alert" class="alert"></div>
               <div class="form-actions form-actions-editor">
-                <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save Changes</button>
-                <button type="button" class="btn btn-secondary btn-lg" onclick="resetForm()">Reset</button>
-                <a id="view-page-link" href="#" target="_blank" class="btn btn-ghost btn-lg ml-auto">View Page →</a>
+                <button type="submit" id="save-btn" class="btn btn-primary btn-lg" disabled>Save Changes</button>
+                <button type="button" class="btn btn-secondary btn-lg" id="cancel-btn" onclick="cancelForm()" disabled>Cancel</button>
               </div>
             </form>
           </div>
@@ -444,6 +445,7 @@
 const API = 'https://contact-page-editor.deem0u.workers.dev';
 let username = null, token = null, currentSha = null, currentContactpagename = 'index';
 let isCreateMode = false;
+var formSnapshot = null;
 const PAGES_URL = 'https://deem0u.github.io/user/';
 const EDITOR_URL = 'https://deem0u.github.io/edit/';
 const RECOVERY_SQ_OPTIONS = {1:'What is your mothers maiden name?',2:'What is the name of the educational institution which you have obtained your highest level of qualification?',3:'What is the name of your first pet?',4:'What is the make and model of your first car?',5:'What is a date that is most memorable to you?',6:'What suburb were you born in?',7:'What was the name of the business or company you first worked for?',8:'Where was your first major travel destination?',9:'What is your favourite sports team?',10:'What is a word that Chris cannot correctly pronounce?'};
@@ -979,6 +981,10 @@ document.addEventListener('DOMContentLoaded', () => {
   var useUsernameLink = document.getElementById('recovery-use-username-link');
   if (useUsernameLink) useUsernameLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-email').classList.add('hidden'); document.getElementById('recovery-step1-username').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your User Name to recover access'; showRecoveryAlert('', ''); });
   document.getElementById('contact-form').addEventListener('submit', handleSave);
+  document.getElementById('contact-form').addEventListener('input', updateFormDirtyState);
+  document.getElementById('contact-form').addEventListener('change', updateFormDirtyState);
+  document.getElementById('contact-page-name').addEventListener('input', updateFormDirtyState);
+  document.getElementById('contact-page-url-slug').addEventListener('input', updateFormDirtyState);
   var editProfileBtn = document.getElementById('edit-profile-btn');
   if (editProfileBtn) editProfileBtn.addEventListener('click', openEditProfileModal);
   var verifyEmailBtn = document.getElementById('verify-email-btn');
@@ -1050,15 +1056,83 @@ function refreshViewModeDisplay() {
   setView('view-additional-info', el('additional-info'));
 }
 
+function getFormSnapshot() {
+  function v(id) { var e = document.getElementById(id); return e ? (e.value || e.textContent || '').trim() : ''; }
+  return {
+    'contact-page-name': v('contact-page-name'),
+    'contact-page-url-slug': v('contact-page-url-slug'),
+    'first-name': v('first-name'),
+    'surname': v('surname'),
+    'email': v('email'),
+    'mobile': v('mobile'),
+    'home-country': v('home-country'),
+    'home-country-text': (function() { var e = document.getElementById('home-country-edit-text'); return e && e.textContent !== 'Select country' ? e.textContent.trim() : ''; })(),
+    'dest-name': v('dest-name'),
+    'dest-address': v('dest-address'),
+    'dest-phone': v('dest-phone'),
+    'dest-email': v('dest-email'),
+    'additional-info': v('additional-info')
+  };
+}
+
+function isFormDirty() {
+  if (!formSnapshot) return true;
+  var cur = getFormSnapshot();
+  for (var k in formSnapshot) { if (formSnapshot[k] !== cur[k]) return true; }
+  return false;
+}
+
+function updateFormDirtyState() {
+  var saveBtn = document.getElementById('save-btn');
+  var cancelBtn = document.getElementById('cancel-btn');
+  if (!saveBtn || !cancelBtn) return;
+  var dirty = isFormDirty();
+  if (isCreateMode) {
+    saveBtn.disabled = false;
+    cancelBtn.disabled = false;
+  } else {
+    saveBtn.disabled = !dirty;
+    cancelBtn.disabled = !dirty;
+  }
+}
+
 function enterEditMode() {
   document.getElementById('editor-contact-view').classList.add('hidden');
   document.getElementById('editor-contact-edit').classList.add('show');
+  formSnapshot = getFormSnapshot();
+  updateFormDirtyState();
 }
 
 function enterViewMode() {
   refreshViewModeDisplay();
+  var vpl = document.getElementById('view-page-link');
+  if (vpl) { vpl.href = viewPageHref(); vpl.style.pointerEvents = isCreateMode ? 'none' : ''; }
   document.getElementById('editor-contact-edit').classList.remove('show');
   document.getElementById('editor-contact-view').classList.remove('hidden');
+}
+
+function cancelForm() {
+  if (isCreateMode) {
+    enterViewMode();
+    return;
+  }
+  resetForm().then(function() {
+    formSnapshot = getFormSnapshot();
+    updateFormDirtyState();
+    enterViewMode();
+  });
+}
+
+function backToViewMode() {
+  if (isCreateMode) {
+    enterViewMode();
+    return;
+  }
+  resetForm().then(function() {
+    formSnapshot = getFormSnapshot();
+    updateFormDirtyState();
+    enterViewMode();
+  });
 }
 
 async function fetchContactPagesList() {
@@ -1532,6 +1606,8 @@ async function handleSave(e) {
         document.getElementById('view-page-link').style.pointerEvents = '';
         await fetchContactPagesList();
         document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
+        formSnapshot = getFormSnapshot();
+        updateFormDirtyState();
         showStatusBanner('Contact page created.', 'success');
       } else {
         var errMsg = data.error || 'Failed to create';
@@ -1603,6 +1679,8 @@ async function handleSave(e) {
     if (res.ok) {
       currentSha = data.sha;
       document.getElementById('user-name').textContent = (document.getElementById('first-name').value || username) + ' (' + username + ')';
+      formSnapshot = getFormSnapshot();
+      updateFormDirtyState();
       showStatusBanner('Saved', 'saved');
     } else {
       var errMsg = data.error || 'Failed to save';
