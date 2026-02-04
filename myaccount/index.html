@@ -1530,9 +1530,13 @@ async function fetchContactPagesList() {
     var pages = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : [];
     if (pages.length === 0) pages = [{ slug: 'index', name: 'Main (index)' }];
     contactPagesListData = pages.map(normalizePageItem);
-    contactPagesLimit.canCreate = d.canCreate !== false;
     contactPagesLimit.maxContactPages = typeof d.maxContactPages === 'number' ? d.maxContactPages : 0;
-    contactPagesLimit.currentCount = typeof d.currentCount === 'number' ? d.currentCount : pages.length;
+    contactPagesLimit.currentCount = typeof d.currentCount === 'number' ? d.currentCount : contactPagesListData.length;
+    if (typeof d.canCreate === 'boolean') {
+      contactPagesLimit.canCreate = d.canCreate;
+    } else {
+      contactPagesLimit.canCreate = contactPagesLimit.maxContactPages === 0 || contactPagesLimit.currentCount < contactPagesLimit.maxContactPages;
+    }
     var useDropdown = contactPagesListData.length > 5;
     if (useDropdown) {
       list.classList.add('hidden');
@@ -1564,10 +1568,14 @@ async function fetchContactPagesList() {
     }
     if (limitMsg) {
       if (!contactPagesLimit.canCreate && contactPagesLimit.maxContactPages > 0) {
-        limitMsg.textContent = 'Maximum number of contact pages (' + contactPagesLimit.maxContactPages + ') reached. Delete an existing page to create a new one.';
+        var msg = 'Maximum number of contact pages (' + contactPagesLimit.maxContactPages + ') reached. Delete an existing page to create a new one.';
+        limitMsg.textContent = msg;
         limitMsg.classList.remove('hidden');
+        limitMsg.classList.add('form-error');
+        if (typeof showStatusBanner === 'function') showStatusBanner(msg, 'error');
       } else {
         limitMsg.textContent = '';
+        limitMsg.classList.remove('form-error');
         limitMsg.classList.add('hidden');
       }
     }
@@ -1908,7 +1916,7 @@ function applyUnverifiedRestriction() {
     if (wrap) wrap.classList.remove("editor-form-disabled");
     if (banner) banner.classList.add("hidden");
     if (editBtn) editBtn.disabled = false;
-    if (newPageBtn) newPageBtn.disabled = false;
+    if (newPageBtn) newPageBtn.disabled = !contactPagesLimit.canCreate;
   } else {
     if (wrap) wrap.classList.add("editor-form-disabled");
     if (banner) banner.classList.remove("hidden");

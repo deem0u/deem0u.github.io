@@ -2264,7 +2264,17 @@ async function handleListContactPages(username, request, env) {
     }
   );
   if (!response.ok) {
-    if (response.status === 404) return jsonResponse({ contactPages: [] });
+    if (response.status === 404) {
+      let maxContactPages = 0;
+      if (env.EDIT_KEYS_KV) {
+        const uLower = (u || '').toLowerCase();
+        const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
+        maxContactPages = parseInt(maxRaw, 10) || 0;
+      }
+      const currentCount = 0;
+      const canCreate = maxContactPages === 0 || currentCount < maxContactPages;
+      return jsonResponse({ contactPages: [], maxContactPages, currentCount, canCreate });
+    }
     return jsonResponse({ error: 'GitHub error' }, 500);
   }
   const contents = await response.json();
