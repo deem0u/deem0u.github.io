@@ -99,6 +99,7 @@
   #editor-contact-edit .form-group:last-child { margin-bottom: 0; }
   #editor-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
   #editor-contact-edit .form-hint { margin-top: 0.15rem; }
+  #editor-contact-edit .card-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.4rem; }
   #editor-contact-edit .form-row { gap: 0.5rem; }
   #editor-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0.35rem; }
   #editor-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
@@ -1193,7 +1194,8 @@ function setContactPageMeta(slug, displayName, createMode) {
   var nameInp = document.getElementById('contact-page-name');
   if (uEl) uEl.textContent = username || '—';
   if (slugInp) {
-    slugInp.value = (slug === 'index' || !slug) ? 'index' : slug;
+    if (createMode && (slug === 'index' || !slug)) slugInp.value = '';
+    else slugInp.value = (slug === 'index' || !slug) ? 'index' : slug;
     slugInp.readOnly = !createMode;
     slugInp.disabled = !createMode;
   }
@@ -1254,10 +1256,15 @@ function isFormDirty() {
   return false;
 }
 
+function updateSaveButtonLabel() {
+  var saveBtn = document.getElementById('save-btn');
+  if (saveBtn) saveBtn.textContent = isCreateMode ? 'Save' : 'Save Changes';
+}
 function updateFormDirtyState() {
   var saveBtn = document.getElementById('save-btn');
   var cancelBtn = document.getElementById('cancel-btn');
   if (!saveBtn || !cancelBtn) return;
+  updateSaveButtonLabel();
   var dirty = isFormDirty();
   if (isCreateMode) {
     saveBtn.disabled = false;
@@ -1275,6 +1282,7 @@ function enterEditMode() {
   var delBtn = document.getElementById('form-delete-page-btn');
   if (delBtn) delBtn.style.display = '';
   formSnapshot = getFormSnapshot();
+  updateSaveButtonLabel();
   updateFormDirtyState();
 }
 
@@ -1352,8 +1360,9 @@ function enterCreateMode() {
   document.getElementById('editor-contact-view').classList.add('hidden');
   document.getElementById('editor-contact-edit').classList.add('show');
   formSnapshot = getFormSnapshot();
+  updateSaveButtonLabel();
   updateFormDirtyState();
-  showStatusBanner('Fill in Contact Page URL and Name, then the form. Click Save to create.', 'info');
+  showStatusBanner('To create a new Contact Page fill out the form and click "Save".', 'info');
 }
 function selectContactPage(contactpagename) {
   if (!username || !token) return Promise.resolve();
