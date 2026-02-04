@@ -1558,8 +1558,8 @@ async function fetchAccountEmailsAndRefresh() {
       var accountDetailsSent = (d.accountDetailsSent) ? d.accountDetailsSent : {};
       var emailVerification = (d.emailVerification) ? d.emailVerification : {};
       var bulkKeys = Object.keys(accountEmails);
-      var userKeys = Object.keys(userInfo);
-      var missingFromBulk = userKeys.filter(function(f) { var fl = (f || '').toLowerCase(); return !accountEmails[f] && !accountEmails[fl]; });
+      var userKeysList = Object.keys(userInfo);
+      var missingFromBulk = userKeysList.filter(function(f) { var fl = (f || '').toLowerCase(); return !accountEmails[f] && !accountEmails[fl]; });
       if (missingFromBulk.length) console.warn('[admin] bulk account-emails missing for usernames (will use profile if available):', missingFromBulk, '| bulk keys:', bulkKeys);
       for (var f in userInfo) {
         var fLower = (f || '').toLowerCase();
@@ -1567,14 +1567,31 @@ async function fetchAccountEmailsAndRefresh() {
         userInfo[f].accountDetailsSent = !!accountDetailsSent[f] || !!accountDetailsSent[fLower];
         userInfo[f].emailVerification = emailVerification[f] || emailVerification[fLower] || null;
       }
+      for (var ek in accountEmails) {
+        for (var i = 0; i < userKeysList.length; i++) {
+          var uf = userKeysList[i];
+          if ((uf || '').toLowerCase() === (ek || '').toLowerCase()) {
+            userInfo[uf].accountEmail = userInfo[uf].accountEmail || accountEmails[ek];
+            userInfo[uf].accountDetailsSent = userInfo[uf].accountDetailsSent || !!accountDetailsSent[ek];
+            userInfo[uf].emailVerification = userInfo[uf].emailVerification || emailVerification[ek];
+            break;
+          }
+        }
+      }
     } else {
       console.warn('[admin] account-emails response was empty (API error or not ok)');
     }
     var profData = results[1];
     if (profData && profData.profiles) {
       var profiles = profData.profiles;
+      var userKeys = Object.keys(userInfo);
       for (var f in userInfo) {
         var prof = profiles[f] || profiles[(f || '').toLowerCase()];
+        if (!prof) {
+          for (var pk in profiles) {
+            if ((pk || '').toLowerCase() === (f || '').toLowerCase()) { prof = profiles[pk]; break; }
+          }
+        }
         if (prof) {
           userInfo[f].firstName = (prof.firstName || '').trim() || userInfo[f].firstName || '';
           userInfo[f].lastName = (prof.lastName || '').trim() || userInfo[f].lastName || '';
@@ -1582,6 +1599,20 @@ async function fetchAccountEmailsAndRefresh() {
           if (profEmail) userInfo[f].accountEmail = profEmail;
         }
       }
+      for (var pk in profiles) {
+        var matched = null;
+        for (var i = 0; i < userKeys.length; i++) {
+          if ((userKeys[i] || '').toLowerCase() === (pk || '').toLowerCase()) { matched = userKeys[i]; break; }
+        }
+        if (matched) {
+          var p = profiles[pk];
+          userInfo[matched].firstName = (p.firstName || '').trim() || userInfo[matched].firstName || '';
+          userInfo[matched].lastName = (p.lastName || '').trim() || userInfo[matched].lastName || '';
+          if ((p.accountEmail || '').trim()) userInfo[matched].accountEmail = (p.accountEmail || '').trim();
+        }
+      }
+    } else if (!profData || !profData.profiles) {
+      console.warn('[admin] account-profiles response missing or empty');
     }
     var sd = results[2];
     if (sd && sd.statuses) {
