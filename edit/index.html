@@ -1269,9 +1269,9 @@ function enterCreateMode() {
   showStatusBanner('Fill in Contact Page URL and Name, then the form. Click Save to create.', 'info');
 }
 function selectContactPage(contactpagename) {
-  if (!username || !token) return;
+  if (!username || !token) return Promise.resolve();
   var slug = contactpagename || 'index';
-  if (slug === currentContactpagename && !isCreateMode) return;
+  if (slug === currentContactpagename && !isCreateMode) return Promise.resolve();
   isCreateMode = false;
   currentContactpagename = slug;
   var list = document.getElementById('contact-pages-list');
@@ -1280,7 +1280,7 @@ function selectContactPage(contactpagename) {
   document.getElementById('view-page-link').style.pointerEvents = '';
   showStatusBanner('Loading...', 'loading');
   var url = pageApiPath();
-  fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+  return fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(res) { return res.json().then(function(data) { if (!res.ok) throw new Error(data.error || 'Failed to load'); return data; }); })
     .then(function(data) {
       currentSha = data.sha;
@@ -1291,8 +1291,10 @@ function selectContactPage(contactpagename) {
       updateFormDirtyState();
       enterViewMode();
       hideStatusBanner();
+      var sel = list && list.querySelector('.contact-page-card.selected');
+      if (sel) sel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     })
-    .catch(function() { showStatusBanner('Failed to load page', 'error'); });
+    .catch(function() { showStatusBanner('Failed to load page', 'error'); return undefined; });
 }
 function getMinimalContactPageHTML() {
   var ids = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
@@ -1563,24 +1565,11 @@ async function confirmDeletePage() {
     var d = await r.json();
     closeDeletePageModal();
     if (r.ok && d.success) {
-      if (currentContactpagename === slug) {
-        currentContactpagename = 'index';
-        currentSha = null;
-        var url = pageApiPath();
-        var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-        if (res.ok) {
-          var data = await res.json();
-          currentSha = data.sha;
-          fillForm(data.content);
-          setContactPageMeta('index', data.contactPageName || 'Main (index)', false);
-          formSnapshot = getFormSnapshot();
-          updateFormDirtyState();
-          enterViewMode();
-        }
-      }
       await fetchContactPagesList();
       var list = document.getElementById('contact-pages-list');
-      if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
+      var firstCard = list && list.querySelector('.contact-page-card');
+      var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
+      await selectContactPage(firstSlug);
       showStatusBanner('Contact page deleted.', 'success');
     } else {
       showStatusBanner(d.error || 'Failed to delete page', 'error');
@@ -1902,6 +1891,11 @@ async function handleSave(e) {
         document.getElementById('view-page-link').href = viewPageHref();
         document.getElementById('view-page-link').style.pointerEvents = '';
         await fetchContactPagesList();
+        var listEl = document.getElementById('contact-pages-list');
+        if (listEl) listEl.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
+        enterViewMode();
+        var selCard = listEl && listEl.querySelector('.contact-page-card.selected');
+        if (selCard) selCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         updateWelcomeUserName();
         formSnapshot = getFormSnapshot();
         updateFormDirtyState();
