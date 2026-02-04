@@ -279,6 +279,9 @@ export default {
       if (request.method === 'POST' && path === '/api/profile/verify-email-change') {
         return await handleVerifyEmailChange(request, env);
       }
+      if (request.method === 'POST' && path === '/api/profile/set-password-after-otp') {
+        return await handleSetPasswordAfterOtp(request, env);
+      }
       if (request.method === 'GET' && path.startsWith('/api/secrets/')) {
         const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
         let username = raw || '';
@@ -317,6 +320,12 @@ export default {
       }
       if (request.method === 'POST' && path === '/api/admin/verify-otp-set-password') {
         return await handleVerifyOtpSetPassword(request, env);
+      }
+      if (request.method === 'POST' && path === '/api/admin/generate-otp') {
+        return await handleAdminGenerateOtp(request, env);
+      }
+      if (request.method === 'POST' && path === '/api/admin/delete-otp') {
+        return await handleAdminDeleteOtp(request, env);
       }
 
       if (request.method === 'POST' && path === '/api/recover/verify-reset-token') {
@@ -372,6 +381,14 @@ function generateOtpCode() {
   const arr = new Uint8Array(6);
   crypto.getRandomValues(arr);
   return Array.from(arr, n => (n % 10).toString()).join('');
+}
+
+/** Generate a random one-time password (alphanumeric, 10 chars) for admin-set OTP. */
+function generateOneTimePassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const arr = new Uint8Array(10);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, n => chars[n % chars.length]).join('');
 }
 
 async function hashPassword(plain) {
@@ -608,12 +625,22 @@ async function handleAuthUser(request, env) {
   if (!secret) return jsonResponse({ error: 'Auth not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
   const accountEmail = (body.accountEmail || '').trim().toLowerCase();
+  const usernameParam = (body.username || '').trim();
   const password = (body.password || '').trim();
-  if (!accountEmail || !accountEmail.includes('@') || !password) {
-    return jsonResponse({ error: 'Invalid email or password' }, 401);
+  if (!password) return jsonResponse({ error: 'Invalid email or password' }, 401);
+  let username = null;
+  if (usernameParam) {
+    username = usernameParam.toLowerCase();
+  } else if (accountEmail && accountEmail.includes('@')) {
+    username = await env.EDIT_KEYS_KV.get(`account_email_to_folder:${accountEmail}`);
   }
-  const username = await env.EDIT_KEYS_KV.get(`account_email_to_folder:${accountEmail}`);
   if (!username) return jsonResponse({ error: 'Invalid email or password' }, 401);
+  const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
+  if (storedOtp && storedOtp === password) {
+    const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
+    const token = await signJwt({ username, exp }, secret);
+    return jsonResponse({ success: true, username, token, mustSetPassword: true });
+  }
   const pwHash = await env.EDIT_KEYS_KV.get(`user_password_hash:${username}`);
   if (!pwHash) return jsonResponse({ error: 'Account does not have a password. Set one via Set Secrets or sign up.' }, 401);
   const valid = await verifyPassword(password, pwHash);
@@ -1683,6 +1710,36 @@ async function handlePutAdminPassword(request, env) {
   return jsonResponse({ success: true });
 }
 
+/** POST /api/admin/generate-otp - Admin only. Body: { username }. Generates OTP, stores user_otp:username (no TTL), emails if account email set. Returns { otp }. */
+async function handleAdminGenerateOtp(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const username = (body.username || '').trim();
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  const otp = generateOneTimePassword();
+  await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
+  const accountEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
+  if (accountEmail && accountEmail.includes('@')) {
+    const subject = 'Your one-time password - Digital Contact Page';
+    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
+    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+    await sendEmail(env, { to: accountEmail, subject, text, html, username });
+  }
+  return jsonResponse({ otp });
+}
+
+/** POST /api/admin/delete-otp - Admin only. Body: { username }. Deletes user_otp:username. */
+async function handleAdminDeleteOtp(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const username = (body.username || '').trim();
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  await env.EDIT_KEYS_KV.delete('user_otp:' + username);
+  return jsonResponse({ success: true });
+}
+
 /** POST /api/recover/verify-reset-token - No auth. Body: { token }. */
 async function handleVerifyResetToken(request, env) {
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
@@ -2396,6 +2453,27 @@ async function handleVerifyEmailChange(request, env) {
   return jsonResponse({ success: true });
 }
 
+/** POST /api/profile/set-password-after-otp - Bearer required. Body: { newPassword }. User must have logged in with OTP (user_otp:username existed). Sets permanent password and deletes OTP. */
+async function handleSetPasswordAfterOtp(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
+  if (!storedOtp) return jsonResponse({ error: 'No one-time password in use. Sign in with your password or request a new OTP.' }, 400);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const newPassword = (body.newPassword || '').trim();
+  if (newPassword.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  const pwHash = await hashPassword(newPassword);
+  await env.EDIT_KEYS_KV.put('user_password_hash:' + username, pwHash);
+  await env.EDIT_KEYS_KV.delete('user_otp:' + username);
+  return jsonResponse({ success: true });
+}
+
 async function handleGetSecrets(username, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
@@ -2407,8 +2485,11 @@ async function handleGetSecrets(username, request, env) {
   const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
   const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
   const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
-  const emailVerified = (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
+  const byAdmin = (await env.EDIT_KEYS_KV.get('email_verified_admin:' + username)) === '1';
+  const byUser = (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
+  const emailVerification = byAdmin ? 'admin' : byUser ? 'user' : null;
   const passwordSet = !!(await env.EDIT_KEYS_KV.get('user_password_hash:' + username));
+  const otpSet = !!(await env.EDIT_KEYS_KV.get('user_otp:' + username));
   let secretQuestions = [];
   if (recoveryRaw) {
     try {
@@ -2416,7 +2497,7 @@ async function handleGetSecrets(username, request, env) {
       secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : [];
     } catch (_) {}
   }
-  return jsonResponse({ accountEmail: accountEmail || '', dob: dob || '', secretQuestions, emailVerified, passwordSet });
+  return jsonResponse({ accountEmail: accountEmail || '', dob: dob || '', secretQuestions, emailVerified: byUser || byAdmin, emailVerification, passwordSet, otpSet });
 }
 
 async function handlePutSecrets(username, request, env) {
@@ -2494,9 +2575,20 @@ async function handlePutSecrets(username, request, env) {
   } else {
     await env.EDIT_KEYS_KV.delete('user_recovery:' + username);
   }
-  if (password) {
+  const otpPlain = (body.otp || '').trim();
+  if (otpPlain && auth.isAdmin) {
+    await env.EDIT_KEYS_KV.put('user_otp:' + username, otpPlain);
+    const accountEmailToSend = (body.accountEmail || accountEmail || await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
+    if (accountEmailToSend && accountEmailToSend.includes('@')) {
+      const subject = 'Your one-time password - Digital Contact Page';
+      const text = `Your one-time sign-in password is: ${otpPlain}\n\nUse this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
+      const html = `<p>Your one-time sign-in password is: <strong>${otpPlain}</strong></p><p>Use this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+      await sendEmail(env, { to: accountEmailToSend, subject, text, html, username });
+    }
+  } else if (password) {
     const pwHash = await hashPassword(password);
     await env.EDIT_KEYS_KV.put('user_password_hash:' + username, pwHash);
+    if (auth.isAdmin) await env.EDIT_KEYS_KV.delete('user_otp:' + username);
   }
   if (auth.isAdmin && typeof body.emailVerified === 'boolean') {
     if (body.emailVerified) {

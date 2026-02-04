@@ -150,17 +150,34 @@
         </div>
         <form id="auth-form">
           <div id="auth-email-mode">
-            <div class="form-group">
+            <div class="form-group" id="auth-account-email-group">
               <label class="form-label">Account Email</label>
               <input type="email" id="auth-account-email" class="form-input" placeholder="your@email.com" autocomplete="email">
             </div>
+            <div class="form-group hidden" id="auth-username-group">
+              <label class="form-label">User Name</label>
+              <input type="text" id="auth-username" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
+            </div>
+            <p class="text-center" style="margin-bottom:0.5rem;"><a href="#" id="auth-use-username-link" class="btn btn-ghost btn-sm">Use User Name instead</a><a href="#" id="auth-use-email-link" class="btn btn-ghost btn-sm hidden">Use Account Email instead</a></p>
             <div class="form-group">
               <label class="form-label">Password</label>
               <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" autocomplete="current-password">
             </div>
           </div>
+          <div id="auth-set-password-after-otp" class="hidden">
+            <div class="alert alert-info show mb-4">Set a new permanent password. Your one-time password will no longer work after this.</div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input type="password" id="auth-new-password" class="form-input" placeholder="Min 8 characters" minlength="8" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm Password</label>
+              <input type="password" id="auth-confirm-password" class="form-input" placeholder="Same as above" minlength="8" autocomplete="new-password">
+            </div>
+            <button type="button" id="auth-set-password-btn" class="btn btn-primary btn-block btn-lg">Set Password &amp; Continue</button>
+          </div>
           <div id="auth-alert" class="alert"></div>
-          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In</button>
+          <button type="submit" id="auth-signin-btn" class="btn btn-primary btn-block btn-lg">Sign In</button>
           <p class="text-center mt-4"><a href="#" id="recovery-link" class="btn btn-ghost btn-sm">I need help Signing In</a></p>
         </form>
       </div>
@@ -1051,6 +1068,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   initContactNumberValidationEdit();
   initDestinationEmailValidationEdit();
   document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
+  var authUseUsernameLink = document.getElementById('auth-use-username-link');
+  if (authUseUsernameLink) authUseUsernameLink.addEventListener('click', function(e) { e.preventDefault(); setAuthModeUseUsername(true); });
+  var authUseEmailLink = document.getElementById('auth-use-email-link');
+  if (authUseEmailLink) authUseEmailLink.addEventListener('click', function(e) { e.preventDefault(); setAuthModeUseUsername(false); });
+  var setPwBtn = document.getElementById('auth-set-password-btn');
+  if (setPwBtn) setPwBtn.addEventListener('click', async function() {
+    var newPw = (document.getElementById('auth-new-password').value || '').trim();
+    var confirmPw = (document.getElementById('auth-confirm-password').value || '').trim();
+    if (newPw.length < 8) { showAlert('auth-alert', 'Password must be at least 8 characters.', 'error'); return; }
+    if (newPw !== confirmPw) { showAlert('auth-alert', 'Passwords do not match.', 'error'); return; }
+    showAlert('auth-alert', '<span class="spinner"></span> Setting password...', 'info');
+    try {
+      var r = await fetch(API + '/api/profile/set-password-after-otp', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ newPassword: newPw }) });
+      var d = await r.json();
+      if (!r.ok) { showAlert('auth-alert', (d && d.error) || 'Failed to set password.', 'error'); return; }
+      document.getElementById('auth-set-password-after-otp').classList.add('hidden');
+      document.getElementById('auth-email-mode').classList.remove('hidden');
+      document.getElementById('auth-signin-btn').classList.remove('hidden');
+      showAlert('auth-alert', 'Password set. Continuing...', 'success');
+      await continueAfterAuth();
+    } catch (e) {
+      showAlert('auth-alert', 'Connection error. Try again.', 'error');
+    }
+  });
   var rLink = document.getElementById('recovery-link');
   if (rLink) rLink.addEventListener('click', function(e) { e.preventDefault(); document.querySelector('.auth-card').classList.add('hidden'); document.getElementById('recovery-card').classList.remove('hidden'); });
   var rbLink = document.getElementById('recovery-back-link');
@@ -1358,26 +1399,16 @@ async function authenticateWithStoredSession() {
   }
 }
 
-async function authenticate() {
-  {
-    var accountEmail = (document.getElementById('auth-account-email').value || '').trim().toLowerCase();
-    var password = (document.getElementById('auth-password').value || '').trim();
-    if (!accountEmail || !accountEmail.includes('@')) { showAlert('auth-alert', 'Please enter your account email.', 'error'); return; }
-    if (!password) { showAlert('auth-alert', 'Please enter your password.', 'error'); return; }
-    showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
-    try {
-      var authRes = await fetch(API + '/api/auth/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ accountEmail: accountEmail, password: password }) });
-      var authData;
-      try { authData = await authRes.json(); } catch (_) { authData = {}; }
-      if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || ('Sign-in failed (' + authRes.status + '). Try again or use recovery.'), 'error'); return; }
-      username = authData.username;
-      token = authData.token;
-    } catch (e) {
-      console.error('Sign-in request failed:', e);
-      showAlert('auth-alert', 'Cannot reach sign-in service. Check your connection, then try again. (Open Console (F12) for details.)', 'error');
-      return;
-    }
-  }
+var authUseUsername = false;
+function setAuthModeUseUsername(useUsername) {
+  authUseUsername = !!useUsername;
+  document.getElementById('auth-account-email-group').classList.toggle('hidden', authUseUsername);
+  document.getElementById('auth-username-group').classList.toggle('hidden', !authUseUsername);
+  document.getElementById('auth-use-username-link').classList.toggle('hidden', authUseUsername);
+  document.getElementById('auth-use-email-link').classList.toggle('hidden', !authUseUsername);
+}
+
+async function continueAfterAuth() {
   try {
     const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
     if (res.status === 401) {
@@ -1421,6 +1452,42 @@ async function authenticate() {
   }
 }
 
+async function authenticate() {
+  var accountEmail = (document.getElementById('auth-account-email').value || '').trim().toLowerCase();
+  var usernameInput = (document.getElementById('auth-username').value || '').trim();
+  var password = (document.getElementById('auth-password').value || '').trim();
+  if (!password) { showAlert('auth-alert', 'Please enter your password.', 'error'); return; }
+  if (authUseUsername) {
+    if (!usernameInput) { showAlert('auth-alert', 'Please enter your user name.', 'error'); return; }
+    accountEmail = '';
+  } else {
+    if (!accountEmail || !accountEmail.includes('@')) { showAlert('auth-alert', 'Please enter your account email.', 'error'); return; }
+  }
+  showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
+  try {
+    var body = { password: password };
+    if (authUseUsername) body.username = usernameInput; else body.accountEmail = accountEmail;
+    var authRes = await fetch(API + '/api/auth/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    var authData;
+    try { authData = await authRes.json(); } catch (_) { authData = {}; }
+    if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || ('Sign-in failed (' + authRes.status + '). Try again or use recovery.'), 'error'); return; }
+    username = authData.username;
+    token = authData.token;
+    if (authData.mustSetPassword) {
+      document.getElementById('auth-email-mode').classList.add('hidden');
+      document.getElementById('auth-signin-btn').classList.add('hidden');
+      document.getElementById('auth-set-password-after-otp').classList.remove('hidden');
+      document.getElementById('auth-new-password').value = '';
+      document.getElementById('auth-confirm-password').value = '';
+      showAlert('auth-alert', 'Set a new password to continue.', 'info');
+      return;
+    }
+    await continueAfterAuth();
+  } catch (e) {
+    console.error('Sign-in request failed:', e);
+    showAlert('auth-alert', 'Cannot reach sign-in service. Check your connection, then try again. (Open Console (F12) for details.)', 'error');
+  }
+}
 
 var profileData = null;
 var verifyEmailContext = null;

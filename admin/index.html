@@ -693,15 +693,21 @@
         <div id="modal-secrets-form" class="hidden">
           <div class="form-group" id="secrets-password-group">
             <label class="form-label">Password (User Contact Editor sign-in)</label>
-            <input type="password" id="secrets-password" class="form-input" autocomplete="new-password" placeholder="Leave blank to keep existing">
-            <span class="form-hint">Min 8 characters. Used to sign in to Contact Editor with Account Email.</span>
+            <span id="secrets-password-badge" class="badge"></span>
+            <div class="form-inline-row" style="flex-wrap:wrap; gap:0.5rem; align-items:center;">
+              <input type="password" id="secrets-password" class="form-input" autocomplete="new-password" placeholder="" style="min-width:12ch;">
+              <button type="button" class="btn btn-secondary btn-sm" id="secrets-generate-otp-btn" onclick="generateOtpInSecretsModal()">Generate OTP</button>
+              <button type="button" class="btn btn-ghost btn-sm hidden" id="secrets-clear-otp-btn" onclick="clearOtpInSecretsModal()">Clear OTP</button>
+              <button type="button" class="btn btn-ghost btn-sm hidden" id="secrets-delete-otp-btn" onclick="deleteOtpInSecretsModal()">Delete OTP</button>
+            </div>
+            <span class="form-hint">Min 8 characters. Generate OTP to email a one-time sign-in; user will set a new password on first login.</span>
             <span class="form-error" id="error-secrets-password" role="alert"></span>
           </div>
           <div class="form-group" id="secrets-account-email-group">
             <label class="form-label">Account Email</label>
             <span id="secrets-email-verified-badge" class="badge hidden"></span>
-            <input type="email" id="secrets-account-email" class="form-input" autocomplete="email">
-            <span class="form-hint">Please provide a valid email for account management &amp; recovery - Must not be currently used to manage another User account. User can change this later in the Contact Editor (Edit Profile); they then sign in with the new email.</span>
+            <input type="email" id="secrets-account-email" class="form-input" autocomplete="email" placeholder="">
+            <span class="form-hint">Valid email for account management &amp; recovery. User can change in Contact Editor; they then sign in with the new email.</span>
             <span class="form-error" id="error-secrets-account-email" role="alert"></span>
             <div class="form-group" style="margin-top:0.5rem;">
               <label class="consent-group" style="cursor:pointer;"><input type="checkbox" id="secrets-email-verified-admin"> <span>Admin: Email verified</span></label>
@@ -709,13 +715,16 @@
           </div>
           <div class="form-group" id="secrets-dob-group">
             <label class="form-label">Date of Birth</label>
-            <input type="text" id="secrets-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
+            <span id="secrets-dob-badge" class="badge"></span>
+            <input type="text" id="secrets-dob" class="form-input dob-mask" placeholder="" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
             <span class="form-hint">Format: dd/mm/yyyy</span>
             <span class="form-error" id="error-secrets-dob" role="alert"></span>
           </div>
           <div class="form-group" id="secrets-sq-group">
             <label class="form-label">Security Questions</label>
+            <span id="secrets-sq-badge" class="badge"></span>
             <span class="form-hint" style="display:block; margin-bottom: 0.5rem;">Select 3 different questions and provide answers (4-30 characters each).</span>
+            <button type="button" class="btn btn-ghost btn-sm hidden" id="secrets-clear-sq-btn" onclick="clearSqInSecretsModal()" style="margin-bottom:0.5rem;">Reset SQ</button>
             <div class="secret-q-row"><select id="secrets-sq1" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div></div>
             <div class="secret-q-row"><select id="secrets-sq2" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq2-answer" role="alert"></span></div></div>
             <div class="secret-q-row"><select id="secrets-sq3" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq3-answer" role="alert"></span></div></div></div>
@@ -723,10 +732,8 @@
         </div>
         <div id="modal-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div><div id="modal-secrets-success" class="alert alert-success hidden" style="margin-top:0.5rem">Secrets saved successfully.</div>
         <div class="modal-footer modal-footer-secrets">
-          <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()">Save</button>
-        <button type="button" class="btn btn-secondary" onclick="resetSecretsModal()">Reset</button>
-        <button type="button" class="btn btn-secondary" onclick="clearSecretsModal()">Clear</button>
-        <button type="button" class="btn btn-secondary" onclick="closeSecretsModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()" disabled>Save</button>
+          <button type="button" class="btn btn-secondary" onclick="resetSecretsModal(); closeSecretsModal();">Cancel</button>
         </div>
       </div>
     </div>
@@ -3266,7 +3273,7 @@ function closeQrModal() {
 }
 
 
-var secretsModalFolder = null; var lastSavedSecretsData = null;
+var secretsModalFolder = null; var lastSavedSecretsData = null; var secretsModalOtpLocal = null;
 var profileModalFolder = null;
 var SQ_OPTIONS = [{v:'',t:'- Select question -'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
 
@@ -3293,7 +3300,11 @@ function syncSecretsModalSqOptions() {
 }
 
 
-(function attachSecretsSqListeners(){['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('change',syncSecretsModalSqOptions);});})();
+(function attachSecretsSqListeners(){['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('change',function(){syncSecretsModalSqOptions();secretsModalSetDirty();});});})();
+(function attachSecretsDirtyListeners(){
+  ['secrets-account-email','secrets-dob','secrets-sq1-answer','secrets-sq2-answer','secrets-sq3-answer'].forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('input',secretsModalSetDirty);});
+  var chk=document.getElementById('secrets-email-verified-admin');if(chk)chk.addEventListener('change',secretsModalSetDirty);
+})();
 
 function initSecretsModalValidations(){
   function validateDob(val){var s=(val||'').trim().replace(/\s+/g,'');if(!s)return{valid:true};var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)return{valid:false,message:'Please enter a valid date in dd/mm/yyyy format.'};var d=parseInt(m[1],10),mo=parseInt(m[2],10),y=parseInt(m[3],10);if(d<1||d>31||mo<1||mo>12||y<1900||y>2100)return{valid:false,message:'Please enter a valid date.'};return{valid:true};}
@@ -3311,6 +3322,87 @@ function closeSecretsModal() {
   document.getElementById('modal-secrets').classList.remove('show');
   secretsModalFolder = null;
   lastSavedSecretsData = null;
+  secretsModalOtpLocal = null;
+}
+
+function secretsModalSetDirty() {
+  var btn = document.getElementById('secrets-save-btn');
+  if (!btn || !lastSavedSecretsData) return;
+  var accountEmail = (document.getElementById('secrets-account-email').value || '').trim();
+  var dob = (document.getElementById('secrets-dob').value || '').trim();
+  var evAdmin = document.getElementById('secrets-email-verified-admin');
+  var sq = [
+    { questionId: parseInt(document.getElementById('secrets-sq1').value, 10), answer: document.getElementById('secrets-sq1-answer').value.trim() },
+    { questionId: parseInt(document.getElementById('secrets-sq2').value, 10), answer: document.getElementById('secrets-sq2-answer').value.trim() },
+    { questionId: parseInt(document.getElementById('secrets-sq3').value, 10), answer: document.getElementById('secrets-sq3-answer').value.trim() }
+  ];
+  var sqMatch = lastSavedSecretsData.secretQuestions && lastSavedSecretsData.secretQuestions.length === 3 && sq[0].questionId === (lastSavedSecretsData.secretQuestions[0] && lastSavedSecretsData.secretQuestions[0].questionId) && sq[1].questionId === (lastSavedSecretsData.secretQuestions[1] && lastSavedSecretsData.secretQuestions[1].questionId) && sq[2].questionId === (lastSavedSecretsData.secretQuestions[2] && lastSavedSecretsData.secretQuestions[2].questionId) && sq[0].answer === (lastSavedSecretsData.secretQuestions[0] && lastSavedSecretsData.secretQuestions[0].answer) && sq[1].answer === (lastSavedSecretsData.secretQuestions[1] && lastSavedSecretsData.secretQuestions[1].answer) && sq[2].answer === (lastSavedSecretsData.secretQuestions[2] && lastSavedSecretsData.secretQuestions[2].answer);
+  var pwInp = document.getElementById('secrets-password');
+  var pwVal = pwInp ? pwInp.value : '';
+  var dirty = accountEmail !== (lastSavedSecretsData.accountEmail || '') || dob !== (lastSavedSecretsData.dob || '') || (evAdmin && evAdmin.checked !== !!lastSavedSecretsData.emailVerified) || !sqMatch || (secretsModalOtpLocal && secretsModalOtpLocal.length >= 8) || (pwVal && pwVal.length >= 8 && !lastSavedSecretsData.passwordSet);
+  btn.disabled = !dirty;
+}
+
+async function generateOtpInSecretsModal() {
+  if (!secretsModalFolder) return;
+  var btn = document.getElementById('secrets-generate-otp-btn');
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch(API + '/api/admin/generate-otp', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ username: secretsModalFolder }) });
+    var d = await r.json();
+    if (r.ok && d.otp) {
+      secretsModalOtpLocal = d.otp;
+      var pwInp = document.getElementById('secrets-password');
+      if (pwInp) { pwInp.value = d.otp; pwInp.type = 'text'; pwInp.readOnly = true; pwInp.classList.add('readonly'); }
+      document.getElementById('secrets-password-badge').textContent = 'OTP generated (save to set)';
+      document.getElementById('secrets-password-badge').className = 'badge badge-cyan';
+      document.getElementById('secrets-clear-otp-btn').classList.remove('hidden');
+      document.getElementById('secrets-generate-otp-btn').classList.add('hidden');
+      secretsModalSetDirty();
+    }
+  } catch (e) {}
+  if (btn) btn.disabled = false;
+}
+
+function clearOtpInSecretsModal() {
+  secretsModalOtpLocal = null;
+  var pwInp = document.getElementById('secrets-password');
+  if (pwInp) { pwInp.value = ''; pwInp.type = 'password'; pwInp.readOnly = false; pwInp.disabled = false; pwInp.classList.remove('readonly'); }
+  var pwBadge = document.getElementById('secrets-password-badge');
+  if (lastSavedSecretsData) {
+    if (lastSavedSecretsData.otpSet) { pwBadge.textContent = 'OTP Set'; pwBadge.className = 'badge badge-cyan'; }
+    else if (lastSavedSecretsData.passwordSet) { pwBadge.textContent = 'Password Set'; pwBadge.className = 'badge badge-success'; pwInp.placeholder = 'Set New Password or leave Empty to keep current'; }
+    else { pwBadge.textContent = 'Password Not Set'; pwBadge.className = 'badge badge-secondary'; pwInp.placeholder = ''; }
+  }
+  document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
+  document.getElementById('secrets-delete-otp-btn').classList.add('hidden');
+  var genBtn = document.getElementById('secrets-generate-otp-btn');
+  if (genBtn && !(lastSavedSecretsData && lastSavedSecretsData.passwordSet)) genBtn.classList.remove('hidden');
+  secretsModalSetDirty();
+}
+
+async function deleteOtpInSecretsModal() {
+  if (!secretsModalFolder) return;
+  try {
+    var r = await fetch(API + '/api/admin/delete-otp', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ username: secretsModalFolder }) });
+    if (r.ok) {
+      lastSavedSecretsData.otpSet = false;
+      clearOtpInSecretsModal();
+    }
+  } catch (e) {}
+}
+
+function clearSqInSecretsModal() {
+  ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
+    document.getElementById(id).value = '';
+    var a = document.getElementById(id + '-answer');
+    a.value = ''; a.type = 'text'; a.placeholder = 'Answer';
+  });
+  syncSecretsModalSqOptions();
+  document.getElementById('secrets-sq-badge').textContent = 'SQ Not Set';
+  document.getElementById('secrets-sq-badge').className = 'badge badge-secondary';
+  document.getElementById('secrets-clear-sq-btn').classList.add('hidden');
+  secretsModalSetDirty();
 }
 
 async function debugUserApi(folder) {
@@ -3459,40 +3551,69 @@ function clearSecretsModal() {
 }
 
 function resetSecretsModal() {
-  if (lastSavedSecretsData && !document.getElementById('modal-secrets-form').classList.contains('hidden')) {
-    var d = lastSavedSecretsData;
-    document.getElementById('secrets-account-email').value = d ? (d.accountEmail || '') : '';
-    document.getElementById('secrets-dob').value = d ? (d.dob || '') : '';
-    var sq = d && Array.isArray(d.secretQuestions) ? d.secretQuestions : [];
-    ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id, i) {
-      var q = sq[i] || {};
-      document.getElementById(id).value = q.questionId ? String(q.questionId) : '';
-      document.getElementById(id + '-answer').value = q.answer || '';
-    });
-    syncSecretsModalSqOptions();
-    document.getElementById('error-secrets-account-email').textContent = '';
-    document.getElementById('error-secrets-dob').textContent = '';
-    ['secrets-sq1-answer','secrets-sq2-answer','secrets-sq3-answer'].forEach(function(id) { var e = document.getElementById('error-' + id); if (e) e.textContent = ''; });
-    document.getElementById('modal-secrets-error').classList.add('hidden');
-  var succ = document.getElementById('modal-secrets-success'); if (succ) succ.classList.add('hidden');
-    var v = d.emailVerified;
-    var pwInpR = document.getElementById('secrets-password'); if (pwInpR) { pwInpR.value = ''; pwInpR.placeholder = d.passwordSet ? 'Password is set — enter new to change' : 'Leave blank to keep existing'; }
-    var vBadge = document.getElementById('secrets-email-verified-badge');
-    if (vBadge) { vBadge.textContent = v ? 'Verified' : 'Not verified'; vBadge.className = 'badge ' + (v ? 'badge-success' : 'badge-warning'); }
-    var adminChk = document.getElementById('secrets-email-verified-admin');
-    if (adminChk) adminChk.checked = !!v;
-    document.getElementById('secrets-account-email').readOnly = false;
-    document.getElementById('secrets-dob').readOnly = false;
-    ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
-      var sel = document.getElementById(id); var ans = document.getElementById(id+'-answer');
-      if (sel) sel.disabled = false;
-      if (ans) ans.readOnly = false;
-    });
+  if (!lastSavedSecretsData || !secretsModalFolder) return;
+  var d = lastSavedSecretsData;
+  document.getElementById('secrets-account-email').value = d.accountEmail || '';
+  document.getElementById('secrets-dob').value = d.dob || '';
+  var sq = Array.isArray(d.secretQuestions) ? d.secretQuestions : [];
+  ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id, i) {
+    var q = sq[i] || {};
+    document.getElementById(id).value = q.questionId ? String(q.questionId) : '';
+    var ansEl = document.getElementById(id + '-answer');
+    ansEl.value = q.answer || '';
+    ansEl.type = (sq.length === 3 && q.answer) ? 'password' : 'text';
+    ansEl.placeholder = (sq.length === 3 && q.answer) ? '••••••••' : 'Answer';
+  });
+  syncSecretsModalSqOptions();
+  document.getElementById('error-secrets-account-email').textContent = '';
+  document.getElementById('error-secrets-dob').textContent = '';
+  document.getElementById('modal-secrets-error').classList.add('hidden');
+  var adminChk = document.getElementById('secrets-email-verified-admin');
+  if (adminChk) { adminChk.checked = !!d.emailVerified; adminChk.disabled = d.emailVerification === 'user'; }
+  secretsModalOtpLocal = null;
+  var pwInp = document.getElementById('secrets-password');
+  if (pwInp) {
+    pwInp.value = '';
+    pwInp.type = 'password';
+    pwInp.readOnly = false;
+    pwInp.disabled = false;
+    pwInp.placeholder = d.passwordSet ? 'Set New Password or leave Empty to keep current' : '';
+    pwInp.classList.remove('readonly');
   }
+  var pwBadge = document.getElementById('secrets-password-badge');
+  if (d.otpSet) { pwBadge.textContent = 'OTP Set'; pwBadge.className = 'badge badge-cyan'; }
+  else if (d.passwordSet) { pwBadge.textContent = 'Password Set'; pwBadge.className = 'badge badge-success'; }
+  else { pwBadge.textContent = 'Password Not Set'; pwBadge.className = 'badge badge-secondary'; }
+  document.getElementById('secrets-generate-otp-btn').classList.toggle('hidden', !!d.passwordSet);
+  document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
+  document.getElementById('secrets-delete-otp-btn').classList.toggle('hidden', !d.otpSet);
+  var evBadge = document.getElementById('secrets-email-verified-badge');
+  if (d.accountEmail) {
+    evBadge.textContent = d.emailVerification === 'admin' ? 'Admin Verified' : d.emailVerification === 'user' ? 'User Verified' : 'Not Verified';
+    evBadge.className = 'badge ' + (d.emailVerification === 'admin' || d.emailVerification === 'user' ? 'badge-cyan' : 'badge-pink');
+    evBadge.classList.remove('hidden');
+  } else { evBadge.textContent = 'Email Not Set'; evBadge.className = 'badge badge-secondary'; evBadge.classList.remove('hidden'); }
+  document.getElementById('secrets-dob-badge').textContent = d.dob ? 'DOB Set' : 'DOB Not Set';
+  document.getElementById('secrets-dob-badge').className = 'badge ' + (d.dob ? 'badge-success' : 'badge-secondary');
+  var dobInpReset = document.getElementById('secrets-dob');
+  if (dobInpReset) dobInpReset.placeholder = d.dob ? 'Set New DOB or leave Empty to keep current' : 'dd/mm/yyyy';
+  var sqSetReset = sq.length === 3 && sq.every(function(q){ return q && q.answer; });
+  document.getElementById('secrets-sq-badge').textContent = sqSetReset ? 'SQ Set' : 'SQ Not Set';
+  document.getElementById('secrets-sq-badge').className = 'badge ' + (sqSetReset ? 'badge-success' : 'badge-secondary');
+  document.getElementById('secrets-clear-sq-btn').classList.toggle('hidden', !sqSetReset);
+  document.getElementById('secrets-account-email').readOnly = false;
+  document.getElementById('secrets-dob').readOnly = false;
+  ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
+    var sel = document.getElementById(id), ans = document.getElementById(id + '-answer');
+    if (sel) sel.disabled = false;
+    if (ans) ans.readOnly = false;
+  });
+  secretsModalSetDirty();
 }
 
 async function showSecretsModal(folder) {
   secretsModalFolder = folder;
+  secretsModalOtpLocal = null;
   document.getElementById('modal-secrets-title').textContent = 'Set Secrets - ' + folder;
   document.getElementById('modal-secrets-loading').classList.remove('hidden');
   document.getElementById('modal-secrets-form').classList.add('hidden');
@@ -3510,22 +3631,59 @@ async function showSecretsModal(folder) {
       document.getElementById('modal-secrets-error').classList.remove('hidden');
       return;
     }
-    lastSavedSecretsData = { accountEmail: d.accountEmail || '', dob: d.dob || '', secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [], emailVerified: !!d.emailVerified, passwordSet: !!d.passwordSet };
+    lastSavedSecretsData = {
+      accountEmail: d.accountEmail || '',
+      dob: d.dob || '',
+      secretQuestions: Array.isArray(d.secretQuestions) ? d.secretQuestions.slice() : [],
+      emailVerified: !!d.emailVerified,
+      emailVerification: d.emailVerification || null,
+      passwordSet: !!d.passwordSet,
+      otpSet: !!d.otpSet
+    };
     document.getElementById('secrets-account-email').value = d.accountEmail || '';
     document.getElementById('secrets-dob').value = d.dob || '';
     var sq = Array.isArray(d.secretQuestions) ? d.secretQuestions : [];
     ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id, i) {
       var q = sq[i] || {};
       document.getElementById(id).value = q.questionId ? String(q.questionId) : '';
-      document.getElementById(id + '-answer').value = q.answer || '';
+      var ansEl = document.getElementById(id + '-answer');
+      ansEl.value = q.answer || '';
+      ansEl.type = (sq.length === 3 && q.answer) ? 'password' : 'text';
+      ansEl.placeholder = (sq.length === 3 && q.answer) ? '••••••••' : 'Answer';
     });
     syncSecretsModalSqOptions();
-    var verifiedBadge = document.getElementById('secrets-email-verified-badge');
-    if (verifiedBadge) { verifiedBadge.textContent = d.emailVerified ? 'Verified' : 'Not verified'; verifiedBadge.className = 'badge ' + (d.emailVerified ? 'badge-success' : 'badge-warning'); verifiedBadge.classList.remove('hidden'); }
-    var pwInp = document.getElementById('secrets-password');
-    if (pwInp) pwInp.placeholder = d.passwordSet ? 'Password is set — enter new to change' : 'Leave blank to keep existing';
     var adminCheck = document.getElementById('secrets-email-verified-admin');
-    if (adminCheck) adminCheck.checked = !!d.emailVerified;
+    if (adminCheck) { adminCheck.checked = !!d.emailVerified; adminCheck.disabled = d.emailVerification === 'user'; }
+    var pwInp = document.getElementById('secrets-password');
+    if (pwInp) {
+      pwInp.value = '';
+      pwInp.type = 'password';
+      pwInp.readOnly = false;
+      pwInp.disabled = false;
+      pwInp.placeholder = d.passwordSet ? 'Set New Password or leave Empty to keep current' : '';
+      pwInp.classList.remove('readonly');
+    }
+    var pwBadge = document.getElementById('secrets-password-badge');
+    if (d.otpSet) { pwBadge.textContent = 'OTP Set'; pwBadge.className = 'badge badge-cyan'; }
+    else if (d.passwordSet) { pwBadge.textContent = 'Password Set'; pwBadge.className = 'badge badge-success'; }
+    else { pwBadge.textContent = 'Password Not Set'; pwBadge.className = 'badge badge-secondary'; }
+    document.getElementById('secrets-generate-otp-btn').classList.toggle('hidden', !!d.passwordSet);
+    document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
+    document.getElementById('secrets-delete-otp-btn').classList.toggle('hidden', !d.otpSet);
+    var evBadge = document.getElementById('secrets-email-verified-badge');
+    if (d.accountEmail) {
+      evBadge.textContent = d.emailVerification === 'admin' ? 'Admin Verified' : d.emailVerification === 'user' ? 'User Verified' : 'Not Verified';
+      evBadge.className = 'badge ' + (d.emailVerification === 'admin' || d.emailVerification === 'user' ? 'badge-cyan' : 'badge-pink');
+    } else { evBadge.textContent = 'Email Not Set'; evBadge.className = 'badge badge-secondary'; }
+    evBadge.classList.remove('hidden');
+    document.getElementById('secrets-dob-badge').textContent = d.dob ? 'DOB Set' : 'DOB Not Set';
+    document.getElementById('secrets-dob-badge').className = 'badge ' + (d.dob ? 'badge-success' : 'badge-secondary');
+    var dobInpShow = document.getElementById('secrets-dob');
+    if (dobInpShow) dobInpShow.placeholder = d.dob ? 'Set New DOB or leave Empty to keep current' : 'dd/mm/yyyy';
+    var sqSetShow = sq.length === 3 && sq.every(function(q){ return q && q.answer; });
+    document.getElementById('secrets-sq-badge').textContent = sqSetShow ? 'SQ Set' : 'SQ Not Set';
+    document.getElementById('secrets-sq-badge').className = 'badge ' + (sqSetShow ? 'badge-success' : 'badge-secondary');
+    document.getElementById('secrets-clear-sq-btn').classList.toggle('hidden', !sqSetShow);
     document.getElementById('secrets-account-email').readOnly = false;
     document.getElementById('secrets-dob').readOnly = false;
     ['secrets-sq1','secrets-sq2','secrets-sq3'].forEach(function(id) {
@@ -3533,6 +3691,7 @@ async function showSecretsModal(folder) {
       if (sel) sel.disabled = false;
       if (ans) ans.readOnly = false;
     });
+    document.getElementById('secrets-save-btn').disabled = true;
   } catch (e) {
     document.getElementById('modal-secrets-loading').classList.add('hidden');
     document.getElementById('modal-secrets-form').classList.remove('hidden');
@@ -3603,7 +3762,9 @@ async function saveSecrets() {
   }
   var adminChecked = document.getElementById('secrets-email-verified-admin');
   var body = { accountEmail: accountEmail || '', dob: dob || '', secretQuestions: hasAllSq ? sq : [] };
-  if (password) body.password = password;
+  if (secretsModalOtpLocal && secretsModalOtpLocal.length >= 8) {
+    body.otp = secretsModalOtpLocal;
+  } else if (password) body.password = password;
   if (adminChecked) body.emailVerified = adminChecked.checked;
   document.getElementById('secrets-save-btn').disabled = true;
   try {
@@ -3615,6 +3776,7 @@ async function saveSecrets() {
     var d = await r.json();
     if (r.ok) {
       if (userInfo[secretsModalFolder]) userInfo[secretsModalFolder].accountEmail = accountEmail || null;
+      secretsModalOtpLocal = null;
       renderList('manage');
       await fetchAccountEmailsAndRefresh();
       closeSecretsModal();
