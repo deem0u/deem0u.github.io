@@ -249,12 +249,25 @@ body {
 }
 
 .auth-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   padding: var(--space-8);
   width: 100%;
   max-width: 420px;
+}
+
+.auth-card .auth-header {
+  width: 100%;
+  text-align: center;
+  margin-bottom: var(--space-8);
+}
+
+.auth-card form {
+  width: 100%;
 }
 
 .auth-header {
@@ -292,13 +305,14 @@ body {
 
 /* Segmented control (e.g. sign-in method: Admin Key | Email & Password) */
 .segmented-control {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
   background: var(--color-bg-muted, var(--grey-100));
   border-radius: var(--radius-md);
   padding: var(--space-1);
   gap: 0;
-  margin-left: auto;
-  margin-right: auto;
 }
 .segmented-control-option {
   padding: var(--space-2) var(--space-4);
@@ -361,6 +375,22 @@ body {
   padding: var(--space-3) var(--space-4);
   background: var(--color-bg-muted, var(--grey-100));
   border-radius: var(--radius-md);
+}
+
+/* Toggle label: center checkbox with text (admin Site Settings, KV cleanup, Manage Users divert) */
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.toggle-label input[type="checkbox"] {
+  margin: 0;
+  flex-shrink: 0;
+  align-self: center;
+  position: relative;
+  top: 0;
 }
 
 /* Admin Access & Site Management tab: compact spacing */
