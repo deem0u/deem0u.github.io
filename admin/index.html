@@ -663,7 +663,7 @@
           <div class="form-group">
             <label class="form-label">Account Username</label>
             <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_-]{3,32}" maxlength="32" autocomplete="username">
-            <span class="form-hint">3–32 characters: letters, numbers, hyphens, underscores. Changing this renames the user folder and URL.</span>
+            <span class="form-hint">3–32 characters: letters, numbers, hyphens, underscores. Changing this renames the user folder and URL. After rename, they sign in with the same account email (now tied to the new username).</span>
             <span class="form-error" id="error-profile-username" role="alert"></span>
           </div>
           <div class="form-group">
@@ -701,7 +701,7 @@
             <label class="form-label">Account Email</label>
             <span id="secrets-email-verified-badge" class="badge hidden"></span>
             <input type="email" id="secrets-account-email" class="form-input" autocomplete="email">
-            <span class="form-hint">Please provide a valid email for account management &amp; recovery - Must not be currently used to manage another User account</span>
+            <span class="form-hint">Please provide a valid email for account management &amp; recovery - Must not be currently used to manage another User account. User can change this later in the Contact Editor (Edit Profile); they then sign in with the new email.</span>
             <span class="form-error" id="error-secrets-account-email" role="alert"></span>
             <div class="form-group" style="margin-top:0.5rem;">
               <label class="consent-group" style="cursor:pointer;"><input type="checkbox" id="secrets-email-verified-admin"> <span>Admin: Email verified</span></label>
@@ -1545,7 +1545,10 @@ function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementB
 async function fetchAccountEmailsAndRefresh() {
   try {
     var usernames = Object.keys(userInfo);
-    var emailsPromise = fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey } }).then(function(r) { return r.ok ? r.json() : null; });
+    var emailsPromise = fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey }, cache: 'no-store' }).then(function(r) {
+      if (!r.ok) { console.warn('[admin] account-emails API failed:', r.status, r.statusText); return null; }
+      return r.json();
+    });
     var profPromise = fetch(API + '/api/account-profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: usernames }) }).then(function(r) { return r.ok ? r.json() : null; });
     var secretsPromise = fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: pages || [] }) }).then(function(r) { return r.ok ? r.json() : null; });
     var results = await Promise.all([emailsPromise, profPromise, secretsPromise]);
@@ -1554,12 +1557,18 @@ async function fetchAccountEmailsAndRefresh() {
       var accountEmails = (d.accountEmails) ? d.accountEmails : {};
       var accountDetailsSent = (d.accountDetailsSent) ? d.accountDetailsSent : {};
       var emailVerification = (d.emailVerification) ? d.emailVerification : {};
+      var bulkKeys = Object.keys(accountEmails);
+      var userKeys = Object.keys(userInfo);
+      var missingFromBulk = userKeys.filter(function(f) { var fl = (f || '').toLowerCase(); return !accountEmails[f] && !accountEmails[fl]; });
+      if (missingFromBulk.length) console.warn('[admin] bulk account-emails missing for usernames (will use profile if available):', missingFromBulk, '| bulk keys:', bulkKeys);
       for (var f in userInfo) {
         var fLower = (f || '').toLowerCase();
         userInfo[f].accountEmail = accountEmails[f] || accountEmails[fLower] || null;
         userInfo[f].accountDetailsSent = !!accountDetailsSent[f] || !!accountDetailsSent[fLower];
         userInfo[f].emailVerification = emailVerification[f] || emailVerification[fLower] || null;
       }
+    } else {
+      console.warn('[admin] account-emails response was empty (API error or not ok)');
     }
     var profData = results[1];
     if (profData && profData.profiles) {
@@ -1569,14 +1578,18 @@ async function fetchAccountEmailsAndRefresh() {
         if (prof) {
           userInfo[f].firstName = (prof.firstName || '').trim() || userInfo[f].firstName || '';
           userInfo[f].lastName = (prof.lastName || '').trim() || userInfo[f].lastName || '';
-          if ((prof.accountEmail || '').trim()) userInfo[f].accountEmail = userInfo[f].accountEmail || (prof.accountEmail || '').trim();
+          var profEmail = (prof.accountEmail || '').trim();
+          if (profEmail) userInfo[f].accountEmail = profEmail;
         }
       }
     }
     var sd = results[2];
     if (sd && sd.statuses) {
       var statuses = sd.statuses;
-      for (var f in userInfo) { userInfo[f].secretsComplete = !!(statuses[f] && statuses[f].secretsComplete); }
+      for (var f in userInfo) {
+        var fLower = (f || '').toLowerCase();
+        userInfo[f].secretsComplete = !!(statuses[f] && statuses[f].secretsComplete) || !!(statuses[fLower] && statuses[fLower].secretsComplete);
+      }
     }
     populateUI();
   } catch (e) { /* ignore */ }
@@ -2227,19 +2240,21 @@ function renderList(t) {
     const emailDisplay = u.accountEmail || 'No account email';
     const secretsNotSet = !(u.secretsComplete === true);
     const isNew = hk && !(u.accountDetailsSent === true);
+    const needsSetup = !(u.accountEmail || '').trim();
     const ver = u.emailVerification;
     const emailBadge = ver === 'admin' ? '<span class="badge badge-cyan">Admin Verified</span>' : ver === 'user' ? '<span class="badge badge-cyan">User Verified</span>' : '<span class="badge badge-pink">Not Verified</span>';
     return `<div class="user-card" id="user-card-${f}" data-username="${f}">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
-          <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}</div>
+          <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}${needsSetup ? ' <span class="badge badge-secondary">Set up account</span>' : ''}</div>
           <div class="user-meta">${escapeHtml(emailDisplay)} ${emailBadge}</div>
           <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
         <div class="user-status">
           <div class="user-status-badges">
             ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
+            ${needsSetup ? '<span class="badge badge-secondary">Set up account</span>' : ''}
             ${secretsNotSet ? '<span class="badge badge-error">Secrets Not Set</span>' : ''}
           </div>
         </div>

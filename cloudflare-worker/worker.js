@@ -344,10 +344,10 @@ export default {
   }
 };
 
-function jsonResponse(data, status = 200) {
+function jsonResponse(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    headers: { ...corsHeaders, 'Content-Type': 'application/json', ...extraHeaders }
   });
 }
 
@@ -1952,7 +1952,11 @@ async function handleGetAccountEmails(request, env) {
     const byUser = (await env.EDIT_KEYS_KV.get('email_verified:' + orig)) === '1';
     emailVerification[keyLower] = byAdmin ? 'admin' : byUser ? 'user' : null;
   }
-  return jsonResponse({ accountEmails, accountDetailsSent, emailVerification });
+  return jsonResponse(
+    { accountEmails, accountDetailsSent, emailVerification },
+    200,
+    { 'Cache-Control': 'no-store' }
+  );
 }
 
 async function handleGetAccountProfiles(request, env) {
