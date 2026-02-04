@@ -1441,8 +1441,12 @@ async function authenticateWithStoredSession() {
     var list = document.getElementById('contact-pages-list');
     var firstCard = list && list.querySelector('.contact-page-card');
     var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
-    await selectContactPage(firstSlug);
-    enterViewMode();
+    if (firstCard) {
+      await selectContactPage(firstSlug);
+      enterViewMode();
+    } else {
+      enterCreateMode();
+    }
   } catch (e) {
     sessionStorage.removeItem('edit_session');
     username = null;
@@ -1500,8 +1504,12 @@ async function continueAfterAuth() {
     var list = document.getElementById('contact-pages-list');
     var firstCard = list && list.querySelector('.contact-page-card');
     var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
-    await selectContactPage(firstSlug);
-    enterViewMode();
+    if (firstCard) {
+      await selectContactPage(firstSlug);
+      enterViewMode();
+    } else {
+      enterCreateMode();
+    }
   } catch (e) {
     console.error('Auth error:', e);
     showAlert('auth-alert', 'Error after sign-in. Open Console (F12) for details.', 'error');
@@ -1762,7 +1770,11 @@ async function confirmDeletePage() {
       var list = document.getElementById('contact-pages-list');
       var firstCard = list && list.querySelector('.contact-page-card');
       var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
-      await selectContactPage(firstSlug);
+      if (firstCard) {
+        await selectContactPage(firstSlug);
+      } else {
+        enterCreateMode();
+      }
       showStatusBanner('Contact page deleted.', 'success');
     } else {
       showStatusBanner(d.error || 'Failed to delete page', 'error');
