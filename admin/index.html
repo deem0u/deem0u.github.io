@@ -2335,16 +2335,6 @@ function renderList(t) {
   c.innerHTML = fl.map(f => {
     const u = userInfo[f] || { firstName: '', lastName: '', accountEmail: null, folder: f }, hk = !!editKeys[f];
     const displayName = getDisplayName(u, f);
-    let lastUpdatedDisplay = 'Never updated';
-    if (u.lastUpdated) {
-      try {
-        lastUpdatedDisplay = formatTimestamp(u.lastUpdated, u.updatedBy || 'admin');
-      } catch (e) {
-        lastUpdatedDisplay = 'Unknown';
-      }
-    } else if (u.updatedBy) {
-      lastUpdatedDisplay = 'Unknown (old format)';
-    }
     const namePart = displayName || '? ?';
     const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
     const emailDisplay = u.accountEmail || 'No account email';
@@ -2359,7 +2349,6 @@ function renderList(t) {
         <div class="user-details">
           <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}${needsSetup ? ' <span class="badge badge-secondary">Set up account</span>' : ''}</div>
           <div class="user-meta">${escapeHtml(emailDisplay)} ${emailBadge}</div>
-          <div class="user-meta user-meta-muted">Last updated: ${escapeHtml(lastUpdatedDisplay)}</div>
         </div>
         <div class="user-status">
           <div class="user-status-badges">

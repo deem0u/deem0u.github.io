@@ -1060,12 +1060,12 @@ async function handleCreatePage(request, env) {
     return jsonResponse({ error: 'Invalid contact page name' }, 400);
   }
 
-  // Enforce max contact pages per account (0 = unlimited)
+  // Enforce max contact pages per account (0 = unlimited). Use username (not lowercase) for GitHub path - repo paths are case-sensitive.
   if (env.EDIT_KEYS_KV) {
     const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + usernameTrim);
     const maxPages = parseInt(maxRaw, 10) || 0;
     if (maxPages > 0) {
-      const currentCount = await getContactPageCountForUser(usernameTrim, env);
+      const currentCount = await getContactPageCountForUser(username, env);
       if (currentCount >= maxPages) {
         return jsonResponse({ error: 'Maximum number of contact pages reached for this account. Delete an existing page to create a new one, or increase the limit in Manage Users.' }, 403);
       }
@@ -2282,17 +2282,17 @@ async function handleListContactPages(username, request, env) {
   const slugs = files
     .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html'))
     .map(item => item.name.replace(/\.html$/i, ''));
+  const uLower = (u || '').toLowerCase();
   const contactPages = [];
   for (const slug of slugs) {
     const name = env.EDIT_KEYS_KV
-      ? (await env.EDIT_KEYS_KV.get(`contact_page_name:${u}:${slug}`)) || (slug === 'index' ? 'Main (index)' : slug)
+      ? (await env.EDIT_KEYS_KV.get(`contact_page_name:${uLower}:${slug}`)) || (slug === 'index' ? 'Main (index)' : slug)
       : (slug === 'index' ? 'Main (index)' : slug);
     contactPages.push({ slug, name });
   }
   const currentCount = slugs.length;
   let maxContactPages = 0;
   if (env.EDIT_KEYS_KV) {
-    const uLower = (u || '').toLowerCase();
     const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
     maxContactPages = parseInt(maxRaw, 10) || 0;
   }

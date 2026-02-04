@@ -1527,6 +1527,16 @@ async function fetchContactPagesList() {
   try {
     var r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json();
+    if (!r.ok) {
+      contactPagesListData = [{ slug: 'index', name: 'Main (index)' }];
+      if (list) list.classList.remove('hidden');
+      if (dropdownWrap) dropdownWrap.classList.remove('show');
+      list.innerHTML = '<div class="contact-page-card selected" data-contactpagename="index" role="button" tabindex="0" onclick="selectContactPage(\'index\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">Main (index)</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">index</span></div></div>';
+      if (newBtn) { newBtn.classList.remove('hidden'); newBtn.disabled = false; }
+      if (limitMsg) { limitMsg.classList.add('hidden'); limitMsg.textContent = ''; }
+      section.classList.remove('hidden');
+      return;
+    }
     var pages = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : [];
     if (pages.length === 0) pages = [{ slug: 'index', name: 'Main (index)' }];
     contactPagesListData = pages.map(normalizePageItem);
