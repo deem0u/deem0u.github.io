@@ -638,7 +638,7 @@ async function handleAuthUser(request, env) {
   const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
   if (storedOtp && storedOtp === password) {
     const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
-    const token = await signJwt({ username, exp }, secret);
+    const token = await signJwt({ username, exp, otpLogin: true }, secret);
     return jsonResponse({ success: true, username, token, mustSetPassword: true });
   }
   const pwHash = await env.EDIT_KEYS_KV.get(`user_password_hash:${username}`);
@@ -930,6 +930,9 @@ async function validateAuth(username, request, env) {
   if (token && secret) {
     const payload = await verifyJwt(token, secret);
     if (payload && payload.username === username) {
+      if (payload.otpLogin) {
+        return { authorized: false, isAdmin: false };
+      }
       if (env.EDIT_KEYS_KV && (await env.EDIT_KEYS_KV.get(`access_revoked:${username}`)) === '1') {
         return { authorized: false, isAdmin: false };
       }
@@ -2323,9 +2326,16 @@ async function handleRecoveryVerify(request, env) {
       if (!q || (q.answer || '').trim().toLowerCase() !== ans.toLowerCase()) return jsonResponse({ error: 'Recovery verification failed' }, 401);
     }
     await env.EDIT_KEYS_KV.delete('account_details_sent:' + username);
-    const secret = env.JWT_SECRET || env.SESSION_SECRET;
-    const token = secret ? await signJwt({ username: username, exp: Math.floor(Date.now() / 1000) + 900 }, secret) : null;
-    return jsonResponse({ success: true, username: username, token });
+    const otp = generateOneTimePassword();
+    await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
+    const toEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
+    if (toEmail && toEmail.includes('@')) {
+      const subject = 'Your one-time password - Digital Contact Page';
+      const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
+      const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+      await sendEmail(env, { to: toEmail, subject, text, html, username });
+    }
+    return jsonResponse({ success: true, username });
   }
 
   if (!username || !accountEmail || !dobRaw || !questionId || !answer) return jsonResponse({ error: 'Recovery verification failed' }, 401);
@@ -2340,9 +2350,16 @@ async function handleRecoveryVerify(request, env) {
   const q = secretQuestions.find(x => x && String(x.questionId) === String(questionId));
   if (!q || (q.answer || '').trim().toLowerCase() !== answer.toLowerCase()) return jsonResponse({ error: 'Recovery verification failed' }, 401);
   await env.EDIT_KEYS_KV.delete('account_details_sent:' + username);
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
-  const token = secret ? await signJwt({ username: username, exp: Math.floor(Date.now() / 1000) + 900 }, secret) : null;
-  return jsonResponse({ success: true, username: username, token });
+  const otp = generateOneTimePassword();
+  await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
+  const toEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
+  if (toEmail && toEmail.includes('@')) {
+    const subject = 'Your one-time password - Digital Contact Page';
+    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
+    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+    await sendEmail(env, { to: toEmail, subject, text, html, username });
+  }
+  return jsonResponse({ success: true, username });
 }
 
 async function handleResetAccess(username, request, env) {
@@ -2471,7 +2488,9 @@ async function handleSetPasswordAfterOtp(request, env) {
   const pwHash = await hashPassword(newPassword);
   await env.EDIT_KEYS_KV.put('user_password_hash:' + username, pwHash);
   await env.EDIT_KEYS_KV.delete('user_otp:' + username);
-  return jsonResponse({ success: true });
+  const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
+  const newToken = await signJwt({ username, exp }, secret);
+  return jsonResponse({ success: true, token: newToken });
 }
 
 async function handleGetSecrets(username, request, env) {

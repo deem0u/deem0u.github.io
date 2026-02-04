@@ -3376,8 +3376,7 @@ function clearOtpInSecretsModal() {
   }
   document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
   document.getElementById('secrets-delete-otp-btn').classList.add('hidden');
-  var genBtn = document.getElementById('secrets-generate-otp-btn');
-  if (genBtn && !(lastSavedSecretsData && lastSavedSecretsData.passwordSet)) genBtn.classList.remove('hidden');
+  document.getElementById('secrets-generate-otp-btn').classList.remove('hidden');
   secretsModalSetDirty();
 }
 
@@ -3584,7 +3583,7 @@ function resetSecretsModal() {
   if (d.otpSet) { pwBadge.textContent = 'OTP Set'; pwBadge.className = 'badge badge-cyan'; }
   else if (d.passwordSet) { pwBadge.textContent = 'Password Set'; pwBadge.className = 'badge badge-success'; }
   else { pwBadge.textContent = 'Password Not Set'; pwBadge.className = 'badge badge-secondary'; }
-  document.getElementById('secrets-generate-otp-btn').classList.toggle('hidden', !!d.passwordSet);
+  document.getElementById('secrets-generate-otp-btn').classList.remove('hidden');
   document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
   document.getElementById('secrets-delete-otp-btn').classList.toggle('hidden', !d.otpSet);
   var evBadge = document.getElementById('secrets-email-verified-badge');
@@ -3667,7 +3666,7 @@ async function showSecretsModal(folder) {
     if (d.otpSet) { pwBadge.textContent = 'OTP Set'; pwBadge.className = 'badge badge-cyan'; }
     else if (d.passwordSet) { pwBadge.textContent = 'Password Set'; pwBadge.className = 'badge badge-success'; }
     else { pwBadge.textContent = 'Password Not Set'; pwBadge.className = 'badge badge-secondary'; }
-    document.getElementById('secrets-generate-otp-btn').classList.toggle('hidden', !!d.passwordSet);
+    document.getElementById('secrets-generate-otp-btn').classList.remove('hidden');
     document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
     document.getElementById('secrets-delete-otp-btn').classList.toggle('hidden', !d.otpSet);
     var evBadge = document.getElementById('secrets-email-verified-badge');
