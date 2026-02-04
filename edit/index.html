@@ -273,17 +273,21 @@
           <aside class="editor-profile-strip">
             <div class="profile-title">Account Profile</div>
             <div id="profile-view" class="profile-view">
+              <div class="profile-row"><span class="profile-label">User Name</span><span class="profile-value" id="profile-username">—</span></div>
               <div class="profile-row"><span class="profile-label">First Name</span><span class="profile-value" id="profile-first-name">—</span></div>
               <div class="profile-row"><span class="profile-label">Last Name</span><span class="profile-value" id="profile-last-name">—</span></div>
               <div class="profile-row profile-email-row"><span class="profile-label">Account Email</span><span class="profile-value-wrap"><span class="profile-value" id="profile-email">—</span><span id="profile-verified-badge" class="badge hidden"></span></span></div>
-              <div class="profile-row"><span class="profile-label">Date Of Birth</span><span class="profile-value" id="profile-dob-masked">—</span></div>
+              <div class="profile-row"><span class="profile-label">Date Of Birth</span><span class="profile-value" id="profile-dob">—</span></div>
               <button type="button" class="btn btn-primary btn-sm mt-2" id="edit-profile-btn" onclick="enterProfileEditMode()">Edit Profile</button>
+              <button type="button" class="btn btn-primary btn-sm mt-2 hidden" id="change-password-sq-btn" onclick="openChangePasswordSqModal()">Change Password &amp; Security Questions</button>
             </div>
             <div id="profile-edit" class="profile-edit hidden">
+              <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" placeholder="e.g. john-smith" autocomplete="username"><span class="form-hint">3–32 characters. Letters, numbers, hyphens, underscores. Required.</span><span class="form-error" id="error-profile-username" role="alert"></span></div>
+              <div class="form-group"><label class="form-label">Current password <span class="form-hint-inline">(required if changing User Name)</span></label><input type="password" id="profile-edit-current-password" class="form-input" autocomplete="current-password" placeholder="Only needed when changing User Name"></div>
               <div class="form-group"><label class="form-label">First Name</label><input type="text" id="profile-edit-first-name" class="form-input" maxlength="32"></div>
               <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="profile-edit-last-name" class="form-input" maxlength="32"></div>
               <div class="form-group"><label class="form-label">Account Email</label><input type="email" id="profile-edit-email" class="form-input"></div>
-              <div class="form-group"><span class="form-label">Date Of Birth</span><span class="profile-value" id="profile-edit-dob-masked">—</span></div>
+              <div class="form-group"><span class="form-label">Date Of Birth</span><span class="profile-value" id="profile-edit-dob">—</span></div>
               <div class="profile-edit-actions">
                 <button type="button" class="btn btn-primary btn-sm" id="profile-save-btn" onclick="saveProfileFromStrip()" disabled>Save</button>
                 <button type="button" class="btn btn-secondary btn-sm" id="profile-cancel-btn" onclick="cancelProfileEdit()">Cancel</button>
@@ -491,6 +495,43 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeVerifyEmailModal()">Cancel</button>
         <button type="button" class="btn btn-primary" id="verify-email-submit-btn" onclick="submitVerifyEmailCode()">Verify</button>
+      </div>
+    </div>
+  </div>
+  <div id="change-password-sq-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header"><h3 class="modal-title">Change Password &amp; Security Questions</h3></div>
+      <div class="modal-body">
+        <p class="form-hint" style="margin-bottom:1rem;">Enter your current password, then set a new password and/or update your security questions. You will use your new password the next time you sign in.</p>
+        <div class="form-group">
+          <label class="form-label" for="change-pwd-current">Current password <span class="form-required">*</span></label>
+          <input type="password" id="change-pwd-current" class="form-input" autocomplete="current-password" placeholder="Your current password">
+          <span class="form-error" id="error-change-pwd-current" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="change-pwd-new">New password</label>
+          <input type="password" id="change-pwd-new" class="form-input" autocomplete="new-password" placeholder="At least 8 characters" minlength="8">
+          <span class="form-error" id="error-change-pwd-new" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="change-pwd-confirm">Confirm new password</label>
+          <input type="password" id="change-pwd-confirm" class="form-input" autocomplete="new-password" placeholder="Same as new password">
+          <span class="form-error" id="error-change-pwd-confirm" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Security Questions</label>
+          <span class="form-hint" style="display:block;margin-bottom:0.5rem;">Select 3 different questions (4–30 chars each). Leave unchanged if you do not want to update.</span>
+          <div id="change-pwd-sq-container">
+            <div class="secret-q-row"><select id="change-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
+            <div class="secret-q-row"><select id="change-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
+            <div class="secret-q-row"><select id="change-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
+          </div>
+        </div>
+        <div id="change-pwd-sq-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeChangePasswordSqModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="change-pwd-sq-save-btn" onclick="saveChangePasswordSq()" disabled>Save</button>
       </div>
     </div>
   </div>
@@ -1101,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('contact-page-url-slug').addEventListener('input', updateFormDirtyState);
   var editProfileBtn = document.getElementById('edit-profile-btn');
   if (editProfileBtn) editProfileBtn.addEventListener('click', enterProfileEditMode);
-  ['profile-edit-first-name', 'profile-edit-last-name', 'profile-edit-email'].forEach(function(id) {
+  ['profile-edit-username', 'profile-edit-first-name', 'profile-edit-last-name', 'profile-edit-email'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) { el.addEventListener('input', updateProfileDirtyState); el.addEventListener('change', updateProfileDirtyState); }
   });
@@ -1382,7 +1423,7 @@ async function authenticateWithStoredSession() {
     document.getElementById('view-page-link').href = viewPageHref();
     document.getElementById('view-page-link').style.pointerEvents = isCreateMode ? 'none' : '';
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
-    if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
+    if (typeof checkSecretsStatus === 'function') await checkSecretsStatus();
     await loadProfile();
     applyUnverifiedRestriction();
     await fetchContactPagesList();
@@ -1436,7 +1477,7 @@ async function continueAfterAuth() {
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
-    if (typeof checkSecretsStatus === 'function') checkSecretsStatus();
+    if (typeof checkSecretsStatus === 'function') await checkSecretsStatus();
     await loadProfile();
     applyUnverifiedRestriction();
     await fetchContactPagesList();
@@ -1499,10 +1540,11 @@ async function loadProfile() {
     var r = await fetch(API + "/api/profile/" + encodeURIComponent(username), { headers: { "Authorization": "Bearer " + token } });
     if (!r.ok) return;
     profileData = await r.json();
+    document.getElementById("profile-username").textContent = profileData.username || username || "—";
     document.getElementById("profile-first-name").textContent = profileData.firstName || "—";
     document.getElementById("profile-last-name").textContent = profileData.lastName || "—";
     document.getElementById("profile-email").textContent = profileData.accountEmail || "—";
-    document.getElementById("profile-dob-masked").textContent = profileData.dobMasked || "—";
+    document.getElementById("profile-dob").textContent = profileData.dob || profileData.dobMasked || "—";
     var badge = document.getElementById("profile-verified-badge");
     if (badge) {
       badge.textContent = profileData.emailVerified ? "Verified" : "Not Verified";
@@ -1540,10 +1582,12 @@ function applyUnverifiedRestriction() {
 }
 var profileSnapshot = null;
 function getProfileEditValues() {
+  var un = document.getElementById("profile-edit-username");
   var fn = document.getElementById("profile-edit-first-name");
   var ln = document.getElementById("profile-edit-last-name");
   var em = document.getElementById("profile-edit-email");
   return {
+    username: (un && un.value) ? un.value.trim() : "",
     firstName: (fn && fn.value) ? fn.value.trim() : "",
     lastName: (ln && ln.value) ? ln.value.trim() : "",
     accountEmail: (em && em.value) ? em.value.trim() : ""
@@ -1552,7 +1596,7 @@ function getProfileEditValues() {
 function isProfileDirty() {
   if (!profileSnapshot) return false;
   var cur = getProfileEditValues();
-  return cur.firstName !== profileSnapshot.firstName || cur.lastName !== profileSnapshot.lastName || cur.accountEmail !== profileSnapshot.accountEmail;
+  return cur.username !== profileSnapshot.username || cur.firstName !== profileSnapshot.firstName || cur.lastName !== profileSnapshot.lastName || cur.accountEmail !== profileSnapshot.accountEmail;
 }
 function updateProfileDirtyState() {
   var editEl = document.getElementById("profile-edit");
@@ -1568,10 +1612,15 @@ function enterProfileEditMode() {
   var viewEl = document.getElementById("profile-view");
   var editEl = document.getElementById("profile-edit");
   if (!viewEl || !editEl) return;
+  var unEl = document.getElementById("profile-edit-username");
+  if (unEl) unEl.value = profileData.username || username || "";
   document.getElementById("profile-edit-first-name").value = profileData.firstName || "";
   document.getElementById("profile-edit-last-name").value = profileData.lastName || "";
   document.getElementById("profile-edit-email").value = profileData.accountEmail || "";
-  document.getElementById("profile-edit-dob-masked").textContent = profileData.dobMasked || "—";
+  document.getElementById("profile-edit-dob").textContent = profileData.dob || profileData.dobMasked || "—";
+  var pwEl = document.getElementById("profile-edit-current-password");
+  if (pwEl) pwEl.value = "";
+  document.getElementById("error-profile-username").textContent = "";
   profileSnapshot = getProfileEditValues();
   viewEl.classList.add("hidden");
   editEl.classList.remove("hidden");
@@ -1645,7 +1694,72 @@ async function confirmDeletePage() {
 async function saveProfileFromStrip() {
   var cur = getProfileEditValues();
   var email = cur.accountEmail;
-  if (!email || !email.includes("@")) { return; }
+  if (!email || !email.includes("@")) { showStatusBanner("Account email is required.", "error"); return; }
+  var usernameChanged = cur.username !== (profileSnapshot && profileSnapshot.username);
+  if (usernameChanged) {
+    var newUn = (cur.username || "").trim().toLowerCase();
+    if (!newUn || newUn.length < 3) { document.getElementById("error-profile-username").textContent = "User name is required (3–32 characters)."; return; }
+    if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUn)) { document.getElementById("error-profile-username").textContent = "User name: letters, numbers, hyphens, underscores only."; return; }
+    var currentPw = (document.getElementById("profile-edit-current-password") && document.getElementById("profile-edit-current-password").value || "").trim();
+    if (!currentPw) { showStatusBanner("Current password is required to change User Name.", "error"); return; }
+    document.getElementById("error-profile-username").textContent = "";
+    var saveBtn = document.getElementById("profile-save-btn");
+    if (saveBtn) saveBtn.disabled = true;
+    try {
+      var rRename = await fetch(API + "/api/profile/rename", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ currentPassword: currentPw, newUsername: newUn })
+      });
+      var dRename = await rRename.json();
+      if (rRename.ok && dRename.success && dRename.token && dRename.username) {
+        username = dRename.username;
+        token = dRename.token;
+        try { sessionStorage.setItem("edit_session", JSON.stringify({ username: username, token: token })); } catch (_) {}
+        var nameOrEmailChanged = cur.firstName !== (profileSnapshot && profileSnapshot.firstName) || cur.lastName !== (profileSnapshot && profileSnapshot.lastName) || cur.accountEmail !== (profileSnapshot && profileSnapshot.accountEmail);
+        if (nameOrEmailChanged) {
+          var rPut = await fetch(API + "/api/profile/" + encodeURIComponent(username), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ firstName: cur.firstName, lastName: cur.lastName, accountEmail: email })
+          });
+          var dPut = await rPut.json();
+          if (rPut.ok && dPut.success && dPut.otpSent) {
+            pendingNewEmail = email;
+            verifyEmailContext = "emailChange";
+            applyUnverifiedRestriction();
+            exitProfileEditMode();
+            showStatusBanner("User name updated. Verification code sent to your new email.", "success");
+            openVerifyEmailModal("emailChange");
+          } else if (rPut.ok && dPut.success) {
+            await loadProfile();
+            await fetchContactPagesList();
+            applyUnverifiedRestriction();
+            exitProfileEditMode();
+            showStatusBanner("Profile updated. Your sign-in user name is now: " + username, "success");
+          } else {
+            await loadProfile();
+            await fetchContactPagesList();
+            exitProfileEditMode();
+            showStatusBanner(dPut.error || "User name updated but profile save failed.", "error");
+          }
+        } else {
+          await loadProfile();
+          await fetchContactPagesList();
+          applyUnverifiedRestriction();
+          exitProfileEditMode();
+          showStatusBanner("User name updated. Your sign-in user name is now: " + username, "success");
+        }
+      } else {
+        showStatusBanner(dRename.error || "Could not change User Name", "error");
+      }
+    } catch (e) {
+      showStatusBanner("Connection error", "error");
+    }
+    if (saveBtn) saveBtn.disabled = false;
+    updateProfileDirtyState();
+    return;
+  }
   var saveBtn = document.getElementById("profile-save-btn");
   if (saveBtn) saveBtn.disabled = true;
   try {
@@ -1776,6 +1890,129 @@ async function submitVerifyEmailCode() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Verify'; }
   }
+}
+
+function syncChangePwdSqOptions() {
+  var v1 = document.getElementById('change-sq1') && document.getElementById('change-sq1').value;
+  var v2 = document.getElementById('change-sq2') && document.getElementById('change-sq2').value;
+  var v3 = document.getElementById('change-sq3') && document.getElementById('change-sq3').value;
+  ['change-sq1','change-sq2','change-sq3'].forEach(function(id, idx) {
+    var sel = document.getElementById(id);
+    var ansWrap = sel && sel.closest && sel.closest('.secret-q-row') && sel.closest('.secret-q-row').querySelector('.secret-q-answer-wrap');
+    var ans = ansWrap && ansWrap.querySelector('.secret-q-answer');
+    var exclude = (id === 'change-sq1' ? [v2,v3] : id === 'change-sq2' ? [v1,v3] : [v1,v2]).filter(Boolean);
+    var cur = sel ? sel.value : '';
+    if (cur && exclude.indexOf(cur) >= 0) { cur = ''; if (ans) ans.value = ''; }
+    if (ansWrap) { if (cur) ansWrap.classList.remove('hidden'); else { ansWrap.classList.add('hidden'); if (ans) ans.value = ''; } }
+    if (sel && typeof RECOVERY_SQ_OPTIONS !== 'undefined') {
+      var opts = ['<option value="">Select question</option>'];
+      for (var k in RECOVERY_SQ_OPTIONS) { if (RECOVERY_SQ_OPTIONS.hasOwnProperty(k) && exclude.indexOf(k) < 0) opts.push('<option value="'+k+'"'+(k===cur?' selected':'')+'>'+RECOVERY_SQ_OPTIONS[k]+'</option>'); }
+      sel.innerHTML = opts.join('');
+    }
+  });
+  updateChangePwdSqSaveButton();
+}
+
+function updateChangePwdSqSaveButton() {
+  var cur = document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value.trim();
+  var newP = document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value;
+  var conf = document.getElementById('change-pwd-confirm') && document.getElementById('change-pwd-confirm').value;
+  var sq1 = document.getElementById('change-sq1') && document.getElementById('change-sq1').value;
+  var sq2 = document.getElementById('change-sq2') && document.getElementById('change-sq2').value;
+  var sq3 = document.getElementById('change-sq3') && document.getElementById('change-sq3').value;
+  var a1 = document.getElementById('change-sq1-answer') && document.getElementById('change-sq1-answer').value.trim();
+  var a2 = document.getElementById('change-sq2-answer') && document.getElementById('change-sq2-answer').value.trim();
+  var a3 = document.getElementById('change-sq3-answer') && document.getElementById('change-sq3-answer').value.trim();
+  var hasNewPwd = newP && newP.length >= 8 && newP === conf;
+  var hasSq = sq1 && sq2 && sq3 && [sq1,sq2,sq3].filter(function(x,i,a){return a.indexOf(x)===i;}).length === 3 && a1.length >= 4 && a2.length >= 4 && a3.length >= 4;
+  var btn = document.getElementById('change-pwd-sq-save-btn');
+  if (btn) btn.disabled = !cur || (!hasNewPwd && !hasSq);
+}
+
+function openChangePasswordSqModal() {
+  var m = document.getElementById('change-password-sq-modal');
+  if (!m) return;
+  document.getElementById('change-pwd-current').value = '';
+  document.getElementById('change-pwd-new').value = '';
+  document.getElementById('change-pwd-confirm').value = '';
+  ['change-sq1','change-sq2','change-sq3'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    var ans = document.getElementById(id + '-answer');
+    if (sel) sel.value = '';
+    if (ans) ans.value = '';
+    var wrap = sel && sel.closest && sel.closest('.secret-q-row') && sel.closest('.secret-q-row').querySelector('.secret-q-answer-wrap');
+    if (wrap) wrap.classList.add('hidden');
+  });
+  document.getElementById('change-pwd-sq-error').classList.add('hidden');
+  document.getElementById('change-pwd-sq-error').textContent = '';
+  syncChangePwdSqOptions();
+  m.classList.remove('hidden');
+  m.classList.add('show');
+  var curInp = document.getElementById('change-pwd-current');
+  if (curInp) curInp.focus();
+  ['change-pwd-current','change-pwd-new','change-pwd-confirm'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateChangePwdSqSaveButton);
+  });
+  ['change-sq1','change-sq2','change-sq3','change-sq1-answer','change-sq2-answer','change-sq3-answer'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', syncChangePwdSqOptions);
+  });
+  ['change-sq1','change-sq2','change-sq3'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', syncChangePwdSqOptions);
+  });
+}
+
+function closeChangePasswordSqModal() {
+  var m = document.getElementById('change-password-sq-modal');
+  if (m) { m.classList.remove('show'); m.classList.add('hidden'); }
+}
+
+async function saveChangePasswordSq() {
+  var cur = (document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value) || '';
+  var newP = (document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value) || '';
+  var conf = (document.getElementById('change-pwd-confirm') && document.getElementById('change-pwd-confirm').value) || '';
+  var errEl = document.getElementById('change-pwd-sq-error');
+  var btn = document.getElementById('change-pwd-sq-save-btn');
+  if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+  if (!cur.trim()) {
+    if (errEl) { errEl.textContent = 'Enter your current password.'; errEl.classList.remove('hidden'); return; }
+  }
+  var hasNewPwd = newP.length >= 8 && newP === conf;
+  var sq = [
+    { questionId: parseInt((document.getElementById('change-sq1') && document.getElementById('change-sq1').value) || 0, 10), answer: (document.getElementById('change-sq1-answer') && document.getElementById('change-sq1-answer').value) || '' },
+    { questionId: parseInt((document.getElementById('change-sq2') && document.getElementById('change-sq2').value) || 0, 10), answer: (document.getElementById('change-sq2-answer') && document.getElementById('change-sq2-answer').value) || '' },
+    { questionId: parseInt((document.getElementById('change-sq3') && document.getElementById('change-sq3').value) || 0, 10), answer: (document.getElementById('change-sq3-answer') && document.getElementById('change-sq3-answer').value) || '' }
+  ];
+  var hasSq = sq[0].questionId && sq[1].questionId && sq[2].questionId && sq.every(function(q){ return (q.answer || '').trim().length >= 4 && (q.answer || '').trim().length <= 30; }) && (new Set(sq.map(function(q){ return q.questionId; }))).size === 3;
+  if (!hasNewPwd && !hasSq) {
+    if (errEl) { errEl.textContent = 'Enter a new password (and confirm) and/or 3 security questions with answers (4–30 chars each).'; errEl.classList.remove('hidden'); return; }
+  }
+  if (hasNewPwd && newP !== conf) {
+    if (errEl) { errEl.textContent = 'New password and confirmation do not match.'; errEl.classList.remove('hidden'); return; }
+  }
+  if (btn) btn.disabled = true;
+  try {
+    var body = { currentPassword: cur.trim(), newPassword: hasNewPwd ? newP : '', secretQuestions: hasSq ? sq.map(function(q){ return { questionId: q.questionId, answer: (q.answer || '').trim() }; }) : [] };
+    var r = await fetch(API + '/api/profile/change-password-and-sq', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
+    var d = await r.json();
+    if (r.ok && d.success !== false) {
+      closeChangePasswordSqModal();
+      sessionStorage.removeItem('edit_session');
+      username = null;
+      token = null;
+      document.getElementById('screen-editor').classList.add('hidden');
+      document.getElementById('signout-btn').classList.add('hidden');
+      document.getElementById('screen-auth').classList.remove('hidden');
+      showAlert('auth-alert', 'Your password (and security questions if changed) have been updated. Please sign in with your new password.', 'success');
+    } else {
+      if (errEl) { errEl.textContent = (d && d.error) || 'Failed to update.'; errEl.classList.remove('hidden'); }
+    }
+  } catch (e) {
+    if (errEl) { errEl.textContent = 'Connection error. Please try again.'; errEl.classList.remove('hidden'); }
+  }
+  if (btn) btn.disabled = false;
 }
 
 function signOut() {

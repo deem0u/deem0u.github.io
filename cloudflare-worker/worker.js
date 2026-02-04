@@ -282,6 +282,12 @@ export default {
       if (request.method === 'POST' && path === '/api/profile/set-password-after-otp') {
         return await handleSetPasswordAfterOtp(request, env);
       }
+      if (request.method === 'POST' && path === '/api/profile/change-password-and-sq') {
+        return await handleChangePasswordAndSq(request, env);
+      }
+      if (request.method === 'POST' && path === '/api/profile/rename') {
+        return await handleProfileRename(request, env);
+      }
       if (request.method === 'GET' && path.startsWith('/api/secrets/')) {
         const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
         let username = raw || '';
@@ -2388,10 +2394,12 @@ async function handleGetProfile(username, request, env) {
   const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
   const dobMasked = (dob && dob.length >= 4) ? '**/**/' + dob.slice(-4) : '';
   return jsonResponse({
+    username: username || '',
     firstName: firstName || '',
     lastName: lastName || '',
     accountEmail: accountEmail || '',
     emailVerified,
+    dob: dob || '',
     dobMasked
   });
 }
@@ -2491,6 +2499,158 @@ async function handleSetPasswordAfterOtp(request, env) {
   const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
   const newToken = await signJwt({ username, exp }, secret);
   return jsonResponse({ success: true, token: newToken });
+}
+
+/** POST /api/profile/change-password-and-sq - Bearer required. Body: { currentPassword, newPassword?, secretQuestions? }. Verifies current password then updates password and/or security questions. */
+async function handleChangePasswordAndSq(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const currentPassword = (body.currentPassword || '').trim();
+  if (!currentPassword) return jsonResponse({ error: 'Current password required' }, 400);
+  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
+  if (!pwHash) return jsonResponse({ error: 'No password set for this account' }, 400);
+  const valid = await verifyPassword(currentPassword, pwHash);
+  if (!valid) return jsonResponse({ error: 'Current password is incorrect' }, 401);
+  const newPassword = (body.newPassword || '').trim();
+  const secretQuestions = Array.isArray(body.secretQuestions) ? body.secretQuestions : [];
+  if (newPassword.length > 0 && newPassword.length < 8) return jsonResponse({ error: 'New password must be at least 8 characters' }, 400);
+  const hasNewPwd = newPassword.length >= 8;
+  const hasSq = secretQuestions.length === 3 && secretQuestions.every(q => q && q.questionId && (q.answer || '').trim().length >= 4);
+  if (!hasNewPwd && !hasSq) return jsonResponse({ error: 'Enter a new password (and confirm) and/or 3 security questions with answers' }, 400);
+  if (secretQuestions.length > 0) {
+    const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const ids = secretQuestions.map(q => q.questionId);
+    if (secretQuestions.length !== 3 || ids.some(id => !validIds.includes(id)) || new Set(ids).size !== 3) {
+      return jsonResponse({ error: 'Exactly 3 distinct security questions required' }, 400);
+    }
+    for (const q of secretQuestions) {
+      const a = (q.answer || '').trim();
+      if (a.length < 4 || a.length > 30) return jsonResponse({ error: 'Each security answer must be 4-30 characters' }, 400);
+    }
+  }
+  if (newPassword.length >= 8) {
+    const newHash = await hashPassword(newPassword);
+    await env.EDIT_KEYS_KV.put('user_password_hash:' + username, newHash);
+  }
+  if (secretQuestions.length === 3) {
+    const existing = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+    const dobForRecovery = (existing ? (JSON.parse(existing).dob || '') : '') || (await env.EDIT_KEYS_KV.get('user_dob:' + username)) || '';
+    await env.EDIT_KEYS_KV.put('user_recovery:' + username, JSON.stringify({
+      dob: dobForRecovery,
+      secretQuestions: secretQuestions.map(q => ({ questionId: q.questionId, answer: (q.answer || '').trim() }))
+    }));
+  }
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/profile/rename - Bearer required. Body: { currentPassword, newUsername }. Verifies current password then renames user folder and KV to newUsername. Returns new JWT. */
+async function handleProfileRename(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const oldUsername = (payload.username || '').trim().toLowerCase();
+  if (!oldUsername || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const currentPassword = (body.currentPassword || '').trim();
+  const newUsername = (body.newUsername || '').trim().toLowerCase();
+  if (!currentPassword) return jsonResponse({ error: 'Current password required' }, 400);
+  if (!newUsername || newUsername.length < 3) return jsonResponse({ error: 'New username required (3-32 characters)' }, 400);
+  if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUsername)) return jsonResponse({ error: 'Username must be 3-32 characters, letters, numbers, hyphens, underscores' }, 400);
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
+  if (reserved.includes(newUsername)) return jsonResponse({ error: 'This username is reserved' }, 400);
+  if (oldUsername === newUsername) return jsonResponse({ error: 'New username must be different' }, 400);
+  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + oldUsername);
+  if (!pwHash) return jsonResponse({ error: 'No password set' }, 400);
+  const valid = await verifyPassword(currentPassword, pwHash);
+  if (!valid) return jsonResponse({ error: 'Current password is incorrect' }, 401);
+  if (!env.GITHUB_TOKEN) return jsonResponse({ error: 'Rename not available' }, 503);
+  {
+    const existingRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${newUsername}?ref=${CONFIG.branch}`,
+      { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+    );
+    if (existingRes.ok) return jsonResponse({ error: 'A user with this username already exists' }, 409);
+  }
+  const listRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${oldUsername}?ref=${CONFIG.branch}`,
+    { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+  );
+  if (!listRes.ok) return jsonResponse({ error: 'User folder not found' }, 404);
+  const files = await listRes.json();
+  const htmlFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name && f.name.endsWith('.html')) : [];
+  for (const file of htmlFiles) {
+    const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
+    const getRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}?ref=${CONFIG.branch}`,
+      { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+    );
+    if (!getRes.ok) return jsonResponse({ error: 'Failed to read file: ' + file.name }, 500);
+    const fileData = await getRes.json();
+    const contentBase64 = fileData.content ? fileData.content.replace(/\n/g, '') : '';
+    const newPath = `${USER_PAGES_PREFIX}/${newUsername}/${file.name}`;
+    const putRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${newPath}`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'ContactPageEditor/1.0' },
+        body: JSON.stringify({ message: `Rename user: ${oldUsername} -> ${newUsername}`, content: contentBase64, branch: CONFIG.branch })
+      }
+    );
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      return jsonResponse({ error: err.message || 'Failed to create file: ' + file.name }, putRes.status);
+    }
+  }
+  for (const file of htmlFiles) {
+    const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
+    const delRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}`,
+      {
+        method: 'DELETE',
+        headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'ContactPageEditor/1.0' },
+        body: JSON.stringify({ message: `Rename user: remove ${oldUsername}`, sha: file.sha, branch: CONFIG.branch })
+      }
+    );
+    if (!delRes.ok) return jsonResponse({ error: 'Failed to delete old file: ' + file.name }, 500);
+  }
+  const kvKeys = [
+    'account_email', 'user_first_name', 'user_last_name', 'user_dob', 'user_recovery', 'user_password_hash',
+    'email_verified', 'email_verified_admin', 'access_revoked', 'account_details_sent'
+  ];
+  for (const prefix of kvKeys) {
+    const val = await env.EDIT_KEYS_KV.get(prefix + ':' + oldUsername);
+    if (val != null) {
+      await env.EDIT_KEYS_KV.put(prefix + ':' + newUsername, val);
+      await env.EDIT_KEYS_KV.delete(prefix + ':' + oldUsername);
+    }
+  }
+  const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + newUsername);
+  if (accountEmail && accountEmail.includes('@')) {
+    await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + accountEmail.toLowerCase().trim());
+    await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmail.toLowerCase().trim(), newUsername);
+  }
+  const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${oldUsername}:` });
+  for (const key of nameList.keys) {
+    const slug = key.name.replace(`contact_page_name:${oldUsername}:`, '');
+    const val = await env.EDIT_KEYS_KV.get(key.name);
+    if (val != null) {
+      await env.EDIT_KEYS_KV.put(`contact_page_name:${newUsername}:${slug}`, val);
+      await env.EDIT_KEYS_KV.delete(key.name);
+    }
+  }
+  const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
+  const newToken = await signJwt({ username: newUsername, exp }, secret);
+  return jsonResponse({ success: true, token: newToken, username: newUsername });
 }
 
 async function handleGetSecrets(username, request, env) {

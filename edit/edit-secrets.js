@@ -9,22 +9,31 @@ async function checkSecretsStatus() {
     const hasDob = !!(d.dob && d.dob.trim());
     const sq = Array.isArray(d.secretQuestions) ? d.secretQuestions : [];
     const hasSecretQuestions = sq.length === 3 && sq.every(function(q) { return q && q.questionId && (q.answer || '').trim().length >= 4; });
+    const passwordSet = !!d.passwordSet;
     const missing = [];
+    if (!passwordSet) missing.push('Password');
     if (!hasAccountEmail) missing.push('Email (For your account)');
     if (!hasDob) missing.push('DOB');
     if (!hasSecretQuestions) missing.push('3 Secret Questions');
+    window.secretsComplete = (missing.length === 0);
     const banner = document.getElementById('secrets-banner');
     const list = document.getElementById('secrets-missing-list');
     if (!banner || !list) return;
     if (missing.length === 0) {
       banner.classList.add('hidden');
       banner.classList.remove('show');
-      return;
+    } else {
+      list.innerHTML = missing.map(function(m) { return '<li>' + m + '</li>'; }).join('');
+      banner.classList.remove('hidden');
+      banner.classList.add('show');
     }
-    list.innerHTML = missing.map(function(m) { return '<li>' + m + '</li>'; }).join('');
-    banner.classList.remove('hidden');
-    banner.classList.add('show');
-  } catch (e) {}
+    var btn = document.getElementById('change-password-sq-btn');
+    if (btn) btn.classList.toggle('hidden', !window.secretsComplete);
+  } catch (e) {
+    window.secretsComplete = false;
+    var btn = document.getElementById('change-password-sq-btn');
+    if (btn) btn.classList.add('hidden');
+  }
 }
 
 function showEditSecretsModal() {
