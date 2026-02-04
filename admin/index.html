@@ -2414,7 +2414,7 @@ function renderList(t) {
           <div class="action-combo-group">
             <span class="action-row-label">Max contact pages</span>
             <div class="action-row-buttons" style="align-items:center; gap:0.35rem;">
-              <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(siteSettings.maxContactPagesByUser && siteSettings.maxContactPagesByUser[f]) !== undefined ? Number(siteSettings.maxContactPagesByUser[f]) : ''}" placeholder="0 = unlimited" style="width:6ch; padding:0.25rem 0.35rem; font-size:0.875rem;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited. User and admin cannot create new pages when at limit; deletion is allowed.">
+              <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0 = unlimited" style="width:6ch; padding:0.25rem 0.35rem; font-size:0.875rem;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited. User and admin cannot create new pages when at limit; deletion is allowed.">
               <span class="form-hint" style="margin:0; font-size:0.8rem;">0 = unlimited</span>
             </div>
           </div>
@@ -3280,17 +3280,25 @@ async function toggleDivertUser(checkboxEl) {
   } catch (e) { siteSettings.divertUsers[username] = !checked; checkboxEl.checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
 }
 
+function getMaxContactPagesForFolder(folder) {
+  if (!siteSettings.maxContactPagesByUser || !folder) return undefined;
+  var v = siteSettings.maxContactPagesByUser[folder];
+  if (v !== undefined) return v;
+  return siteSettings.maxContactPagesByUser[folder.toLowerCase()];
+}
+
 async function setMaxContactPagesForUser(username, value) {
   if (!username) return;
   var n = value === '' || value === null || value === undefined ? 0 : parseInt(value, 10);
   if (isNaN(n) || n < 0) n = 0;
   if (!siteSettings.maxContactPagesByUser) siteSettings.maxContactPagesByUser = {};
-  siteSettings.maxContactPagesByUser[username] = n;
+  var uLower = username.toLowerCase();
+  siteSettings.maxContactPagesByUser[uLower] = n;
   try {
     var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ maxContactPagesByUser: siteSettings.maxContactPagesByUser }) });
     if (r.ok) showAlert('alert-manage', 'Max contact pages updated.', 'success');
-    else { delete siteSettings.maxContactPagesByUser[username]; var inp = document.getElementById('max-pages-' + username); if (inp) inp.value = (siteSettings.maxContactPagesByUser[username] !== undefined ? siteSettings.maxContactPagesByUser[username] : ''); showAlert('alert-manage', 'Failed to update.', 'error'); }
-  } catch (e) { delete siteSettings.maxContactPagesByUser[username]; var inp = document.getElementById('max-pages-' + username); if (inp) inp.value = ''; showAlert('alert-manage', 'Connection error.', 'error'); }
+    else { delete siteSettings.maxContactPagesByUser[uLower]; var inp = document.getElementById('max-pages-' + username); if (inp) inp.value = (getMaxContactPagesForFolder(username) !== undefined ? getMaxContactPagesForFolder(username) : ''); showAlert('alert-manage', 'Failed to update.', 'error'); }
+  } catch (e) { delete siteSettings.maxContactPagesByUser[uLower]; var inp = document.getElementById('max-pages-' + username); if (inp) inp.value = ''; showAlert('alert-manage', 'Connection error.', 'error'); }
 }
 
 function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); }
