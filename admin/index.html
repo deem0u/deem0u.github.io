@@ -1542,16 +1542,22 @@ async function handlePasswordResetModalSubmit() {
 function copyRecoveredKey() { navigator.clipboard.writeText(document.getElementById('recovered-key').value); showAlert('recovery-alert-2', 'Copied to clipboard!', 'success'); }
 
 
-async function fetchAccountEmailsAndRefresh() {
+var FETCH_BULK_TIMEOUT_MS = 25000;
+
+async function fetchAccountEmailsAndRefresh(skipPopulateUI) {
+  var controller = new AbortController();
+  var timeoutId = setTimeout(function() { controller.abort(); }, FETCH_BULK_TIMEOUT_MS);
+  var opts = { signal: controller.signal, cache: 'no-store' };
   try {
     var usernames = Object.keys(userInfo);
-    var emailsPromise = fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey }, cache: 'no-store' }).then(function(r) {
+    var emailsPromise = fetch(API + '/api/account-emails', { headers: { 'X-Admin-Key': adminKey }, ...opts }).then(function(r) {
       if (!r.ok) { console.warn('[admin] account-emails API failed:', r.status, r.statusText); return null; }
       return r.json();
     });
-    var profPromise = fetch(API + '/api/account-profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: usernames }), cache: 'no-store' }).then(function(r) { return r.ok ? r.json() : null; });
-    var secretsPromise = fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: pages || [] }), cache: 'no-store' }).then(function(r) { return r.ok ? r.json() : null; });
+    var profPromise = fetch(API + '/api/account-profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: usernames }), ...opts }).then(function(r) { return r.ok ? r.json() : null; });
+    var secretsPromise = fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: pages || [] }), ...opts }).then(function(r) { return r.ok ? r.json() : null; });
     var results = await Promise.all([emailsPromise, profPromise, secretsPromise]);
+    clearTimeout(timeoutId);
     var d = results[0];
     if (d) {
       var accountEmails = (d.accountEmails) ? d.accountEmails : {};
@@ -1624,55 +1630,96 @@ async function fetchAccountEmailsAndRefresh() {
         userInfo[f].secretsComplete = !!(statuses[f] && statuses[f].secretsComplete) || !!(statuses[fLower] && statuses[fLower].secretsComplete);
       }
     }
-    populateUI();
+    if (!skipPopulateUI) populateUI();
   } catch (e) {
-    console.error('[admin] fetchAccountEmailsAndRefresh failed:', e);
+    clearTimeout(timeoutId);
+    if (e && e.name === 'AbortError') console.warn('[admin] account fetch timed out after ' + (FETCH_BULK_TIMEOUT_MS/1000) + 's');
+    else console.error('[admin] fetchAccountEmailsAndRefresh failed:', e);
+    if (skipPopulateUI) throw e;
   }
 }
 async function loadDashboard() {
-  var pRes = fetch(API + '/api/pages', { headers: { 'X-Admin-Key': adminKey } });
-  var kRes = fetch(API + '/api/keys', { headers: { 'X-Admin-Key': adminKey } });
-  var pResOk = await pRes;
-  var kResOk = await kRes;
-  if (!pResOk.ok) throw new Error('Failed to load pages: ' + pResOk.status);
-  if (!kResOk.ok) throw new Error('Failed to load keys: ' + kResOk.status);
-  var pData = await pResOk.json();
-  var kData = await kResOk.json();
-  var accountEmails = {};
-  pages = pData.pages || [];
+  var headers = { 'X-Admin-Key': adminKey };
+  var summariesRes = await fetch(API + '/api/pages/summaries', { headers: headers });
+  var kRes = await fetch(API + '/api/keys', { headers: headers });
+  if (!kRes.ok) throw new Error('Failed to load keys: ' + kRes.status);
+  var kData = await kRes.json();
   editKeys = kData.editKeys || {};
   userInfo = {};
-  var pagePromises = pages.map(function(f) {
-    return fetch(API + '/api/page/' + encodeURIComponent(f), { headers: { 'X-Admin-Key': adminKey } })
-      .then(function(r) { return r.ok ? r.json().then(function(d) { return { folder: f, data: d }; }) : null; })
-      .catch(function() { return null; });
-  });
-  var pageResults = await Promise.all(pagePromises);
-  for (var i = 0; i < pageResults.length; i++) {
-    var item = pageResults[i];
-    if (item && item.data && item.data.content) {
-      var info = extractInfo(item.data.content);
-      var f = item.folder;
-      userInfo[f] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: info.givenName, pageFamilyName: info.familyName, pageEmail: info.contactEmail, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
+  var summariesData = summariesRes.ok ? await summariesRes.json().catch(function() { return null; }) : null;
+  var useSummaries = summariesRes.ok && summariesData && Array.isArray(summariesData.pages) && summariesData.summaries && typeof summariesData.summaries === 'object';
+
+  if (useSummaries) {
+    pages = summariesData.pages;
+    for (var si = 0; si < pages.length; si++) {
+      var folder = pages[si];
+      var s = (summariesData.summaries && summariesData.summaries[folder]) || {};
+      userInfo[folder] = {
+        accountEmail: null,
+        firstName: '',
+        lastName: '',
+        pageGivenName: s.givenName || '',
+        pageFamilyName: s.familyName || '',
+        pageEmail: s.contactEmail || '',
+        lastUpdated: s.lastUpdated || null,
+        updatedBy: s.updatedBy || null,
+        folder: folder
+      };
     }
-  }
-  for (var pi = 0; pi < pages.length; pi++) {
-    var folder = pages[pi];
-    if (!userInfo[folder]) userInfo[folder] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', lastUpdated: null, updatedBy: null, folder: folder };
-  }
-  try {
-    var settingsRes = await fetch(API + '/api/admin/site-settings', { headers: { 'X-Admin-Key': adminKey } });
-    if (settingsRes.ok) {
-      var settingsData = await settingsRes.json();
+  } else {
+    var pRes = await fetch(API + '/api/pages', { headers: headers });
+    if (!pRes.ok) throw new Error('Failed to load pages: ' + pRes.status);
+    var pData = await pRes.json();
+    pages = pData.pages || [];
+    var pagePromises = pages.map(function(f) {
+      return fetch(API + '/api/page/' + encodeURIComponent(f), { headers: headers })
+        .then(function(r) { return r.ok ? r.json().then(function(d) { return { folder: f, data: d }; }) : null; })
+        .catch(function() { return null; });
+    });
+    var settingsPromise = fetch(API + '/api/admin/site-settings', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
+    var adminEmailPromise = fetch(API + '/api/admin/admin-email', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
+    var allResults = await Promise.all(pagePromises.concat([settingsPromise, adminEmailPromise]));
+    var pageResults = allResults.slice(0, pages.length);
+    var settingsData = allResults[pages.length];
+    var adminEmailData = allResults[pages.length + 1];
+    for (var i = 0; i < pageResults.length; i++) {
+      var item = pageResults[i];
+      if (item && item.data && item.data.content) {
+        var info = extractInfo(item.data.content);
+        var f = item.folder;
+        userInfo[f] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: info.givenName, pageFamilyName: info.familyName, pageEmail: info.contactEmail, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
+      }
+    }
+    for (var pi = 0; pi < pages.length; pi++) {
+      var folder = pages[pi];
+      if (!userInfo[folder]) userInfo[folder] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', lastUpdated: null, updatedBy: null, folder: folder };
+    }
+    if (settingsData) {
       siteSettings = { divertAllGlobal: !!settingsData.divertAllGlobal, maintenanceMode: !!settingsData.maintenanceMode, lockdownMode: !!settingsData.lockdownMode, divertUsers: settingsData.divertUsers || {} };
     }
-    var adminEmailRes = await fetch(API + '/api/admin/admin-email', { headers: { 'X-Admin-Key': adminKey } });
-    if (adminEmailRes.ok) {
-      var adminEmailData = await adminEmailRes.json();
+    if (adminEmailData) {
       adminEmail = adminEmailData.email || null;
       adminPasswordSet = !!adminEmailData.passwordSet;
       loadAdminAccountSection();
     }
+  }
+
+  if (useSummaries) {
+    var settingsPromise = fetch(API + '/api/admin/site-settings', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
+    var adminEmailPromise = fetch(API + '/api/admin/admin-email', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
+    var settingsData = await settingsPromise;
+    var adminEmailData = await adminEmailPromise;
+    if (settingsData) {
+      siteSettings = { divertAllGlobal: !!settingsData.divertAllGlobal, maintenanceMode: !!settingsData.maintenanceMode, lockdownMode: !!settingsData.lockdownMode, divertUsers: settingsData.divertUsers || {} };
+    }
+    if (adminEmailData) {
+      adminEmail = adminEmailData.email || null;
+      adminPasswordSet = !!adminEmailData.passwordSet;
+      loadAdminAccountSection();
+    }
+  }
+
+  try {
     var sdAll = document.getElementById('site-divert-all');
     var sdMaint = document.getElementById('site-maintenance');
     var sdLock = document.getElementById('site-lockdown');
@@ -1680,7 +1727,12 @@ async function loadDashboard() {
     if (sdAll) sdAll.checked = siteSettings.divertAllGlobal;
     if (sdMaint) sdMaint.checked = siteSettings.maintenanceMode;
     if (sdLock) sdLock.checked = siteSettings.lockdownMode;
-    await fetchAccountEmailsAndRefresh();
+    try {
+      await fetchAccountEmailsAndRefresh(true);
+    } catch (e) {
+      console.error('[admin] account merge failed, showing list with page data only:', e);
+      showAlert('alert-manage', 'Account details could not be loaded. You can still manage pages. Refresh to retry.', 'warning');
+    }
     populateUI();
   } catch (e) {
     console.error('populateUI error:', e);

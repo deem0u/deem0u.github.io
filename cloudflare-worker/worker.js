@@ -230,6 +230,9 @@ export default {
       }
 
       // Admin routes
+      if (request.method === 'GET' && path === '/api/pages/summaries') {
+        return await handlePageSummaries(request, env);
+      }
       if (request.method === 'GET' && path === '/api/pages') {
         return await handleListPages(request, env);
       }
@@ -1871,6 +1874,72 @@ async function handleListPages(request, env) {
   return jsonResponse({ pages });
 }
 
+/** GET /api/pages/summaries - List pages plus minimal summary per page (givenName, familyName, contactEmail, lastUpdated, updatedBy). Admin only. */
+async function handlePageSummaries(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  const listRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (!listRes.ok) {
+    return jsonResponse({ error: 'GitHub error' }, 500);
+  }
+  const contents = await listRes.json();
+  const usernames = (Array.isArray(contents) ? contents : [])
+    .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
+    .map(item => item.name);
+
+  const pages = [];
+  const summaries = {};
+  const authHeaders = {
+    'Authorization': `token ${env.GITHUB_TOKEN}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'ContactPageEditor/1.0'
+  };
+
+  const fetchSummary = async (username) => {
+    try {
+      const dirRes = await fetch(
+        `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+        { headers: authHeaders }
+      );
+      if (!dirRes.ok) return null;
+      const dirContents = await dirRes.json();
+      const files = Array.isArray(dirContents) ? dirContents : [];
+      if (!files.some(f => f.name && f.name.endsWith('.html'))) return null;
+      const filePath = pagePath(username, 'index');
+      const fileRes = await fetch(
+        `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
+        { headers: authHeaders }
+      );
+      if (!fileRes.ok) return { username, summary: null };
+      const fileData = await fileRes.json();
+      const html = decodeBase64(fileData.content);
+      const summary = extractSummaryFromHtml(html);
+      return { username, summary };
+    } catch (e) {
+      return { username, summary: null };
+    }
+  };
+
+  const results = await Promise.all(usernames.map(fetchSummary));
+  for (const r of results) {
+    if (!r) continue;
+    pages.push(r.username);
+    summaries[r.username] = r.summary || { givenName: '', familyName: '', contactEmail: '', lastUpdated: null, updatedBy: null };
+  }
+
+  return jsonResponse({ pages, summaries });
+}
+
 /** GET /api/contact-pages/:username - List contact page names for a user (admin or same user via Bearer). */
 async function handleListContactPages(username, request, env) {
   const u = (username || '').trim();
@@ -2455,4 +2524,42 @@ function decodeBase64(base64) {
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return new TextDecoder().decode(bytes);
+}
+
+/** Extract display fields from contact page HTML. Keep in sync with admin extractInfo(). */
+function extractSummaryFromHtml(html) {
+  const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const g = (label) => {
+    const re = new RegExp(`<span class="label">${esc(label)}[^<]*</span><span class="value">([^<]+)</span>`);
+    const m = html.match(re);
+    if (!m) return '';
+    const v = (m[1] || '').trim();
+    return (v === '?' || !v) ? '' : v;
+  };
+  const em = html.match(/href="mailto:([^"]+)"/);
+  const contactEmail = em ? em[1] : '';
+  const dataTimestampMatch = html.match(/data-timestamp="([^"]+)"/);
+  const dataUpdatedByMatch = html.match(/data-updated-by="([^"]+)"/);
+  let lastUpdated = null;
+  let updatedBy = null;
+  if (dataTimestampMatch && dataUpdatedByMatch) {
+    lastUpdated = dataTimestampMatch[1];
+    updatedBy = dataUpdatedByMatch[1];
+  } else {
+    const lastUpdatedText = g('Last Updated') || g('Last updated');
+    if (lastUpdatedText) {
+      const byMatch = lastUpdatedText.match(/ by (Admin|User)$/);
+      if (byMatch) {
+        updatedBy = byMatch[1].toLowerCase();
+        lastUpdated = null;
+      }
+    }
+  }
+  return {
+    givenName: g('Given Names') || g('Name'),
+    familyName: g('Family Name') || g('Surname'),
+    contactEmail: contactEmail || '',
+    lastUpdated,
+    updatedBy
+  };
 }
