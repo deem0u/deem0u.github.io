@@ -616,7 +616,7 @@ function escapeHtml(s) {
 }
 function setHeaderAndTitleForUser(un) {
   if (!un || !un.length) return;
-  var capUn = un.charAt(0).toUpperCase() + un.slice(1).toLowerCase();
+  var capUn = (un || '').toUpperCase();
   document.title = 'MyAccount - ' + capUn;
   var logoEl = document.getElementById('header-logo-text');
   if (logoEl) logoEl.innerHTML = 'MyAccount - <span class="header-username-teal">' + escapeHtml(capUn) + '</span>';
