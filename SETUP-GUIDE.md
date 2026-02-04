@@ -8,7 +8,7 @@
 
 - **Admin Dashboard** — Manage users, set secrets, grant/revoke edit access, send account details via email
 - **Home Page** — Self-service account creation for new users
-- **Contact Editor** — Users sign in with User Name + Edit Key to edit their page; Access Recovery for forgot key
+- **My Account (user portal)** — Users sign in with User Name + password to edit their page; Access Recovery for forgot password
 - **Backend (Cloudflare Worker)** — API for signup, auth, recovery, page CRUD, secrets, keys
 - **Storage** — GitHub (pages content) + Cloudflare KV (keys, secrets, admin)
 - **Email Relay** (optional) — Vercel serverless function using Nodemailer + Gmail SMTP; enables automated emails (account details, recovery, etc.) from your Gmail
@@ -55,17 +55,17 @@ Use this section to find where to obtain each value, what it looks like, and eve
 | `cloudflare-worker/worker.js` | `owner: 'deem0u'` | `owner: 'YOUR_GITHUB_USERNAME'` |
 | `cloudflare-worker/worker.js` | `repo: 'deem0u.github.io'` | `repo: 'YOUR_GITHUB_USERNAME.github.io'` (or your Pages repo name) |
 | `account-details-content.js` | `https://deem0u.github.io/` | `https://YOUR_GITHUB_USERNAME.github.io/` |
-| `account-details-content.js` | `https://deem0u.github.io/edit/` | `https://YOUR_GITHUB_USERNAME.github.io/edit/` |
-| `admin/index.html` | `https://deem0u.github.io/edit/` | `https://YOUR_GITHUB_USERNAME.github.io/edit/` |
+| `account-details-content.js` | `https://deem0u.github.io/myaccount/` | `https://YOUR_GITHUB_USERNAME.github.io/myaccount/` |
+| `admin/index.html` | `https://deem0u.github.io/myaccount/` | `https://YOUR_GITHUB_USERNAME.github.io/myaccount/` |
 | `admin/index.html` | `https://deem0u.github.io/` | `https://YOUR_GITHUB_USERNAME.github.io/` |
-| `home/index.html` | `https://deem0u.github.io/edit/` | (3 occurrences: nav, Contact Editor button) |
+| `home/index.html` | `https://deem0u.github.io/myaccount/` | (nav link) |
 | `home/index.html` | `https://deem0u.github.io/home/` | (1 occurrence: I'll do it later button) |
 | `home/index.html` | `https://deem0u.github.io/` | (PAGES_URL) |
 | `home/index.html` | `deem0u.github.io/john-smith/` | (in form hint text) |
-| `edit/index.html` | `https://deem0u.github.io/edit/` | (3 occurrences: nav, recovery button) |
-| `edit/index.html` | `https://deem0u.github.io/` | (PAGES_URL) |
-| `edit/index.html` | `https://deem0u.github.io/${folder}/` | (view-page-link href — keep `${folder}`) |
-| `terms-and-privacy/index.html` | `https://deem0u.github.io/edit/` | (nav link) |
+| `myaccount/index.html` | `https://deem0u.github.io/myaccount/` | (3 occurrences: nav, recovery button) |
+| `myaccount/index.html` | `https://deem0u.github.io/` | (PAGES_URL) |
+| `myaccount/index.html` | `https://deem0u.github.io/${folder}/` | (view-page-link href — keep `${folder}`) |
+| `terms-and-privacy/index.html` | `https://deem0u.github.io/myaccount/` | (nav link) |
 | `form-descriptions.js` | `deem0u.github.io/<strong>john-smith</strong>/` | `YOUR_GITHUB_USERNAME.github.io/<strong>john-smith</strong>/` |
 
 ---
@@ -88,7 +88,7 @@ Use this section to find where to obtain each value, what it looks like, and eve
 |------|------------|--------------|
 | `admin/index.html` | `const API = 'https://contact-page-editor.deem0u.workers.dev';` | `const API = 'https://YOUR-WORKER-URL';` |
 | `home/index.html` | `const API = 'https://contact-page-editor.deem0u.workers.dev';` | Same |
-| `edit/index.html` | `const API = 'https://contact-page-editor.deem0u.workers.dev';` | Same |
+| `myaccount/index.html` | `const API = 'https://contact-page-editor.deem0u.workers.dev';` | Same |
 
 ---
 
@@ -128,8 +128,8 @@ Use this section to find where to obtain each value, what it looks like, and eve
 | `account-details-content.js` | `deem0u.github.io@gmail.com` | `YOUR_CONTACT_EMAIL` (2 occurrences: plain text and HTML body) |
 | `admin/index.html` | `mailto:deem0u.github.io@gmail.com` | `mailto:YOUR_CONTACT_EMAIL` (Email Me nav link) |
 | `home/index.html` | `mailto:deem0u.github.io@gmail.com` | `mailto:YOUR_CONTACT_EMAIL` (Email Me nav link) |
-| `edit/index.html` | `mailto:deem0u.github.io@gmail.com` | `mailto:YOUR_CONTACT_EMAIL` (Email Me nav link) |
-| `edit/index.html` | `email deem0u.github.io@gmail.com` | `email YOUR_CONTACT_EMAIL` (2 occurrences: recovery error messages) |
+| `myaccount/index.html` | `mailto:deem0u.github.io@gmail.com` | `mailto:YOUR_CONTACT_EMAIL` (Email Me nav link) |
+| `myaccount/index.html` | `email deem0u.github.io@gmail.com` | `email YOUR_CONTACT_EMAIL` (2 occurrences: recovery error messages) |
 | `terms-and-privacy/index.html` | `deem0u.github.io@gmail.com` | `YOUR_CONTACT_EMAIL` (3 occurrences: mailto links and body text) |
 
 ---
@@ -288,14 +288,14 @@ Update the API base URL in **three files** (replace with your Worker URL from A5
 |------|----------|--------|
 | `admin/index.html` | Search for `const API =` | `const API = 'https://YOUR-WORKER-URL';` |
 | `home/index.html` | Search for `const API =` | Same |
-| `edit/index.html` | Search for `const API =` | Same |
+| `myaccount/index.html` | Search for `const API =` | Same |
 
 ### C4. Frontend — Base URLs and Contact Email
 
 **`account-details-content.js`** (root):
 ```javascript
 const PAGES_URL = 'https://YOUR_GITHUB_USERNAME.github.io/';
-const EDITOR_URL = 'https://YOUR_GITHUB_USERNAME.github.io/edit/';
+const EDITOR_URL = 'https://YOUR_GITHUB_USERNAME.github.io/myaccount/';
 ```
 And replace `deem0u.github.io@gmail.com` with your contact email in:
 - The plain-text body string (`contact me at ...`)
@@ -307,8 +307,8 @@ Search for `deem0u.github.io` and `https://deem0u.github.io/` across the site. R
 
 Files to update:
 - `admin/index.html` — nav links, Email Me
-- `home/index.html` — nav, Contact Editor button
-- `edit/index.html` — nav, recovery links
+- `home/index.html` — nav (My Account link)
+- `myaccount/index.html` — nav, recovery links
 - `terms-and-privacy/index.html` — nav
 - `form-descriptions.js` — folder hint example (e.g. `deem0u.github.io/john-smith/` → `YOUR_GITHUB_USERNAME.github.io/john-smith/`)
 
@@ -341,8 +341,8 @@ Upload these files preserving the folder structure:
 | `countries-data.js` | Root: `countries-data.js` |
 | `form-descriptions.js` | Root: `form-descriptions.js` |
 | `admin/index.html` | `admin/index.html` |
-| `edit/index.html` | `edit/index.html` |
-| `edit/edit-secrets.js` | `edit/edit-secrets.js` |
+| `myaccount/index.html` | `myaccount/index.html` |
+| `myaccount/edit-secrets.js` | `myaccount/edit-secrets.js` |
 | `home/index.html` | `home/index.html` |
 | `terms-and-privacy/index.html` | `terms-and-privacy/index.html` |
 
@@ -391,7 +391,7 @@ The Worker includes a `sendEmail()` helper. Workflow integrations (signup, recov
 | Worker live | Visit `https://YOUR-WORKER-URL` — may show 404, but no connection error |
 | Admin loads | `https://YOUR_GITHUB_USERNAME.github.io/admin/` shows setup or sign-in |
 | Home loads | `https://YOUR_GITHUB_USERNAME.github.io/home/` shows hero + Get Started |
-| Edit loads | `https://YOUR_GITHUB_USERNAME.github.io/edit/` shows Sign In |
+| My Account loads | `https://YOUR_GITHUB_USERNAME.github.io/myaccount/` shows Sign In |
 
 ---
 
@@ -399,7 +399,7 @@ The Worker includes a `sendEmail()` helper. Workflow integrations (signup, recov
 
 - **Manage users** — Admin → Manage Users: Add, Set Secrets, Grant/Revoke, Delete, Send via Email
 - **New badge** — Users with a new Edit Key who haven’t had “Send via Email” yet
-- **Edit pages** — Admin → Edit Pages, or users via Contact Editor
+- **Edit pages** — Admin → Edit Pages, or users via My Account
 - **Access Recovery** — Edit page → “I need help Signing In” for users who forgot Edit Key
 - **Recover admin** — Admin → Forgot password? → enter recovery email → get OTP by email → enter OTP → get reset link by email → set new password; or sign in with **Email & password** if you set a password. **Failsafe:** see *Failsafe: Retrieve admin key via Cloudflare* below if you lose both key and email access.
 
@@ -521,7 +521,7 @@ This works because the admin key is stored in KV; only you (with Cloudflare acco
 |------|-----------------------------------|
 | Admin Dashboard | `https://YOUR_GITHUB_USERNAME.github.io/admin/` |
 | Home | `https://YOUR_GITHUB_USERNAME.github.io/home/` |
-| Contact Editor | `https://YOUR_GITHUB_USERNAME.github.io/edit/` |
+| My Account | `https://YOUR_GITHUB_USERNAME.github.io/myaccount/` |
 | User page | `https://YOUR_GITHUB_USERNAME.github.io/USERNAME/` |
 | Cloudflare | https://dash.cloudflare.com/ |
 | Email setup (detailed) | [EMAIL-SETUP.md](EMAIL-SETUP.md) in repo |

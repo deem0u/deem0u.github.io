@@ -1,8 +1,8 @@
 # Validation audit – contact forms
 
-Reference forms: **Add New User** (admin), **Edit Contact Information** (admin), **User Contact Editor**, **Home signup** (Create Your Account), **Set Secrets** (admin and edit modals).
+Reference forms: **Add New User** (admin), **Edit Contact Information** (admin), **My Account (user portal)**, **Home signup** (Create Your Account), **Set Secrets** (admin and edit modals).
 
-**Context:** Required-ness differs by form. Add New User only requires User Name. Admin Edit has no required enforcement. User Contact Editor requires Given Names, Family Name, and Email. Home signup requires User Name, Account Email, DOB, 3 Security Questions + answers, and consent. Set Secrets (admin) allows all empty; Set Secrets (edit) requires at least one of Account Email, DOB, or 3 SQ.
+**Context:** Required-ness differs by form. Add New User only requires User Name. Admin Edit has no required enforcement. My Account requires Given Names, Family Name, and Email. Home signup requires User Name, Account Email, DOB, 3 Security Questions + answers, and consent. Set Secrets (admin) allows all empty; Set Secrets (edit) requires at least one of Account Email, DOB, or 3 SQ.
 
 ---
 
@@ -10,7 +10,7 @@ Reference forms: **Add New User** (admin), **Edit Contact Information** (admin),
 
 ### Contact information fields
 
-| Field | Add New User | Edit Contact (admin) | User Contact Editor | Notes |
+| Field | Add New User | Edit Contact (admin) | My Account | Notes |
 |-------|----------------|----------------------|---------------------|-------|
 | **User Name** | `required`, `pattern="^[a-zA-Z0-9_-]{3,32}$"`, `minlength="3"`, `maxlength="32"`, proactive (blur/input), inline error | — | — | Alphanumeric, hyphens, underscores only; 3–32 chars. |
 | **Account Email** | Optional. No `required`. Not same as Contact Page Email. | — | — | For account management & recovery. Distinct from Contact Page Email. |
@@ -62,7 +62,7 @@ Reference forms: **Add New User** (admin), **Edit Contact Information** (admin),
 
 - **Add New User:** `handleCreateUser` validates User Name via `validateFolder()` before create; blocks submit and shows inline error if invalid. Account Email and Contact Page Email optional.
 - **Edit Contact (admin):** `handleSave` does not enforce validation; admin can leave fields blank.
-- **User Contact Editor:** `handleSave` validates Given Names, Family Name, and Contact Page Email; blocks submit and shows inline error if any invalid.
+- **My Account:** `handleSave` validates Given Names, Family Name, and Contact Page Email; blocks submit and shows inline error if any invalid.
 - **Home signup:** Validates User Name (including uniqueness), Account Email (including in-use check), DOB, 3 Security Questions + answers, consent before API call. Blocks submit on any failure.
 - **Set Secrets (admin):** `saveSecrets` allows saving with all empty (clears secrets). When Account Email provided, `validateEmailStrict`. When 3 SQ provided, must be exactly 3 complete or all empty ("or leave all empty").
 - **Set Secrets (edit):** `saveEditSecrets` requires at least one of Account Email, DOB, or 3 Secret Questions. When provided, validates format.
@@ -88,6 +88,6 @@ Reference forms: **Add New User** (admin), **Edit Contact Information** (admin),
 
 - **Add New User:** Only User Name required; Account Email and Contact Page Email optional.
 - **Edit Contact (admin):** No required enforcement; format validation when provided.
-- **User Contact Editor:** Given Names, Family Name, Email required; validation enforced on submit.
+- **My Account:** Given Names, Family Name, Email required; validation enforced on submit.
 - **Home signup:** User Name, Account Email, DOB, 3 Security Questions + answers, consent required.
 - **Set Secrets:** Admin can save with all empty. Edit requires at least one of Account Email, DOB, or 3 SQ. When provided, strict format checks. Secret Questions: either 3 complete or all empty (no partial).

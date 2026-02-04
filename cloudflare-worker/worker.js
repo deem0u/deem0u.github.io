@@ -186,6 +186,9 @@ export default {
       if (request.method === 'POST' && path === '/api/signup-success-email') {
         return await handleSignupSuccessEmail(request, env);
       }
+      if (request.method === 'POST' && path === '/api/contact') {
+        return await handleContactForm(request, env);
+      }
 
       // User recovery (no auth)
       if (request.method === 'POST' && path === '/api/recovery/check') {
@@ -219,6 +222,10 @@ export default {
       if (request.method === 'GET' && path.startsWith('/api/page/')) {
         const { username, contactpagename } = parsePagePath(path);
         return await handleGetPage(username, contactpagename, request, env);
+      }
+      if (request.method === 'POST' && path.match(/^\/api\/page\/[^/]+\/rename$/)) {
+        const username = path.replace(/^\/api\/page\//, '').replace(/\/rename$/, '').trim();
+        return await handleRenamePage(username, request, env);
       }
       if (request.method === 'POST' && path.startsWith('/api/page/')) {
         const { username, contactpagename } = parsePagePath(path);
@@ -849,12 +856,47 @@ async function handleSignupSuccessEmail(request, env) {
   if (!username || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
   const baseUrl = `https://${CONFIG.owner}.github.io`;
   const viewLink = pageUrl(username, 'index');
-  const editUrl = `${baseUrl}/edit/`;
+  const editUrl = `${baseUrl}/myaccount/`;
   const subject = `Your Digital Contact Page - ${username} - Account Details`;
-  const text = `Below are details related to your account you should keep handy.\n\n\t• User Name: ${username}\n\t• Your Digital Contact Page URL: ${viewLink}\n\nHOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n\t1. Visit the Contact Editor (${editUrl}) and sign in with your Account Email and Password\n\t2. Make your changes\n\t3. Click "Save Changes"\n\nIf you wish to have your account deleted, contact deem0u.github.io@gmail.com`;
-  const html = `<p>Below are details related to your account you should keep handy.</p><ul><li><strong>User Name:</strong> ${username}</li><li><strong>Contact Page URL:</strong> <a href="${viewLink}">${viewLink}</a></li></ul><p><strong>HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</strong></p><ol><li>Visit the <a href="${editUrl}">Contact Editor</a> and sign in with your Account Email and Password</li><li>Make your changes</li><li>Click "Save Changes"</li></ol><p>If you wish to have your account deleted, contact deem0u.github.io@gmail.com</p>`;
+  const text = `Below are details related to your account you should keep handy.\n\n\t• User Name: ${username}\n\t• Your Digital Contact Page URL: ${viewLink}\n\nHOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n\t1. Visit My Account (${editUrl}) and sign in with your Account Email and Password\n\t2. Make your changes\n\t3. Click "Save Changes"\n\nIf you wish to have your account deleted, contact deem0u.github.io@gmail.com`;
+  const html = `<p>Below are details related to your account you should keep handy.</p><ul><li><strong>User Name:</strong> ${username}</li><li><strong>Contact Page URL:</strong> <a href="${viewLink}">${viewLink}</a></li></ul><p><strong>HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</strong></p><ol><li>Visit the <a href="${editUrl}">My Account</a> and sign in with your Account Email and Password</li><li>Make your changes</li><li>Click "Save Changes"</li></ol><p>If you wish to have your account deleted, contact deem0u.github.io@gmail.com</p>`;
   const sent = await sendEmail(env, { to: accountEmail, subject, text, html, username });
   return jsonResponse({ ok: sent.ok, error: sent.error });
+}
+
+/** Contact form recipient (site owner). */
+const CONTACT_FORM_RECIPIENT = 'deem0u.github.io@gmail.com';
+
+function escapeHtml(s) {
+  return (s ?? '').toString()
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/** POST /api/contact - Public. Body: { name, email, enquiryType, message }. Sends email to site owner. */
+async function handleContactForm(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid request' }, 400);
+  }
+  const name = (body.name || '').trim();
+  const email = (body.email || '').trim();
+  const enquiryType = (body.enquiryType || '').trim();
+  const message = (body.message || '').trim();
+
+  if (!name) return jsonResponse({ error: 'Name is required' }, 400);
+  if (!email) return jsonResponse({ error: 'Email is required' }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return jsonResponse({ error: 'Please enter a valid email address' }, 400);
+  if (!enquiryType) return jsonResponse({ error: 'Enquiry type is required' }, 400);
+
+  const subject = `Contact form: ${enquiryType} from ${name}`;
+  const text = `Name: ${name}\nEmail: ${email}\nEnquiry type: ${enquiryType}\n\nMessage:\n${message}`;
+  const html = `<p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></p><p><strong>Enquiry type:</strong> ${escapeHtml(enquiryType)}</p><p><strong>Message:</strong></p><p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>`;
+
+  const sent = await sendEmail(env, { to: CONTACT_FORM_RECIPIENT, subject, text, html });
+  if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send message' }, 500);
+  return jsonResponse({ success: true });
 }
 
 function normalizeDob(input) {
@@ -1731,8 +1773,8 @@ async function handleAdminGenerateOtp(request, env) {
   const accountEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
   if (accountEmail && accountEmail.includes('@')) {
     const subject = 'Your one-time password - Digital Contact Page';
-    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
-    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
+    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
     await sendEmail(env, { to: accountEmail, subject, text, html, username });
   }
   return jsonResponse({ otp });
@@ -1886,6 +1928,139 @@ async function handleUpdatePage(username, contactpagename, request, env) {
     success: true,
     sha: data.content.sha,
     url: pageUrl(username, contactpagename)
+  });
+}
+
+/**
+ * POST /api/page/{username}/rename - Rename (change slug of) a contact page. Bearer, same user.
+ * Body: { oldContactpagename, newContactpagename, content, contactPageName, sha }.
+ */
+async function handleRenamePage(username, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
+  if (!canEdit) {
+    return jsonResponse({ error: 'Verify your email to edit contact pages.' }, 403);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const oldSlug = (body.oldContactpagename || '').trim() || 'index';
+  const newSlugRaw = (body.newContactpagename || '').trim();
+  const newSlug = (newSlugRaw === '' || newSlugRaw.toLowerCase() === 'index') ? 'index' : newSlugRaw;
+
+  if (oldSlug === newSlug) {
+    return jsonResponse({ error: 'New URL is the same as current' }, 400);
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(newSlug)) {
+    return jsonResponse({ error: 'Page URL can only use letters, numbers, hyphens, and underscores' }, 400);
+  }
+  if (newSlug.length < 2 || newSlug.length > 64) {
+    return jsonResponse({ error: 'Page URL must be 2–64 characters' }, 400);
+  }
+
+  const contactPageNameTrim = (body.contactPageName != null && typeof body.contactPageName === 'string') ? body.contactPageName.trim() : null;
+  if (contactPageNameTrim && contactPageNameTrim.length > 128) {
+    return jsonResponse({ error: 'Contact page name must be 128 characters or less' }, 400);
+  }
+  if (env.EDIT_KEYS_KV && contactPageNameTrim) {
+    const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+    for (const key of nameList.keys) {
+      const slugForKey = key.name.replace(`contact_page_name:${username}:`, '');
+      if (slugForKey === newSlug) continue;
+      const existing = await env.EDIT_KEYS_KV.get(key.name);
+      if (existing && existing.trim().toLowerCase() === contactPageNameTrim.toLowerCase()) {
+        return jsonResponse({ error: 'Another contact page already uses this Contact Page Name' }, 409);
+      }
+    }
+  }
+
+  const content = body.content;
+  const sha = body.sha;
+  if (typeof content !== 'string' || !sha) {
+    return jsonResponse({ error: 'Content and sha are required' }, 400);
+  }
+
+  const oldPath = pagePath(username, oldSlug);
+  const newPath = pagePath(username, newSlug);
+
+  const checkNew = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${newPath}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (checkNew.ok) {
+    return jsonResponse({ error: 'A contact page with this URL already exists' }, 409);
+  }
+
+  const createRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${newPath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Rename contact page: ${username}/${oldSlug} -> ${newSlug}`,
+        content: encodeBase64(content),
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!createRes.ok) {
+    const err = await createRes.json();
+    return jsonResponse({ error: err.message || 'Failed to create new page' }, createRes.status);
+  }
+  const createData = await createRes.json();
+
+  const deleteRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Rename: remove old ${username}/${oldSlug}.html`,
+        sha,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!deleteRes.ok) {
+    const err = await deleteRes.json();
+    return jsonResponse({ error: err.message || 'Failed to remove old page' }, deleteRes.status);
+  }
+
+  if (env.EDIT_KEYS_KV) {
+    await env.EDIT_KEYS_KV.delete(`contact_page_name:${username}:${oldSlug}`);
+    const displayName = contactPageNameTrim || (newSlug === 'index' ? 'Main (index)' : newSlug);
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${username}:${newSlug}`, displayName);
+  }
+
+  return jsonResponse({
+    success: true,
+    contactpagename: newSlug,
+    sha: createData.content && createData.content.sha ? createData.content.sha : null,
+    url: pageUrl(username, newSlug)
   });
 }
 
@@ -2337,8 +2512,8 @@ async function handleRecoveryVerify(request, env) {
     const toEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
     if (toEmail && toEmail.includes('@')) {
       const subject = 'Your one-time password - Digital Contact Page';
-      const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
-      const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+      const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
+      const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
       await sendEmail(env, { to: toEmail, subject, text, html, username });
     }
     return jsonResponse({ success: true, username });
@@ -2361,8 +2536,8 @@ async function handleRecoveryVerify(request, env) {
   const toEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
   if (toEmail && toEmail.includes('@')) {
     const subject = 'Your one-time password - Digital Contact Page';
-    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
-    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
+    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
     await sendEmail(env, { to: toEmail, subject, text, html, username });
   }
   return jsonResponse({ success: true, username });
@@ -2429,8 +2604,8 @@ async function handlePutProfile(username, request, env) {
     await env.EDIT_KEYS_KV.put('otp_email_change:' + username, code, { expirationTtl: 600 });
     await env.EDIT_KEYS_KV.put('pending_email_change:' + username, JSON.stringify({ newEmail: accountEmail.trim() }), { expirationTtl: 600 });
     const subject = 'Verify your new email - Digital Contact Page';
-    const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. Use it in the Contact Editor to complete your email change.\n\nIf you did not request this, please sign in and change your password.`;
-    const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. Use it in the Contact Editor to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>`;
+    const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. Use it in My Account to complete your email change.\n\nIf you did not request this, please sign in and change your password.`;
+    const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. Use it in My Account to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>`;
     const sent = await sendEmail(env, { to: accountEmail.trim(), subject, text, html, username });
     if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send verification code' }, 500);
     await env.EDIT_KEYS_KV.delete('email_verified:' + username);
@@ -2754,8 +2929,8 @@ async function handlePutSecrets(username, request, env) {
     const accountEmailToSend = (body.accountEmail || accountEmail || await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
     if (accountEmailToSend && accountEmailToSend.includes('@')) {
       const subject = 'Your one-time password - Digital Contact Page';
-      const text = `Your one-time sign-in password is: ${otpPlain}\n\nUse this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
-      const html = `<p>Your one-time sign-in password is: <strong>${otpPlain}</strong></p><p>Use this to sign in at the Contact Editor (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+      const text = `Your one-time sign-in password is: ${otpPlain}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
+      const html = `<p>Your one-time sign-in password is: <strong>${otpPlain}</strong></p><p>Use this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
       await sendEmail(env, { to: accountEmailToSend, subject, text, html, username });
     }
   } else if (password) {

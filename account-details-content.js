@@ -5,7 +5,7 @@
  */
 (function() {
   const PAGES_URL = 'https://deem0u.github.io/user/';
-  const EDITOR_URL = 'https://deem0u.github.io/edit/';
+  const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
 
   function getViewLink(username) {
     return PAGES_URL + (username || '') + '/';
@@ -21,8 +21,8 @@
         '\t• User Name: ' + (username || '') + '\n' +
         '\t• Your Digital Contact Page URL: ' + viewLink + '\n\n' +
         'HOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n' +
-        '\t1. Visit the Contact Editor (' + EDITOR_URL + ') and sign in with your Account Email and Password\n' +
-        '\t2. Make your changes in the Contact Editor\n' +
+        '\t1. Visit the My Account (' + EDITOR_URL + ') and sign in with your Account Email and Password\n' +
+        '\t2. Make your changes in the My Account\n' +
         '\t3. Click "Save Changes" - Your updates will appear on your contact page within a few minutes\n\n' +
         'If at any point you wish to have your account/Digital Contact Page deleted, contact me at deem0u.github.io@gmail.com';
     },
@@ -32,8 +32,8 @@
         '<ul><li><strong>User Name:</strong> ' + (username || '') + '</li>' +
         '<li><strong>Your Digital Contact Page URL:</strong> <a href="' + viewLink + '" target="_blank" rel="noopener">' + viewLink + '</a></li></ul>' +
         '<p class="success-heading">HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</p>' +
-        '<ol><li>Visit the Contact Editor (<a href="' + EDITOR_URL + '" target="_blank" rel="noopener">' + EDITOR_URL + '</a>) and sign in with your Account Email and Password</li>' +
-        '<li>Make your changes in the Contact Editor</li>' +
+        '<ol><li>Visit the My Account (<a href="' + EDITOR_URL + '" target="_blank" rel="noopener">' + EDITOR_URL + '</a>) and sign in with your Account Email and Password</li>' +
+        '<li>Make your changes in the My Account</li>' +
         '<li>Click "Save Changes" - Your updates will appear on your contact page within a few minutes</li></ol>' +
         '<p>If at any point you wish to have your account/Digital Contact Page deleted, contact me at <a href="mailto:deem0u.github.io@gmail.com">deem0u.github.io@gmail.com</a></p>';
     }

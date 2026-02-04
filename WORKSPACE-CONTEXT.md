@@ -13,8 +13,8 @@ Proj.DigitalLuggageTags/   (= deem0u.github.io repo root)
 ├── cloudflare-worker/
 │   ├── worker.js         # Cloudflare Worker (deploy to Workers)
 │   └── wrangler.toml
-├── edit/
-│   ├── index.html        # Self-service Contact Editor
+├── myaccount/
+│   ├── index.html        # User portal (sign in, edit contact page, profile)
 │   └── edit-secrets.js
 ├── home/
 │   └── index.html
@@ -54,7 +54,7 @@ Proj.DigitalLuggageTags/   (= deem0u.github.io repo root)
    - Updated "Files to Deploy" and daily-usage instructions.
 
 4. **Release artifacts**
-   - `release/digital-luggage-tags-artifacts.zip` includes SETUP-GUIDE, worker, wrangler, `styles.css`, `admin/index.html`, `edit/index.html`.
+   - `release/digital-luggage-tags-artifacts.zip` includes SETUP-GUIDE, worker, wrangler, `styles.css`, `admin/index.html`, `myaccount/index.html`.
 
 ## Updating from GitHub
 

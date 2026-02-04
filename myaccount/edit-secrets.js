@@ -1,4 +1,4 @@
-// Edit page secrets modal - loaded by edit/index.html
+// My Account secrets modal - loaded by myaccount/index.html
 async function checkSecretsStatus() {
   if (!username || !token) return;
   try {
@@ -68,7 +68,7 @@ function closeEditSecretsModal() {
   if (m) { m.classList.remove('show'); m.classList.add('hidden'); }
 }
 
-var EDIT_SQ_OPTIONS = [{v:'',t:'Select question'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
+var EDIT_SQ_OPTIONS = [{v:'',t:'Select question'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce? 🥚'}];
 
 function syncEditSecretsSqOptions() {
   var v1 = document.getElementById('edit-sq1').value, v2 = document.getElementById('edit-sq2').value, v3 = document.getElementById('edit-sq3').value;

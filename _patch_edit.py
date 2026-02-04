@@ -1,4 +1,4 @@
-with open('edit/index.html', 'r', encoding='utf-8') as f:
+with open('myaccount/index.html', 'r', encoding='utf-8') as f:
     content = f.read()
 
 old = '''        <div id="recovery-step2" class="hidden">
@@ -14,7 +14,7 @@ new = '''        <div id="recovery-step2" class="hidden">
 
 if old in content:
     content = content.replace(old, new)
-    with open('edit/index.html', 'w', encoding='utf-8') as f:
+    with open('myaccount/index.html', 'w', encoding='utf-8') as f:
         f.write(content)
     print('Replaced successfully')
 else:

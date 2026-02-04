@@ -46,6 +46,14 @@
   .signup-progress .step-pill { flex: 1; padding: 0.5rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; text-align: center; background: var(--color-bg-muted, #f3f4f6); color: var(--color-text-secondary, #6b7280); }
   .signup-progress .step-pill.active { background: var(--accent-teal, #0d9488); color: white; }
   .signup-progress .step-pill.done { background: var(--color-success, #16a34a); color: white; }
+  .signup-form-card { border-radius: 1rem; overflow: hidden; }
+  .signup-form-card .card-header { text-align: center; padding-bottom: 0.5rem; }
+  .signup-form-card .card-title { font-size: 1.75rem; font-weight: 700; }
+  .signup-form-card .form-actions .btn { width: 100%; }
+  .signup-form-card .form-actions { flex-direction: column; gap: 0.75rem; }
+  .signup-signin-prompt { text-align: center; margin-top: 1rem; font-size: 0.95rem; }
+  .signup-signin-prompt .signin-link { background: none; border: none; padding: 0; font-size: inherit; color: var(--color-text-secondary, #6b7280); text-decoration: underline; cursor: pointer; }
+  .signup-signin-prompt .signin-link:hover { color: var(--accent-teal, #0d9488); }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -64,9 +72,9 @@
         </div>
         <nav class="app-nav tabs">
           <a href="/home/" class="tab active">Home</a>
-          <a href="https://deem0u.github.io/edit/" class="tab">Contact Editor</a>
+          <a href="https://deem0u.github.io/myaccount/" class="tab">My Account</a>
           <a href="/terms-and-privacy/" class="tab">Terms of Use & Privacy</a>
-          <a href="mailto:deem0u.github.io@gmail.com" class="tab">Email Me</a>
+          <a href="/contact/" class="tab">Contact</a>
         </nav>
       </div>
     </header>
@@ -81,18 +89,13 @@
             <div class="home-actions">
               <button type="button" class="btn btn-primary btn-lg home-action-btn" onclick="showSignupForm()">
                 <span class="btn-main">Get Started</span>
-                <span class="btn-sub">(New Users)</span>
               </button>
-              <a href="https://deem0u.github.io/edit/" class="btn btn-secondary btn-lg home-action-btn">
-                <span class="btn-main">Contact Editor</span>
-                <span class="btn-sub">(Existing Users)</span>
-              </a>
             </div>
           </div>
         </div>
         <div id="signup-step0-section" class="home-right-col hidden">
-          <div class="card">
-            <div class="card-header"><span class="card-title">Getting Started</span></div>
+          <div class="card signup-form-card">
+            <div class="card-header"><span class="card-title">Sign Up</span></div>
             <div class="card-body">
               <form id="signup-step0-form">
                 <div class="form-group">
@@ -104,8 +107,8 @@
                 <div id="signup-step0-alert" class="alert"></div>
                 <div class="form-actions">
                   <button type="submit" id="signup-step0-btn" class="btn btn-primary btn-lg">Sign Up</button>
-                  <button type="button" class="btn btn-outline btn-lg" onclick="cancelSignupStep0()">Cancel</button>
                 </div>
+                <p class="signup-signin-prompt"><em>Already got an account? <a href="https://deem0u.github.io/myaccount/" class="signin-link">Sign In</a></em></p>
               </form>
             </div>
           </div>
@@ -153,9 +156,9 @@
                   <label class="form-label">Security Questions <span class="form-required">*</span></label>
                   <span class="form-hint" style="display:block; margin-bottom: 0.75rem;">Select 3 different questions and provide answers (4–30 characters each). Used for account recovery.</span>
                   <div id="secret-questions-container">
-                    <div class="secret-q-row"><select id="sq1" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq1-answer" role="alert"></span></div>
-                    <div class="secret-q-row"><select id="sq2" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq2-answer" role="alert"></span></div>
-                    <div class="secret-q-row"><select id="sq3" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><input type="text" id="sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq3-answer" role="alert"></span></div>
+                    <div class="secret-q-row"><select id="sq1" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><input type="text" id="sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq1-answer" role="alert"></span></div>
+                    <div class="secret-q-row"><select id="sq2" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><input type="text" id="sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq2-answer" role="alert"></span></div>
+                    <div class="secret-q-row"><select id="sq3" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><input type="text" id="sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq3-answer" role="alert"></span></div>
                   </div>
                   <span class="form-error" id="error-secret-questions" role="alert"></span>
                 </div>
@@ -202,11 +205,11 @@
                 <button type="button" class="btn btn-outline" onclick="step2Skip()">Skip</button>
               </div>
               <div id="step2-skip-msg" class="hidden mt-3">
-                <p class="text-secondary">You can come back to this later via the Contact Editor.</p>
+                <p class="text-secondary">You can come back to this later via My Account.</p>
                 <button type="button" class="btn btn-primary mt-2" onclick="step2ContinueAfterSkip()">Continue to Step 3</button>
               </div>
               <div id="step2-after-save" class="hidden mt-3">
-                <p class="text-secondary">When you have finished in the Contact Editor, click below to continue.</p>
+                <p class="text-secondary">When you have finished in My Account, click below to continue.</p>
                 <button type="button" class="btn btn-primary mt-2" onclick="continueToStep3()">Continue</button>
               </div>
             </div>
@@ -217,7 +220,7 @@
               <div id="step3-summary" class="home-success-details"></div>
               <p class="text-secondary mt-3">A copy of this information has been sent to your email.</p>
               <div class="form-actions mt-3">
-                <a id="step3-editor-link" href="#" class="btn btn-primary">Go to Contact Editor</a>
+                <a id="step3-editor-link" href="#" class="btn btn-primary">Go to My Account</a>
                 <a href="/home/" class="btn btn-ghost">Back to Home</a>
               </div>
             </div>
@@ -230,7 +233,7 @@
               <div id="success-banner" class="home-success-banner banner-success"></div>
               <div id="success-details" class="home-success-details"></div>
               <div class="home-success-action">
-                <p>Don't worry — A copy of this will be emailed to you (once I get to it). You may wish to click the "Email Myself a Copy" button below and send yourself a copy now. You can continue and fill out the details for your Digital Contact Page now or you can choose to do it later via the Contact Editor.</p>
+                <p>Don't worry — A copy of this will be emailed to you (once I get to it). You may wish to click the "Email Myself a Copy" button below and send yourself a copy now. You can continue and fill out the details for your Digital Contact Page now or you can choose to do it later via My Account.</p>
                 <div class="home-success-buttons">
                   <a id="mailto-btn" href="#" class="btn btn-primary">Email Myself a Copy</a>
                   <a id="complete-page-btn" href="#" class="btn btn-primary">Fill out My Digital Contact Page</a>
@@ -247,7 +250,7 @@
   <script>
   const API = 'https://contact-page-editor.deem0u.workers.dev';
   const PAGES_URL = 'https://deem0u.github.io/user/';
-  const EDITOR_URL = 'https://deem0u.github.io/edit/';
+  const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
   const SQ_OPTIONS = [
     {v:'',t:'— Select question —'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}
   ];
@@ -452,9 +455,9 @@
       '<li><strong>Email:</strong> ' + (email || '') + '</li>' +
       '<li><strong>Date of Birth:</strong> ' + (dob ? '**/**/****' : '') + '</li>' +
       '<li><strong>Contact Page URL:</strong> <a href="' + viewUrl + '" target="_blank" rel="noopener">' + viewUrl + '</a></li>' +
-      '<li><strong>Contact Editor:</strong> <a href="' + editUrl + '" target="_blank" rel="noopener">Sign in to edit</a></li></ul>' +
+      '<li><strong>My Account:</strong> <a href="' + editUrl + '" target="_blank" rel="noopener">Sign in</a></li></ul>' +
       '<p class="success-heading">How to edit your contact page</p>' +
-      '<ol><li>Visit the Contact Editor and sign in with your Account Email and Password</li>' +
+      '<ol><li>Visit My Account and sign in with your Account Email and Password</li>' +
       '<li>Make your changes</li><li>Click Save Changes</li></ol>';
     document.getElementById('step3-editor-link').href = editUrl;
     try {

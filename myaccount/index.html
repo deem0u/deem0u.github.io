@@ -1,0 +1,2694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>My Account - User</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='24' font-size='24'>✉</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+  .edit-recovery-success-banner { padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-weight: 500; }
+  .edit-recovery-success-details ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
+  .edit-recovery-success-details ul li { margin-bottom: 0.5rem; }
+  .edit-recovery-success-details .success-important { font-weight: bold; color: #C00000; margin: 1rem 0; }
+  .edit-recovery-success-details .success-heading { font-weight: 600; margin: 1rem 0 0.5rem; }
+  .edit-recovery-success-details ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
+  .edit-recovery-success-details ol li { margin-bottom: 0.5rem; }
+  .edit-recovery-success-action { margin-top: 1.5rem; }
+  .edit-recovery-success-action p { margin-bottom: 1rem; }
+  .edit-recovery-success-buttons { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+  .recovery-toggle-wrap { margin: 1rem 0; }
+  .recovery-toggle { display: inline-block; padding: 0.5rem 1rem; font-size: 0.875rem; color: var(--accent-teal, #1ac5b0); border: 1px solid var(--accent-teal, #1ac5b0); border-radius: 9999px; text-decoration: none; background: transparent; transition: background 0.15s, color 0.15s; }
+  .recovery-toggle:hover { background: var(--accent-teal, #1ac5b0); color: white; }
+  .recovery-actions { margin-top: 1.25rem; }
+  .recovery-actions .alert { margin-bottom: 1rem; }
+  .recovery-actions .alert:not(.show) { margin-bottom: 0; }
+
+  .editor-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
+  .editor-profile-strip { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--white, #fff); border-radius: var(--radius-md, 6px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
+  .editor-profile-strip .profile-title { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.9rem; }
+  .editor-profile-strip .profile-row { margin-bottom: 0.5rem; font-size: 0.85rem; }
+  .editor-profile-strip .profile-label { color: var(--color-text-secondary, #6b7280); }
+  .editor-profile-strip .profile-value { font-weight: 500; }
+  .editor-profile-strip .badge { font-size: 0.7rem; padding: 0.2em 0.5em; }
+  .editor-main { flex: 1; min-width: 0; max-width: 640px; }
+  .editor-form-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.3); }
+  .status-banner { margin-bottom: 1rem; }
+  .status-banner.hidden { display: none; }
+  .status-banner.show { display: block; }
+  .verify-otp-input { font-size: 1.25rem; letter-spacing: 0.2em; text-align: center; }
+  .editor-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
+  .contact-pages-container { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--white, #fff); border-radius: var(--radius-md, 6px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
+  .contact-pages-section .profile-title { margin-bottom: 0.5rem; }
+  .editor-profile-strip .profile-title, .contact-pages-section .profile-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: var(--accent-teal, #1ac5b0); }
+  #contact-pages-section .mb-3 { margin-bottom: 0.75rem; }
+  .contact-pages-list { display: flex; flex-direction: column; gap: 0.35rem; }
+  .contact-page-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 6px); padding: 0.4rem 0.5rem; cursor: pointer; font-size: 0.75rem; line-height: 1.35; text-align: left; transition: border-color 0.15s, background 0.15s; }
+  .contact-page-card:hover { border-color: var(--accent-purple, #9370db); background: var(--color-bg-subtle, #f5f5f5); }
+  .contact-page-card.selected { border-color: var(--accent-purple, #9370db); background: rgba(147, 112, 219, 0.12); font-weight: 600; }
+  .contact-page-card .contact-page-card-row { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 0.25rem; margin-top: 0.15rem; min-height: 0; }
+  .contact-page-card .contact-page-card-row:first-child { margin-top: 0; }
+  .contact-page-card .contact-page-card-label { flex-shrink: 0; font-size: 0.65rem; font-weight: 600; color: var(--color-text-secondary, #666); }
+  .contact-page-card .contact-page-card-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; }
+  #editor-contact-card .card-header-fields { gap: 0.35rem; }
+  .card-header-fields { display: flex; flex-direction: column; gap: 0.5rem; }
+  .card-header-field-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
+  .card-header-field-row .form-input-header { max-width: 22ch; width: 100%; }
+  .card-header-url-prefix { font-size: 0.85rem; color: var(--color-text-secondary, #666); }
+  .card-header-url-suffix { font-size: 0.85rem; color: var(--color-text-secondary, #666); }
+  .card-header-field-row .form-error-inline { flex-basis: 100%; font-size: 0.8rem; margin-top: -0.25rem; }
+  .editor-contact-view { display: block; }
+  .editor-contact-view.hidden { display: none; }
+  .editor-contact-edit { display: none; }
+  .editor-contact-edit.show { display: block; }
+  .editor-view-header-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+  .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
+  .editor-contact-view-content { font-size: 0.95rem; line-height: 1.5; }
+  .editor-contact-view-content .editor-view-value { font-weight: 500; }
+  .editor-contact-view-content .editor-view-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: #9370db; }
+  .editor-profile-strip .profile-row { display: block; margin-bottom: 0.5rem; }
+  .editor-profile-strip .profile-label { display: block; margin-bottom: 0.15rem; font-size: 0.8rem; }
+  .editor-profile-strip .profile-value { display: block; font-weight: 500; }
+  .editor-profile-strip .profile-email-row { display: block; }
+  .editor-profile-strip .profile-email-row .profile-value-wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.15rem; }
+  .editor-profile-strip .profile-email-row .profile-value-wrap .profile-value { display: inline; }
+  .editor-profile-strip .profile-email-row .profile-value-wrap .badge { flex-shrink: 0; }
+  .editor-contact-view-content .form-required { display: none; }
+  .editor-contact-view-content .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
+  .editor-contact-view-content .form-label { font-weight: 700; }
+  .editor-view-url-row { display: flex; align-items: baseline; gap: 0.35rem; flex-wrap: nowrap; }
+  .editor-view-url-row .form-label { margin-bottom: 0; flex-shrink: 0; }
+  .editor-view-url-row .editor-view-value { flex: 0 1 auto; min-width: 0; }
+  .editor-contact-view-content .editor-view-header { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
+  .editor-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+  .editor-contact-edit .card-header-fields { flex: 1; min-width: 0; }
+  .editor-edit-mode-actions { flex-shrink: 0; }
+  .profile-edit.hidden { display: none; }
+  .profile-edit .form-group { margin-bottom: 0.4rem; }
+  .profile-edit .form-label { font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.2rem; }
+  .profile-edit .form-input { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
+  .profile-edit-actions { display: flex; gap: 0.35rem; margin-top: 0.5rem; }
+  .contact-page-url-inline { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem; }
+  .contact-page-url-inline .form-input { flex: 1; min-width: 8ch; }
+  .contact-page-url-inline .card-header-url-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
+  .contact-page-url-inline .card-header-url-suffix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
+  /* Compact form: edit only; view mode keeps default spacing/font */
+  #editor-contact-edit .card-header { padding: 0.5rem 0.75rem; }
+  #editor-contact-edit .card-body { padding: 0.5rem 0.75rem; }
+  #editor-contact-edit .form-group { margin-bottom: 0.4rem; }
+  #editor-contact-edit .form-group:last-child { margin-bottom: 0; }
+  #editor-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
+  #editor-contact-edit .form-hint { margin-top: 0.15rem; }
+  #editor-contact-edit .card-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.4rem; }
+  #editor-contact-edit .form-row { gap: 0.5rem; }
+  #editor-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0.35rem; }
+  #editor-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
+  #editor-contact-edit .form-actions { margin-top: 0.5rem; padding-top: 0.5rem; }
+  #editor-contact-edit .form-input, #editor-contact-edit .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
+  #editor-contact-edit .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
+  #editor-contact-edit .searchable-select-trigger { padding: 0.35rem 0.5rem; font-size: 0.875rem; min-height: 2.25rem; box-sizing: border-box; }
+  #editor-contact-edit #home-country-edit-container .searchable-select-search { padding: 0.25rem 0.35rem; }
+  #editor-contact-edit #home-country-edit-container .searchable-select-search input { padding: 0.25rem 0.35rem; font-size: 0.8125rem; min-height: 1.75rem; }
+  #editor-contact-edit #home-country-edit-container .searchable-select-options { max-height: 160px; }
+  #editor-contact-edit #home-country-edit-container .searchable-select-option { padding: 0.25rem 0.35rem; font-size: 0.8125rem; }
+  .editor-contact-view-content .editor-view-header { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
+  /* Easter egg: floating astronaut (only when eligible, first login of day) */
+  .easter-egg-overlay { position: fixed; inset: 0; z-index: 9998; pointer-events: none; overflow: hidden; }
+  .easter-egg-astronaut { position: absolute; width: 80px; height: auto; max-height: 100px; object-fit: contain; animation: easter-egg-float 7s ease-in-out forwards; }
+  .easter-egg-overlay.easter-egg-fadeout { opacity: 0; transition: opacity 0.5s ease-out; }
+  @keyframes easter-egg-float {
+    0% { left: 5%; top: 15%; transform: rotate(-10deg); }
+    12% { left: 25%; top: 8%; transform: rotate(5deg); }
+    25% { left: 45%; top: 25%; transform: rotate(-5deg); }
+    37% { left: 70%; top: 12%; transform: rotate(10deg); }
+    50% { left: 85%; top: 35%; transform: rotate(-8deg); }
+    62% { left: 65%; top: 55%; transform: rotate(5deg); }
+    75% { left: 35%; top: 70%; transform: rotate(-12deg); }
+    87% { left: 15%; top: 50%; transform: rotate(8deg); }
+    100% { left: 5%; top: 20%; transform: rotate(-10deg); opacity: 0; }
+  }
+  @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-sidebar { width: 100%; } .editor-profile-strip, .contact-pages-container { width: 100%; } }
+    </style>
+</head>
+<body>
+  <div id="site-unavailable" class="hidden" style="display:none; position:fixed; inset:0; background:var(--color-bg,#fff); z-index:9999; align-items:center; justify-content:center; flex-direction:column; padding:2rem; text-align:center;">
+    <h1 style="font-size:1.5rem; margin-bottom:0.5rem;">Site temporarily unavailable</h1>
+    <p style="color:var(--color-text-secondary,#666);">Please try again later.</p>
+  </div>
+  <div id="site-maintenance" class="hidden" style="display:none; position:fixed; inset:0; background:var(--color-bg,#fff); z-index:9999; align-items:center; justify-content:center; flex-direction:column; padding:2rem; text-align:center;">
+    <h1 style="font-size:1.5rem; margin-bottom:0.5rem;">Maintenance in progress</h1>
+    <p style="color:var(--color-text-secondary,#666);">Only contact pages are available. Please try again later.</p>
+  </div>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <div class="app-logo-icon">C</div>
+          <span class="app-logo-text" id="header-logo-text">My Account - User</span>
+        </div>
+        <div class="app-header-actions">
+          <nav class="app-nav tabs">
+            <a href="/home/" class="tab">Home</a>
+            <a href="https://deem0u.github.io/myaccount/" class="tab active">My Account</a>
+            <a href="/terms-and-privacy/" class="tab">Terms of Use &amp; Privacy</a>
+            <a href="/contact/" class="tab">Contact</a>
+          </nav>
+          <button id="signout-btn" class="btn btn-ghost btn-sm hidden" onclick="signOut()">Sign Out</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="screen-auth" class="app-centered">
+      <div class="auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Sign In</h1>
+          <p class="auth-subtitle" id="auth-subtitle">To access and edit your Digital Contact Page, enter your Account Email and Password</p>
+        </div>
+        <form id="auth-form">
+          <div id="auth-email-mode">
+            <div class="form-group" id="auth-account-email-group">
+              <label class="form-label">Account Email</label>
+              <input type="email" id="auth-account-email" class="form-input" placeholder="your@email.com" autocomplete="email">
+            </div>
+            <div class="form-group hidden" id="auth-username-group">
+              <label class="form-label">User Name</label>
+              <input type="text" id="auth-username" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
+            </div>
+            <p class="text-center" style="margin-bottom:0.5rem;"><a href="#" id="auth-use-username-link" class="btn btn-ghost btn-sm">Use User Name instead</a><a href="#" id="auth-use-email-link" class="btn btn-ghost btn-sm hidden">Use Account Email instead</a></p>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+            </div>
+          </div>
+          <div id="auth-set-password-after-otp" class="hidden">
+            <div class="alert alert-info show mb-4">Set a new permanent password. Your one-time password will no longer work after this.</div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input type="password" id="auth-new-password" class="form-input" placeholder="Min 8 characters" minlength="8" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm Password</label>
+              <input type="password" id="auth-confirm-password" class="form-input" placeholder="Same as above" minlength="8" autocomplete="new-password">
+            </div>
+            <button type="button" id="auth-set-password-btn" class="btn btn-primary btn-block btn-lg">Set Password &amp; Continue</button>
+          </div>
+          <div id="auth-alert" class="alert"></div>
+          <button type="submit" id="auth-signin-btn" class="btn btn-primary btn-block btn-lg">Sign In</button>
+          <p class="text-center mt-4"><a href="#" id="recovery-link" class="btn btn-ghost btn-sm">I need help Signing In</a></p>
+        </form>
+      </div>
+
+      <div id="recovery-card" class="auth-card hidden">
+        <div class="auth-header">
+          <h2 class="auth-title">Access Recovery</h2>
+          <p class="auth-subtitle" id="recovery-subtitle">Enter your User Name to recover access</p>
+        </div>
+        <div id="recovery-step1">
+          <form id="recovery-form-step1" onsubmit="return false;">
+            <div id="recovery-step1-username">
+              <div class="form-group">
+                <label class="form-label">User Name</label>
+                <input type="text" id="recovery-username" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
+                <span class="form-error" id="error-recovery-username" role="alert"></span>
+              </div>
+              <p class="text-center recovery-toggle-wrap"><a href="#" id="recovery-use-email-link" class="recovery-toggle">Forgot your User Name? Use Account Email instead</a></p>
+            </div>
+            <div id="recovery-step1-email" class="hidden">
+              <div class="form-group">
+                <label class="form-label">Account Email</label>
+                <input type="email" id="recovery-account-email-step1" class="form-input" placeholder="your@email.com" autocomplete="email">
+                <span class="form-error" id="error-recovery-email" role="alert"></span>
+              </div>
+              <p class="text-center recovery-toggle-wrap"><a href="#" id="recovery-use-username-link" class="recovery-toggle">Use User Name instead</a></p>
+            </div>
+            <div class="recovery-actions">
+              <div id="recovery-alert" class="alert"></div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-check-btn" onclick="recoveryCheckStep1()">Recover Access</button>
+            </div>
+            <p class="text-center mt-4"><a href="#" id="recovery-back-link" class="btn btn-ghost btn-sm">Back to Sign In</a></p>
+          </form>
+        </div>
+        <div id="recovery-step2" class="hidden">
+          <div id="recovery-link-option" class="hidden">
+            <p class="text-secondary mb-3">We can send a recovery link to your verified email. Click below to receive it.</p>
+            <div id="recovery-link-alert" class="alert"></div>
+            <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-send-link-btn" onclick="recoverySendLink()">Send recovery link to my email</button>
+          </div>
+          <form id="recovery-form-step2" onsubmit="return false;">
+            <div class="form-group" id="recovery-account-email-group">
+              <label class="form-label">Account Email</label>
+              <input type="email" id="recovery-account-email" class="form-input" autocomplete="email">
+              <span class="form-error" id="error-recovery-account-email" role="alert"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              <input type="text" id="recovery-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="bday">
+              <span class="form-hint">Format: dd/mm/yyyy</span>
+              <span class="form-error" id="error-recovery-dob" role="alert"></span>
+            </div>
+            <div class="form-group" id="recovery-sq-group">
+              <label class="form-label" id="recovery-sq-label"></label>
+              <input type="text" id="recovery-sq-answer" class="form-input" maxlength="30" placeholder="Answer">
+              <span class="form-error" id="error-recovery-sq" role="alert"></span>
+            </div>
+            <div class="form-group hidden" id="recovery-sq2-group">
+              <label class="form-label" id="recovery-sq2-label"></label>
+              <input type="text" id="recovery-sq2-answer" class="form-input" maxlength="30" placeholder="Answer">
+              <span class="form-error" id="error-recovery-sq2" role="alert"></span>
+            </div>
+            <div class="recovery-actions">
+              <div id="recovery-verify-alert" class="alert"></div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" id="recovery-verify-btn" onclick="recoveryVerify()">Recover Access</button>
+            </div>
+            <p class="text-center mt-4"><a href="#" onclick="recoveryBackToStep1(); return false;" class="btn btn-ghost btn-sm">Back</a></p>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <main id="screen-recovery-success" class="app-main hidden">
+      <div class="app-container" style="max-width: 1100px; margin: 0 auto; padding: 1rem;">
+        <div class="card">
+          <div class="card-body">
+            <div id="recovery-success-banner" class="edit-recovery-success-banner banner-success"></div>
+            <div id="recovery-success-details" class="edit-recovery-success-details"></div>
+            <div class="edit-recovery-success-action">
+              <div id="recovery-success-buttons-wrap" class="edit-recovery-success-buttons">
+                <a id="recovery-signin-btn" href="https://deem0u.github.io/myaccount/" class="btn btn-primary">Go to Sign In</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <main id="screen-editor" class="app-main hidden">
+      <div class="app-container">
+      <div class="editor-layout">
+        <div class="editor-sidebar">
+          <aside class="editor-profile-strip">
+            <div class="profile-title">Account Profile</div>
+            <div id="profile-view" class="profile-view">
+              <div class="profile-row"><span class="profile-label">User Name</span><span class="profile-value" id="profile-username">—</span></div>
+              <div class="profile-row"><span class="profile-label">First Name</span><span class="profile-value" id="profile-first-name">—</span></div>
+              <div class="profile-row"><span class="profile-label">Last Name</span><span class="profile-value" id="profile-last-name">—</span></div>
+              <div class="profile-row profile-email-row"><span class="profile-label">Account Email</span><span class="profile-value-wrap"><span class="profile-value" id="profile-email">—</span><span id="profile-verified-badge" class="badge hidden"></span></span></div>
+              <div class="profile-row"><span class="profile-label">Date Of Birth</span><span class="profile-value" id="profile-dob">—</span></div>
+              <button type="button" class="btn btn-primary btn-sm mt-2" id="edit-profile-btn" onclick="enterProfileEditMode()">Edit Profile</button>
+              <button type="button" class="btn btn-primary btn-sm mt-2 hidden" id="change-password-sq-btn" onclick="openChangePasswordSqModal()">Change Password &amp; Security Questions</button>
+            </div>
+            <div id="profile-edit" class="profile-edit hidden">
+              <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" placeholder="e.g. john-smith" autocomplete="username"><span class="form-hint">3–32 characters. Letters, numbers, hyphens, underscores. Must be unique.</span><span class="form-error" id="error-profile-username" role="alert"></span></div>
+              <div class="form-group"><label class="form-label">First Name</label><input type="text" id="profile-edit-first-name" class="form-input" maxlength="32"></div>
+              <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="profile-edit-last-name" class="form-input" maxlength="32"></div>
+              <div class="form-group"><label class="form-label">Account Email</label><input type="email" id="profile-edit-email" class="form-input"></div>
+              <div class="form-group"><span class="form-label">Date Of Birth</span><span class="profile-value" id="profile-edit-dob">—</span></div>
+              <div class="profile-edit-actions">
+                <button type="button" class="btn btn-primary btn-sm" id="profile-save-btn" onclick="saveProfileFromStrip()" disabled>Save</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="profile-cancel-btn" onclick="cancelProfileEdit()">Cancel</button>
+              </div>
+            </div>
+          </aside>
+          <div id="contact-pages-section" class="contact-pages-container hidden">
+            <div class="contact-pages-section">
+              <div class="profile-title">Contact Pages</div>
+              <button type="button" class="btn btn-primary btn-sm btn-block mb-3" id="new-contact-page-btn" onclick="enterCreateMode()">+ New contact page</button>
+              <div id="contact-pages-list" class="contact-pages-list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="editor-main">
+        <div id="unverified-banner" class="banner-reminder hidden">
+          <span id="unverified-banner-text"><strong>Verify your email</strong> to edit your Contact Page and add new contact pages.</span> <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
+        </div>
+        <div class="card card-welcome">
+          <div class="card-body">
+            <p class="card-welcome-text">
+              Welcome, <strong id="user-name">User</strong>. Here are your current Contact Information. Make the required updates to your details below and click Save.
+            </p>
+          </div>
+        </div>
+
+        <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
+
+        <div id="secrets-banner" class="banner-reminder hidden">
+          <div class="banner-reminder-content">
+            <p class="banner-reminder-title">There are some items that need your attention</p>
+            <p class="banner-reminder-message">To enable Access Recovery for your account, please set the following:</p>
+            <ul id="secrets-missing-list"></ul>
+          </div>
+          <div class="banner-reminder-actions">
+            <button type="button" class="btn btn-primary btn-sm" onclick="showEditSecretsModal()">Set Secrets</button>
+          </div>
+        </div>
+
+        <div class="card" id="editor-contact-card">
+          <div id="editor-contact-view" class="editor-contact-view">
+            <div class="editor-contact-view-content card-body" id="editor-contact-view-content">
+              <div class="editor-view-header-row">
+                <span class="editor-view-value editor-view-title" id="view-contact-page-name"></span>
+                <div class="editor-view-actions">
+                  <a id="view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm">View Page</a>
+                  <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit</button>
+                </div>
+              </div>
+              <div class="editor-view-url-row editor-view-header"><span class="form-label">Page URL</span><span class="editor-view-value" id="view-contact-page-url"></span></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><span class="editor-view-value" id="view-first-name"></span></div>
+                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><span class="editor-view-value" id="view-surname"></span></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><span class="editor-view-value" id="view-email"></span></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><span class="editor-view-value" id="view-mobile"></span></div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Home Country</label>
+                <span class="editor-view-value" id="view-home-country"></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Destination Details</label>
+                <div class="form-section">
+                  <div class="form-group"><label class="form-label">Destination Name</label><span class="editor-view-value" id="view-dest-name"></span></div>
+                  <div class="form-group"><label class="form-label">Destination Address</label><span class="editor-view-value" id="view-dest-address"></span></div>
+                  <div class="form-row">
+                    <div class="form-group"><label class="form-label">Destination Contact Number</label><span class="editor-view-value" id="view-dest-phone"></span></div>
+                    <div class="form-group"><label class="form-label">Destination Email</label><span class="editor-view-value" id="view-dest-email"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Additional Information</label>
+                <span class="editor-view-value editor-view-value-block" id="view-additional-info"></span>
+              </div>
+            </div>
+          </div>
+          <div id="editor-contact-edit" class="editor-contact-edit">
+          <div class="card-header">
+            <div class="card-header-fields">
+              <div class="form-group">
+                <label class="form-label" for="contact-page-name">Contact Page Name <span class="form-required">*</span></label>
+                <span class="form-hint">A name to identify this page on your card/tile. Must be unique among your contact pages.</span>
+                <input type="text" id="contact-page-name" class="form-input" placeholder="Contact Page Name" maxlength="28" autocomplete="off" title="Contact Page Name" required>
+                <span class="form-error" id="error-contact-page-name" role="alert"></span>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
+                <span class="form-hint">The slug for this page’s URL (stored under your user folder). Letters, numbers, hyphens, underscores. 2–28 characters. Must be unique.</span>
+                <div class="contact-page-url-inline">
+                  <span class="card-header-url-prefix" aria-hidden="true">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
+                  <input type="text" id="contact-page-url-slug" class="form-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]+$" maxlength="28" autocomplete="off" title="Contact Page URL" required>
+                </div>
+                <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
+              </div>
+            </div>
+            <div class="editor-edit-mode-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="view-mode-btn" onclick="backToViewMode()">Back to View Mode</button>
+            </div>
+          </div>
+          <div class="card-body" id="editor-contact-form-wrap">
+            <form id="contact-form">
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-email" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="tel"><span class="form-hint"></span><span class="form-error" id="error-mobile" role="alert"></span></div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Home Country</label>
+                <div class="searchable-select" id="home-country-edit-container">
+                  <button type="button" class="searchable-select-trigger" id="home-country-edit-trigger" onclick="toggleCountrySelectEdit()">
+                    <span id="home-country-edit-text" class="searchable-select-placeholder">Select country</span>
+                  </button>
+                  <div class="searchable-select-dropdown" id="home-country-edit-dropdown">
+                    <div class="searchable-select-search">
+                      <input type="text" id="home-country-edit-search" oninput="filterCountryOptionsEdit()">
+                    </div>
+                    <div class="searchable-select-options" id="home-country-edit-options"></div>
+                  </div>
+                </div>
+                <input type="hidden" id="home-country" value="">
+                <span class="form-hint">Your country of residence. Shown on your contact page for identification.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Destination Details</label>
+                <span class="form-hint" id="hint-destination-details"></span>
+                <div class="form-section">
+                  <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200"></div>
+                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200"></div>
+                  <div class="form-row">
+                    <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-dest-phone" role="alert"></span></div>
+                    <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-error" id="error-dest-email" role="alert"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Additional Information</label>
+                <textarea id="additional-info" class="form-textarea form-textarea-additional" rows="4" maxlength="500"></textarea>
+                <span class="form-hint">Optional. e.g. emergency contact, special instructions.</span>
+              </div>
+              <div id="editor-alert" class="alert"></div>
+              <div class="form-actions form-actions-editor">
+                <button type="submit" id="save-btn" class="btn btn-primary btn-sm" disabled>Save Changes</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="cancel-btn" onclick="cancelForm()" disabled>Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm" id="form-delete-page-btn" onclick="openDeletePageModalForCurrentPage()" style="display:none">Delete</button>
+              </div>
+            </form>
+          </div>
+          </div>
+        </div>
+        </div>
+      </div>
+      </div>
+    </main>
+
+  
+    <div id="edit-secrets-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header"><h3 class="modal-title">Set Secrets</h3></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Account Email</label>
+          <input type="email" id="edit-secrets-account-email" class="form-input" autocomplete="email">
+          <span class="form-hint">For account management &amp; recovery. Must not be used by another account.</span>
+          <span class="form-error" id="error-edit-secrets-account-email" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth</label>
+          <input type="text" id="edit-secrets-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="bday">
+          <span class="form-hint">Format: dd/mm/yyyy</span>
+          <span class="form-error" id="error-edit-secrets-dob" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Security Questions</label>
+          <span class="form-hint" style="display:block;margin-bottom:0.5rem;">Select 3 different questions (4-30 chars each).</span>
+          <div id="edit-secrets-sq-container">          <div class="secret-q-row"><select id="edit-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq1-answer" role="alert"></span></div></div>
+          <div class="secret-q-row"><select id="edit-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq2-answer" role="alert"></span></div></div>
+          <div class="secret-q-row"><select id="edit-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq3-answer" role="alert"></span></div></div></div>
+        </div>
+        <div id="edit-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEditSecretsModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="edit-secrets-save-btn" onclick="saveEditSecrets()">Save</button>
+      </div>
+    </div>
+  </div>
+  <div id="verify-email-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header"><h3 class="modal-title" id="verify-email-modal-title">Verify your email</h3></div>
+      <div class="modal-body">
+        <p id="verify-email-modal-message">A 6-digit code was sent to your account email. Enter it below.</p>
+        <div class="form-group">
+          <label class="form-label" for="verify-email-code">6-digit code</label>
+          <input type="text" id="verify-email-code" class="form-input verify-otp-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+          <span class="form-error" id="verify-email-error" role="alert"></span>
+        </div>
+        <div id="verify-email-alert" class="alert hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeVerifyEmailModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="verify-email-submit-btn" onclick="submitVerifyEmailCode()">Verify</button>
+      </div>
+    </div>
+  </div>
+  <div id="change-password-sq-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-header"><h3 class="modal-title">Change Password &amp; Security Questions</h3></div>
+      <div class="modal-body">
+        <p class="form-hint" style="margin-bottom:1rem;">Enter your current password, then set a new password and/or update your security questions. You will use your new password the next time you sign in.</p>
+        <div class="form-group">
+          <label class="form-label" for="change-pwd-current">Current password <span class="form-required">*</span></label>
+          <input type="password" id="change-pwd-current" class="form-input" autocomplete="current-password" placeholder="Enter current password to make changes">
+          <span class="form-error" id="error-change-pwd-current" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="change-pwd-new">New password</label>
+          <input type="password" id="change-pwd-new" class="form-input" autocomplete="new-password" placeholder="Leave blank to keep the same password or enter a new password" minlength="8">
+          <span class="form-error" id="error-change-pwd-new" role="alert"></span>
+        </div>
+        <div class="form-group hidden" id="change-pwd-confirm-wrap">
+          <label class="form-label" for="change-pwd-confirm">Confirm new password</label>
+          <input type="password" id="change-pwd-confirm" class="form-input" autocomplete="new-password" placeholder="Enter your new password again">
+          <span class="form-error" id="error-change-pwd-confirm" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Security Questions</label>
+          <span class="form-hint" style="display:block;margin-bottom:0.5rem;">Select 3 different questions and provide your secret answers (4–30 chars each). Leave unchanged if you do not want to update.</span>
+          <div id="change-pwd-sq-container">
+            <div class="secret-q-row"><select id="change-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
+            <div class="secret-q-row"><select id="change-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
+            <div class="secret-q-row"><select id="change-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
+          </div>
+        </div>
+        <div id="change-pwd-sq-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeChangePasswordSqModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="change-pwd-sq-save-btn" onclick="saveChangePasswordSq()" disabled>Save</button>
+      </div>
+    </div>
+  </div>
+  <div id="delete-page-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header"><h3 class="modal-title">Delete contact page?</h3></div>
+      <div class="modal-body">
+        <p>This contact page will be permanently deleted and its URL will no longer exist. Any QR codes and tags referencing this Page URL will stop working.</p>
+        <p id="delete-page-modal-url" class="text-secondary" style="font-size:0.9rem;margin-top:0.5rem;"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDeletePageModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="delete-page-confirm-btn" onclick="confirmDeletePage()">Delete</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+<script src="/account-details-content.js"></script>
+<script src="../countries-data.js"></script>
+<script src="../form-descriptions.js"></script>
+<script src="edit-secrets.js"></script>
+<script>
+const API = 'https://contact-page-editor.deem0u.workers.dev';
+let username = null, token = null, currentSha = null, currentContactpagename = 'index';
+let isCreateMode = false;
+var formSnapshot = null;
+const PAGES_URL = 'https://deem0u.github.io/user/';
+const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
+const RECOVERY_SQ_OPTIONS = {1:'What is your mothers maiden name?',2:'What is the name of the educational institution which you have obtained your highest level of qualification?',3:'What is the name of your first pet?',4:'What is the make and model of your first car?',5:'What is a date that is most memorable to you?',6:'What suburb were you born in?',7:'What was the name of the business or company you first worked for?',8:'Where was your first major travel destination?',9:'What is your favourite sports team?',10:'What is a word that Chris cannot correctly pronounce?'};
+let recoveryPath = null, recoveryUsername = null, recoveryQuestionId = null, recoveryQuestionIds = null, recoveryAccountEmail = null;
+
+function formatContactNumber(val) {
+  var d = (val || '').replace(/\D/g, '');
+  if (!d.length) return '';
+  return '+' + d.substring(0, 20);
+}
+
+function formatDob(val) {
+  var d = (val || '').replace(/\D/g, '').substring(0, 8);
+  if (!d.length) return '';
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return d.substring(0, 2) + '/' + d.substring(2);
+  return d.substring(0, 2) + '/' + d.substring(2, 4) + '/' + d.substring(4);
+}
+function escapeHtml(s) {
+  return (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function attachDobMask() {
+  document.querySelectorAll('.dob-mask').forEach(function(inp) {
+    if (inp.dataset.dobMaskAttached) return;
+    inp.dataset.dobMaskAttached = '1';
+    inp.addEventListener('input', function() {
+      var val = this.value;
+      var formatted = formatDob(val);
+      if (formatted !== val) this.value = formatted;
+    });
+  });
+}
+
+function attachContactNumberMask() {
+  document.querySelectorAll('.contact-number-mask').forEach(function(inp) {
+    if (inp.dataset.maskAttached) return;
+    inp.dataset.maskAttached = '1';
+    inp.addEventListener('input', function() {
+      var val = this.value;
+      var pos = this.selectionStart;
+      var digitsBefore = (val.substring(0, pos).replace(/\D/g, '')).length;
+      var formatted = formatContactNumber(val);
+      if (formatted !== val) {
+        this.value = formatted;
+        var newPos = Math.min(digitsBefore + 1, formatted.length);
+        this.setSelectionRange(newPos, newPos);
+      }
+    });
+    inp.addEventListener('blur', function() {
+      if (this.value && !/^\+[0-9]/.test(this.value)) {
+        var d = (this.value || '').replace(/\D/g, '');
+        if (d.length) this.value = formatContactNumber('+' + d);
+      }
+    });
+  });
+}
+
+
+function showRecoveryAlert(msg, type) {
+  var el = document.getElementById('recovery-alert');
+  if (!el) return;
+  if (msg) {
+    el.className = 'alert alert-' + (type || 'info') + ' show';
+    el.innerHTML = '<div class="alert-content">' + msg + '</div>';
+  } else {
+    el.className = 'alert';
+    el.textContent = '';
+  }
+}
+
+function showRecoveryVerifyAlert(msg, type) {
+  var el = document.getElementById('recovery-verify-alert');
+  if (!el) return;
+  if (msg) {
+    el.className = 'alert alert-' + (type || 'info') + ' show';
+    el.innerHTML = '<div class="alert-content">' + msg + '</div>';
+  } else {
+    el.className = 'alert';
+    el.textContent = '';
+  }
+}
+
+function recoveryCheckStep1() {
+  var useEmail = document.getElementById('recovery-step1-email').classList.contains('hidden');
+  if (useEmail) recoveryCheckUsername(); else recoveryCheckByEmail();
+}
+function recoveryCheckUsername() {
+  var inp = document.getElementById('recovery-username');
+  var errEl = document.getElementById('error-recovery-username');
+  var username = (inp && inp.value || '').trim().toLowerCase();
+  showRecoveryAlert('', '');
+  if (errEl) errEl.textContent = '';
+  if (!username) {
+    showRecoveryAlert('Please enter your User Name.', 'error');
+    return;
+  }
+  if (username.length < 3) {
+    showRecoveryAlert('User Name must be at least 3 characters.', 'error');
+    return;
+  }
+  var btn = document.getElementById('recovery-check-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking...'; }
+  fetch(API + '/api/recovery/check', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: username })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
+    if (!d.exists) {
+      showRecoveryAlert('No account with the User Name exists. Forgot your User Name? Try entering your Account Email instead.', 'error');
+      return;
+    }
+    if (!d.canRecover) {
+      showRecoveryAlert("Access Recovery for your account is not available right now. Please email deem0u.github.io@gmail.com for support.", 'error');
+      return;
+    }
+    recoveryPath = 'username';
+    recoveryUsername = username;
+    recoveryQuestionId = d.recoveryQuestionId;
+    recoveryQuestionIds = null;
+    showRecoveryStep2();
+  }).catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
+    showRecoveryAlert('Connection error. Please try again.', 'error');
+  });
+}
+function recoveryCheckByEmail() {
+  var inp = document.getElementById('recovery-account-email-step1');
+  var email = (inp && inp.value || '').trim();
+  showRecoveryAlert('', '');
+  if (!email || !email.includes('@')) {
+    showRecoveryAlert('Please enter a valid Account Email.', 'error');
+    return;
+  }
+  var btn = document.getElementById('recovery-check-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking...'; }
+  fetch(API + '/api/recovery/check-by-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountEmail: email })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
+    if (!d.exists) {
+      showRecoveryAlert('No account with this email.', 'error');
+      return;
+    }
+    if (!d.canRecover) {
+      showRecoveryAlert("Access Recovery for your account is not available right now. Please email deem0u.github.io@gmail.com for support.", 'error');
+      return;
+    }
+    recoveryPath = 'email';
+    recoveryUsername = null;
+    recoveryQuestionId = null;
+    recoveryQuestionIds = d.recoveryQuestionIds || [];
+    recoveryAccountEmail = email;
+    showRecoveryStep2();
+  }).catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
+    showRecoveryAlert('Connection error. Please try again.', 'error');
+  });
+}
+function showRecoveryStep2() {
+  document.getElementById('recovery-step1').classList.add('hidden');
+  document.getElementById('recovery-step2').classList.remove('hidden');
+  var sub = document.getElementById('recovery-subtitle');
+  if (sub) sub.textContent = 'Verify your account details to recover access';
+  document.getElementById('recovery-dob').value = '';
+  document.getElementById('recovery-sq-answer').value = '';
+  document.getElementById('recovery-sq2-answer').value = '';
+  attachDobMask();
+  var accGroup = document.getElementById('recovery-account-email-group');
+  var sqGroup = document.getElementById('recovery-sq-group');
+  var sq2Group = document.getElementById('recovery-sq2-group');
+  var accInput = document.getElementById('recovery-account-email');
+  if (recoveryPath === 'username') {
+    if (accGroup) accGroup.classList.remove('hidden');
+    if (sq2Group) sq2Group.classList.add('hidden');
+    accInput.value = '';
+    var label = document.getElementById('recovery-sq-label');
+    if (label) label.textContent = RECOVERY_SQ_OPTIONS[recoveryQuestionId] || 'Security Question';
+  } else {
+    if (accGroup) accGroup.classList.add('hidden');
+    if (sq2Group) sq2Group.classList.remove('hidden');
+    var l1 = document.getElementById('recovery-sq-label');
+    var l2 = document.getElementById('recovery-sq2-label');
+    if (l1 && recoveryQuestionIds[0]) l1.textContent = RECOVERY_SQ_OPTIONS[recoveryQuestionIds[0]] || 'Security Question';
+    if (l2 && recoveryQuestionIds[1]) l2.textContent = RECOVERY_SQ_OPTIONS[recoveryQuestionIds[1]] || 'Security Question';
+  }
+}
+
+function recoveryBackToStep1() {
+  recoveryPath = null; recoveryUsername = null; recoveryQuestionId = null; recoveryQuestionIds = null; recoveryAccountEmail = null;
+  document.getElementById('recovery-step2').classList.add('hidden');
+  document.getElementById('recovery-step1').classList.remove('hidden');
+  document.getElementById('recovery-step1-username').classList.remove('hidden');
+  document.getElementById('recovery-step1-email').classList.add('hidden');
+  var sub = document.getElementById('recovery-subtitle');
+  if (sub) sub.textContent = 'Enter your User Name to recover access';
+  showRecoveryAlert('', '');
+}
+
+function recoveryVerify() {
+  var dob = (document.getElementById('recovery-dob').value || '').trim();
+  var ans = (document.getElementById('recovery-sq-answer').value || '').trim();
+  var ans2 = (document.getElementById('recovery-sq2-answer').value || '').trim();
+  var accEm = (document.getElementById('recovery-account-email').value || '').trim();
+  showRecoveryVerifyAlert('', '');
+  var dobNorm = (function(v) {
+    var s = (v || '').trim().replace(/\s+/g, '');
+    var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return null;
+    var d = parseInt(m[1],10), mo = parseInt(m[2],10), y = parseInt(m[3],10);
+    if (d<1||d>31||mo<1||mo>12||y<1900||y>2100) return null;
+    return String(d).padStart(2,'0')+'/'+String(mo).padStart(2,'0')+'/'+y;
+  })(dob);
+  if (!dobNorm) {
+    showRecoveryVerifyAlert('Please enter a valid date (dd/mm/yyyy).', 'error');
+    return;
+  }
+  if (recoveryPath === 'username') {
+    if (!accEm || !ans) {
+      showRecoveryVerifyAlert('Please fill in all fields.', 'error');
+      return;
+    }
+  } else {
+    if (!ans || !ans2) {
+      showRecoveryVerifyAlert('Please fill in all fields.', 'error');
+      return;
+    }
+  }
+  var btn = document.getElementById('recovery-verify-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
+  var payload;
+  if (recoveryPath === 'email') {
+    payload = { accountEmail: recoveryAccountEmail, dob: dobNorm, questionIds: recoveryQuestionIds, answers: [ans, ans2] };
+  } else {
+    payload = { username: recoveryUsername, accountEmail: accEm, dob: dobNorm, questionId: recoveryQuestionId, answer: ans };
+  }
+  fetch(API + '/api/recovery/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
+    if (d.error || !d.success) {
+      showRecoveryVerifyAlert(d.error || 'Recovery verification failed.', 'error');
+      return;
+    }
+    if (recoveryPath === 'username') recoveryAccountEmail = accEm;
+    showRecoverySuccess(d.username || d.folder);
+  }).catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
+    showRecoveryVerifyAlert('Connection error. Please try again.', 'error');
+  });
+}
+
+function showRecoverySuccess(username) {
+  document.getElementById('recovery-success-banner').textContent = 'A one-time code has been sent to your account email.';
+  document.getElementById('recovery-success-details').innerHTML = '<p>Return to <strong>Sign In</strong>. Enter your user name or account email and use the one-time code as your password. You will then be asked to set a new permanent password.</p>';
+  document.getElementById('screen-auth').classList.add('hidden');
+  document.getElementById('screen-recovery-success').classList.remove('hidden');
+}
+function applyFormDescriptionsEdit() {
+  var c = window.FORM_DESCRIPTIONS;
+  if (!c) return;
+  var keys = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
+  keys.forEach(function(key) {
+    var el = document.getElementById(key);
+    if (!el) return;
+    var cfg = c[key];
+    if (!cfg) return;
+    var group = el.closest('.form-group');
+    if (!group) return;
+    var hint = group.querySelector('.form-hint');
+    if (hint && cfg.hint) hint.innerHTML = cfg.hint;
+  });
+  var dd = c['destination-details'];
+  if (dd && dd.hint) {
+    var h = document.getElementById('hint-destination-details');
+    if (h) h.innerHTML = dd.hint;
+  }
+}
+
+function validateGivenNames(val, required) {
+  var s = (val || '').trim();
+  var msg = 'Given names must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
+  if (!s) return required ? { valid: false, message: 'Given names are required.' } : { valid: true };
+  if (s.length > 32) return { valid: false, message: msg };
+  if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
+  return { valid: true };
+}
+
+function initGivenNamesValidationEdit() {
+  var inp = document.getElementById('first-name');
+  var errEl = document.getElementById('error-first-name');
+  if (!inp || !errEl) return;
+  var required = true;
+  function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+  function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+  inp.addEventListener('blur', function() {
+    var r = validateGivenNames(this.value, required);
+    if (r.valid) clearErr(); else showErr(r.message);
+  });
+  inp.addEventListener('input', function() {
+    var r = validateGivenNames(this.value, required);
+    if (r.valid) clearErr();
+  });
+}
+
+function validateFamilyName(val, required) {
+  var s = (val || '').trim();
+  var msg = 'Family name must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
+  if (!s) return required ? { valid: false, message: 'Family name is required.' } : { valid: true };
+  if (s.length > 32) return { valid: false, message: msg };
+  if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
+  return { valid: true };
+}
+
+function initFamilyNameValidationEdit() {
+  var inp = document.getElementById('surname');
+  var errEl = document.getElementById('error-surname');
+  if (!inp || !errEl) return;
+  var required = true;
+  function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+  function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+  inp.addEventListener('blur', function() {
+    var r = validateFamilyName(this.value, required);
+    if (r.valid) clearErr(); else showErr(r.message);
+  });
+  inp.addEventListener('input', function() {
+    var r = validateFamilyName(this.value, required);
+    if (r.valid) clearErr();
+  });
+}
+
+function validateEmailInput(inp, required) {
+  var s = (inp.value || '').trim();
+  var msg = 'Please enter a valid email address (e.g. name@example.com).';
+  if (!s) return required ? { valid: false, message: 'Email is required.' } : { valid: true };
+  if (!inp.validity.valid) return { valid: false, message: msg };
+  return { valid: true };
+}
+
+function initEmailValidationEdit() {
+  var inp = document.getElementById('email');
+  var errEl = document.getElementById('error-email');
+  if (!inp || !errEl) return;
+  var required = true;
+  function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+  function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+  inp.addEventListener('blur', function() {
+    var r = validateEmailInput(this, required);
+    if (r.valid) clearErr(); else showErr(r.message);
+  });
+  inp.addEventListener('input', function() {
+    var r = validateEmailInput(this, required);
+    if (r.valid) clearErr();
+  });
+}
+
+function validateContactNumber(val) {
+  var s = (val || '').trim();
+  var msg = 'Please enter a valid phone number including country code (e.g. +61432123456).';
+  if (!s) return { valid: true };
+  if (!/^\+[0-9]{8,20}$/.test(s)) return { valid: false, message: msg };
+  return { valid: true };
+}
+
+function initContactNumberValidationEdit() {
+  var configs = [
+    { id: 'mobile', errId: 'error-mobile' },
+    { id: 'dest-phone', errId: 'error-dest-phone' }
+  ];
+  configs.forEach(function(c) {
+    var inp = document.getElementById(c.id);
+    var errEl = document.getElementById(c.errId);
+    if (!inp || !errEl) return;
+    function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+    function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+    inp.addEventListener('blur', function() {
+      var r = validateContactNumber(this.value);
+      if (r.valid) clearErr(); else showErr(r.message);
+    });
+    inp.addEventListener('input', function() {
+      var r = validateContactNumber(this.value);
+      if (r.valid) clearErr();
+    });
+  });
+}
+
+function initDestinationEmailValidationEdit() {
+  var inp = document.getElementById('dest-email');
+  var errEl = document.getElementById('error-dest-email');
+  if (!inp || !errEl) return;
+  var required = false;
+  function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+  function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+  inp.addEventListener('blur', function() {
+    var r = validateEmailInput(this, required);
+    if (r.valid) clearErr(); else showErr(r.message);
+  });
+  inp.addEventListener('input', function() {
+    var r = validateEmailInput(this, required);
+    if (r.valid) clearErr();
+  });
+}
+
+function resolveCountryDisplayEdit(parsed) {
+  if (!parsed || (parsed.trim()) === '' || parsed.trim() === '—') return null;
+  var p = parsed.trim();
+  var list = window.COUNTRIES || [];
+  for (var i = 0; i < list.length; i++) {
+    var name = list[i][0], code = list[i][1], label = name + ' (' + code + ')';
+    if (p === name || p === label) return label;
+  }
+  return p;
+}
+
+function setCountryDropdownEdit(value) {
+  var textEl = document.getElementById('home-country-edit-text');
+  var hid = document.getElementById('home-country');
+  if (!value) {
+    hid.value = '';
+    textEl.textContent = 'Select country';
+    textEl.classList.add('searchable-select-placeholder');
+    textEl.classList.remove('searchable-select-value');
+  } else {
+    hid.value = value;
+    textEl.textContent = value;
+    textEl.classList.remove('searchable-select-placeholder');
+    textEl.classList.add('searchable-select-value');
+  }
+}
+
+function initCountryDropdownEdit() {
+  var list = window.COUNTRIES || [];
+  var el = document.getElementById('home-country-edit-options');
+  if (!el) return;
+  el.innerHTML = '<div class="searchable-select-option searchable-select-clear" data-value="" data-clear="1">Leave empty</div>' + list.map(function(c) {
+    var label = c[0] + ' (' + c[1] + ')';
+    return '<div class="searchable-select-option" data-value="' + label.replace(/"/g, '&quot;') + '">' + label + '</div>';
+  }).join('');
+  el.addEventListener('click', function(e) {
+    var o = e.target.closest('.searchable-select-option');
+    if (o) selectCountryEdit(o.dataset.value !== undefined ? o.dataset.value : '');
+  });
+}
+
+function toggleCountrySelectEdit() {
+  var dropdown = document.getElementById('home-country-edit-dropdown');
+  var trigger = document.getElementById('home-country-edit-trigger');
+  var isOpen = dropdown.classList.contains('show');
+  document.querySelectorAll('.searchable-select-dropdown').forEach(function(d) { d.classList.remove('show'); });
+  if (!isOpen) {
+    var rect = trigger.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.width = rect.width + 'px';
+    dropdown.classList.add('show');
+    var search = document.getElementById('home-country-edit-search');
+    search.value = '';
+    filterCountryOptionsEdit();
+    search.focus();
+  }
+}
+
+function filterCountryOptionsEdit() {
+  var search = document.getElementById('home-country-edit-search').value.toLowerCase();
+  var opts = document.querySelectorAll('#home-country-edit-options .searchable-select-option');
+  var visible = 0;
+  opts.forEach(function(o) {
+    if (o.dataset.clear === '1') {
+      o.style.display = '';
+      return;
+    }
+    var match = o.dataset.value.toLowerCase().includes(search);
+    o.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  var container = document.getElementById('home-country-edit-options');
+  var empty = container.querySelector('.searchable-select-empty');
+  if (!visible && !empty) {
+    var e = document.createElement('div');
+    e.className = 'searchable-select-empty';
+    e.textContent = 'No countries match';
+    container.appendChild(e);
+  } else if (visible && empty) empty.remove();
+}
+
+function selectCountryEdit(value) {
+  var textEl = document.getElementById('home-country-edit-text');
+  document.getElementById('home-country').value = value || '';
+  if (!value) {
+    textEl.textContent = 'Select country';
+    textEl.classList.add('searchable-select-placeholder');
+    textEl.classList.remove('searchable-select-value');
+  } else {
+    textEl.textContent = value;
+    textEl.classList.remove('searchable-select-placeholder');
+    textEl.classList.add('searchable-select-value');
+  }
+  document.getElementById('home-country-edit-dropdown').classList.remove('show');
+  document.querySelectorAll('#home-country-edit-options .searchable-select-option').forEach(function(o) {
+    o.classList.toggle('selected', (o.dataset.value || '') === (value || ''));
+  });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    var adminKey = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_key') : null;
+    var headers = {};
+    if (adminKey) headers['X-Admin-Key'] = adminKey;
+    var statusRes = await fetch(API + '/api/site-status', { headers: headers });
+    var statusData = await statusRes.json();
+    if (statusData.isAdmin) { /* admin bypasses maintenance and lockdown */ }
+    else if (statusData.lockdownMode) {
+      var el = document.getElementById('site-unavailable');
+      if (el) { el.style.display = 'flex'; el.classList.remove('hidden'); }
+      var app = document.querySelector('.app');
+      if (app) app.style.display = 'none';
+      return;
+    }
+    else if (statusData.maintenanceMode) {
+      var maint = document.getElementById('site-maintenance');
+      if (maint) { maint.style.display = 'flex'; maint.classList.remove('hidden'); }
+      var app = document.querySelector('.app');
+      if (app) app.style.display = 'none';
+      return;
+    }
+  } catch (e) {}
+  const params = new URLSearchParams(window.location.search);
+  username = params.get('username') || params.get('folder');
+  
+  attachContactNumberMask();
+  attachDobMask();
+  initCountryDropdownEdit();
+  applyFormDescriptionsEdit();
+  initGivenNamesValidationEdit();
+  initFamilyNameValidationEdit();
+  initEmailValidationEdit();
+  initContactNumberValidationEdit();
+  initDestinationEmailValidationEdit();
+  document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
+  var authUseUsernameLink = document.getElementById('auth-use-username-link');
+  if (authUseUsernameLink) authUseUsernameLink.addEventListener('click', function(e) { e.preventDefault(); setAuthModeUseUsername(true); });
+  var authUseEmailLink = document.getElementById('auth-use-email-link');
+  if (authUseEmailLink) authUseEmailLink.addEventListener('click', function(e) { e.preventDefault(); setAuthModeUseUsername(false); });
+  var setPwBtn = document.getElementById('auth-set-password-btn');
+  if (setPwBtn) setPwBtn.addEventListener('click', async function() {
+    var newPw = (document.getElementById('auth-new-password').value || '').trim();
+    var confirmPw = (document.getElementById('auth-confirm-password').value || '').trim();
+    if (newPw.length < 8) { showAlert('auth-alert', 'Password must be at least 8 characters.', 'error'); return; }
+    if (newPw !== confirmPw) { showAlert('auth-alert', 'Passwords do not match.', 'error'); return; }
+    showAlert('auth-alert', '<span class="spinner"></span> Setting password...', 'info');
+    try {
+      var r = await fetch(API + '/api/profile/set-password-after-otp', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ newPassword: newPw }) });
+      var d = await r.json();
+      if (!r.ok) { showAlert('auth-alert', (d && d.error) || 'Failed to set password.', 'error'); return; }
+      document.getElementById('auth-set-password-after-otp').classList.add('hidden');
+      document.getElementById('auth-email-mode').classList.remove('hidden');
+      document.getElementById('auth-signin-btn').classList.remove('hidden');
+      showAlert('auth-alert', 'Password set. Continuing...', 'success');
+      await continueAfterAuth();
+    } catch (e) {
+      showAlert('auth-alert', 'Connection error. Try again.', 'error');
+    }
+  });
+  var rLink = document.getElementById('recovery-link');
+  if (rLink) rLink.addEventListener('click', function(e) { e.preventDefault(); document.querySelector('.auth-card').classList.add('hidden'); document.getElementById('recovery-card').classList.remove('hidden'); });
+  var rbLink = document.getElementById('recovery-back-link');
+  if (rbLink) rbLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-card').classList.add('hidden'); document.querySelector('.auth-card').classList.remove('hidden'); });
+  var useEmailLink = document.getElementById('recovery-use-email-link');
+  if (useEmailLink) useEmailLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-username').classList.add('hidden'); document.getElementById('recovery-step1-email').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your Account Email to recover access'; showRecoveryAlert('', ''); });
+  var useUsernameLink = document.getElementById('recovery-use-username-link');
+  if (useUsernameLink) useUsernameLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-email').classList.add('hidden'); document.getElementById('recovery-step1-username').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your User Name to recover access'; showRecoveryAlert('', ''); });
+  document.getElementById('contact-form').addEventListener('submit', handleSave);
+  document.getElementById('contact-form').addEventListener('input', updateFormDirtyState);
+  document.getElementById('contact-form').addEventListener('change', updateFormDirtyState);
+  document.getElementById('contact-page-name').addEventListener('input', updateFormDirtyState);
+  document.getElementById('contact-page-url-slug').addEventListener('input', updateFormDirtyState);
+  var editProfileBtn = document.getElementById('edit-profile-btn');
+  if (editProfileBtn) editProfileBtn.addEventListener('click', enterProfileEditMode);
+  ['profile-edit-username', 'profile-edit-first-name', 'profile-edit-last-name', 'profile-edit-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.addEventListener('input', updateProfileDirtyState); el.addEventListener('change', updateProfileDirtyState); }
+  });
+  var profileUsernameEl = document.getElementById('profile-edit-username');
+  if (profileUsernameEl) {
+    profileUsernameEl.addEventListener('input', scheduleProfileUsernameCheck);
+    profileUsernameEl.addEventListener('blur', function() {
+      if (profileUsernameCheckTimer) { clearTimeout(profileUsernameCheckTimer); profileUsernameCheckTimer = null; }
+      runProfileUsernameValidation();
+    });
+  }
+  var verifyEmailBtn = document.getElementById('verify-email-btn');
+  if (verifyEmailBtn) verifyEmailBtn.addEventListener('click', function() {
+    if (verifyEmailContext === 'emailChange' && pendingNewEmail) {
+      openVerifyEmailModal('emailChange');
+    } else {
+      verifyEmailFromEditor();
+    }
+  });
+  var verifyEmailCodeInput = document.getElementById('verify-email-code');
+  if (verifyEmailCodeInput) verifyEmailCodeInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); submitVerifyEmailCode(); } });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.searchable-select')) {
+      document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
+    }
+  });
+  try {
+    var s = JSON.parse(sessionStorage.getItem('edit_session') || '{}');
+    if ((s.username || s.folder) && s.token) {
+      username = s.username || s.folder;
+      token = s.token;
+      authenticateWithStoredSession();
+    }
+  } catch (e) {}
+});
+
+
+function pageApiPath() {
+  return currentContactpagename === 'index' ? `${API}/api/page/${encodeURIComponent(username)}` : `${API}/api/page/${encodeURIComponent(username)}/${encodeURIComponent(currentContactpagename)}`;
+}
+function viewPageHref() {
+  return currentContactpagename === 'index' ? PAGES_URL + username + '/' : PAGES_URL + username + '/' + currentContactpagename;
+}
+
+function setContactPageMeta(slug, displayName, createMode) {
+  var uEl = document.getElementById('contact-page-url-username');
+  var slugInp = document.getElementById('contact-page-url-slug');
+  var suffixEl = document.getElementById('contact-page-url-suffix');
+  var nameInp = document.getElementById('contact-page-name');
+  if (uEl) uEl.textContent = username || '—';
+  if (slugInp) {
+    if (createMode && (slug === 'index' || !slug)) slugInp.value = '';
+    else slugInp.value = (slug === 'index' || !slug) ? 'index' : slug;
+    slugInp.readOnly = false;
+    slugInp.disabled = false;
+  }
+  if (suffixEl) suffixEl.textContent = '';
+  if (nameInp) nameInp.value = displayName || '';
+  document.getElementById('error-contact-page-url-slug').textContent = '';
+  document.getElementById('error-contact-page-name').textContent = '';
+  refreshViewModeDisplay();
+}
+
+function refreshViewModeDisplay() {
+  function el(id) { var e = document.getElementById(id); return e ? e.value || e.textContent || '' : ''; }
+  function setView(id, text) { var e = document.getElementById(id); if (e) e.textContent = (text != null && String(text).trim() !== '') ? String(text).trim() : ''; }
+  var nameInp = document.getElementById('contact-page-name');
+  var slugInp = document.getElementById('contact-page-url-slug');
+  var u = username || '';
+  var slug = (slugInp && slugInp.value) ? slugInp.value.trim() : (currentContactpagename === 'index' ? '' : currentContactpagename);
+  if (slug && slug.toLowerCase() === 'index') slug = '';
+  var url = u ? (PAGES_URL + u + '/' + (slug || '')) : '';
+  setView('view-contact-page-name', nameInp ? nameInp.value : '');
+  setView('view-contact-page-url', url);
+  setView('view-first-name', el('first-name'));
+  setView('view-surname', el('surname'));
+  setView('view-email', el('email'));
+  setView('view-mobile', el('mobile'));
+  var countryEl = document.getElementById('home-country-edit-text');
+  setView('view-home-country', countryEl && countryEl.textContent && countryEl.textContent !== 'Select country' ? countryEl.textContent : '');
+  setView('view-dest-name', el('dest-name'));
+  setView('view-dest-address', el('dest-address'));
+  setView('view-dest-phone', el('dest-phone'));
+  setView('view-dest-email', el('dest-email'));
+  setView('view-additional-info', el('additional-info'));
+}
+
+function getFormSnapshot() {
+  function v(id) { var e = document.getElementById(id); return e ? (e.value || e.textContent || '').trim() : ''; }
+  return {
+    'contact-page-name': v('contact-page-name'),
+    'contact-page-url-slug': v('contact-page-url-slug'),
+    'first-name': v('first-name'),
+    'surname': v('surname'),
+    'email': v('email'),
+    'mobile': v('mobile'),
+    'home-country': v('home-country'),
+    'home-country-text': (function() { var e = document.getElementById('home-country-edit-text'); return e && e.textContent !== 'Select country' ? e.textContent.trim() : ''; })(),
+    'dest-name': v('dest-name'),
+    'dest-address': v('dest-address'),
+    'dest-phone': v('dest-phone'),
+    'dest-email': v('dest-email'),
+    'additional-info': v('additional-info')
+  };
+}
+
+function isFormDirty() {
+  if (!formSnapshot) return true;
+  var cur = getFormSnapshot();
+  for (var k in formSnapshot) { if (formSnapshot[k] !== cur[k]) return true; }
+  return false;
+}
+
+function updateSaveButtonLabel() {
+  var saveBtn = document.getElementById('save-btn');
+  if (saveBtn) saveBtn.textContent = isCreateMode ? 'Save' : 'Save Changes';
+}
+function updateFormDirtyState() {
+  var saveBtn = document.getElementById('save-btn');
+  var cancelBtn = document.getElementById('cancel-btn');
+  if (!saveBtn || !cancelBtn) return;
+  updateSaveButtonLabel();
+  var dirty = isFormDirty();
+  if (isCreateMode) {
+    saveBtn.disabled = false;
+    cancelBtn.disabled = false;
+  } else {
+    saveBtn.disabled = !dirty;
+    cancelBtn.disabled = !dirty;
+  }
+}
+
+function enterEditMode() {
+  if (!profileData || !profileData.emailVerified) return;
+  document.getElementById('editor-contact-view').classList.add('hidden');
+  document.getElementById('editor-contact-edit').classList.add('show');
+  var delBtn = document.getElementById('form-delete-page-btn');
+  if (delBtn) delBtn.style.display = '';
+  formSnapshot = getFormSnapshot();
+  updateSaveButtonLabel();
+  updateFormDirtyState();
+}
+
+function enterViewMode() {
+  refreshViewModeDisplay();
+  var vpl = document.getElementById('view-page-link');
+  if (vpl) { vpl.href = viewPageHref(); vpl.style.pointerEvents = isCreateMode ? 'none' : ''; }
+  document.getElementById('editor-contact-edit').classList.remove('show');
+  document.getElementById('editor-contact-view').classList.remove('hidden');
+  var delBtn = document.getElementById('form-delete-page-btn');
+  if (delBtn) delBtn.style.display = 'none';
+}
+
+function cancelForm() {
+  if (isCreateMode) {
+    enterViewMode();
+    return;
+  }
+  resetForm().then(function() {
+    formSnapshot = getFormSnapshot();
+    updateFormDirtyState();
+    enterViewMode();
+  });
+}
+
+function backToViewMode() {
+  if (isCreateMode) {
+    enterViewMode();
+    return;
+  }
+  resetForm().then(function() {
+    formSnapshot = getFormSnapshot();
+    updateFormDirtyState();
+    enterViewMode();
+  });
+}
+
+async function fetchContactPagesList() {
+  var section = document.getElementById('contact-pages-section');
+  var list = document.getElementById('contact-pages-list');
+  if (!section || !list || !username || !token) return;
+  try {
+    var r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    var pages = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : [];
+    if (pages.length === 0) pages = [{ slug: 'index', name: 'Main (index)' }];
+    list.innerHTML = pages.map(function(p) {
+      var slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
+      var label = (typeof p === 'object' && p.name != null) ? p.name : (slug === 'index' ? 'Main (index)' : slug);
+      var slugDisplayUrlOnly = slug === 'index' ? 'index' : slug;
+      var slugAttr = escapeHtml(slug === 'index' ? 'index' : slug);
+      var labelAttr = escapeHtml(label);
+      return '<div class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + slugAttr + '" role="button" tabindex="0" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">' + escapeHtml(label) + '</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">' + escapeHtml(slugDisplayUrlOnly) + '</span></div></div>';
+    }).join('');
+    section.classList.remove('hidden');
+  } catch (e) {
+    list.innerHTML = '<div class="contact-page-card selected" data-contactpagename="index" role="button" tabindex="0" onclick="selectContactPage(\'index\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">Main (index)</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">index</span></div></div>';
+    section.classList.remove('hidden');
+  }
+}
+
+function enterCreateMode() {
+  if (!profileData || !profileData.emailVerified) return;
+  isCreateMode = true;
+  currentContactpagename = '';
+  currentSha = null;
+  setContactPageMeta('', '', true);
+  clearFormToBlank();
+  var list = document.getElementById('contact-pages-list');
+  if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.remove('selected'); });
+  document.getElementById('view-page-link').href = '#';
+  document.getElementById('view-page-link').style.pointerEvents = 'none';
+  var delBtn = document.getElementById('form-delete-page-btn');
+  if (delBtn) delBtn.style.display = 'none';
+  document.getElementById('editor-contact-view').classList.add('hidden');
+  document.getElementById('editor-contact-edit').classList.add('show');
+  formSnapshot = getFormSnapshot();
+  updateSaveButtonLabel();
+  updateFormDirtyState();
+  showStatusBanner('To create a new Contact Page fill out the form and click "Save".', 'info');
+}
+function selectContactPage(contactpagename) {
+  if (!username || !token) return Promise.resolve();
+  var slug = contactpagename || 'index';
+  if (slug === currentContactpagename && !isCreateMode) return Promise.resolve();
+  isCreateMode = false;
+  currentContactpagename = slug;
+  var list = document.getElementById('contact-pages-list');
+  if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
+  document.getElementById('view-page-link').href = viewPageHref();
+  document.getElementById('view-page-link').style.pointerEvents = '';
+  showStatusBanner('Loading...', 'loading');
+  var url = pageApiPath();
+  return fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(res) { return res.json().then(function(data) { if (!res.ok) throw new Error(data.error || 'Failed to load'); return data; }); })
+    .then(function(data) {
+      currentSha = data.sha;
+      fillForm(data.content);
+      setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
+      document.getElementById('view-page-link').href = viewPageHref();
+      formSnapshot = getFormSnapshot();
+      updateFormDirtyState();
+      enterViewMode();
+      hideStatusBanner();
+      var sel = list && list.querySelector('.contact-page-card.selected');
+      if (sel) sel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    })
+    .catch(function() { showStatusBanner('Failed to load page', 'error'); return undefined; });
+}
+function getMinimalContactPageHTML() {
+  var ids = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
+  var saved = {};
+  ids.forEach(function(id) { var el = document.getElementById(id); if (el) { saved[id] = el.value; el.value = ''; } });
+  var countryTextEl = document.getElementById('home-country-edit-text');
+  var savedCountryText = countryTextEl ? countryTextEl.textContent : '';
+  if (countryTextEl) countryTextEl.textContent = 'Select country';
+  var homeCountryHidden = document.getElementById('home-country');
+  var savedHomeCountry = homeCountryHidden ? homeCountryHidden.value : '';
+  if (homeCountryHidden) homeCountryHidden.value = '';
+  var html = generateHTML();
+  ids.forEach(function(id) { var el = document.getElementById(id); if (el && saved[id] !== undefined) el.value = saved[id]; });
+  if (countryTextEl) countryTextEl.textContent = savedCountryText;
+  if (homeCountryHidden) homeCountryHidden.value = savedHomeCountry;
+  return html;
+}
+function clearFormToBlank() {
+  var ids = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
+  ids.forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  var countryTextEl = document.getElementById('home-country-edit-text');
+  if (countryTextEl) countryTextEl.textContent = 'Select country';
+  var homeCountryHidden = document.getElementById('home-country');
+  if (homeCountryHidden) homeCountryHidden.value = '';
+  document.querySelectorAll('.form-error').forEach(function(el) { el.textContent = ''; el.classList.add('hidden'); });
+}
+async function authenticateWithStoredSession() {
+  if (!username || !token) return;
+  try {
+    const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.ok) {
+      const data = await res.json();
+      currentSha = data.sha;
+      isCreateMode = false;
+      currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
+      fillForm(data.content);
+      setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
+    } else if (res.status === 404) {
+      currentSha = null;
+      isCreateMode = true;
+      currentContactpagename = 'index';
+      fillForm('');
+      setContactPageMeta('index', null, true);
+    } else {
+      throw new Error('Session expired');
+    }
+    document.getElementById('screen-auth').classList.add('hidden');
+    document.getElementById('signout-btn').classList.remove('hidden');
+    document.getElementById('screen-editor').classList.remove('hidden');
+    document.getElementById('view-page-link').href = viewPageHref();
+    document.getElementById('view-page-link').style.pointerEvents = isCreateMode ? 'none' : '';
+    sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
+    if (typeof checkSecretsStatus === 'function') await checkSecretsStatus();
+    await loadProfile();
+    tryShowEasterEgg();
+    applyUnverifiedRestriction();
+    await fetchContactPagesList();
+    var list = document.getElementById('contact-pages-list');
+    var firstCard = list && list.querySelector('.contact-page-card');
+    var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
+    if (firstCard) {
+      await selectContactPage(firstSlug);
+      enterViewMode();
+    } else {
+      enterCreateMode();
+    }
+  } catch (e) {
+    sessionStorage.removeItem('edit_session');
+    username = null;
+    token = null;
+  }
+}
+
+var authUseUsername = false;
+function setAuthModeUseUsername(useUsername) {
+  authUseUsername = !!useUsername;
+  document.getElementById('auth-account-email-group').classList.toggle('hidden', authUseUsername);
+  document.getElementById('auth-username-group').classList.toggle('hidden', !authUseUsername);
+  document.getElementById('auth-use-username-link').classList.toggle('hidden', authUseUsername);
+  document.getElementById('auth-use-email-link').classList.toggle('hidden', !authUseUsername);
+}
+
+async function continueAfterAuth() {
+  try {
+    const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) {
+      showAlert('auth-alert', 'Sign in failed. Please check your email and password.', 'error');
+      return;
+    }
+    if (res.ok) {
+      const data = await res.json();
+      currentSha = data.sha;
+      isCreateMode = false;
+      currentContactpagename = (data.contactpagename && data.contactpagename !== 'index') ? data.contactpagename : 'index';
+      fillForm(data.content);
+      setContactPageMeta(data.contactpagename || currentContactpagename, data.contactPageName || null, false);
+    } else if (res.status === 404) {
+      // Main contact page (index) does not exist yet – show editor in create mode
+      currentSha = null;
+      isCreateMode = true;
+      currentContactpagename = 'index';
+      fillForm('');
+      setContactPageMeta('index', null, true);
+    } else {
+      showAlert('auth-alert', 'Connection error. Please try again.', 'error');
+      return;
+    }
+    updateWelcomeUserName();
+    document.title = 'My Account - ' + username;
+    document.getElementById('header-logo-text').textContent = 'My Account - ' + username;
+    document.getElementById('signout-btn').classList.remove('hidden');
+    document.getElementById('view-page-link').href = viewPageHref();
+    document.getElementById('view-page-link').style.pointerEvents = isCreateMode ? 'none' : '';
+    document.getElementById('screen-auth').classList.add('hidden');
+    document.getElementById('screen-editor').classList.remove('hidden');
+    sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
+    if (typeof checkSecretsStatus === 'function') await checkSecretsStatus();
+    await loadProfile();
+    tryShowEasterEgg();
+    applyUnverifiedRestriction();
+    await fetchContactPagesList();
+    var list = document.getElementById('contact-pages-list');
+    var firstCard = list && list.querySelector('.contact-page-card');
+    var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
+    if (firstCard) {
+      await selectContactPage(firstSlug);
+      enterViewMode();
+    } else {
+      enterCreateMode();
+    }
+  } catch (e) {
+    console.error('Auth error:', e);
+    showAlert('auth-alert', 'Error after sign-in. Open Console (F12) for details.', 'error');
+  }
+}
+
+async function authenticate() {
+  var accountEmail = (document.getElementById('auth-account-email').value || '').trim().toLowerCase();
+  var usernameInput = (document.getElementById('auth-username').value || '').trim();
+  var password = (document.getElementById('auth-password').value || '').trim();
+  if (!password) { showAlert('auth-alert', 'Please enter your password.', 'error'); return; }
+  if (authUseUsername) {
+    if (!usernameInput) { showAlert('auth-alert', 'Please enter your user name.', 'error'); return; }
+    accountEmail = '';
+  } else {
+    if (!accountEmail || !accountEmail.includes('@')) { showAlert('auth-alert', 'Please enter your account email.', 'error'); return; }
+  }
+  showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
+  try {
+    var body = { password: password };
+    if (authUseUsername) body.username = usernameInput; else body.accountEmail = accountEmail;
+    var authRes = await fetch(API + '/api/auth/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    var authData;
+    try { authData = await authRes.json(); } catch (_) { authData = {}; }
+    if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || ('Sign-in failed (' + authRes.status + '). Try again or use recovery.'), 'error'); return; }
+    username = authData.username;
+    token = authData.token;
+    if (authData.mustSetPassword) {
+      document.getElementById('auth-email-mode').classList.add('hidden');
+      document.getElementById('auth-signin-btn').classList.add('hidden');
+      document.getElementById('auth-set-password-after-otp').classList.remove('hidden');
+      document.getElementById('auth-new-password').value = '';
+      document.getElementById('auth-confirm-password').value = '';
+      showAlert('auth-alert', 'Set a new password to continue.', 'info');
+      return;
+    }
+    await continueAfterAuth();
+  } catch (e) {
+    console.error('Sign-in request failed:', e);
+    showAlert('auth-alert', 'Cannot reach sign-in service. Check your connection, then try again. (Open Console (F12) for details.)', 'error');
+  }
+}
+
+var profileData = null;
+var verifyEmailContext = null;
+var pendingNewEmail = null;
+
+function isMartianAnswer(answer) {
+  if (!answer || typeof answer !== 'string') return false;
+  var a = answer.trim().toLowerCase().replace(/^\s*the\s+/, '');
+  return a === 'martian';
+}
+function isEasterEggEligible(profile) {
+  if (!profile || !Array.isArray(profile.secretQuestions)) return false;
+  return profile.secretQuestions.some(function(q) {
+    return q && (q.questionId === 10 || q.questionId === '10') && isMartianAnswer(q.answer);
+  });
+}
+function isFirstLoginToday(user) {
+  if (!user) return false;
+  var today = new Date().toISOString().slice(0, 10);
+  try {
+    return (localStorage.getItem('easter_egg_last_' + user) || '') !== today;
+  } catch (_) { return false; }
+}
+function showEasterEggAnimation() {
+  var overlay = document.createElement('div');
+  overlay.className = 'easter-egg-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  var img = document.createElement('img');
+  img.className = 'easter-egg-astronaut';
+  img.src = 'astronaut-easter-egg.png';
+  img.alt = '';
+  img.setAttribute('referrerpolicy', 'no-referrer');
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+  setTimeout(function() {
+    overlay.classList.add('easter-egg-fadeout');
+    setTimeout(function() {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }, 500);
+  }, 7000);
+  try {
+    if (username) localStorage.setItem('easter_egg_last_' + username, new Date().toISOString().slice(0, 10));
+  } catch (_) {}
+}
+function tryShowEasterEgg() {
+  if (!username || !profileData) return;
+  if (!isEasterEggEligible(profileData) || !isFirstLoginToday(username)) return;
+  showEasterEggAnimation();
+}
+
+function updateWelcomeUserName() {
+  if (!username) return;
+  var firstName = (profileData && profileData.firstName && String(profileData.firstName).trim()) || (document.getElementById("first-name") && document.getElementById("first-name").value && document.getElementById("first-name").value.trim()) || "";
+  var display = firstName ? firstName + " (" + username + ")" : username;
+  var el = document.getElementById("user-name");
+  if (el) el.textContent = display;
+}
+async function loadProfile() {
+  if (!username || !token) return;
+  try {
+    var r = await fetch(API + "/api/profile/" + encodeURIComponent(username), { headers: { "Authorization": "Bearer " + token } });
+    if (!r.ok) return;
+    profileData = await r.json();
+    document.getElementById("profile-username").textContent = profileData.username || username || "—";
+    document.getElementById("profile-first-name").textContent = profileData.firstName || "—";
+    document.getElementById("profile-last-name").textContent = profileData.lastName || "—";
+    document.getElementById("profile-email").textContent = profileData.accountEmail || "—";
+    document.getElementById("profile-dob").textContent = profileData.dob || profileData.dobMasked || "—";
+    var badge = document.getElementById("profile-verified-badge");
+    if (badge) {
+      badge.textContent = profileData.emailVerified ? "Verified" : "Not Verified";
+      badge.className = "badge " + (profileData.emailVerified ? "badge-cyan" : "badge-pink");
+      badge.classList.remove("hidden");
+    }
+    updateWelcomeUserName();
+  } catch (e) {}
+}
+function applyUnverifiedRestriction() {
+  if (!profileData) return;
+  var wrap = document.getElementById("editor-contact-form-wrap");
+  var banner = document.getElementById("unverified-banner");
+  var bannerText = document.getElementById("unverified-banner-text");
+  var editBtn = document.getElementById("edit-contact-page-btn");
+  var newPageBtn = document.getElementById("new-contact-page-btn");
+  if (profileData.emailVerified) {
+    if (wrap) wrap.classList.remove("editor-form-disabled");
+    if (banner) banner.classList.add("hidden");
+    if (editBtn) editBtn.disabled = false;
+    if (newPageBtn) newPageBtn.disabled = false;
+  } else {
+    if (wrap) wrap.classList.add("editor-form-disabled");
+    if (banner) banner.classList.remove("hidden");
+    if (editBtn) editBtn.disabled = true;
+    if (newPageBtn) newPageBtn.disabled = true;
+    if (bannerText) {
+      bannerText.innerHTML = (verifyEmailContext === 'emailChange' && pendingNewEmail)
+        ? 'Verify your new email to edit your Contact Page and add new contact pages. '
+        : '<strong>Verify your email</strong> to edit your Contact Page and add new contact pages. ';
+    }
+    var editPanel = document.getElementById("editor-contact-edit");
+    if (editPanel && editPanel.classList.contains("show")) enterViewMode();
+  }
+}
+var profileSnapshot = null;
+var profileUsernameCheckTimer = null;
+var PROFILE_RESERVED_USERNAMES = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
+function validateProfileUsernameFormat(value) {
+  var v = (value || "").trim();
+  if (!v) return { valid: false, message: "User name is required (3–32 characters)." };
+  if (v.length < 3 || v.length > 32) return { valid: false, message: "User name must be 3–32 characters." };
+  if (!/^[a-zA-Z0-9_-]+$/.test(v)) return { valid: false, message: "User name: letters, numbers, hyphens, underscores only." };
+  if (PROFILE_RESERVED_USERNAMES.indexOf(v.toLowerCase()) !== -1) return { valid: false, message: "This username is reserved." };
+  return { valid: true, message: "" };
+}
+function getCurrentProfileUsername() {
+  return (profileSnapshot && profileSnapshot.username) ? profileSnapshot.username.trim().toLowerCase() : (typeof username !== "undefined" ? (username || "").trim().toLowerCase() : "");
+}
+function setProfileUsernameError(message) {
+  var el = document.getElementById("error-profile-username");
+  if (el) el.textContent = message || "";
+}
+async function runProfileUsernameValidation() {
+  var inputEl = document.getElementById("profile-edit-username");
+  if (!inputEl || !inputEl.closest(".profile-edit") || inputEl.closest(".profile-edit").classList.contains("hidden")) return;
+  var value = (inputEl.value || "").trim();
+  var formatResult = validateProfileUsernameFormat(value);
+  if (!formatResult.valid) {
+    setProfileUsernameError(formatResult.message);
+    return;
+  }
+  var normalized = value.toLowerCase();
+  var currentUn = getCurrentProfileUsername();
+  if (normalized === currentUn) {
+    setProfileUsernameError("");
+    return;
+  }
+  try {
+    var r = await fetch(API + "/api/check-username/" + encodeURIComponent(normalized));
+    var data = await r.json();
+    if (data.available) {
+      setProfileUsernameError("");
+    } else {
+      setProfileUsernameError(data.error || "Username is taken or reserved.");
+    }
+  } catch (_) {
+    setProfileUsernameError("");
+  }
+}
+function scheduleProfileUsernameCheck() {
+  if (profileUsernameCheckTimer) clearTimeout(profileUsernameCheckTimer);
+  var value = (document.getElementById("profile-edit-username") && document.getElementById("profile-edit-username").value || "").trim();
+  if (!value) {
+    setProfileUsernameError("");
+    return;
+  }
+  var normalized = value.toLowerCase();
+  var currentUn = getCurrentProfileUsername();
+  var formatResult = validateProfileUsernameFormat(value);
+  if (!formatResult.valid) {
+    setProfileUsernameError(formatResult.message);
+    return;
+  }
+  if (normalized === currentUn) {
+    setProfileUsernameError("");
+    return;
+  }
+  profileUsernameCheckTimer = setTimeout(function() { runProfileUsernameValidation(); }, 400);
+}
+function getProfileEditValues() {
+  var un = document.getElementById("profile-edit-username");
+  var fn = document.getElementById("profile-edit-first-name");
+  var ln = document.getElementById("profile-edit-last-name");
+  var em = document.getElementById("profile-edit-email");
+  return {
+    username: (un && un.value) ? un.value.trim() : "",
+    firstName: (fn && fn.value) ? fn.value.trim() : "",
+    lastName: (ln && ln.value) ? ln.value.trim() : "",
+    accountEmail: (em && em.value) ? em.value.trim() : ""
+  };
+}
+function isProfileDirty() {
+  if (!profileSnapshot) return false;
+  var cur = getProfileEditValues();
+  return cur.username !== profileSnapshot.username || cur.firstName !== profileSnapshot.firstName || cur.lastName !== profileSnapshot.lastName || cur.accountEmail !== profileSnapshot.accountEmail;
+}
+function updateProfileDirtyState() {
+  var editEl = document.getElementById("profile-edit");
+  if (!editEl || editEl.classList.contains("hidden")) return;
+  var saveBtn = document.getElementById("profile-save-btn");
+  var cancelBtn = document.getElementById("profile-cancel-btn");
+  var dirty = isProfileDirty();
+  if (saveBtn) saveBtn.disabled = !dirty;
+  if (cancelBtn) cancelBtn.disabled = false;
+}
+function enterProfileEditMode() {
+  if (!profileData) return;
+  var viewEl = document.getElementById("profile-view");
+  var editEl = document.getElementById("profile-edit");
+  if (!viewEl || !editEl) return;
+  var unEl = document.getElementById("profile-edit-username");
+  if (unEl) unEl.value = profileData.username || username || "";
+  document.getElementById("profile-edit-first-name").value = profileData.firstName || "";
+  document.getElementById("profile-edit-last-name").value = profileData.lastName || "";
+  document.getElementById("profile-edit-email").value = profileData.accountEmail || "";
+  document.getElementById("profile-edit-dob").textContent = profileData.dob || profileData.dobMasked || "—";
+  document.getElementById("error-profile-username").textContent = "";
+  profileSnapshot = getProfileEditValues();
+  viewEl.classList.add("hidden");
+  editEl.classList.remove("hidden");
+  updateProfileDirtyState();
+}
+function exitProfileEditMode() {
+  var viewEl = document.getElementById("profile-view");
+  var editEl = document.getElementById("profile-edit");
+  if (viewEl) viewEl.classList.remove("hidden");
+  if (editEl) editEl.classList.add("hidden");
+  profileSnapshot = null;
+}
+function cancelProfileEdit() {
+  exitProfileEditMode();
+}
+
+var deletePageSlugToDelete = null;
+function openDeletePageModal(btn) {
+  if (!btn || !username || !token) return;
+  var slug = (btn.dataset.contactpagename || '').trim();
+  var pageName = (btn.dataset.pageName || '').trim();
+  var urlDisplay = (btn.dataset.url || '').trim();
+  deletePageSlugToDelete = slug;
+  document.getElementById('delete-page-modal-url').textContent = urlDisplay ? 'URL: ' + urlDisplay : '';
+  document.getElementById('delete-page-modal').classList.remove('hidden');
+  document.getElementById('delete-page-modal').classList.add('show');
+}
+function openDeletePageModalForCurrentPage() {
+  if (!username || !token || isCreateMode) return;
+  var slug = currentContactpagename || 'index';
+  var nameInp = document.getElementById('contact-page-name');
+  var pageName = (nameInp && nameInp.value) ? nameInp.value.trim() : (slug === 'index' ? 'Main (index)' : slug);
+  var urlDisplay = slug === 'index' ? username + '/' : username + '/' + slug;
+  deletePageSlugToDelete = slug;
+  document.getElementById('delete-page-modal-url').textContent = 'URL: ' + urlDisplay;
+  document.getElementById('delete-page-modal').classList.remove('hidden');
+  document.getElementById('delete-page-modal').classList.add('show');
+}
+function closeDeletePageModal() {
+  document.getElementById('delete-page-modal').classList.remove('show');
+  document.getElementById('delete-page-modal').classList.add('hidden');
+  deletePageSlugToDelete = null;
+}
+async function confirmDeletePage() {
+  if (!deletePageSlugToDelete || !username || !token) { closeDeletePageModal(); return; }
+  var slug = deletePageSlugToDelete;
+  var confirmBtn = document.getElementById('delete-page-confirm-btn');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Deleting...'; }
+  try {
+    var path = API + '/api/page/' + encodeURIComponent(username) + '/' + encodeURIComponent(slug);
+    var r = await fetch(path, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json();
+    closeDeletePageModal();
+    if (r.ok && d.success) {
+      await fetchContactPagesList();
+      var list = document.getElementById('contact-pages-list');
+      var firstCard = list && list.querySelector('.contact-page-card');
+      var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
+      if (firstCard) {
+        await selectContactPage(firstSlug);
+      } else {
+        enterCreateMode();
+      }
+      showStatusBanner('Contact page deleted.', 'success');
+    } else {
+      showStatusBanner(d.error || 'Failed to delete page', 'error');
+    }
+  } catch (e) {
+    closeDeletePageModal();
+    showStatusBanner('Connection error', 'error');
+  }
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Delete'; }
+}
+
+async function saveProfileFromStrip() {
+  var cur = getProfileEditValues();
+  var email = cur.accountEmail;
+  if (!email || !email.includes("@")) { showStatusBanner("Account email is required.", "error"); return; }
+  var usernameChanged = cur.username !== (profileSnapshot && profileSnapshot.username);
+  if (usernameChanged) {
+    var newUn = (cur.username || "").trim().toLowerCase();
+    if (!newUn || newUn.length < 3) { document.getElementById("error-profile-username").textContent = "User name is required (3–32 characters)."; return; }
+    if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUn)) { document.getElementById("error-profile-username").textContent = "User name: letters, numbers, hyphens, underscores only."; return; }
+    if (PROFILE_RESERVED_USERNAMES.indexOf(newUn) !== -1) { document.getElementById("error-profile-username").textContent = "This username is reserved."; return; }
+    var currentUn = (profileSnapshot && profileSnapshot.username) ? profileSnapshot.username.trim().toLowerCase() : (username || "").trim().toLowerCase();
+    if (newUn !== currentUn) {
+      var checkRes = await fetch(API + "/api/check-username/" + encodeURIComponent(newUn));
+      var checkData = await checkRes.json();
+      if (!checkData.available) {
+        document.getElementById("error-profile-username").textContent = checkData.error || "Username is taken or reserved.";
+        return;
+      }
+    }
+    document.getElementById("error-profile-username").textContent = "";
+    var saveBtn = document.getElementById("profile-save-btn");
+    if (saveBtn) saveBtn.disabled = true;
+    try {
+      var rRename = await fetch(API + "/api/profile/rename", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ newUsername: newUn })
+      });
+      var dRename = await rRename.json();
+      if (rRename.ok && dRename.success && dRename.token && dRename.username) {
+        username = dRename.username;
+        token = dRename.token;
+        try { sessionStorage.setItem("edit_session", JSON.stringify({ username: username, token: token })); } catch (_) {}
+        var nameOrEmailChanged = cur.firstName !== (profileSnapshot && profileSnapshot.firstName) || cur.lastName !== (profileSnapshot && profileSnapshot.lastName) || cur.accountEmail !== (profileSnapshot && profileSnapshot.accountEmail);
+        if (nameOrEmailChanged) {
+          var rPut = await fetch(API + "/api/profile/" + encodeURIComponent(username), {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+            body: JSON.stringify({ firstName: cur.firstName, lastName: cur.lastName, accountEmail: email })
+          });
+          var dPut = await rPut.json();
+          if (rPut.ok && dPut.success && dPut.otpSent) {
+            pendingNewEmail = email;
+            verifyEmailContext = "emailChange";
+            applyUnverifiedRestriction();
+            exitProfileEditMode();
+            showStatusBanner("User name updated. Verification code sent to your new email.", "success");
+            openVerifyEmailModal("emailChange");
+          } else if (rPut.ok && dPut.success) {
+            await loadProfile();
+            await fetchContactPagesList();
+            applyUnverifiedRestriction();
+            exitProfileEditMode();
+            showStatusBanner("Profile updated. Your sign-in user name is now: " + username, "success");
+          } else {
+            await loadProfile();
+            await fetchContactPagesList();
+            exitProfileEditMode();
+            showStatusBanner(dPut.error || "User name updated but profile save failed.", "error");
+          }
+        } else {
+          await loadProfile();
+          await fetchContactPagesList();
+          applyUnverifiedRestriction();
+          exitProfileEditMode();
+          showStatusBanner("User name updated. Your sign-in user name is now: " + username, "success");
+        }
+      } else {
+        showStatusBanner(dRename.error || "Could not change User Name", "error");
+      }
+    } catch (e) {
+      showStatusBanner("Connection error", "error");
+    }
+    if (saveBtn) saveBtn.disabled = false;
+    updateProfileDirtyState();
+    return;
+  }
+  var saveBtn = document.getElementById("profile-save-btn");
+  if (saveBtn) saveBtn.disabled = true;
+  try {
+    var r = await fetch(API + "/api/profile/" + encodeURIComponent(username), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ firstName: cur.firstName, lastName: cur.lastName, accountEmail: email })
+    });
+    var d = await r.json();
+    if (r.ok && d.success) {
+      if (d.otpSent) {
+        profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName };
+        pendingNewEmail = email;
+        verifyEmailContext = "emailChange";
+        applyUnverifiedRestriction();
+        exitProfileEditMode();
+        showStatusBanner("Verification code sent to your new email. Enter it below.", "success");
+        openVerifyEmailModal("emailChange");
+      } else {
+        profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email };
+        await loadProfile();
+        applyUnverifiedRestriction();
+        exitProfileEditMode();
+      }
+    } else {
+      showStatusBanner(d.error || "Could not save", "error");
+    }
+  } catch (e) {
+    showStatusBanner("Connection error", "error");
+  }
+  if (saveBtn) saveBtn.disabled = false;
+  updateProfileDirtyState();
+}
+async function verifyEmailFromEditor() {
+  if (!username) return;
+  try {
+    showStatusBanner('Sending code...', 'loading');
+    var r = await fetch(API + "/api/otp/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username }) });
+    var d = await r.json();
+    if (d.sent) {
+      showStatusBanner('Code sent. Enter the 6-digit code below.', 'success');
+      openVerifyEmailModal();
+    } else {
+      showStatusBanner(d.error || 'Could not send code', 'error');
+    }
+  } catch (e) {
+    showStatusBanner('Connection error', 'error');
+  }
+}
+
+function openVerifyEmailModal(context) {
+  var modal = document.getElementById('verify-email-modal');
+  var input = document.getElementById('verify-email-code');
+  var errEl = document.getElementById('verify-email-error');
+  var alertEl = document.getElementById('verify-email-alert');
+  var titleEl = document.getElementById('verify-email-modal-title');
+  var msgEl = document.getElementById('verify-email-modal-message');
+  if (!modal || !input) return;
+  input.value = '';
+  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+  if (alertEl) { alertEl.classList.add('hidden'); alertEl.innerHTML = ''; }
+  if (context === 'emailChange' && pendingNewEmail) {
+    if (titleEl) titleEl.textContent = 'Verify your new email';
+    if (msgEl) msgEl.textContent = 'Enter the 6-digit code we sent to ' + pendingNewEmail + '.';
+  } else {
+    if (titleEl) titleEl.textContent = 'Verify your email';
+    if (msgEl) msgEl.textContent = 'A 6-digit code was sent to your account email. Enter it below.';
+  }
+  modal.classList.remove('hidden');
+  modal.classList.add('show');
+  input.focus();
+}
+
+function closeVerifyEmailModal() {
+  var modal = document.getElementById('verify-email-modal');
+  if (modal) { modal.classList.remove('show'); modal.classList.add('hidden'); }
+}
+
+async function submitVerifyEmailCode() {
+  var input = document.getElementById('verify-email-code');
+  var errEl = document.getElementById('verify-email-error');
+  var alertEl = document.getElementById('verify-email-alert');
+  var btn = document.getElementById('verify-email-submit-btn');
+  var code = (input && input.value) ? input.value.trim().replace(/\D/g, '') : '';
+  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+  if (alertEl) { alertEl.classList.add('hidden'); alertEl.innerHTML = ''; }
+  if (code.length !== 6) {
+    if (errEl) { errEl.textContent = 'Please enter the 6-digit code.'; errEl.classList.remove('hidden'); }
+    if (input) input.focus();
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
+  try {
+    showStatusBanner('Verifying...', 'loading');
+    var isEmailChange = verifyEmailContext === 'emailChange';
+    var vr = isEmailChange
+      ? await fetch(API + "/api/profile/verify-email-change", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ code }) })
+      : await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, code }) });
+    var vd = await vr.json();
+    if (vr.ok && vd.success) {
+      if (isEmailChange) {
+        verifyEmailContext = null;
+        pendingNewEmail = null;
+        await loadProfile();
+      }
+      profileData.emailVerified = true;
+      var badge = document.getElementById('profile-verified-badge');
+      if (badge) { badge.textContent = 'Verified'; badge.className = 'badge badge-cyan'; badge.classList.remove('hidden'); }
+      applyUnverifiedRestriction();
+      closeVerifyEmailModal();
+      showStatusBanner(isEmailChange ? 'Email updated. Next time, sign in with your new email.' : 'Email verified!', 'success');
+    } else {
+      showStatusBanner('', null);
+      if (alertEl) {
+        alertEl.className = 'alert alert-error show';
+        alertEl.innerHTML = '<div class="alert-content">' + (vd.error || 'Invalid code') + '</div>';
+        alertEl.classList.remove('hidden');
+      }
+      if (input) input.focus();
+    }
+  } catch (e) {
+    showStatusBanner('', null);
+    if (alertEl) {
+      alertEl.className = 'alert alert-error show';
+      alertEl.innerHTML = '<div class="alert-content">Connection error.</div>';
+      alertEl.classList.remove('hidden');
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Verify'; }
+  }
+}
+
+function syncChangePwdSqOptions() {
+  var v1 = document.getElementById('change-sq1') && document.getElementById('change-sq1').value;
+  var v2 = document.getElementById('change-sq2') && document.getElementById('change-sq2').value;
+  var v3 = document.getElementById('change-sq3') && document.getElementById('change-sq3').value;
+  ['change-sq1','change-sq2','change-sq3'].forEach(function(id, idx) {
+    var sel = document.getElementById(id);
+    var ansWrap = sel && sel.closest && sel.closest('.secret-q-row') && sel.closest('.secret-q-row').querySelector('.secret-q-answer-wrap');
+    var ans = ansWrap && ansWrap.querySelector('.secret-q-answer');
+    var exclude = (id === 'change-sq1' ? [v2,v3] : id === 'change-sq2' ? [v1,v3] : [v1,v2]).filter(Boolean);
+    var cur = sel ? sel.value : '';
+    if (cur && exclude.indexOf(cur) >= 0) { cur = ''; if (ans) ans.value = ''; }
+    if (ansWrap) { if (cur) ansWrap.classList.remove('hidden'); else { ansWrap.classList.add('hidden'); if (ans) ans.value = ''; } }
+    if (sel && typeof RECOVERY_SQ_OPTIONS !== 'undefined') {
+      var opts = ['<option value="">Select question</option>'];
+      for (var k in RECOVERY_SQ_OPTIONS) { if (RECOVERY_SQ_OPTIONS.hasOwnProperty(k) && exclude.indexOf(k) < 0) opts.push('<option value="'+k+'"'+(k===cur?' selected':'')+'>'+RECOVERY_SQ_OPTIONS[k]+'</option>'); }
+      sel.innerHTML = opts.join('');
+    }
+  });
+  updateChangePwdSqSaveButton();
+}
+
+function toggleChangePwdConfirmVisibility() {
+  var newP = document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value;
+  var wrap = document.getElementById('change-pwd-confirm-wrap');
+  var conf = document.getElementById('change-pwd-confirm');
+  if (wrap) wrap.classList.toggle('hidden', !(newP && newP.length > 0));
+  if (conf && (!newP || !newP.length)) conf.value = '';
+  updateChangePwdSqSaveButton();
+}
+
+function updateChangePwdSqSaveButton() {
+  var cur = document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value.trim();
+  var newP = document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value;
+  var conf = document.getElementById('change-pwd-confirm') && document.getElementById('change-pwd-confirm').value;
+  var sq1 = document.getElementById('change-sq1') && document.getElementById('change-sq1').value;
+  var sq2 = document.getElementById('change-sq2') && document.getElementById('change-sq2').value;
+  var sq3 = document.getElementById('change-sq3') && document.getElementById('change-sq3').value;
+  var a1 = document.getElementById('change-sq1-answer') && document.getElementById('change-sq1-answer').value.trim();
+  var a2 = document.getElementById('change-sq2-answer') && document.getElementById('change-sq2-answer').value.trim();
+  var a3 = document.getElementById('change-sq3-answer') && document.getElementById('change-sq3-answer').value.trim();
+  var hasNewPwd = newP && newP.length >= 8 && newP === conf;
+  var hasSq = sq1 && sq2 && sq3 && [sq1,sq2,sq3].filter(function(x,i,a){return a.indexOf(x)===i;}).length === 3 && a1.length >= 4 && a2.length >= 4 && a3.length >= 4;
+  var btn = document.getElementById('change-pwd-sq-save-btn');
+  if (btn) btn.disabled = !cur || (!hasNewPwd && !hasSq);
+}
+
+function openChangePasswordSqModal() {
+  var m = document.getElementById('change-password-sq-modal');
+  if (!m) return;
+  document.getElementById('change-pwd-current').value = '';
+  document.getElementById('change-pwd-new').value = '';
+  document.getElementById('change-pwd-confirm').value = '';
+  var confirmWrap = document.getElementById('change-pwd-confirm-wrap');
+  if (confirmWrap) confirmWrap.classList.add('hidden');
+  ['change-sq1','change-sq2','change-sq3'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    var ans = document.getElementById(id + '-answer');
+    if (sel) sel.value = '';
+    if (ans) ans.value = '';
+    var wrap = sel && sel.closest && sel.closest('.secret-q-row') && sel.closest('.secret-q-row').querySelector('.secret-q-answer-wrap');
+    if (wrap) wrap.classList.add('hidden');
+  });
+  document.getElementById('change-pwd-sq-error').classList.add('hidden');
+  document.getElementById('change-pwd-sq-error').textContent = '';
+  syncChangePwdSqOptions();
+  m.classList.remove('hidden');
+  m.classList.add('show');
+  var curInp = document.getElementById('change-pwd-current');
+  if (curInp) curInp.focus();
+  ['change-pwd-current','change-pwd-new','change-pwd-confirm'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateChangePwdSqSaveButton);
+  });
+  var newPwdEl = document.getElementById('change-pwd-new');
+  if (newPwdEl) newPwdEl.addEventListener('input', toggleChangePwdConfirmVisibility);
+  ['change-sq1','change-sq2','change-sq3','change-sq1-answer','change-sq2-answer','change-sq3-answer'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', syncChangePwdSqOptions);
+  });
+  ['change-sq1','change-sq2','change-sq3'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', syncChangePwdSqOptions);
+  });
+}
+
+function closeChangePasswordSqModal() {
+  var m = document.getElementById('change-password-sq-modal');
+  if (m) { m.classList.remove('show'); m.classList.add('hidden'); }
+}
+
+async function saveChangePasswordSq() {
+  var cur = (document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value) || '';
+  var newP = (document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value) || '';
+  var conf = (document.getElementById('change-pwd-confirm') && document.getElementById('change-pwd-confirm').value) || '';
+  var errEl = document.getElementById('change-pwd-sq-error');
+  var btn = document.getElementById('change-pwd-sq-save-btn');
+  if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+  if (!cur.trim()) {
+    if (errEl) { errEl.textContent = 'Enter your current password.'; errEl.classList.remove('hidden'); return; }
+  }
+  var hasNewPwd = newP.length >= 8 && newP === conf;
+  var sq = [
+    { questionId: parseInt((document.getElementById('change-sq1') && document.getElementById('change-sq1').value) || 0, 10), answer: (document.getElementById('change-sq1-answer') && document.getElementById('change-sq1-answer').value) || '' },
+    { questionId: parseInt((document.getElementById('change-sq2') && document.getElementById('change-sq2').value) || 0, 10), answer: (document.getElementById('change-sq2-answer') && document.getElementById('change-sq2-answer').value) || '' },
+    { questionId: parseInt((document.getElementById('change-sq3') && document.getElementById('change-sq3').value) || 0, 10), answer: (document.getElementById('change-sq3-answer') && document.getElementById('change-sq3-answer').value) || '' }
+  ];
+  var hasSq = sq[0].questionId && sq[1].questionId && sq[2].questionId && sq.every(function(q){ return (q.answer || '').trim().length >= 4 && (q.answer || '').trim().length <= 30; }) && (new Set(sq.map(function(q){ return q.questionId; }))).size === 3;
+  if (!hasNewPwd && !hasSq) {
+    if (errEl) { errEl.textContent = 'Enter a new password (and confirm) and/or 3 security questions with answers (4–30 chars each).'; errEl.classList.remove('hidden'); return; }
+  }
+  if (hasNewPwd && newP !== conf) {
+    if (errEl) { errEl.textContent = 'New password and confirmation do not match.'; errEl.classList.remove('hidden'); return; }
+  }
+  if (btn) btn.disabled = true;
+  try {
+    var body = { currentPassword: cur.trim(), newPassword: hasNewPwd ? newP : '', secretQuestions: hasSq ? sq.map(function(q){ return { questionId: q.questionId, answer: (q.answer || '').trim() }; }) : [] };
+    var r = await fetch(API + '/api/profile/change-password-and-sq', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
+    var d = {};
+    try { d = await r.json(); } catch (_) { d = { error: 'Invalid response' }; }
+    if (r.ok && d.error !== true && d.success !== false) {
+      closeChangePasswordSqModal();
+      if (typeof showStatusBanner === 'function') showStatusBanner('Your password (and security questions if changed) have been updated. Use your new password next time you sign in.', 'success');
+    } else {
+      if (errEl) { errEl.textContent = (d && d.error) || 'Failed to update.'; errEl.classList.remove('hidden'); }
+    }
+  } catch (e) {
+    if (errEl) { errEl.textContent = 'Connection error. Please try again.'; errEl.classList.remove('hidden'); }
+  }
+  if (btn) btn.disabled = false;
+}
+
+function signOut() {
+  sessionStorage.removeItem('edit_session');
+  username = null;
+  token = null;
+  currentSha = null;
+  document.title = 'My Account - User';
+  document.getElementById('header-logo-text').textContent = 'My Account - User';
+  document.getElementById('signout-btn').classList.add('hidden');
+  document.getElementById('screen-editor').classList.add('hidden');
+  document.getElementById('screen-auth').classList.remove('hidden');
+  
+  var authEmail = document.getElementById('auth-account-email');
+  var authPw = document.getElementById('auth-password');
+  if (authEmail) authEmail.value = '';
+  if (authPw) authPw.value = '';
+  hideAlert('auth-alert');
+  window.history.replaceState({}, '', window.location.origin + '/myaccount/');
+}
+
+function fillForm(h) {
+  const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const g = l => { 
+    const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
+    if (!m) return '';
+    const v = m[1].trim();
+    return (v === '—' || !v) ? '' : v;
+  };
+  const decodeHtmlEntities = (s) => (s ?? '')
+    .toString()
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<')
+    .replace(/&amp;/g, '&');
+
+  const decodeMultiline = (s) => {
+    const raw = (s ?? '').toString().trim();
+    if (!raw || raw === '—') return '';
+    return decodeHtmlEntities(raw)
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]*>/g, '');
+  };
+
+  const gMulti = l => {
+    const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([\\s\\S]*?)</span>`));
+    return m ? decodeMultiline(m[1]) : '';
+  };
+  const gl = l => { 
+    const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
+    if (!m) return '';
+    const v = m[1].trim();
+    return (v === '—' || !v) ? '' : v;
+  };
+  
+  document.getElementById('first-name').value = g('Given Names') || g('Name');
+  document.getElementById('surname').value = g('Family Name') || g('Surname');
+  document.getElementById('email').value = gl('Email');
+  var mv = gl('Contact Number') || gl('Mobile');
+  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '—' || !plain) mv = ''; }
+  document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
+  var hc = resolveCountryDisplayEdit(g('Home Country'));
+  setCountryDropdownEdit(hc || null);
+  
+  // Destination details: 4-span (name, address, phone, email) or 3-span legacy (name, phone, email)
+  const dm4 = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
+  const dm3 = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
+  if (dm4) {
+    document.getElementById('dest-name').value = dm4[1].trim();
+    document.getElementById('dest-address').value = dm4[2].trim();
+    var dp = dm4[3].trim();
+    document.getElementById('dest-phone').value = dp ? formatContactNumber(dp) : '';
+    document.getElementById('dest-email').value = dm4[4].trim();
+  } else if (dm3) {
+    document.getElementById('dest-name').value = dm3[1].trim();
+    document.getElementById('dest-address').value = '';
+    var dp = dm3[2].trim();
+    document.getElementById('dest-phone').value = dp ? formatContactNumber(dp) : '';
+    document.getElementById('dest-email').value = dm3[3].trim();
+  } else {
+    document.getElementById('dest-name').value = '';
+    document.getElementById('dest-address').value = '';
+    document.getElementById('dest-phone').value = '';
+    document.getElementById('dest-email').value = '';
+  }
+
+  document.getElementById('additional-info').value = gMulti('Additional Information');
+  refreshViewModeDisplay();
+}
+
+async function resetForm() {
+  if (isCreateMode) {
+    setContactPageMeta('', '', true);
+    clearFormToBlank();
+    hideStatusBanner();
+    return;
+  }
+  showStatusBanner('Refreshing...', 'refreshing');
+  try {
+    const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.ok) {
+      const d = await res.json();
+      currentSha = d.sha;
+      fillForm(d.content);
+      setContactPageMeta(d.contactpagename || currentContactpagename, d.contactPageName || null, false);
+      hideStatusBanner();
+      function clearFieldErr(errId, inpId) {
+        var e = document.getElementById(errId), i = document.getElementById(inpId);
+        if (e) { e.textContent = ''; e.removeAttribute('aria-live'); }
+        if (i) i.classList.remove('is-invalid');
+      }
+      clearFieldErr('error-first-name', 'first-name');
+      clearFieldErr('error-surname', 'surname');
+      clearFieldErr('error-email', 'email');
+      clearFieldErr('error-mobile', 'mobile');
+      clearFieldErr('error-dest-phone', 'dest-phone');
+      clearFieldErr('error-dest-email', 'dest-email');
+      document.getElementById('error-contact-page-url-slug').textContent = '';
+      document.getElementById('error-contact-page-name').textContent = '';
+    }
+  } catch (e) { showStatusBanner('Failed to reload', 'error'); }
+}
+
+async function handleSave(e) {
+  e.preventDefault();
+  const btn = document.getElementById('save-btn');
+  var slugInp = document.getElementById('contact-page-url-slug');
+  var slugErr = document.getElementById('error-contact-page-url-slug');
+  var nameInp = document.getElementById('contact-page-name');
+  var nameErr = document.getElementById('error-contact-page-name');
+
+  if (isCreateMode) {
+    var rawSlug = (slugInp && slugInp.value) ? slugInp.value.trim() : '';
+    var contactpagename = (rawSlug === '' || rawSlug.toLowerCase() === 'index') ? 'index' : rawSlug;
+    var contactPageNameTrim = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
+    if (slugErr) slugErr.textContent = '';
+    if (nameErr) nameErr.textContent = '';
+    if (!contactPageNameTrim) {
+      if (nameErr) nameErr.textContent = 'Contact Page Name is required.';
+      if (nameInp) nameInp.focus();
+      return;
+    }
+    if (contactpagename !== 'index') {
+      if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
+        if (slugErr) slugErr.textContent = 'Use only letters, numbers, hyphens, and underscores.';
+        if (slugInp) slugInp.focus();
+        return;
+      }
+      if (contactpagename.length < 2 || contactpagename.length > 28) {
+        if (slugErr) slugErr.textContent = 'Page URL must be 2–28 characters.';
+        if (slugInp) slugInp.focus();
+        return;
+      }
+    }
+    if (nameErr) nameErr.textContent = '';
+    if (slugErr) slugErr.textContent = '';
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
+    showStatusBanner('Creating contact page...', 'saving');
+    try {
+      var content = generateHTML();
+      var res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ contactpagename: contactpagename, contactPageName: contactPageNameTrim || undefined, content: content })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        isCreateMode = false;
+        currentContactpagename = data.contactpagename || contactpagename;
+        currentSha = data.sha;
+        setContactPageMeta(currentContactpagename, data.contactPageName || contactPageNameTrim || null, false);
+        document.getElementById('view-page-link').href = viewPageHref();
+        document.getElementById('view-page-link').style.pointerEvents = '';
+        await fetchContactPagesList();
+        var listEl = document.getElementById('contact-pages-list');
+        if (listEl) listEl.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
+        enterViewMode();
+        var selCard = listEl && listEl.querySelector('.contact-page-card.selected');
+        if (selCard) selCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        updateWelcomeUserName();
+        formSnapshot = getFormSnapshot();
+        updateFormDirtyState();
+        showStatusBanner('Contact page created.', 'success');
+        btn.textContent = 'Save Changes';
+        return;
+      } else {
+        var errMsg = data.error || 'Failed to create';
+        if (data.error && (data.error.indexOf('URL') !== -1 || data.error.indexOf('slug') !== -1 || data.error.indexOf('exists') !== -1)) {
+          if (slugErr) slugErr.textContent = errMsg;
+          if (slugInp) slugInp.focus();
+        } else if (data.error && data.error.indexOf('Contact Page Name') !== -1) {
+          if (nameErr) nameErr.textContent = errMsg;
+          if (nameInp) nameInp.focus();
+        } else {
+          showStatusBanner(errMsg, 'error');
+        }
+      }
+    } catch (err) {
+      showStatusBanner('Connection error', 'error');
+    }
+    btn.textContent = 'Save Changes';
+    updateFormDirtyState();
+    return;
+  }
+
+  var fnInput = document.getElementById('first-name'), fnErr = document.getElementById('error-first-name');
+  var snInput = document.getElementById('surname'), snErr = document.getElementById('error-surname');
+  var r = validateGivenNames(fnInput.value, true);
+  if (!r.valid) {
+    if (fnErr) { fnErr.textContent = r.message; fnErr.setAttribute('aria-live', 'polite'); }
+    fnInput.classList.add('is-invalid');
+    fnInput.focus();
+    if (snErr) snErr.textContent = '';
+    if (snInput) snInput.classList.remove('is-invalid');
+    return;
+  }
+  if (fnErr) fnErr.textContent = '';
+  fnInput.classList.remove('is-invalid');
+  r = validateFamilyName(snInput.value, true);
+  if (!r.valid) {
+    if (snErr) { snErr.textContent = r.message; snErr.setAttribute('aria-live', 'polite'); }
+    snInput.classList.add('is-invalid');
+    snInput.focus();
+    return;
+  }
+  if (snErr) snErr.textContent = '';
+  snInput.classList.remove('is-invalid');
+  var emInput = document.getElementById('email'), emErr = document.getElementById('error-email');
+  r = validateEmailInput(emInput, true);
+  if (!r.valid) {
+    if (emErr) { emErr.textContent = r.message; emErr.setAttribute('aria-live', 'polite'); }
+    emInput.classList.add('is-invalid');
+    emInput.focus();
+    return;
+  }
+  if (emErr) emErr.textContent = '';
+  emInput.classList.remove('is-invalid');
+  var contactPageName = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
+  if (!contactPageName) {
+    if (nameErr) nameErr.textContent = 'Contact Page Name is required.';
+    if (nameInp) nameInp.focus();
+    return;
+  }
+  if (nameErr) nameErr.textContent = '';
+  if (slugErr) slugErr.textContent = '';
+
+  var rawSlug = (slugInp && slugInp.value) ? slugInp.value.trim() : '';
+  var newSlug = (rawSlug === '' || rawSlug.toLowerCase() === 'index') ? 'index' : rawSlug;
+  var slugChanged = newSlug !== (currentContactpagename === 'index' ? 'index' : currentContactpagename);
+  if (slugChanged) {
+    if (!/^[a-zA-Z0-9_-]+$/.test(newSlug)) {
+      if (slugErr) slugErr.textContent = 'Use only letters, numbers, hyphens, and underscores.';
+      if (slugInp) slugInp.focus();
+      return;
+    }
+    if (newSlug.length < 2 || newSlug.length > 28) {
+      if (slugErr) slugErr.textContent = 'Page URL must be 2–28 characters.';
+      if (slugInp) slugInp.focus();
+      return;
+    }
+  }
+
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
+  showStatusBanner('Saving...', 'saving');
+
+  try {
+    const content = generateHTML();
+    if (slugChanged) {
+      var renameRes = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          oldContactpagename: currentContactpagename,
+          newContactpagename: newSlug,
+          content: content,
+          contactPageName: contactPageName,
+          sha: currentSha
+        })
+      });
+      var renameData = await renameRes.json();
+      if (renameRes.ok && renameData.success) {
+        currentContactpagename = renameData.contactpagename || newSlug;
+        currentSha = renameData.sha || currentSha;
+        setContactPageMeta(currentContactpagename, contactPageName, false);
+        document.getElementById('view-page-link').href = viewPageHref();
+        document.getElementById('view-page-link').style.pointerEvents = '';
+        await fetchContactPagesList();
+        var listEl = document.getElementById('contact-pages-list');
+        if (listEl) listEl.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
+        enterViewMode();
+        formSnapshot = getFormSnapshot();
+        updateFormDirtyState();
+        showStatusBanner('Page URL updated.', 'success');
+      } else {
+        var errMsg = renameData.error || 'Failed to update URL';
+        if (renameData.error && (renameData.error.indexOf('URL') !== -1 || renameData.error.indexOf('exists') !== -1)) {
+          if (slugErr) slugErr.textContent = errMsg;
+          if (slugInp) slugInp.focus();
+        } else {
+          showStatusBanner(errMsg, 'error');
+        }
+      }
+    } else {
+      const res = await fetch(pageApiPath(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ content, sha: currentSha, contactPageName: contactPageName })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        currentSha = data.sha;
+        updateWelcomeUserName();
+        formSnapshot = getFormSnapshot();
+        updateFormDirtyState();
+        showStatusBanner('Saved', 'saved');
+      } else {
+        var errMsg = data.error || 'Failed to save';
+        if (data.error && data.error.indexOf('Contact Page Name') !== -1) {
+          if (nameErr) nameErr.textContent = errMsg;
+          if (nameInp) nameInp.focus();
+        } else {
+          showStatusBanner(errMsg, 'error');
+        }
+      }
+    }
+  } catch (e) {
+    showStatusBanner('Connection error', 'error');
+  }
+  finally {
+    updateSaveButtonLabel();
+    updateFormDirtyState();
+  }
+}
+
+function generateHTML() {
+  const f = i => document.getElementById(i).value.trim();
+  const firstName = f('first-name');
+  const surname = f('surname');
+  const email = f('email');
+  const mobile = f('mobile');
+  const homeCountry = f('home-country');
+  const destName = f('dest-name');
+  const destAddress = f('dest-address');
+  const destPhone = f('dest-phone');
+  const destEmail = f('dest-email');
+  const additionalInfo = f('additional-info');
+
+  const escapeHtml = (s) => (s ?? '')
+    .toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const formatMultiline = (s) => {
+    const text = (s ?? '').toString().trim();
+    if (!text) return '';
+    return escapeHtml(text).replace(/\r?\n/g, '<br>');
+  };
+  
+  const css = `
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}
+    .container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}
+    @media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}
+    @media(min-width:640px){.container{padding:48px 40px;max-width:760px}}
+    .last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}
+    @media(min-width:640px){.last-updated-block{font-size:1rem}}
+    .last-updated-block .last-updated-display{display:block;margin-top:4px;word-break:break-word;overflow-wrap:break-word}
+    h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111;letter-spacing:-0.025em}
+    @media(max-width:480px){h1{font-size:1.25rem;margin-bottom:20px;padding-bottom:12px}}
+    @media(min-width:640px){h1{font-size:1.75rem}}
+    .info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}
+    @media(max-width:480px){.info{padding:12px 0}}
+    .info:last-of-type{border-bottom:none}
+    .label{font-weight:600;color:#374151}
+    .value{color:#1a1a1a;word-break:break-word}
+    a{color:#2563eb;text-decoration:none;transition:color 0.15s}
+    a:hover{color:#1d4ed8;text-decoration:underline}
+    a:active{color:#1e40af}
+    .dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}
+    @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
+  `.replace(/\n\s*/g, '');
+  
+  const formatTimestampScript = `
+<script>
+(function() {
+  function formatTimestamp(isoString, updatedBy) {
+    if (!isoString) return '';
+    var date = new Date(isoString);
+    var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    var dayName = dayNames[date.getDay()];
+    var day = date.getDate();
+    var month = monthNames[date.getMonth()];
+    var year = date.getFullYear();
+    var hours = String(date.getHours()).padStart(2, '0');
+    var minutes = String(date.getMinutes()).padStart(2, '0');
+    var tzParts = Intl.DateTimeFormat('en', { timeZoneName: 'short' }).formatToParts(date);
+    var tzPart = tzParts.find(function(p) { return p.type === 'timeZoneName'; });
+    var tz = tzPart ? tzPart.value : '';
+    var by = updatedBy === 'admin' ? 'Admin' : 'User';
+    return tz ? dayName + ', ' + day + ' ' + month + ' ' + year + ' ' + hours + ':' + minutes + ' ' + tz + ' by ' + by : dayName + ', ' + day + ' ' + month + ' ' + year + ' ' + hours + ':' + minutes + ' by ' + by;
+  }
+  document.querySelectorAll('.last-updated-display').forEach(function(el) {
+    var timestamp = el.getAttribute('data-timestamp');
+    var updatedBy = el.getAttribute('data-updated-by');
+    if (timestamp) {
+      el.textContent = formatTimestamp(timestamp, updatedBy);
+    }
+  });
+})();
+</scr` + `ipt>`;
+  
+  const dName = (destName == null ? '' : String(destName)).trim();
+  const dAddr = (destAddress == null ? '' : String(destAddress)).trim();
+  const dPhone = (destPhone == null ? '' : String(destPhone)).trim();
+  const dEmail = (destEmail == null ? '' : String(destEmail)).trim();
+  const hasDest = !!(dName || dAddr || dPhone || dEmail);
+  const destParts = [dName, dAddr, dPhone, dEmail].map(t => '<span>' + (t ? escapeHtml(t) : '') + '</span>');
+  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
+
+  const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
+  const hasMobile = mobile != null && String(mobile).trim() !== '';
+  const ml = (mobile || '').replace(/\s/g, '');
+  const mobileHtml = hasMobile
+    ? `<a href="tel:${ml.replace(/"/g, '&quot;')}">${escapeHtml(String(mobile).trim())}</a>`
+    : '—';
+  const hasHomeCountry = homeCountry != null && String(homeCountry).trim() !== '';
+  const homeCountryHtml = hasHomeCountry ? escapeHtml(String(homeCountry).trim()) : '—';
+  const now = new Date().toISOString();
+  const lastUpdatedData = `data-timestamp="${now}" data-updated-by="user"`;
+  const lastUpdatedEn = 'Last updated';
+  const lastUpdatedFr = 'Derni\u00e8re mise \u00e0 jour';
+  const lastUpdatedZh = '\u6700\u540e\u66f4\u65b0';
+  const lastUpdatedTitles = lastUpdatedEn + ' \u00b7 ' + lastUpdatedFr + ' \u00b7 ' + lastUpdatedZh;
+  const lastUpdatedBlockHtml = `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>—</span></div>`;
+  const D = window.FORM_DESCRIPTIONS || {};
+  const lbl = (k) => (D[k] && D[k].label) ? D[k].label : k;
+  const fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
+  const zh = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
+  const titleEn = 'Contact Information';
+  const lblBoth = (k) => { const e = k === 'section-title' ? titleEn : lbl(k); return e + ' \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0">
+<meta name="format-detection" content="telephone=yes">
+<meta name="theme-color" content="#ffffff">
+<title>Contact - ${firstName} ${surname}</title>
+<style>${css}</style>
+</head>
+<body>
+<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>
+<div class="container">
+${lastUpdatedBlockHtml}
+<h1>${lblBoth('section-title')}</h1>
+<div class="info"><span class="label">${lblBoth('first-name')}</span><span class="value">${firstName}</span></div>
+<div class="info"><span class="label">${lblBoth('surname')}</span><span class="value">${surname}</span></div>
+<div class="info"><span class="label">${lblBoth('email')}</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
+<div class="info"><span class="label">${lblBoth('mobile')}</span><span class="value">${mobileHtml}</span></div>
+<div class="info"><span class="label">${lblBoth('home-country')}</span><span class="value">${homeCountryHtml}</span></div>
+<div class="info"><span class="label">${lblBoth('destination-details')}</span>${destHtml}</div>
+<div class="info additional-info"><span class="label">${lblBoth('additional-info')}</span>${additionalHtml}</div>
+</div>
+${formatTimestampScript}
+<script>(function(){var h={"X-Admin-Key":(typeof localStorage!=="undefined"&&localStorage.getItem("admin_key"))||""};fetch("${API}/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
+</body>
+</html>`;
+}
+
+function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
+function hideAlert(id) { document.getElementById(id).className = 'alert'; }
+
+function showStatusBanner(msg, type) {
+  var el = document.getElementById('status-banner');
+  if (!el) return;
+  if (!msg) { el.classList.add('hidden'); el.className = 'status-banner hidden'; el.innerHTML = ''; return; }
+  var alertType = (type === 'loading' || type === 'saving' || type === 'refreshing') ? 'info' : (type === 'success' || type === 'saved') ? 'success' : 'error';
+  var content = msg;
+  if (type === 'loading' || type === 'saving' || type === 'refreshing') content = '<span class="spinner"></span> ' + msg;
+  el.className = 'status-banner alert alert-' + alertType + ' show';
+  el.innerHTML = '<div class="alert-content">' + content + '</div>';
+  el.classList.remove('hidden');
+}
+function hideStatusBanner() { showStatusBanner('', null); }
+</script>
+</body>
+</html>

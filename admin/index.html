@@ -17,9 +17,9 @@
         <div class="app-header-actions">
           <nav class="app-nav tabs">
             <a href="/home/" class="tab">Home</a>
-            <a href="https://deem0u.github.io/edit/" class="tab">Contact Editor</a>
+            <a href="https://deem0u.github.io/myaccount/" class="tab">My Account</a>
             <a href="/terms-and-privacy/" class="tab">Terms of Use &amp; Privacy</a>
-            <a href="mailto:deem0u.github.io@gmail.com" class="tab">Email Me</a>
+            <a href="/contact/" class="tab">Contact</a>
           </nav>
           <button id="logout-btn" class="btn btn-ghost btn-sm hidden" onclick="logout()">Sign Out</button>
         </div>
@@ -692,7 +692,7 @@
         <div id="modal-secrets-loading" class="modal-qr-loading"><span class="spinner"></span> Loading...</div>
         <div id="modal-secrets-form" class="hidden">
           <div class="form-group" id="secrets-password-group">
-            <label class="form-label">Password (User Contact Editor sign-in)</label>
+            <label class="form-label">Password (User My Account sign-in)</label>
             <span id="secrets-password-badge" class="badge"></span>
             <div class="form-inline-row" style="flex-wrap:wrap; gap:0.5rem; align-items:center;">
               <input type="password" id="secrets-password" class="form-input" autocomplete="new-password" placeholder="" style="min-width:12ch;">
@@ -707,7 +707,7 @@
             <label class="form-label">Account Email</label>
             <span id="secrets-email-verified-badge" class="badge hidden"></span>
             <input type="email" id="secrets-account-email" class="form-input" autocomplete="email" placeholder="">
-            <span class="form-hint">Valid email for account management &amp; recovery. User can change in Contact Editor; they then sign in with the new email.</span>
+            <span class="form-hint">Valid email for account management &amp; recovery. User can change in My Account; they then sign in with the new email.</span>
             <span class="form-error" id="error-secrets-account-email" role="alert"></span>
             <div class="form-group" style="margin-top:0.5rem;">
               <label class="consent-group" style="cursor:pointer;"><input type="checkbox" id="secrets-email-verified-admin"> <span>Admin: Email verified</span></label>
@@ -744,7 +744,7 @@
 <script src="../form-descriptions.js"></script>
 <script>
 const API = 'https://contact-page-editor.deem0u.workers.dev';
-const EDITOR_URL = 'https://deem0u.github.io/edit/';
+const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
 const PAGES_URL = 'https://deem0u.github.io/user/';
 
 let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentContactPageName = 'index', currentSha = null, modalCallback = null;
