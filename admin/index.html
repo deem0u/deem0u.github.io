@@ -1549,8 +1549,8 @@ async function fetchAccountEmailsAndRefresh() {
       if (!r.ok) { console.warn('[admin] account-emails API failed:', r.status, r.statusText); return null; }
       return r.json();
     });
-    var profPromise = fetch(API + '/api/account-profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: usernames }) }).then(function(r) { return r.ok ? r.json() : null; });
-    var secretsPromise = fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: pages || [] }) }).then(function(r) { return r.ok ? r.json() : null; });
+    var profPromise = fetch(API + '/api/account-profiles', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: usernames }), cache: 'no-store' }).then(function(r) { return r.ok ? r.json() : null; });
+    var secretsPromise = fetch(API + '/api/secrets-status', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ usernames: pages || [] }), cache: 'no-store' }).then(function(r) { return r.ok ? r.json() : null; });
     var results = await Promise.all([emailsPromise, profPromise, secretsPromise]);
     var d = results[0];
     if (d) {
@@ -1656,6 +1656,10 @@ async function loadDashboard() {
       userInfo[f] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: info.givenName, pageFamilyName: info.familyName, pageEmail: info.contactEmail, lastUpdated: info.lastUpdated, updatedBy: info.updatedBy, folder: f };
     }
   }
+  for (var pi = 0; pi < pages.length; pi++) {
+    var folder = pages[pi];
+    if (!userInfo[folder]) userInfo[folder] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', lastUpdated: null, updatedBy: null, folder: folder };
+  }
   try {
     var settingsRes = await fetch(API + '/api/admin/site-settings', { headers: { 'X-Admin-Key': adminKey } });
     if (settingsRes.ok) {
@@ -1676,8 +1680,8 @@ async function loadDashboard() {
     if (sdAll) sdAll.checked = siteSettings.divertAllGlobal;
     if (sdMaint) sdMaint.checked = siteSettings.maintenanceMode;
     if (sdLock) sdLock.checked = siteSettings.lockdownMode;
-    populateUI();
     await fetchAccountEmailsAndRefresh();
+    populateUI();
   } catch (e) {
     console.error('populateUI error:', e);
     throw new Error('Dashboard UI error: ' + (e.message || 'see console'));
