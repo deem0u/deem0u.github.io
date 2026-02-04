@@ -237,6 +237,10 @@ body {
   color: var(--color-text);
 }
 
+.app-logo-text .header-username-teal {
+  color: var(--accent-teal, #1ac5b0);
+}
+
 .app-logo-badge {
   background: var(--color-bg-muted);
   color: var(--color-text-secondary);

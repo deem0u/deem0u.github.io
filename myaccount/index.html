@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>My Account - User</title>
+  <title>MyAccount</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='24' font-size='24'>✉</text></svg>">
   <link rel="stylesheet" href="/styles.css">
   <style>
@@ -117,6 +117,7 @@
   #editor-contact-edit #home-country-edit-container .searchable-select-options { max-height: 160px; }
   #editor-contact-edit #home-country-edit-container .searchable-select-option { padding: 0.25rem 0.35rem; font-size: 0.8125rem; }
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
+  .header-username-teal { color: var(--accent-teal, #1ac5b0); }
   /* Easter egg: floating astronaut (only when eligible, first login of day) */
   .easter-egg-overlay { position: fixed; inset: 0; z-index: 9998; pointer-events: none; overflow: hidden; }
   .easter-egg-astronaut { position: absolute; width: 80px; height: auto; max-height: 100px; object-fit: contain; animation: easter-egg-float 7s ease-in-out forwards; }
@@ -149,7 +150,7 @@
       <div class="app-header-inner">
         <div class="app-logo">
           <div class="app-logo-icon">C</div>
-          <span class="app-logo-text" id="header-logo-text">My Account - User</span>
+          <span class="app-logo-text" id="header-logo-text">MyAccount</span>
         </div>
         <div class="app-header-actions">
           <nav class="app-nav tabs">
@@ -612,6 +613,18 @@ function formatDob(val) {
 }
 function escapeHtml(s) {
   return (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function setHeaderAndTitleForUser(un) {
+  if (!un || !un.length) return;
+  var capUn = un.charAt(0).toUpperCase() + un.slice(1).toLowerCase();
+  document.title = 'MyAccount - ' + capUn;
+  var logoEl = document.getElementById('header-logo-text');
+  if (logoEl) logoEl.innerHTML = 'MyAccount - <span class="header-username-teal">' + escapeHtml(capUn) + '</span>';
+}
+function clearHeaderAndTitleToDefault() {
+  document.title = 'MyAccount';
+  var logoEl = document.getElementById('header-logo-text');
+  if (logoEl) logoEl.textContent = 'MyAccount';
 }
 
 function attachDobMask() {
@@ -1240,6 +1253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if ((s.username || s.folder) && s.token) {
       username = s.username || s.folder;
       token = s.token;
+      setHeaderAndTitleForUser(username);
       authenticateWithStoredSession();
     }
   } catch (e) {}
@@ -1440,7 +1454,6 @@ function selectContactPage(contactpagename) {
   if (list) list.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
   document.getElementById('view-page-link').href = viewPageHref();
   document.getElementById('view-page-link').style.pointerEvents = '';
-  showStatusBanner('Loading...', 'loading');
   var url = pageApiPath();
   return fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(res) { return res.json().then(function(data) { if (!res.ok) throw new Error(data.error || 'Failed to load'); return data; }); })
@@ -1452,7 +1465,6 @@ function selectContactPage(contactpagename) {
       formSnapshot = getFormSnapshot();
       updateFormDirtyState();
       enterViewMode();
-      hideStatusBanner();
       var sel = list && list.querySelector('.contact-page-card.selected');
       if (sel) sel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     })
@@ -1506,6 +1518,7 @@ async function authenticateWithStoredSession() {
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
+    setHeaderAndTitleForUser(username);
     document.getElementById('view-page-link').href = viewPageHref();
     document.getElementById('view-page-link').style.pointerEvents = isCreateMode ? 'none' : '';
     sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
@@ -1569,8 +1582,7 @@ async function continueAfterAuth() {
       return;
     }
     updateWelcomeUserName();
-    document.title = 'My Account - ' + username;
-    document.getElementById('header-logo-text').textContent = 'My Account - ' + username;
+    setHeaderAndTitleForUser(username);
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('view-page-link').href = viewPageHref();
     document.getElementById('view-page-link').style.pointerEvents = isCreateMode ? 'none' : '';
@@ -2258,8 +2270,7 @@ function signOut() {
   username = null;
   token = null;
   currentSha = null;
-  document.title = 'My Account - User';
-  document.getElementById('header-logo-text').textContent = 'My Account - User';
+  clearHeaderAndTitleToDefault();
   document.getElementById('signout-btn').classList.add('hidden');
   document.getElementById('screen-editor').classList.add('hidden');
   document.getElementById('screen-auth').classList.remove('hidden');
