@@ -303,12 +303,15 @@ body {
   margin-bottom: var(--space-4);
 }
 
+/* Wrapper to center segmented control on auth (sign-in) screen */
+.segmented-control-wrap {
+  width: 100%;
+  text-align: center;
+}
+
 /* Segmented control (e.g. sign-in method: Admin Key | Email & Password) */
 .segmented-control {
-  display: flex;
-  width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
+  display: inline-flex;
   background: var(--color-bg-muted, var(--grey-100));
   border-radius: var(--radius-md);
   padding: var(--space-1);
@@ -629,6 +632,46 @@ body {
   transform: translateY(-50%);
   color: var(--color-text-muted);
   pointer-events: none;
+}
+
+/* Password field with inline show/hide eye icon (admin sign-in) */
+.password-input-wrap {
+  position: relative;
+  width: 100%;
+}
+.password-input-wrap .form-input {
+  width: 100%;
+  padding-right: 2.75rem;
+  box-sizing: border-box;
+}
+.password-toggle-btn {
+  position: absolute;
+  right: var(--space-2);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: var(--space-1);
+  margin: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.password-toggle-btn:hover {
+  color: var(--color-text);
+}
+.password-toggle-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+.password-toggle-btn svg {
+  display: block;
+}
+.password-toggle-btn .hidden {
+  display: none;
 }
 
 .form-select {

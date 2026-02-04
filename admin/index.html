@@ -60,16 +60,21 @@
           <h1 class="auth-title">Sign In</h1>
           <p class="auth-subtitle" id="login-subtitle">Enter your Admin Key to Sign In</p>
         </div>
-        <div class="segmented-control mb-4" role="group" aria-label="Sign in method">
-          <button type="button" class="segmented-control-option active" id="login-mode-key">Admin Key</button>
-          <button type="button" class="segmented-control-option" id="login-mode-email">Email &amp; Password</button>
+        <div class="segmented-control-wrap mb-4">
+          <div class="segmented-control" role="group" aria-label="Sign in method">
+            <button type="button" class="segmented-control-option active" id="login-mode-key">Admin Key</button>
+            <button type="button" class="segmented-control-option" id="login-mode-email">Email &amp; Password</button>
+          </div>
         </div>
         <form id="login-form">
           <div id="login-key-group" class="form-group">
             <label class="form-label">Admin Key</label>
-            <div class="form-inline-row">
+            <div class="password-input-wrap">
               <input type="password" id="login-key" class="form-input" placeholder="Enter your admin key" autocomplete="current-password">
-              <button type="button" class="btn btn-ghost btn-sm" id="login-toggle-password" aria-label="Show password">Show</button>
+              <button type="button" class="password-toggle-btn" id="login-toggle-password" aria-label="Show password" title="Show password">
+                <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="icon-eye-off hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.16 13.16 0 0 0 2 12s3 7 10 7a9.9 9.9 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+              </button>
             </div>
             <span class="form-hint">Admin keys are stored locally on the device you sign in on — You will stay signed in on this device.</span>
           </div>
@@ -791,13 +796,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     setLoginMode('key');
     var togglePw = document.getElementById('login-toggle-password');
     if (togglePw) {
+      var iconEye = togglePw.querySelector('.icon-eye');
+      var iconEyeOff = togglePw.querySelector('.icon-eye-off');
       togglePw.addEventListener('click', function() {
         var inp = document.getElementById('login-key');
         if (!inp) return;
         var hidden = inp.type === 'password';
         inp.type = hidden ? 'text' : 'password';
-        togglePw.textContent = hidden ? 'Hide' : 'Show';
         togglePw.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+        togglePw.setAttribute('title', hidden ? 'Hide password' : 'Show password');
+        if (iconEye) iconEye.classList.toggle('hidden', !hidden);
+        if (iconEyeOff) iconEyeOff.classList.toggle('hidden', hidden);
       });
     }
     var forgotLink = document.getElementById('forgot-password-link');
