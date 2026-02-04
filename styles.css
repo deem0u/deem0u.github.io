@@ -258,7 +258,7 @@ body {
 
 .app-logo-text {
   font-weight: 600;
-  font-size: var(--text-xl);
+  font-size: 1.375rem;
   color: var(--color-text);
   white-space: nowrap;
 }
