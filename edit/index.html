@@ -505,22 +505,22 @@
         <p class="form-hint" style="margin-bottom:1rem;">Enter your current password, then set a new password and/or update your security questions. You will use your new password the next time you sign in.</p>
         <div class="form-group">
           <label class="form-label" for="change-pwd-current">Current password <span class="form-required">*</span></label>
-          <input type="password" id="change-pwd-current" class="form-input" autocomplete="current-password" placeholder="Your current password">
+          <input type="password" id="change-pwd-current" class="form-input" autocomplete="current-password" placeholder="Enter current password to make changes">
           <span class="form-error" id="error-change-pwd-current" role="alert"></span>
         </div>
         <div class="form-group">
           <label class="form-label" for="change-pwd-new">New password</label>
-          <input type="password" id="change-pwd-new" class="form-input" autocomplete="new-password" placeholder="At least 8 characters" minlength="8">
+          <input type="password" id="change-pwd-new" class="form-input" autocomplete="new-password" placeholder="Leave blank to keep the same password or enter a new password" minlength="8">
           <span class="form-error" id="error-change-pwd-new" role="alert"></span>
         </div>
-        <div class="form-group">
+        <div class="form-group hidden" id="change-pwd-confirm-wrap">
           <label class="form-label" for="change-pwd-confirm">Confirm new password</label>
-          <input type="password" id="change-pwd-confirm" class="form-input" autocomplete="new-password" placeholder="Same as new password">
+          <input type="password" id="change-pwd-confirm" class="form-input" autocomplete="new-password" placeholder="Enter your new password again">
           <span class="form-error" id="error-change-pwd-confirm" role="alert"></span>
         </div>
         <div class="form-group">
           <label class="form-label">Security Questions</label>
-          <span class="form-hint" style="display:block;margin-bottom:0.5rem;">Select 3 different questions (4–30 chars each). Leave unchanged if you do not want to update.</span>
+          <span class="form-hint" style="display:block;margin-bottom:0.5rem;">Select 3 different questions and provide your secret answers (4–30 chars each). Leave unchanged if you do not want to update.</span>
           <div id="change-pwd-sq-container">
             <div class="secret-q-row"><select id="change-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
             <div class="secret-q-row"><select id="change-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
@@ -1427,6 +1427,11 @@ async function authenticateWithStoredSession() {
     await loadProfile();
     applyUnverifiedRestriction();
     await fetchContactPagesList();
+    var list = document.getElementById('contact-pages-list');
+    var firstCard = list && list.querySelector('.contact-page-card');
+    var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
+    await selectContactPage(firstSlug);
+    enterViewMode();
   } catch (e) {
     sessionStorage.removeItem('edit_session');
     username = null;
@@ -1481,6 +1486,11 @@ async function continueAfterAuth() {
     await loadProfile();
     applyUnverifiedRestriction();
     await fetchContactPagesList();
+    var list = document.getElementById('contact-pages-list');
+    var firstCard = list && list.querySelector('.contact-page-card');
+    var firstSlug = firstCard ? (firstCard.getAttribute('data-contactpagename') || 'index') : 'index';
+    await selectContactPage(firstSlug);
+    enterViewMode();
   } catch (e) {
     console.error('Auth error:', e);
     showAlert('auth-alert', 'Error after sign-in. Open Console (F12) for details.', 'error');
@@ -1913,6 +1923,15 @@ function syncChangePwdSqOptions() {
   updateChangePwdSqSaveButton();
 }
 
+function toggleChangePwdConfirmVisibility() {
+  var newP = document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value;
+  var wrap = document.getElementById('change-pwd-confirm-wrap');
+  var conf = document.getElementById('change-pwd-confirm');
+  if (wrap) wrap.classList.toggle('hidden', !(newP && newP.length > 0));
+  if (conf && (!newP || !newP.length)) conf.value = '';
+  updateChangePwdSqSaveButton();
+}
+
 function updateChangePwdSqSaveButton() {
   var cur = document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value.trim();
   var newP = document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value;
@@ -1935,6 +1954,8 @@ function openChangePasswordSqModal() {
   document.getElementById('change-pwd-current').value = '';
   document.getElementById('change-pwd-new').value = '';
   document.getElementById('change-pwd-confirm').value = '';
+  var confirmWrap = document.getElementById('change-pwd-confirm-wrap');
+  if (confirmWrap) confirmWrap.classList.add('hidden');
   ['change-sq1','change-sq2','change-sq3'].forEach(function(id) {
     var sel = document.getElementById(id);
     var ans = document.getElementById(id + '-answer');
@@ -1954,6 +1975,8 @@ function openChangePasswordSqModal() {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', updateChangePwdSqSaveButton);
   });
+  var newPwdEl = document.getElementById('change-pwd-new');
+  if (newPwdEl) newPwdEl.addEventListener('input', toggleChangePwdConfirmVisibility);
   ['change-sq1','change-sq2','change-sq3','change-sq1-answer','change-sq2-answer','change-sq3-answer'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', syncChangePwdSqOptions);
@@ -1996,16 +2019,11 @@ async function saveChangePasswordSq() {
   try {
     var body = { currentPassword: cur.trim(), newPassword: hasNewPwd ? newP : '', secretQuestions: hasSq ? sq.map(function(q){ return { questionId: q.questionId, answer: (q.answer || '').trim() }; }) : [] };
     var r = await fetch(API + '/api/profile/change-password-and-sq', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
-    var d = await r.json();
-    if (r.ok && d.success !== false) {
+    var d = {};
+    try { d = await r.json(); } catch (_) { d = { error: 'Invalid response' }; }
+    if (r.ok && d.error !== true && d.success !== false) {
       closeChangePasswordSqModal();
-      sessionStorage.removeItem('edit_session');
-      username = null;
-      token = null;
-      document.getElementById('screen-editor').classList.add('hidden');
-      document.getElementById('signout-btn').classList.add('hidden');
-      document.getElementById('screen-auth').classList.remove('hidden');
-      showAlert('auth-alert', 'Your password (and security questions if changed) have been updated. Please sign in with your new password.', 'success');
+      if (typeof showStatusBanner === 'function') showStatusBanner('Your password (and security questions if changed) have been updated. Use your new password next time you sign in.', 'success');
     } else {
       if (errEl) { errEl.textContent = (d && d.error) || 'Failed to update.'; errEl.classList.remove('hidden'); }
     }

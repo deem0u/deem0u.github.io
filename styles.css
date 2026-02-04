@@ -1254,6 +1254,13 @@ body {
   border: 1px solid rgba(26, 197, 176, 0.85);
 }
 
+/* Contact Editor sidebar: Account Profile and Contact Pages sections – grey 100 */
+.editor-profile-strip,
+.contact-pages-container,
+.contact-pages-section {
+  background: var(--grey-100);
+}
+
 /* Email verification badge in Contact Editor sidebar – match admin user cards */
 .editor-profile-strip .badge-cyan {
   background: var(--accent-teal);
