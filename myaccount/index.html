@@ -620,9 +620,9 @@ function escapeHtml(s) {
 function setHeaderAndTitleForUser(un) {
   if (!un || !un.length) return;
   var capUn = (un || '').toUpperCase();
-  document.title = 'MyAccount - ' + capUn;
+  document.title = 'MyAccount ' + capUn;
   var logoEl = document.getElementById('header-logo-text');
-  if (logoEl) logoEl.innerHTML = 'MyAccount - <span class="header-username-teal">' + escapeHtml(capUn) + '</span>';
+  if (logoEl) logoEl.innerHTML = 'MyAccount <span class="header-username-teal">' + escapeHtml(capUn) + '</span>';
 }
 function clearHeaderAndTitleToDefault() {
   document.title = 'MyAccount';
