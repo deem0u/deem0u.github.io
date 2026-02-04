@@ -247,7 +247,7 @@ body {
   display: block;
 }
 
-/* Home page: full Brand Icon at 96px */
+/* Home header: mini Brand icon at 96px (Icon Sizes / mini-mascots in reference) */
 .app-logo-icon-brand.app-logo-icon-mascot svg,
 .app-logo-icon-brand .app-header-logo-svg {
   width: 96px !important;
