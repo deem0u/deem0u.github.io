@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How It Works - Digital Contact Information Page</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+  .app-nav.tabs { margin-bottom: 0; }
+  .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
+  .how-section { margin-bottom: 2rem; }
+  .how-section h2 { font-size: 1.25rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #ddd); }
+  .how-section p { margin-bottom: 1rem; line-height: 1.7; }
+  .how-section ol, .how-section ul { margin: 0.5rem 0 1rem 1.5rem; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <div class="app-logo-icon">C</div>
+          <span class="app-logo-text">Digital Contact Information Page</span>
+        </div>
+        <div class="app-header-actions">
+          <nav class="app-nav tabs">
+            <a href="/home/" class="tab">Home</a>
+            <a href="/how-it-works/" class="tab active">How It Works</a>
+            <a href="https://deem0u.github.io/myaccount/" class="tab">My Account</a>
+            <a href="/contact/" class="tab">Contact</a>
+          </nav>
+          <span class="header-signout-slot" aria-hidden="true"></span>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-container" style="max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem;">
+        <h1 style="font-size: 1.5rem; margin-bottom: 1.5rem;">How It Works</h1>
+
+        <section class="how-section">
+          <h2>1. Create your account</h2>
+          <p>On the <a href="/home/">Home</a> page, click <strong>Get Started</strong> and sign up with your email. You’ll choose a user name and set a password. Once your account is created, you can sign in anytime from <a href="https://deem0u.github.io/myaccount/">My Account</a>.</p>
+        </section>
+
+        <section class="how-section">
+          <h2>2. Your Digital Contact Page</h2>
+          <p>Each account has a public contact page that shows the details you enter: your name, contact info, destination details, and any extra information you add. You can have one main page (index) and optionally more pages (e.g. for different trips or purposes).</p>
+        </section>
+
+        <section class="how-section">
+          <h2>3. Edit and update</h2>
+          <p>Sign in at <strong>My Account</strong> to add or change your contact details. You can update your page whenever you like. Changes are saved and appear on your live page straight away.</p>
+        </section>
+
+        <section class="how-section">
+          <h2>4. Share your link</h2>
+          <p>Your page has a unique URL (for example <code>https://deem0u.github.io/user/yourname/</code>). Share this link with family, friends, or anyone who needs to reach you. You can use it on luggage tags, in emails, or on social profiles.</p>
+        </section>
+
+        <p style="margin-top: 2rem;"><a href="/home/" class="btn btn-primary">Get Started</a></p>
+      </div>
+    </main>
+    <footer class="app-footer">
+      <a href="/terms-and-privacy/">Terms of Use &amp; Privacy</a>
+    </footer>
+  </div>
+</body>
+</html>
