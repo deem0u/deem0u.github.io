@@ -17,12 +17,17 @@
   .edit-recovery-success-action { margin-top: 1.5rem; }
   .edit-recovery-success-action p { margin-bottom: 1rem; }
   .edit-recovery-success-buttons { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
-  .recovery-toggle-wrap { margin: 1rem 0; }
+  .recovery-pill-row { margin: 0 0 1rem; }
   .recovery-toggle { display: inline-block; padding: 0.5rem 1rem; font-size: 0.875rem; color: var(--accent-teal, #1ac5b0); border: 1px solid var(--accent-teal, #1ac5b0); border-radius: 9999px; text-decoration: none; background: transparent; transition: background 0.15s, color 0.15s; }
   .recovery-toggle:hover { background: var(--accent-teal, #1ac5b0); color: white; }
-  .recovery-actions { margin-top: 1.25rem; }
+  .recovery-step1-fields .form-group { margin-bottom: 0; }
+  .recovery-actions { margin-top: var(--space-6, 1.5rem); }
   .recovery-actions .alert { margin-bottom: 1rem; }
   .recovery-actions .alert:not(.show) { margin-bottom: 0; }
+  #recovery-card .form-input { width: 100%; box-sizing: border-box; }
+  #recovery-card .recovery-actions .btn { width: 100%; }
+  #recovery-card #recovery-form-step2 .form-group { margin-bottom: var(--space-4); }
+  #recovery-card #recovery-form-step2 .recovery-actions { margin-top: var(--space-6, 1.5rem); }
 
   .editor-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
   .editor-profile-strip { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--white, #fff); border-radius: var(--radius-md, 6px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
@@ -164,6 +169,12 @@
           <h1 class="auth-title">Sign In</h1>
           <p class="auth-subtitle" id="auth-subtitle">To access and edit your Digital Contact Page, enter your Account Email and Password</p>
         </div>
+        <div class="segmented-control-wrap mb-4">
+          <div class="segmented-control" role="group" aria-label="Sign in method">
+            <button type="button" class="segmented-control-option active" id="auth-mode-email">Email &amp; Password</button>
+            <button type="button" class="segmented-control-option" id="auth-mode-username">User Name</button>
+          </div>
+        </div>
         <form id="auth-form">
           <div id="auth-email-mode">
             <div class="form-group" id="auth-account-email-group">
@@ -174,10 +185,15 @@
               <label class="form-label">User Name</label>
               <input type="text" id="auth-username" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
             </div>
-            <p class="text-center" style="margin-bottom:0.5rem;"><a href="#" id="auth-use-username-link" class="btn btn-ghost btn-sm">Use User Name instead</a><a href="#" id="auth-use-email-link" class="btn btn-ghost btn-sm hidden">Use Account Email instead</a></p>
             <div class="form-group">
               <label class="form-label">Password</label>
-              <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+              <div class="password-input-wrap">
+                <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+                <button type="button" class="password-toggle-btn" id="auth-toggle-password" aria-label="Show password" title="Show password">
+                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon-eye-off hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.16 13.16 0 0 0 2 12s3 7 10 7a9.9 9.9 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                </button>
+              </div>
             </div>
           </div>
           <div id="auth-set-password-after-otp" class="hidden">
@@ -203,23 +219,25 @@
           <h2 class="auth-title">Access Recovery</h2>
           <p class="auth-subtitle" id="recovery-subtitle">Enter your User Name to recover access</p>
         </div>
+        <div class="recovery-pill-row text-center mb-4">
+          <span id="recovery-pill-username"><a href="#" id="recovery-use-email-link" class="recovery-toggle">Forgot your User Name? Use Account Email instead</a></span>
+          <span id="recovery-pill-email" class="hidden"><a href="#" id="recovery-use-username-link" class="recovery-toggle">Use User Name instead</a></span>
+        </div>
         <div id="recovery-step1">
           <form id="recovery-form-step1" onsubmit="return false;">
-            <div id="recovery-step1-username">
+            <div id="recovery-step1-username" class="recovery-step1-fields">
               <div class="form-group">
                 <label class="form-label">User Name</label>
                 <input type="text" id="recovery-username" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
                 <span class="form-error" id="error-recovery-username" role="alert"></span>
               </div>
-              <p class="text-center recovery-toggle-wrap"><a href="#" id="recovery-use-email-link" class="recovery-toggle">Forgot your User Name? Use Account Email instead</a></p>
             </div>
-            <div id="recovery-step1-email" class="hidden">
+            <div id="recovery-step1-email" class="recovery-step1-fields hidden">
               <div class="form-group">
                 <label class="form-label">Account Email</label>
                 <input type="email" id="recovery-account-email-step1" class="form-input" placeholder="your@email.com" autocomplete="email">
                 <span class="form-error" id="error-recovery-email" role="alert"></span>
               </div>
-              <p class="text-center recovery-toggle-wrap"><a href="#" id="recovery-use-username-link" class="recovery-toggle">Use User Name instead</a></p>
             </div>
             <div class="recovery-actions">
               <div id="recovery-alert" class="alert"></div>
@@ -771,6 +789,8 @@ function recoveryBackToStep1() {
   document.getElementById('recovery-step1').classList.remove('hidden');
   document.getElementById('recovery-step1-username').classList.remove('hidden');
   document.getElementById('recovery-step1-email').classList.add('hidden');
+  document.getElementById('recovery-pill-username').classList.remove('hidden');
+  document.getElementById('recovery-pill-email').classList.add('hidden');
   var sub = document.getElementById('recovery-subtitle');
   if (sub) sub.textContent = 'Enter your User Name to recover access';
   showRecoveryAlert('', '');
@@ -1118,10 +1138,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   initContactNumberValidationEdit();
   initDestinationEmailValidationEdit();
   document.getElementById('auth-form').addEventListener('submit', (e) => { e.preventDefault(); authenticate(); });
-  var authUseUsernameLink = document.getElementById('auth-use-username-link');
-  if (authUseUsernameLink) authUseUsernameLink.addEventListener('click', function(e) { e.preventDefault(); setAuthModeUseUsername(true); });
-  var authUseEmailLink = document.getElementById('auth-use-email-link');
-  if (authUseEmailLink) authUseEmailLink.addEventListener('click', function(e) { e.preventDefault(); setAuthModeUseUsername(false); });
+  var authModeEmailBtn = document.getElementById('auth-mode-email');
+  var authModeUsernameBtn = document.getElementById('auth-mode-username');
+  if (authModeEmailBtn) authModeEmailBtn.addEventListener('click', function() { setAuthModeUseUsername(false); });
+  if (authModeUsernameBtn) authModeUsernameBtn.addEventListener('click', function() { setAuthModeUseUsername(true); });
+  var authTogglePw = document.getElementById('auth-toggle-password');
+  if (authTogglePw) {
+    var authIconEye = authTogglePw.querySelector('.icon-eye');
+    var authIconEyeOff = authTogglePw.querySelector('.icon-eye-off');
+    authTogglePw.addEventListener('click', function() {
+      var inp = document.getElementById('auth-password');
+      if (!inp) return;
+      var hidden = inp.type === 'password';
+      inp.type = hidden ? 'text' : 'password';
+      authTogglePw.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+      authTogglePw.setAttribute('title', hidden ? 'Hide password' : 'Show password');
+      if (authIconEye) authIconEye.classList.toggle('hidden', !hidden);
+      if (authIconEyeOff) authIconEyeOff.classList.toggle('hidden', hidden);
+    });
+  }
   var setPwBtn = document.getElementById('auth-set-password-btn');
   if (setPwBtn) setPwBtn.addEventListener('click', async function() {
     var newPw = (document.getElementById('auth-new-password').value || '').trim();
@@ -1147,9 +1182,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   var rbLink = document.getElementById('recovery-back-link');
   if (rbLink) rbLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-card').classList.add('hidden'); document.querySelector('.auth-card').classList.remove('hidden'); });
   var useEmailLink = document.getElementById('recovery-use-email-link');
-  if (useEmailLink) useEmailLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-username').classList.add('hidden'); document.getElementById('recovery-step1-email').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your Account Email to recover access'; showRecoveryAlert('', ''); });
+  if (useEmailLink) useEmailLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('recovery-step1-username').classList.add('hidden');
+    document.getElementById('recovery-step1-email').classList.remove('hidden');
+    document.getElementById('recovery-pill-username').classList.add('hidden');
+    document.getElementById('recovery-pill-email').classList.remove('hidden');
+    document.getElementById('recovery-subtitle').textContent = 'Enter your Account Email to recover access';
+    showRecoveryAlert('', '');
+  });
   var useUsernameLink = document.getElementById('recovery-use-username-link');
-  if (useUsernameLink) useUsernameLink.addEventListener('click', function(e) { e.preventDefault(); document.getElementById('recovery-step1-email').classList.add('hidden'); document.getElementById('recovery-step1-username').classList.remove('hidden'); document.getElementById('recovery-subtitle').textContent = 'Enter your User Name to recover access'; showRecoveryAlert('', ''); });
+  if (useUsernameLink) useUsernameLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('recovery-step1-email').classList.add('hidden');
+    document.getElementById('recovery-step1-username').classList.remove('hidden');
+    document.getElementById('recovery-pill-email').classList.add('hidden');
+    document.getElementById('recovery-pill-username').classList.remove('hidden');
+    document.getElementById('recovery-subtitle').textContent = 'Enter your User Name to recover access';
+    showRecoveryAlert('', '');
+  });
   document.getElementById('contact-form').addEventListener('submit', handleSave);
   document.getElementById('contact-form').addEventListener('input', updateFormDirtyState);
   document.getElementById('contact-form').addEventListener('change', updateFormDirtyState);
@@ -1484,8 +1535,12 @@ function setAuthModeUseUsername(useUsername) {
   authUseUsername = !!useUsername;
   document.getElementById('auth-account-email-group').classList.toggle('hidden', authUseUsername);
   document.getElementById('auth-username-group').classList.toggle('hidden', !authUseUsername);
-  document.getElementById('auth-use-username-link').classList.toggle('hidden', authUseUsername);
-  document.getElementById('auth-use-email-link').classList.toggle('hidden', !authUseUsername);
+  var emailBtn = document.getElementById('auth-mode-email');
+  var usernameBtn = document.getElementById('auth-mode-username');
+  if (emailBtn) emailBtn.classList.toggle('active', !authUseUsername);
+  if (usernameBtn) usernameBtn.classList.toggle('active', authUseUsername);
+  var sub = document.getElementById('auth-subtitle');
+  if (sub) sub.textContent = authUseUsername ? 'To access and edit your Digital Contact Page, enter your User Name and Password' : 'To access and edit your Digital Contact Page, enter your Account Email and Password';
 }
 
 async function continueAfterAuth() {
