@@ -82,6 +82,24 @@ function parsePagePath(path) {
   return { username, contactpagename };
 }
 
+/** Returns the number of contact pages (HTML files) for a user. Used for max-contact-pages limit. */
+async function getContactPageCountForUser(username, env) {
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (!response.ok) return 0;
+  const contents = await response.json();
+  const files = Array.isArray(contents) ? contents : [];
+  return files.filter(item => item.type === 'file' && item.name && item.name.endsWith('.html')).length;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -1042,6 +1060,18 @@ async function handleCreatePage(request, env) {
     return jsonResponse({ error: 'Invalid contact page name' }, 400);
   }
 
+  // Enforce max contact pages per account (0 = unlimited)
+  if (env.EDIT_KEYS_KV) {
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + usernameTrim);
+    const maxPages = parseInt(maxRaw, 10) || 0;
+    if (maxPages > 0) {
+      const currentCount = await getContactPageCountForUser(usernameTrim, env);
+      if (currentCount >= maxPages) {
+        return jsonResponse({ error: 'Maximum number of contact pages reached for this account. Delete an existing page to create a new one, or increase the limit in Manage Users.' }, 403);
+      }
+    }
+  }
+
   // Check if user folder or this contact page already exists
   const checkResponse = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${pagePath(username, contactpagename)}?ref=${CONFIG.branch}`,
@@ -1118,6 +1148,18 @@ async function handleUserCreatePage(username, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  // Enforce max contact pages per account (0 = unlimited)
+  if (env.EDIT_KEYS_KV) {
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + username);
+    const maxPages = parseInt(maxRaw, 10) || 0;
+    if (maxPages > 0) {
+      const currentCount = await getContactPageCountForUser(username, env);
+      if (currentCount >= maxPages) {
+        return jsonResponse({ error: 'Maximum number of contact pages reached. Delete an existing page to create a new one.' }, 403);
+      }
+    }
   }
 
   let body;
@@ -1466,7 +1508,7 @@ async function handleGetSiteStatus(request, env) {
 async function handleGetSiteSettings(request, env) {
   if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!env.EDIT_KEYS_KV) {
-    return jsonResponse({ divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {} });
+    return jsonResponse({ divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {}, maxContactPagesByUser: {} });
   }
   const divertAllGlobal = (await env.EDIT_KEYS_KV.get('site:divert_all_global')) === '1';
   const maintenanceMode = (await env.EDIT_KEYS_KV.get('site:maintenance')) === '1';
@@ -1480,7 +1522,17 @@ async function handleGetSiteSettings(request, env) {
       if (val === '1') divertUsers[username] = true;
     }
   }
-  return jsonResponse({ divertAllGlobal, maintenanceMode, lockdownMode, divertUsers });
+  const maxPagesList = await env.EDIT_KEYS_KV.list({ prefix: 'max_contact_pages:' });
+  const maxContactPagesByUser = {};
+  for (const key of maxPagesList.keys) {
+    const username = key.name.replace('max_contact_pages:', '');
+    if (username) {
+      const val = await env.EDIT_KEYS_KV.get(key.name);
+      const n = parseInt(val, 10);
+      maxContactPagesByUser[username] = isNaN(n) || n < 0 ? 0 : n;
+    }
+  }
+  return jsonResponse({ divertAllGlobal, maintenanceMode, lockdownMode, divertUsers, maxContactPagesByUser });
 }
 
 /** PUT /api/admin/site-settings - Admin only. Body: { divertAllGlobal?, maintenanceMode?, lockdownMode?, divertUsers? }. */
@@ -1500,6 +1552,15 @@ async function handlePutSiteSettings(request, env) {
       if (!u) continue;
       if (on === true) await env.EDIT_KEYS_KV.put('divert_email:' + u, '1');
       else await env.EDIT_KEYS_KV.delete('divert_email:' + u);
+    }
+  }
+  if (body.maxContactPagesByUser && typeof body.maxContactPagesByUser === 'object') {
+    for (const [username, num] of Object.entries(body.maxContactPagesByUser)) {
+      const u = (username || '').trim();
+      if (!u) continue;
+      const n = parseInt(num, 10);
+      const val = (isNaN(n) || n < 0) ? 0 : n;
+      await env.EDIT_KEYS_KV.put('max_contact_pages:' + u, String(val));
     }
   }
   return jsonResponse({ success: true });
@@ -2217,7 +2278,14 @@ async function handleListContactPages(username, request, env) {
       : (slug === 'index' ? 'Main (index)' : slug);
     contactPages.push({ slug, name });
   }
-  return jsonResponse({ contactPages });
+  const currentCount = slugs.length;
+  let maxContactPages = 0;
+  if (env.EDIT_KEYS_KV) {
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + u);
+    maxContactPages = parseInt(maxRaw, 10) || 0;
+  }
+  const canCreate = maxContactPages === 0 || currentCount < maxContactPages;
+  return jsonResponse({ contactPages, maxContactPages, currentCount, canCreate });
 }
 
 async function handleGetAccountEmails(request, env) {

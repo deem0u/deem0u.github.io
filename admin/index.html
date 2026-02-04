@@ -753,7 +753,7 @@ const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
 const PAGES_URL = 'https://deem0u.github.io/user/';
 
 let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentContactPageName = 'index', currentSha = null, modalCallback = null;
-var siteSettings = { divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {} };
+var siteSettings = { divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {}, maxContactPagesByUser: {} };
 var loginMode = 'key'; // 'key' | 'email'
 var adminEmail = null, adminPasswordSet = false;
 
@@ -1711,7 +1711,7 @@ async function loadDashboard() {
       if (!userInfo[folder]) userInfo[folder] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', lastUpdated: null, updatedBy: null, folder: folder };
     }
     if (settingsData) {
-      siteSettings = { divertAllGlobal: !!settingsData.divertAllGlobal, maintenanceMode: !!settingsData.maintenanceMode, lockdownMode: !!settingsData.lockdownMode, divertUsers: settingsData.divertUsers || {} };
+      siteSettings = { divertAllGlobal: !!settingsData.divertAllGlobal, maintenanceMode: !!settingsData.maintenanceMode, lockdownMode: !!settingsData.lockdownMode, divertUsers: settingsData.divertUsers || {}, maxContactPagesByUser: settingsData.maxContactPagesByUser || {} };
     }
     if (adminEmailData) {
       adminEmail = adminEmailData.email || null;
@@ -1726,7 +1726,7 @@ async function loadDashboard() {
     var settingsData = await settingsPromise;
     var adminEmailData = await adminEmailPromise;
     if (settingsData) {
-      siteSettings = { divertAllGlobal: !!settingsData.divertAllGlobal, maintenanceMode: !!settingsData.maintenanceMode, lockdownMode: !!settingsData.lockdownMode, divertUsers: settingsData.divertUsers || {} };
+      siteSettings = { divertAllGlobal: !!settingsData.divertAllGlobal, maintenanceMode: !!settingsData.maintenanceMode, lockdownMode: !!settingsData.lockdownMode, divertUsers: settingsData.divertUsers || {}, maxContactPagesByUser: settingsData.maxContactPagesByUser || {} };
     }
     if (adminEmailData) {
       adminEmail = adminEmailData.email || null;
@@ -2404,6 +2404,15 @@ function renderList(t) {
             <span class="action-row-label">Divert to dev</span>
             <div class="action-row-buttons">
               <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer; font-size:0.875rem;"><input type="checkbox" class="divert-user-toggle" id="divert-${escapeHtml(f)}" data-username="${escapeHtml(f)}" onchange="toggleDivertUser(this)" ${(siteSettings.divertAllGlobal || siteSettings.divertUsers[f]) ? ' checked' : ''}><span>Divert to dev</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="action-row action-row-combo">
+          <div class="action-combo-group">
+            <span class="action-row-label">Max contact pages</span>
+            <div class="action-row-buttons" style="align-items:center; gap:0.35rem;">
+              <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(siteSettings.maxContactPagesByUser && siteSettings.maxContactPagesByUser[f]) !== undefined ? Number(siteSettings.maxContactPagesByUser[f]) : ''}" placeholder="0 = unlimited" style="width:6ch; padding:0.25rem 0.35rem; font-size:0.875rem;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited. User and admin cannot create new pages when at limit; deletion is allowed.">
+              <span class="form-hint" style="margin:0; font-size:0.8rem;">0 = unlimited</span>
             </div>
           </div>
         </div>
@@ -3266,6 +3275,19 @@ async function toggleDivertUser(checkboxEl) {
     var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ divertUsers: { [username]: checked } }) });
     if (!r.ok) { siteSettings.divertUsers[username] = !checked; checkboxEl.checked = !checked; showAlert('alert-manage', 'Failed to update.', 'error'); }
   } catch (e) { siteSettings.divertUsers[username] = !checked; checkboxEl.checked = !checked; showAlert('alert-manage', 'Connection error.', 'error'); }
+}
+
+async function setMaxContactPagesForUser(username, value) {
+  if (!username) return;
+  var n = value === '' || value === null || value === undefined ? 0 : parseInt(value, 10);
+  if (isNaN(n) || n < 0) n = 0;
+  if (!siteSettings.maxContactPagesByUser) siteSettings.maxContactPagesByUser = {};
+  siteSettings.maxContactPagesByUser[username] = n;
+  try {
+    var r = await fetch(API + '/api/admin/site-settings', { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ maxContactPagesByUser: siteSettings.maxContactPagesByUser }) });
+    if (r.ok) showAlert('alert-manage', 'Max contact pages updated.', 'success');
+    else { delete siteSettings.maxContactPagesByUser[username]; var inp = document.getElementById('max-pages-' + username); if (inp) inp.value = (siteSettings.maxContactPagesByUser[username] !== undefined ? siteSettings.maxContactPagesByUser[username] : ''); showAlert('alert-manage', 'Failed to update.', 'error'); }
+  } catch (e) { delete siteSettings.maxContactPagesByUser[username]; var inp = document.getElementById('max-pages-' + username); if (inp) inp.value = ''; showAlert('alert-manage', 'Connection error.', 'error'); }
 }
 
 function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); }

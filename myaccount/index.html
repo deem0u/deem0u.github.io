@@ -331,7 +331,10 @@
           <div id="contact-pages-section" class="contact-pages-container hidden">
             <div class="contact-pages-section">
               <div class="profile-title">Contact Pages</div>
-              <button type="button" class="btn btn-primary btn-sm btn-block mb-3" id="new-contact-page-btn" onclick="enterCreateMode()">+ New contact page</button>
+              <div id="new-contact-page-row" class="mb-3">
+                <button type="button" class="btn btn-primary btn-sm btn-block" id="new-contact-page-btn" onclick="enterCreateMode()">+ New contact page</button>
+                <p id="contact-pages-limit-msg" class="form-hint mt-2 hidden" style="margin-top:0.35rem; font-size:0.85rem;"></p>
+              </div>
               <div id="contact-pages-list" class="contact-pages-list"></div>
             </div>
           </div>
@@ -1400,15 +1403,22 @@ function backToViewMode() {
   });
 }
 
+var contactPagesLimit = { canCreate: true, maxContactPages: 0, currentCount: 0 };
+
 async function fetchContactPagesList() {
   var section = document.getElementById('contact-pages-section');
   var list = document.getElementById('contact-pages-list');
+  var newBtn = document.getElementById('new-contact-page-btn');
+  var limitMsg = document.getElementById('contact-pages-limit-msg');
   if (!section || !list || !username || !token) return;
   try {
     var r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json();
     var pages = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : [];
     if (pages.length === 0) pages = [{ slug: 'index', name: 'Main (index)' }];
+    contactPagesLimit.canCreate = d.canCreate !== false;
+    contactPagesLimit.maxContactPages = typeof d.maxContactPages === 'number' ? d.maxContactPages : 0;
+    contactPagesLimit.currentCount = typeof d.currentCount === 'number' ? d.currentCount : pages.length;
     list.innerHTML = pages.map(function(p) {
       var slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
       var label = (typeof p === 'object' && p.name != null) ? p.name : (slug === 'index' ? 'Main (index)' : slug);
@@ -1417,15 +1427,37 @@ async function fetchContactPagesList() {
       var labelAttr = escapeHtml(label);
       return '<div class="contact-page-card' + (slug === currentContactpagename && !isCreateMode ? ' selected' : '') + '" data-contactpagename="' + slugAttr + '" role="button" tabindex="0" onclick="selectContactPage(\'' + (slug === 'index' ? 'index' : String(slug).replace(/'/g, "\\'")) + '\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">' + escapeHtml(label) + '</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">' + escapeHtml(slugDisplayUrlOnly) + '</span></div></div>';
     }).join('');
+    if (newBtn) {
+      if (contactPagesLimit.canCreate) {
+        newBtn.classList.remove('hidden');
+        newBtn.disabled = false;
+      } else {
+        newBtn.classList.add('hidden');
+        newBtn.disabled = true;
+      }
+    }
+    if (limitMsg) {
+      if (!contactPagesLimit.canCreate && contactPagesLimit.maxContactPages > 0) {
+        limitMsg.textContent = 'Maximum number of contact pages (' + contactPagesLimit.maxContactPages + ') reached. Delete an existing page to create a new one.';
+        limitMsg.classList.remove('hidden');
+      } else {
+        limitMsg.textContent = '';
+        limitMsg.classList.add('hidden');
+      }
+    }
     section.classList.remove('hidden');
   } catch (e) {
+    contactPagesLimit.canCreate = true;
     list.innerHTML = '<div class="contact-page-card selected" data-contactpagename="index" role="button" tabindex="0" onclick="selectContactPage(\'index\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">Main (index)</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">index</span></div></div>';
+    if (newBtn) { newBtn.classList.remove('hidden'); newBtn.disabled = false; }
+    if (limitMsg) { limitMsg.classList.add('hidden'); limitMsg.textContent = ''; }
     section.classList.remove('hidden');
   }
 }
 
 function enterCreateMode() {
   if (!profileData || !profileData.emailVerified) return;
+  if (!contactPagesLimit.canCreate) return;
   isCreateMode = true;
   currentContactpagename = '';
   currentSha = null;

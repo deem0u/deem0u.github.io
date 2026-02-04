@@ -231,6 +231,17 @@ body {
   font-size: var(--text-sm);
 }
 
+.app-logo-icon-mascot {
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.app-logo-icon-mascot svg {
+  width: 32px;
+  height: 32px;
+  display: block;
+}
+
 .app-logo-text {
   font-weight: 600;
   font-size: var(--text-lg);
