@@ -38,7 +38,7 @@
   .status-banner.show { display: block; }
   .verify-otp-input { font-size: 1.25rem; letter-spacing: 0.2em; text-align: center; }
   .editor-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
-  .contact-pages-container { background: var(--white, #fff); border-radius: var(--radius-md, 8px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
+  .contact-pages-container { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--white, #fff); border-radius: var(--radius-md, 6px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
   .contact-pages-section .profile-title { margin-bottom: 0.5rem; }
   .editor-profile-strip .profile-title, .contact-pages-section .profile-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: var(--accent-teal, #1ac5b0); }
   #contact-pages-section .mb-3 { margin-bottom: 0.75rem; }
@@ -111,7 +111,7 @@
   #editor-contact-edit #home-country-edit-container .searchable-select-options { max-height: 160px; }
   #editor-contact-edit #home-country-edit-container .searchable-select-option { padding: 0.25rem 0.35rem; font-size: 0.8125rem; }
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
-  @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-sidebar { width: 100%; } .editor-profile-strip { width: 100%; } }
+  @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-sidebar { width: 100%; } .editor-profile-strip, .contact-pages-container { width: 100%; } }
     </style>
 </head>
 <body>
@@ -282,8 +282,7 @@
               <button type="button" class="btn btn-primary btn-sm mt-2 hidden" id="change-password-sq-btn" onclick="openChangePasswordSqModal()">Change Password &amp; Security Questions</button>
             </div>
             <div id="profile-edit" class="profile-edit hidden">
-              <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" placeholder="e.g. john-smith" autocomplete="username"><span class="form-hint">3–32 characters. Letters, numbers, hyphens, underscores. Required.</span><span class="form-error" id="error-profile-username" role="alert"></span></div>
-              <div class="form-group"><label class="form-label">Current password <span class="form-hint-inline">(required if changing User Name)</span></label><input type="password" id="profile-edit-current-password" class="form-input" autocomplete="current-password" placeholder="Only needed when changing User Name"></div>
+              <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" placeholder="e.g. john-smith" autocomplete="username"><span class="form-hint">3–32 characters. Letters, numbers, hyphens, underscores. Must be unique.</span><span class="form-error" id="error-profile-username" role="alert"></span></div>
               <div class="form-group"><label class="form-label">First Name</label><input type="text" id="profile-edit-first-name" class="form-input" maxlength="32"></div>
               <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="profile-edit-last-name" class="form-input" maxlength="32"></div>
               <div class="form-group"><label class="form-label">Account Email</label><input type="email" id="profile-edit-email" class="form-input"></div>
@@ -1146,6 +1145,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     var el = document.getElementById(id);
     if (el) { el.addEventListener('input', updateProfileDirtyState); el.addEventListener('change', updateProfileDirtyState); }
   });
+  var profileUsernameEl = document.getElementById('profile-edit-username');
+  if (profileUsernameEl) {
+    profileUsernameEl.addEventListener('input', scheduleProfileUsernameCheck);
+    profileUsernameEl.addEventListener('blur', function() {
+      if (profileUsernameCheckTimer) { clearTimeout(profileUsernameCheckTimer); profileUsernameCheckTimer = null; }
+      runProfileUsernameValidation();
+    });
+  }
   var verifyEmailBtn = document.getElementById('verify-email-btn');
   if (verifyEmailBtn) verifyEmailBtn.addEventListener('click', function() {
     if (verifyEmailContext === 'emailChange' && pendingNewEmail) {
@@ -1591,6 +1598,70 @@ function applyUnverifiedRestriction() {
   }
 }
 var profileSnapshot = null;
+var profileUsernameCheckTimer = null;
+var PROFILE_RESERVED_USERNAMES = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
+function validateProfileUsernameFormat(value) {
+  var v = (value || "").trim();
+  if (!v) return { valid: false, message: "User name is required (3–32 characters)." };
+  if (v.length < 3 || v.length > 32) return { valid: false, message: "User name must be 3–32 characters." };
+  if (!/^[a-zA-Z0-9_-]+$/.test(v)) return { valid: false, message: "User name: letters, numbers, hyphens, underscores only." };
+  if (PROFILE_RESERVED_USERNAMES.indexOf(v.toLowerCase()) !== -1) return { valid: false, message: "This username is reserved." };
+  return { valid: true, message: "" };
+}
+function getCurrentProfileUsername() {
+  return (profileSnapshot && profileSnapshot.username) ? profileSnapshot.username.trim().toLowerCase() : (typeof username !== "undefined" ? (username || "").trim().toLowerCase() : "");
+}
+function setProfileUsernameError(message) {
+  var el = document.getElementById("error-profile-username");
+  if (el) el.textContent = message || "";
+}
+async function runProfileUsernameValidation() {
+  var inputEl = document.getElementById("profile-edit-username");
+  if (!inputEl || !inputEl.closest(".profile-edit") || inputEl.closest(".profile-edit").classList.contains("hidden")) return;
+  var value = (inputEl.value || "").trim();
+  var formatResult = validateProfileUsernameFormat(value);
+  if (!formatResult.valid) {
+    setProfileUsernameError(formatResult.message);
+    return;
+  }
+  var normalized = value.toLowerCase();
+  var currentUn = getCurrentProfileUsername();
+  if (normalized === currentUn) {
+    setProfileUsernameError("");
+    return;
+  }
+  try {
+    var r = await fetch(API + "/api/check-username/" + encodeURIComponent(normalized));
+    var data = await r.json();
+    if (data.available) {
+      setProfileUsernameError("");
+    } else {
+      setProfileUsernameError(data.error || "Username is taken or reserved.");
+    }
+  } catch (_) {
+    setProfileUsernameError("");
+  }
+}
+function scheduleProfileUsernameCheck() {
+  if (profileUsernameCheckTimer) clearTimeout(profileUsernameCheckTimer);
+  var value = (document.getElementById("profile-edit-username") && document.getElementById("profile-edit-username").value || "").trim();
+  if (!value) {
+    setProfileUsernameError("");
+    return;
+  }
+  var normalized = value.toLowerCase();
+  var currentUn = getCurrentProfileUsername();
+  var formatResult = validateProfileUsernameFormat(value);
+  if (!formatResult.valid) {
+    setProfileUsernameError(formatResult.message);
+    return;
+  }
+  if (normalized === currentUn) {
+    setProfileUsernameError("");
+    return;
+  }
+  profileUsernameCheckTimer = setTimeout(function() { runProfileUsernameValidation(); }, 400);
+}
 function getProfileEditValues() {
   var un = document.getElementById("profile-edit-username");
   var fn = document.getElementById("profile-edit-first-name");
@@ -1628,8 +1699,6 @@ function enterProfileEditMode() {
   document.getElementById("profile-edit-last-name").value = profileData.lastName || "";
   document.getElementById("profile-edit-email").value = profileData.accountEmail || "";
   document.getElementById("profile-edit-dob").textContent = profileData.dob || profileData.dobMasked || "—";
-  var pwEl = document.getElementById("profile-edit-current-password");
-  if (pwEl) pwEl.value = "";
   document.getElementById("error-profile-username").textContent = "";
   profileSnapshot = getProfileEditValues();
   viewEl.classList.add("hidden");
@@ -1710,8 +1779,16 @@ async function saveProfileFromStrip() {
     var newUn = (cur.username || "").trim().toLowerCase();
     if (!newUn || newUn.length < 3) { document.getElementById("error-profile-username").textContent = "User name is required (3–32 characters)."; return; }
     if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUn)) { document.getElementById("error-profile-username").textContent = "User name: letters, numbers, hyphens, underscores only."; return; }
-    var currentPw = (document.getElementById("profile-edit-current-password") && document.getElementById("profile-edit-current-password").value || "").trim();
-    if (!currentPw) { showStatusBanner("Current password is required to change User Name.", "error"); return; }
+    if (PROFILE_RESERVED_USERNAMES.indexOf(newUn) !== -1) { document.getElementById("error-profile-username").textContent = "This username is reserved."; return; }
+    var currentUn = (profileSnapshot && profileSnapshot.username) ? profileSnapshot.username.trim().toLowerCase() : (username || "").trim().toLowerCase();
+    if (newUn !== currentUn) {
+      var checkRes = await fetch(API + "/api/check-username/" + encodeURIComponent(newUn));
+      var checkData = await checkRes.json();
+      if (!checkData.available) {
+        document.getElementById("error-profile-username").textContent = checkData.error || "Username is taken or reserved.";
+        return;
+      }
+    }
     document.getElementById("error-profile-username").textContent = "";
     var saveBtn = document.getElementById("profile-save-btn");
     if (saveBtn) saveBtn.disabled = true;
@@ -1719,7 +1796,7 @@ async function saveProfileFromStrip() {
       var rRename = await fetch(API + "/api/profile/rename", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify({ currentPassword: currentPw, newUsername: newUn })
+        body: JSON.stringify({ newUsername: newUn })
       });
       var dRename = await rRename.json();
       if (rRename.ok && dRename.success && dRename.token && dRename.username) {

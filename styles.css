@@ -1254,9 +1254,17 @@ body {
   border: 1px solid rgba(26, 197, 176, 0.85);
 }
 
-/* Contact Editor sidebar: Account Profile and Contact Pages sections – white */
+/* Contact Editor sidebar: Account Profile and Contact Pages containers – match profile strip */
 .editor-profile-strip,
-.contact-pages-container,
+.contact-pages-container {
+  width: 100%;
+  max-width: 100%;
+  flex-shrink: 0;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+}
 .contact-pages-section {
   background: var(--white);
 }

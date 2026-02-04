@@ -2550,7 +2550,7 @@ async function handleChangePasswordAndSq(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** POST /api/profile/rename - Bearer required. Body: { currentPassword, newUsername }. Verifies current password then renames user folder and KV to newUsername. Returns new JWT. */
+/** POST /api/profile/rename - Bearer required. Body: { newUsername } (currentPassword optional). Renames user folder and KV to newUsername. Validates format, reserved, uniqueness. Returns new JWT. */
 async function handleProfileRename(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
@@ -2561,18 +2561,12 @@ async function handleProfileRename(request, env) {
   const oldUsername = (payload.username || '').trim().toLowerCase();
   if (!oldUsername || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
-  const currentPassword = (body.currentPassword || '').trim();
   const newUsername = (body.newUsername || '').trim().toLowerCase();
-  if (!currentPassword) return jsonResponse({ error: 'Current password required' }, 400);
   if (!newUsername || newUsername.length < 3) return jsonResponse({ error: 'New username required (3-32 characters)' }, 400);
   if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUsername)) return jsonResponse({ error: 'Username must be 3-32 characters, letters, numbers, hyphens, underscores' }, 400);
   const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
   if (reserved.includes(newUsername)) return jsonResponse({ error: 'This username is reserved' }, 400);
   if (oldUsername === newUsername) return jsonResponse({ error: 'New username must be different' }, 400);
-  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + oldUsername);
-  if (!pwHash) return jsonResponse({ error: 'No password set' }, 400);
-  const valid = await verifyPassword(currentPassword, pwHash);
-  if (!valid) return jsonResponse({ error: 'Current password is incorrect' }, 401);
   if (!env.GITHUB_TOKEN) return jsonResponse({ error: 'Rename not available' }, 503);
   {
     const existingRes = await fetch(
