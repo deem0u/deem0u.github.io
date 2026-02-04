@@ -257,9 +257,7 @@
             <div id="recovery-success-banner" class="edit-recovery-success-banner banner-success"></div>
             <div id="recovery-success-details" class="edit-recovery-success-details"></div>
             <div class="edit-recovery-success-action">
-              <p>Don't worry — A copy of this will be emailed to you (once I get to it). You may wish to click the "Email Myself a Copy" button below and send yourself a copy now. Proceed with Sign In to your Digital Contact Page otherwise you can do it later via the Contact Editor.</p>
-              <div class="edit-recovery-success-buttons">
-                <a id="recovery-mailto-btn" href="#" class="btn btn-primary">Email Myself a Copy</a>
+              <div id="recovery-success-buttons-wrap" class="edit-recovery-success-buttons">
                 <a id="recovery-signin-btn" href="https://deem0u.github.io/edit/" class="btn btn-primary">Go to Sign In</a>
               </div>
             </div>
@@ -634,7 +632,7 @@ function recoveryCheckUsername() {
       return;
     }
     if (!d.canRecover) {
-      showRecoveryAlert("We can't recover your account right now, please email deem0u.github.io@gmail.com for further assistance.", 'error');
+      showRecoveryAlert("Access Recovery for your account is not available right now. Please email deem0u.github.io@gmail.com for support.", 'error');
       return;
     }
     recoveryPath = 'username';
@@ -668,7 +666,7 @@ function recoveryCheckByEmail() {
       return;
     }
     if (!d.canRecover) {
-      showRecoveryAlert("We can't recover your account right now, please email deem0u.github.io@gmail.com for further assistance.", 'error');
+      showRecoveryAlert("Access Recovery for your account is not available right now. Please email deem0u.github.io@gmail.com for support.", 'error');
       return;
     }
     recoveryPath = 'email';
@@ -770,20 +768,16 @@ function recoveryVerify() {
       return;
     }
     if (recoveryPath === 'username') recoveryAccountEmail = accEm;
-    showRecoverySuccess(d.username || d.folder, d.token);
+    showRecoverySuccess(d.username || d.folder);
   }).catch(function() {
     if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
     showRecoveryVerifyAlert('Connection error. Please try again.', 'error');
   });
 }
 
-function showRecoverySuccess(username, token) {
-  document.getElementById('recovery-success-banner').textContent = 'Hi ' + username + '! You can now sign in again with your Account Email and Password.';
-  document.getElementById('recovery-success-details').innerHTML = window.ACCOUNT_DETAILS.getBodyHtml(username);
-  var subject = window.ACCOUNT_DETAILS.getSubject(username);
-  var bodyPlain = window.ACCOUNT_DETAILS.getBodyPlainText(username);
-  document.getElementById('recovery-mailto-btn').href = 'mailto:' + encodeURIComponent(recoveryAccountEmail || '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(bodyPlain);
-  if (token) sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token }));
+function showRecoverySuccess(username) {
+  document.getElementById('recovery-success-banner').textContent = 'A one-time code has been sent to your account email.';
+  document.getElementById('recovery-success-details').innerHTML = '<p>Return to <strong>Sign In</strong>. Enter your user name or account email and use the one-time code as your password. You will then be asked to set a new permanent password.</p>';
   document.getElementById('screen-auth').classList.add('hidden');
   document.getElementById('screen-recovery-success').classList.remove('hidden');
 }
