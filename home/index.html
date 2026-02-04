@@ -55,14 +55,16 @@
   .signup-signin-prompt .signin-link { background: none; border: none; padding: 0; font-size: inherit; color: var(--color-text-secondary, #6b7280); text-decoration: underline; cursor: pointer; }
   .signup-signin-prompt .signin-link:hover { color: var(--accent-teal, #0d9488); }
   /* Step 0: larger bold labels, no hints, no * */
-  .signup-step0-card .form-label { font-size: 1.1rem; font-weight: 700; }
+  .signup-step0-card .form-label { font-weight: 700; }
   .signup-step0-card .form-required { display: none; }
   .signup-step0-card .form-hint { display: none; }
   .signup-step0-card .password-input-wrap { position: relative; display: block; }
   .signup-step0-card .password-input-wrap .form-input { padding-right: 4.5rem; }
-  .signup-step0-card .password-toggle { position: absolute; right: var(--space-2); top: 50%; transform: translateY(-50%); padding: var(--space-1) var(--space-2); margin: 0; background: none; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .signup-step0-card .password-toggle { position: absolute; right: var(--space-2); top: 50%; transform: translateY(-50%); padding: var(--space-1) var(--space-2); margin: 0; background: none; border: none; border-radius: var(--radius-sm); cursor: pointer; color: var(--color-text-muted); display: inline-flex; align-items: center; justify-content: center; }
   .signup-step0-card .password-toggle:hover { color: var(--color-text); }
   .signup-step0-card .password-toggle:focus { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
+  .signup-step0-card .password-toggle-icon { display: inline-flex; line-height: 0; }
+  .signup-step0-card .password-toggle-icon.hidden { display: none; }
   /* When Step 1+ is visible: hide hero, show only form; compact spacing to avoid scroll */
   .home-two-col.signup-steps-active .home-left-col { display: none; }
   .home-two-col.signup-steps-active .home-right-col { max-width: 560px; margin: 0 auto; }
@@ -148,7 +150,10 @@
                   <label class="form-label">Password</label>
                   <div class="password-input-wrap">
                     <input type="password" id="signup-step0-password" class="form-input" required autocomplete="new-password" minlength="8">
-                    <button type="button" class="password-toggle" id="signup-step0-password-toggle" aria-label="Show password" title="Show password"><span class="password-toggle-text">Show</span></button>
+                    <button type="button" class="password-toggle" id="signup-step0-password-toggle" aria-label="Show password" title="Show password">
+                      <span class="password-toggle-icon password-toggle-icon-show" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                      <span class="password-toggle-icon password-toggle-icon-hide hidden" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span>
+                    </button>
                   </div>
                   <span class="form-error" id="error-signup-step0-password" role="alert"></span>
                 </div>
@@ -385,12 +390,14 @@
   (function() {
     var toggle = document.getElementById('signup-step0-password-toggle');
     var input = document.getElementById('signup-step0-password');
-    var textEl = toggle && toggle.querySelector('.password-toggle-text');
-    if (toggle && input && textEl) {
+    var iconShow = toggle && toggle.querySelector('.password-toggle-icon-show');
+    var iconHide = toggle && toggle.querySelector('.password-toggle-icon-hide');
+    if (toggle && input && iconShow && iconHide) {
       toggle.addEventListener('click', function() {
         var isPassword = input.type === 'password';
         input.type = isPassword ? 'text' : 'password';
-        textEl.textContent = isPassword ? 'Hide' : 'Show';
+        iconShow.classList.toggle('hidden', !isPassword);
+        iconHide.classList.toggle('hidden', isPassword);
         toggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
         toggle.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
       });
@@ -400,9 +407,11 @@
   function cancelSignupStep0() {
     document.getElementById('signup-step0-form').reset();
     var pwInput = document.getElementById('signup-step0-password');
-    var toggleText = document.querySelector('#signup-step0-password-toggle .password-toggle-text');
+    var iconShow = document.querySelector('#signup-step0-password-toggle .password-toggle-icon-show');
+    var iconHide = document.querySelector('#signup-step0-password-toggle .password-toggle-icon-hide');
     if (pwInput) pwInput.type = 'password';
-    if (toggleText) toggleText.textContent = 'Show';
+    if (iconShow) iconShow.classList.remove('hidden');
+    if (iconHide) iconHide.classList.add('hidden');
     ['error-signup-email','error-signup-step0-first-name','error-signup-step0-last-name','error-signup-step0-password'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
     hideAlert('signup-step0-alert');
     document.getElementById('signup-step0-section').classList.add('hidden');
@@ -427,9 +436,11 @@
     document.getElementById('signup-step0-section').classList.remove('hidden');
     document.getElementById('signup-step0-form').reset();
     var pwInput = document.getElementById('signup-step0-password');
-    var toggleText = document.querySelector('#signup-step0-password-toggle .password-toggle-text');
+    var iconShow = document.querySelector('#signup-step0-password-toggle .password-toggle-icon-show');
+    var iconHide = document.querySelector('#signup-step0-password-toggle .password-toggle-icon-hide');
     if (pwInput) pwInput.type = 'password';
-    if (toggleText) toggleText.textContent = 'Show';
+    if (iconShow) iconShow.classList.remove('hidden');
+    if (iconHide) iconHide.classList.add('hidden');
     ['error-signup-email','error-signup-step0-first-name','error-signup-step0-last-name','error-signup-step0-password'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
     hideAlert('signup-step0-alert');
     document.getElementById('signup-email').focus();
