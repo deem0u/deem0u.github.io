@@ -285,7 +285,7 @@
         </div>
         <div class="editor-main">
         <div id="unverified-banner" class="banner-reminder hidden">
-          <strong>Verify your email</strong> to edit your Contact Page. <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
+          <span id="unverified-banner-text"><strong>Verify your email</strong> to edit your Contact Page and add new contact pages.</span> <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
         </div>
         <div class="card card-welcome">
           <div class="card-body">
@@ -463,9 +463,9 @@
   </div>
   <div id="verify-email-modal" class="modal-overlay hidden">
     <div class="modal" style="max-width:400px;">
-      <div class="modal-header"><h3 class="modal-title">Verify your email</h3></div>
+      <div class="modal-header"><h3 class="modal-title" id="verify-email-modal-title">Verify your email</h3></div>
       <div class="modal-body">
-        <p>A 6-digit code was sent to your account email. Enter it below.</p>
+        <p id="verify-email-modal-message">A 6-digit code was sent to your account email. Enter it below.</p>
         <div class="form-group">
           <label class="form-label" for="verify-email-code">6-digit code</label>
           <input type="text" id="verify-email-code" class="form-input verify-otp-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code">
@@ -1071,7 +1071,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (el) { el.addEventListener('input', updateProfileDirtyState); el.addEventListener('change', updateProfileDirtyState); }
   });
   var verifyEmailBtn = document.getElementById('verify-email-btn');
-  if (verifyEmailBtn) verifyEmailBtn.addEventListener('click', verifyEmailFromEditor);
+  if (verifyEmailBtn) verifyEmailBtn.addEventListener('click', function() {
+    if (verifyEmailContext === 'emailChange' && pendingNewEmail) {
+      openVerifyEmailModal('emailChange');
+    } else {
+      verifyEmailFromEditor();
+    }
+  });
   var verifyEmailCodeInput = document.getElementById('verify-email-code');
   if (verifyEmailCodeInput) verifyEmailCodeInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); submitVerifyEmailCode(); } });
   document.addEventListener('click', (e) => {
@@ -1415,6 +1421,8 @@ async function authenticate() {
 
 
 var profileData = null;
+var verifyEmailContext = null;
+var pendingNewEmail = null;
 function updateWelcomeUserName() {
   if (!username) return;
   var firstName = (profileData && profileData.firstName && String(profileData.firstName).trim()) || (document.getElementById("first-name") && document.getElementById("first-name").value && document.getElementById("first-name").value.trim()) || "";
@@ -1445,6 +1453,7 @@ function applyUnverifiedRestriction() {
   if (!profileData) return;
   var wrap = document.getElementById("editor-contact-form-wrap");
   var banner = document.getElementById("unverified-banner");
+  var bannerText = document.getElementById("unverified-banner-text");
   var editBtn = document.getElementById("edit-contact-page-btn");
   var newPageBtn = document.getElementById("new-contact-page-btn");
   if (profileData.emailVerified) {
@@ -1457,6 +1466,11 @@ function applyUnverifiedRestriction() {
     if (banner) banner.classList.remove("hidden");
     if (editBtn) editBtn.disabled = true;
     if (newPageBtn) newPageBtn.disabled = true;
+    if (bannerText) {
+      bannerText.innerHTML = (verifyEmailContext === 'emailChange' && pendingNewEmail)
+        ? 'Verify your new email to edit your Contact Page and add new contact pages. '
+        : '<strong>Verify your email</strong> to edit your Contact Page and add new contact pages. ';
+    }
     var editPanel = document.getElementById("editor-contact-edit");
     if (editPanel && editPanel.classList.contains("show")) enterViewMode();
   }
@@ -1592,12 +1606,27 @@ async function saveProfileFromStrip() {
     });
     var d = await r.json();
     if (r.ok && d.success) {
-      profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email };
-      await loadProfile();
-      applyUnverifiedRestriction();
-      exitProfileEditMode();
+      if (d.otpSent) {
+        profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName };
+        pendingNewEmail = email;
+        verifyEmailContext = "emailChange";
+        applyUnverifiedRestriction();
+        exitProfileEditMode();
+        showStatusBanner("Verification code sent to your new email. Enter it below.", "success");
+        openVerifyEmailModal("emailChange");
+      } else {
+        profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email };
+        await loadProfile();
+        applyUnverifiedRestriction();
+        exitProfileEditMode();
+      }
+    } else {
+      showStatusBanner(d.error || "Could not save", "error");
     }
-  } catch (e) {}
+  } catch (e) {
+    showStatusBanner("Connection error", "error");
+  }
+  if (saveBtn) saveBtn.disabled = false;
   updateProfileDirtyState();
 }
 async function verifyEmailFromEditor() {
@@ -1617,15 +1646,24 @@ async function verifyEmailFromEditor() {
   }
 }
 
-function openVerifyEmailModal() {
+function openVerifyEmailModal(context) {
   var modal = document.getElementById('verify-email-modal');
   var input = document.getElementById('verify-email-code');
   var errEl = document.getElementById('verify-email-error');
   var alertEl = document.getElementById('verify-email-alert');
+  var titleEl = document.getElementById('verify-email-modal-title');
+  var msgEl = document.getElementById('verify-email-modal-message');
   if (!modal || !input) return;
   input.value = '';
   if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
   if (alertEl) { alertEl.classList.add('hidden'); alertEl.innerHTML = ''; }
+  if (context === 'emailChange' && pendingNewEmail) {
+    if (titleEl) titleEl.textContent = 'Verify your new email';
+    if (msgEl) msgEl.textContent = 'Enter the 6-digit code we sent to ' + pendingNewEmail + '.';
+  } else {
+    if (titleEl) titleEl.textContent = 'Verify your email';
+    if (msgEl) msgEl.textContent = 'A 6-digit code was sent to your account email. Enter it below.';
+  }
   modal.classList.remove('hidden');
   modal.classList.add('show');
   input.focus();
@@ -1652,15 +1690,23 @@ async function submitVerifyEmailCode() {
   if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
   try {
     showStatusBanner('Verifying...', 'loading');
-    var vr = await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, code }) });
+    var isEmailChange = verifyEmailContext === 'emailChange';
+    var vr = isEmailChange
+      ? await fetch(API + "/api/profile/verify-email-change", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }, body: JSON.stringify({ code }) })
+      : await fetch(API + "/api/otp/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, code }) });
     var vd = await vr.json();
     if (vr.ok && vd.success) {
+      if (isEmailChange) {
+        verifyEmailContext = null;
+        pendingNewEmail = null;
+        await loadProfile();
+      }
       profileData.emailVerified = true;
       var badge = document.getElementById('profile-verified-badge');
       if (badge) { badge.textContent = 'Verified'; badge.className = 'badge badge-cyan'; badge.classList.remove('hidden'); }
       applyUnverifiedRestriction();
       closeVerifyEmailModal();
-      showStatusBanner('Email verified!', 'success');
+      showStatusBanner(isEmailChange ? 'Email updated. Next time, sign in with your new email.' : 'Email verified!', 'success');
     } else {
       showStatusBanner('', null);
       if (alertEl) {

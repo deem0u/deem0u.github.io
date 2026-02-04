@@ -273,6 +273,9 @@ export default {
         try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
         return await handlePutProfile(username, request, env);
       }
+      if (request.method === 'POST' && path === '/api/profile/verify-email-change') {
+        return await handleVerifyEmailChange(request, env);
+      }
       if (request.method === 'GET' && path.startsWith('/api/secrets/')) {
         const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
         let username = raw || '';
@@ -2267,6 +2270,23 @@ async function handlePutProfile(username, request, env) {
   if (firstName) await env.EDIT_KEYS_KV.put('user_first_name:' + username, firstName);
   if (lastName) await env.EDIT_KEYS_KV.put('user_last_name:' + username, lastName);
   const oldAccountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+  const oldEmailNorm = (oldAccountEmail || '').trim().toLowerCase();
+  const newEmailNorm = accountEmail ? accountEmail.trim().toLowerCase() : '';
+
+  if (accountEmail && newEmailNorm !== oldEmailNorm) {
+    const code = generateOtpCode();
+    await env.EDIT_KEYS_KV.put('otp_email_change:' + username, code, { expirationTtl: 600 });
+    await env.EDIT_KEYS_KV.put('pending_email_change:' + username, JSON.stringify({ newEmail: accountEmail.trim() }), { expirationTtl: 600 });
+    const subject = 'Verify your new email - Digital Contact Page';
+    const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. Use it in the Contact Editor to complete your email change.\n\nIf you did not request this, please sign in and change your password.`;
+    const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. Use it in the Contact Editor to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>`;
+    const sent = await sendEmail(env, { to: accountEmail.trim(), subject, text, html, username });
+    if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send verification code' }, 500);
+    await env.EDIT_KEYS_KV.delete('email_verified:' + username);
+    await env.EDIT_KEYS_KV.delete('email_verified_admin:' + username);
+    return jsonResponse({ success: true, otpSent: true, message: 'Verification code sent to your new email.' });
+  }
+
   if (accountEmail) {
     if (oldAccountEmail) await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldAccountEmail.toLowerCase());
     await env.EDIT_KEYS_KV.put('account_email:' + username, accountEmail);
@@ -2275,6 +2295,35 @@ async function handlePutProfile(username, request, env) {
       await env.EDIT_KEYS_KV.delete('email_verified:' + username);
     }
   }
+  return jsonResponse({ success: true });
+}
+
+async function handleVerifyEmailChange(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const code = (body.code || '').trim().replace(/\D/g, '');
+  if (code.length !== 6) return jsonResponse({ error: 'Invalid code' }, 400);
+  const stored = await env.EDIT_KEYS_KV.get('otp_email_change:' + username);
+  if (!stored || stored !== code) return jsonResponse({ error: 'Invalid or expired code' }, 400);
+  const pendingRaw = await env.EDIT_KEYS_KV.get('pending_email_change:' + username);
+  if (!pendingRaw) return jsonResponse({ error: 'No pending email change' }, 400);
+  let newEmail;
+  try { newEmail = JSON.parse(pendingRaw).newEmail; } catch (_) { return jsonResponse({ error: 'Invalid pending data' }, 400); }
+  if (!newEmail || !newEmail.includes('@')) return jsonResponse({ error: 'Invalid email' }, 400);
+  const oldAccountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+  if (oldAccountEmail) await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldAccountEmail.toLowerCase().trim());
+  await env.EDIT_KEYS_KV.put('account_email:' + username, newEmail);
+  await env.EDIT_KEYS_KV.put('account_email_to_folder:' + newEmail.trim().toLowerCase(), username);
+  await env.EDIT_KEYS_KV.put('email_verified:' + username, '1');
+  await env.EDIT_KEYS_KV.delete('otp_email_change:' + username);
+  await env.EDIT_KEYS_KV.delete('pending_email_change:' + username);
   return jsonResponse({ success: true });
 }
 
