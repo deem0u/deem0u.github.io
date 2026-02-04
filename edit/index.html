@@ -1349,6 +1349,10 @@ function enterCreateMode() {
   document.getElementById('view-page-link').style.pointerEvents = 'none';
   var delBtn = document.getElementById('form-delete-page-btn');
   if (delBtn) delBtn.style.display = 'none';
+  document.getElementById('editor-contact-view').classList.add('hidden');
+  document.getElementById('editor-contact-edit').classList.add('show');
+  formSnapshot = getFormSnapshot();
+  updateFormDirtyState();
   showStatusBanner('Fill in Contact Page URL and Name, then the form. Click Save to create.', 'info');
 }
 function selectContactPage(contactpagename) {
