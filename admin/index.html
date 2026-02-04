@@ -388,7 +388,7 @@
               <form id="new-user-form">
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
-                  <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_-]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
+                  <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
                   <span class="form-hint" id="hint-new-username"></span>
                   <span class="form-error" id="error-new-username" role="alert"></span>
                 </div>
@@ -498,7 +498,7 @@
                       <span class="form-hint" style="display:block;">Letters, numbers, hyphens, underscores. 2–28 characters. Leave blank when creating from admin to use a random slug.</span>
                       <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.25rem;">
                         <span class="card-header-url-prefix" style="font-size:0.875rem; color:var(--color-text-secondary,#666);">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
-                        <input type="text" id="contact-page-url-slug" class="form-input" placeholder="e.g. mypage or leave blank for random" pattern="^[a-zA-Z0-9_-]*$" maxlength="28" autocomplete="off" style="min-width:10ch;">
+                        <input type="text" id="contact-page-url-slug" class="form-input" placeholder="e.g. mypage or leave blank for random" pattern="^[a-zA-Z0-9_\u002D]*$" maxlength="28" autocomplete="off" style="min-width:10ch;">
                       </div>
                       <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
                     </div>
@@ -662,7 +662,7 @@
         <div id="modal-profile-form" class="hidden">
           <div class="form-group">
             <label class="form-label">Account Username</label>
-            <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_-]{3,32}" maxlength="32" autocomplete="username">
+            <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_\u002D]{3,32}" maxlength="32" autocomplete="username">
             <span class="form-hint">3–32 characters: letters, numbers, hyphens, underscores. Changing this renames the user folder and URL. After rename, they sign in with the same account email (now tied to the new username).</span>
             <span class="form-error" id="error-profile-username" role="alert"></span>
           </div>
@@ -1563,7 +1563,8 @@ async function fetchAccountEmailsAndRefresh() {
       if (missingFromBulk.length) console.warn('[admin] bulk account-emails missing for usernames (will use profile if available):', missingFromBulk, '| bulk keys:', bulkKeys);
       for (var f in userInfo) {
         var fLower = (f || '').toLowerCase();
-        userInfo[f].accountEmail = accountEmails[f] || accountEmails[fLower] || null;
+        var raw = accountEmails[f] || accountEmails[fLower];
+        userInfo[f].accountEmail = (typeof raw === 'string' && raw.trim()) ? raw.trim() : null;
         userInfo[f].accountDetailsSent = !!accountDetailsSent[f] || !!accountDetailsSent[fLower];
         userInfo[f].emailVerification = emailVerification[f] || emailVerification[fLower] || null;
       }
@@ -1571,7 +1572,8 @@ async function fetchAccountEmailsAndRefresh() {
         for (var i = 0; i < userKeysList.length; i++) {
           var uf = userKeysList[i];
           if ((uf || '').toLowerCase() === (ek || '').toLowerCase()) {
-            userInfo[uf].accountEmail = userInfo[uf].accountEmail || accountEmails[ek];
+            var ekEmail = (typeof accountEmails[ek] === 'string' && accountEmails[ek].trim()) ? accountEmails[ek].trim() : null;
+            userInfo[uf].accountEmail = userInfo[uf].accountEmail || ekEmail;
             userInfo[uf].accountDetailsSent = userInfo[uf].accountDetailsSent || !!accountDetailsSent[ek];
             userInfo[uf].emailVerification = userInfo[uf].emailVerification || emailVerification[ek];
             break;
@@ -1623,7 +1625,9 @@ async function fetchAccountEmailsAndRefresh() {
       }
     }
     populateUI();
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.error('[admin] fetchAccountEmailsAndRefresh failed:', e);
+  }
 }
 async function loadDashboard() {
   var pRes = fetch(API + '/api/pages', { headers: { 'X-Admin-Key': adminKey } });
@@ -1673,7 +1677,7 @@ async function loadDashboard() {
     if (sdMaint) sdMaint.checked = siteSettings.maintenanceMode;
     if (sdLock) sdLock.checked = siteSettings.lockdownMode;
     populateUI();
-    fetchAccountEmailsAndRefresh();
+    await fetchAccountEmailsAndRefresh();
   } catch (e) {
     console.error('populateUI error:', e);
     throw new Error('Dashboard UI error: ' + (e.message || 'see console'));
