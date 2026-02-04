@@ -219,8 +219,10 @@ body {
 }
 
 .app-logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   background: var(--accent-teal);
   border-radius: var(--radius-sm);
   display: flex;
@@ -228,7 +230,7 @@ body {
   justify-content: center;
   color: var(--white);
   font-weight: 600;
-  font-size: var(--text-sm);
+  font-size: 1.125rem;
 }
 
 .app-logo-icon-mascot {
@@ -236,15 +238,18 @@ body {
   flex-shrink: 0;
 }
 
-.app-logo-icon-mascot svg {
-  width: 32px;
-  height: 32px;
+.app-logo-icon-mascot svg,
+.app-header-logo-svg {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px;
+  min-height: 40px;
   display: block;
 }
 
 .app-logo-text {
   font-weight: 600;
-  font-size: var(--text-2xl);
+  font-size: 1.75rem !important;
   color: var(--color-text);
   line-height: 1.2;
 }
