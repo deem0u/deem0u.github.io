@@ -1152,7 +1152,8 @@ async function handleUserCreatePage(username, request, env) {
 
   // Enforce max contact pages per account (0 = unlimited)
   if (env.EDIT_KEYS_KV) {
-    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + username);
+    const u = (username || '').toLowerCase();
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + u);
     const maxPages = parseInt(maxRaw, 10) || 0;
     if (maxPages > 0) {
       const currentCount = await getContactPageCountForUser(username, env);
@@ -1556,7 +1557,7 @@ async function handlePutSiteSettings(request, env) {
   }
   if (body.maxContactPagesByUser && typeof body.maxContactPagesByUser === 'object') {
     for (const [username, num] of Object.entries(body.maxContactPagesByUser)) {
-      const u = (username || '').trim();
+      const u = (username || '').trim().toLowerCase();
       if (!u) continue;
       const n = parseInt(num, 10);
       const val = (isNaN(n) || n < 0) ? 0 : n;
@@ -2281,7 +2282,8 @@ async function handleListContactPages(username, request, env) {
   const currentCount = slugs.length;
   let maxContactPages = 0;
   if (env.EDIT_KEYS_KV) {
-    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + u);
+    const uLower = (u || '').toLowerCase();
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
     maxContactPages = parseInt(maxRaw, 10) || 0;
   }
   const canCreate = maxContactPages === 0 || currentCount < maxContactPages;
