@@ -16,6 +16,7 @@ The workspace root **is** the GitHub Pages repo (deem0u.github.io). Live at http
 - **`cloudflare-worker/`** — API backend (Worker + wrangler). Deploy to Cloudflare Workers.
 - **`release/`** — Packaged deployable artifacts (`digital-luggage-tags-artifacts.zip`)
 - **`SETUP-GUIDE.md`** — Setup, daily usage, troubleshooting
+- **`linky-mascot.html`** — **Linky Mascot Suite** (SVG asset reference). Contains 10 full-size mascot variants (Brand, Sign Up, Maintenance, Terms & Privacy, Contact, MyAccount, Admin, Error/404, Loading, Success), 10 mini-icon versions, and brand colour palette. Use for header icons, empty states, error/loading/success screens. Full SVGs: viewBox 160×160; minis: viewBox 80×80. Colours: body #272932, screen #ffffff, cheeks #e455ae; accents teal/cyan/yellow/pink/purple. Extract SVG code from this file when adding or changing mascot assets.
 
 ## Recent modifications (repository)
 

@@ -247,6 +247,15 @@ body {
   display: block;
 }
 
+/* Home page: full Brand Icon at 96px */
+.app-logo-icon-brand.app-logo-icon-mascot svg,
+.app-logo-icon-brand .app-header-logo-svg {
+  width: 96px !important;
+  height: 96px !important;
+  min-width: 96px;
+  min-height: 96px;
+}
+
 .app-logo-text {
   font-weight: 600;
   font-size: var(--text-base);

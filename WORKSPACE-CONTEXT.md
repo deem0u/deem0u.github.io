@@ -24,6 +24,7 @@ Proj.DigitalLuggageTags/   (= deem0u.github.io repo root)
 │   └── <username>/       # Per-user contact pages (e.g. user/danielmounnarath/index.html)
 │       └── *.html
 ├── styles.css            # Shared styles
+├── linky-mascot.html     # Linky Mascot Suite — SVG reference (full + mini icons, palette)
 ├── account-details-content.js
 ├── form-descriptions.js
 ├── countries-data.js
