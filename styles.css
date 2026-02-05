@@ -150,6 +150,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 96px;
 }
 
 .app-header-actions {
@@ -219,10 +220,10 @@ body {
 }
 
 .app-logo-icon {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  min-height: 48px;
+  width: 96px;
+  height: 96px;
+  min-width: 96px;
+  min-height: 96px;
   background: var(--accent-teal);
   border-radius: var(--radius-sm);
   display: flex;
@@ -230,7 +231,7 @@ body {
   justify-content: center;
   color: var(--white);
   font-weight: 600;
-  font-size: 1.25rem;
+  font-size: 2.5rem;
 }
 
 .app-logo-icon-mascot {
@@ -240,20 +241,11 @@ body {
 
 .app-logo-icon-mascot svg,
 .app-header-logo-svg {
-  width: 48px !important;
-  height: 48px !important;
-  min-width: 48px;
-  min-height: 48px;
-  display: block;
-}
-
-/* Home header: mini Brand icon at 96px (Icon Sizes / mini-mascots in reference) */
-.app-logo-icon-brand.app-logo-icon-mascot svg,
-.app-logo-icon-brand .app-header-logo-svg {
   width: 96px !important;
   height: 96px !important;
   min-width: 96px;
   min-height: 96px;
+  display: block;
 }
 
 .app-logo-text {
@@ -1906,6 +1898,12 @@ body {
 .mb-6 { margin-bottom: var(--space-6); }
 .ml-auto { margin-left: auto; }
 .hidden { display: none !important; }
+/* Header Sign Out: when button has .hidden, reserve space so nav doesn't shift (override .hidden) */
+.app-header-actions > button.hidden {
+  visibility: hidden;
+  display: inline-flex !important;
+  pointer-events: none;
+}
 
 /* Admin dashboard: contact form matches Contact Editor (compact layout, same sections) */
 #admin-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; }

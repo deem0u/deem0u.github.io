@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>Digital Contact Information Page - Home</title>
+  <title>DigiCon</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
+  .digicon-brand-digicon { font-weight: 700; }
+  .digicon-brand-dot { font-weight: 400; font-size: 1.2em; color: var(--accent-teal, #1ac5b0); vertical-align: baseline; }
+  .digicon-brand-id { font-weight: 700; }
   .app-nav.tabs { margin-bottom: 0; }
   .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
   .consent-text { font-size: 0.9rem; line-height: 1.6; }
@@ -90,8 +93,8 @@
     <header class="app-header">
       <div class="app-header-inner">
         <div class="app-logo">
-          <!-- Mini Brand icon at 96px from .cursor/linky-mascot.html Icon Sizes / mini-mascots -->
-          <span class="app-logo-icon app-logo-icon-mascot app-logo-icon-brand" aria-hidden="true">
+          <!-- Mini Brand icon at 96px -->
+          <span class="app-logo-icon app-logo-icon-mascot" aria-hidden="true">
             <svg viewBox="0 0 80 80" width="96" height="96" fill="none" xmlns="http://www.w3.org/2000/svg" class="app-header-logo-svg">
               <rect x="20" y="12" width="40" height="56" rx="9" fill="#272932"/>
               <rect x="25" y="18" width="30" height="44" rx="5" fill="#ffffff"/>
@@ -104,7 +107,7 @@
               <path d="M 34 46 Q 40 52 46 46" stroke="#272932" stroke-width="2" fill="none" stroke-linecap="round"/>
             </svg>
           </span>
-          <span class="app-logo-text">Digital Contact Information Page</span>
+          <span class="app-logo-text"><span class="digicon-brand-digicon">DigiCon</span><span class="digicon-brand-dot">.</span><span class="digicon-brand-id">ID</span></span>
         </div>
         <div class="app-header-actions">
           <nav class="app-nav tabs">
