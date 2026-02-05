@@ -2742,7 +2742,7 @@ function copyAccountReport() {
 async function deleteUser(f) {
   showAlert('alert-manage', '<span class="spinner"></span> Deleting...', 'info');
   try {
-    const r = await fetch(`${API}/api/page/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } });
+    const r = await fetch(`${API}/api/page/${encodeURIComponent(f)}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } });
     if (r.ok) {
       pages = pages.filter(p => p !== f);
       delete userInfo[f];

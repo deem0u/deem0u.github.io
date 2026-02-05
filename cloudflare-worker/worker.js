@@ -1340,7 +1340,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
     return jsonResponse({ error: 'Admin access required' }, 401);
   }
 
-  // List all files under user/username/
+  // List all files under user/username/ (folder may already be deleted on GitHub)
   const listResponse = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
     {
@@ -1352,12 +1352,11 @@ async function handleDeletePage(username, contactpagename, request, env) {
     }
   );
 
-  if (!listResponse.ok) {
-    return jsonResponse({ error: 'Page not found' }, 404);
+  let htmlFiles = [];
+  if (listResponse.ok) {
+    const files = await listResponse.json();
+    htmlFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name && f.name.endsWith('.html')) : [];
   }
-
-  const files = await listResponse.json();
-  const htmlFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name && f.name.endsWith('.html')) : [];
 
   for (const file of htmlFiles) {
     const filePath = `${USER_PAGES_PREFIX}/${username}/${file.name}`;
@@ -1384,21 +1383,30 @@ async function handleDeletePage(username, contactpagename, request, env) {
     }
   }
 
-  // Also delete all KV data for this user
+  // Delete all KV data for this user (same set as KV orphan cleanup)
   if (env.EDIT_KEYS_KV) {
     const accountEmail = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
+    const u = username.toLowerCase();
     await env.EDIT_KEYS_KV.delete(`access_revoked:${username}`);
     await env.EDIT_KEYS_KV.delete(`account_email:${username}`);
     await env.EDIT_KEYS_KV.delete(`user_password_hash:${username}`);
     await env.EDIT_KEYS_KV.delete(`user_first_name:${username}`);
     await env.EDIT_KEYS_KV.delete(`user_last_name:${username}`);
     await env.EDIT_KEYS_KV.delete(`email_verified:${username}`);
+    await env.EDIT_KEYS_KV.delete(`email_verified_admin:${username}`);
     if (accountEmail && accountEmail.includes('@')) {
       await env.EDIT_KEYS_KV.delete(`account_email_to_folder:${accountEmail.toLowerCase().trim()}`);
     }
     await env.EDIT_KEYS_KV.delete(`user_dob:${username}`);
     await env.EDIT_KEYS_KV.delete(`user_recovery:${username}`);
     await env.EDIT_KEYS_KV.delete(`account_details_sent:${username}`);
+    await env.EDIT_KEYS_KV.delete(`user_otp:${username}`);
+    await env.EDIT_KEYS_KV.delete(`otp:${username}`);
+    await env.EDIT_KEYS_KV.delete(`push_message:${u}`);
+    await env.EDIT_KEYS_KV.delete(`divert_email:${username}`);
+    await env.EDIT_KEYS_KV.delete(`max_contact_pages:${username}`);
+    await env.EDIT_KEYS_KV.delete(`otp_email_change:${username}`);
+    await env.EDIT_KEYS_KV.delete(`pending_email_change:${username}`);
     const nameKeys = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
     for (const key of nameKeys.keys) {
       await env.EDIT_KEYS_KV.delete(key.name);
@@ -1677,7 +1685,9 @@ async function collectKvOrphans(env) {
       'divert_email:',
       'max_contact_pages:',
       'otp_email_change:',
-      'pending_email_change:'
+      'pending_email_change:',
+      'otp:',
+      'push_message:'
     ];
     for (const prefix of userPrefixes) {
       const keys = await listAllKvKeys(env, prefix);
