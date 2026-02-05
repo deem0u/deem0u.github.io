@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-  <title>DigiConiD - MyAccount</title>
+  <title>DigiCon iD - MyAccount</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='24' font-size='24'>✉</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -697,12 +697,12 @@ function escapeHtml(s) {
 function setHeaderAndTitleForUser(un) {
   if (!un || !un.length) return;
   var capUn = (un || '').toUpperCase();
-  document.title = 'DigiConiD - MyAccount';
+  document.title = 'DigiCon iD - MyAccount';
   var logoEl = document.getElementById('header-logo-text');
   if (logoEl) logoEl.innerHTML = 'MyAccount <span class="header-username-teal">' + escapeHtml(capUn) + '</span>';
 }
 function clearHeaderAndTitleToDefault() {
-  document.title = 'DigiConiD - MyAccount';
+  document.title = 'DigiCon iD - MyAccount';
   var logoEl = document.getElementById('header-logo-text');
   if (logoEl) logoEl.textContent = 'My Account';
 }

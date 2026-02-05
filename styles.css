@@ -1659,7 +1659,11 @@ body {
   margin-right: var(--space-5);
 }
 
-/* Account & Access Recovery row: buttons + Max Pages + Delete User aligned right */
+/* Account & Access Recovery row: group fills row so Delete User can align right */
+.action-row-combo .action-combo-group-access {
+  flex: 1;
+  min-width: 0;
+}
 .action-row-combo .action-combo-group-access .action-row-buttons-access {
   flex: 1;
   display: flex;
