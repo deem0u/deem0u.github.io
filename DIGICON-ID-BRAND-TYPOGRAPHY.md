@@ -19,7 +19,7 @@ The dot above the "i" in "iD" is replaced with a larger teal dot, serving as a s
 
 - **Colour:** #00c9b7
 - **Size:** 0.26em (relative to font size)
-- **Position:** top: -0.08em (raised so the dot sits above the stem with clear separation; avoid positive values that bring the dot too close to the stem)
+- **Position:** top: -0.04em (slightly above the stem; adjust between -0.08em and 0 for spacing)
 - **Shape:** Perfect circle (border-radius: 50%)
 
 ### Spacing
@@ -74,7 +74,7 @@ There is a standard space between "DigiCon" and "iD" to create a clear two-part 
   height: 0.26em;
   background: #00c9b7;
   border-radius: 50%;
-  top: -0.08em;  /* above the stem with clear separation; do not use positive values that clash */
+  top: -0.04em;  /* slightly above the stem; use -0.08em to 0 to tune spacing */
   left: 50%;
   transform: translateX(-50%);
 }
@@ -111,7 +111,7 @@ The dot scales proportionally with font size due to `em` units.
 ### Do
 - ✓ Maintain the space between "DigiCon" and "iD"
 - ✓ Keep the teal dot colour consistent (#00c9b7)
-- ✓ Position the dot above the "ı" stem with clear separation (e.g. top: -0.08em) so it does not clash
+- ✓ Position the dot slightly above the "ı" stem (e.g. top: -0.04em) so it does not clash
 - ✓ Scale proportionally – never stretch or distort
 - ✓ Use Inter Bold (700) only
 
