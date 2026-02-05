@@ -232,6 +232,47 @@ body {
   line-height: 1;
 }
 
+.app-header .app-logo-text-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  flex-wrap: nowrap;
+}
+
+/* DigiCon iD wordmark – header on all pages (home overrides font-size to 36px) */
+.app-header .digicon-logo {
+  font-family: 'Inter', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+.app-header .digicon-logo .i-dot {
+  position: relative;
+  display: inline-block;
+}
+.app-header .digicon-logo .i-dot::after {
+  content: '';
+  position: absolute;
+  width: 0.26em;
+  height: 0.26em;
+  background: #00c9b7;
+  border-radius: 50%;
+  top: -0.04em;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.app-header .app-logo-text-suffix {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
 .app-logo-icon {
   width: 96px;
   height: 96px;
