@@ -1092,6 +1092,23 @@ body {
   box-shadow: 0 0 0 3px rgba(228, 85, 174, 0.4);
 }
 
+.btn-warning {
+  background: var(--accent-yellow);
+  color: var(--accent-dark);
+  border: 1px solid rgba(196, 176, 0, 0.55);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--accent-yellow);
+  filter: brightness(0.98);
+  color: var(--accent-dark);
+  border-color: rgba(196, 176, 0, 0.55);
+}
+
+.btn-warning:focus {
+  box-shadow: 0 0 0 3px rgba(253, 245, 0, 0.4);
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--color-text-secondary);

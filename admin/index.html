@@ -769,6 +769,38 @@
     </div>
   </div>
 
+  <div id="modal-kv-purge" class="modal-overlay">
+    <div class="modal" style="max-width: 560px;">
+      <div class="modal-header"><h3 class="modal-title" id="modal-kv-purge-title">KV Purge</h3></div>
+      <div class="modal-body">
+        <div id="kv-purge-loading" class="modal-qr-loading"><span class="spinner"></span> Loading keys…</div>
+        <div id="kv-purge-content" class="hidden">
+          <p class="form-hint mb-3">Keys for this user. Orphaned = user folder no longer in GitHub. Select keys to purge, then dry run, then confirm and delete.</p>
+          <div class="kv-report-summary mb-3" style="padding:0.75rem; background:var(--color-bg-muted); border-radius:var(--radius-md); font-size:0.875rem;"></div>
+          <div id="kv-purge-keys-list" class="mb-3" style="max-height:14rem; overflow:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:0.5rem;"></div>
+          <div id="kv-purge-actions" class="hidden">
+            <div class="form-group mb-2">
+              <button type="button" class="btn btn-secondary btn-sm" id="kv-purge-dry-run-btn">Dry run (preview delete)</button>
+              <span class="form-hint" style="margin-left:0.5rem;" id="kv-purge-dry-run-result"></span>
+            </div>
+            <div id="kv-purge-confirm-block" class="hidden" style="padding:0.75rem; background:var(--color-bg-muted); border-radius:var(--radius-md);">
+              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.5rem;">
+                <input type="checkbox" id="kv-purge-confirm-checkbox">
+                <span>I have reviewed and want to permanently delete the selected keys (4-eye check)</span>
+              </label>
+              <button type="button" class="btn btn-danger btn-sm" id="kv-purge-delete-btn" disabled>Delete selected keys</button>
+            </div>
+          </div>
+        </div>
+        <div id="kv-purge-empty" class="hidden form-hint">No KV keys found for this user.</div>
+        <div id="kv-purge-error" class="alert alert-error hidden mt-2"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeKvPurgeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
 <script src="/account-details-content.js"></script>
 <script src="../countries-data.js"></script>
 <script src="../form-descriptions.js"></script>
@@ -2423,43 +2455,26 @@ function renderList(t) {
         </div>
         <div class="action-row action-row-combo">
           <div class="action-combo-group">
-            <span class="action-row-label">Recovery</span>
-            <div class="action-row-buttons">
+            <span class="action-row-label">Account &amp; Access Recovery</span>
+            <div class="action-row-buttons" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
               <button class="btn btn-primary btn-sm" onclick="showProfileModal('${f}')">Edit Profile</button>
               <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
+              <span style="display:inline-flex; align-items:center; gap:0.35rem;">
+                <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0=unlimited" style="width:5ch; padding:0.25rem 0.35rem; font-size:0.875rem;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited">
+                <span class="form-hint" style="margin:0; font-size:0.8rem;">max pages</span>
+              </span>
               <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
-              <button type="button" class="btn btn-ghost btn-sm" onclick="debugUserApi('${escapeHtml(f).replace(/'/g, "\\'")}')" title="See what the API returns for this user">Debug API</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="debugUserApi('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Diagnose anything related to this user that might be broken">Debug API</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openKvPurgeModal('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Report and purge KV keys for this user">KV Purge</button>
             </div>
           </div>
         </div>
         <div class="action-row action-row-combo">
           <div class="action-combo-group">
-            <span class="action-row-label">Divert to dev</span>
-            <div class="action-row-buttons">
+            <span class="action-row-label">Communications</span>
+            <div class="action-row-buttons" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
               <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer; font-size:0.875rem;"><input type="checkbox" class="divert-user-toggle" id="divert-${escapeHtml(f)}" data-username="${escapeHtml(f)}" onchange="toggleDivertUser(this)" ${(siteSettings.divertAllGlobal || siteSettings.divertUsers[f]) ? ' checked' : ''}><span>Divert to dev</span></label>
-            </div>
-          </div>
-        </div>
-        <div class="action-row action-row-combo">
-          <div class="action-combo-group">
-            <span class="action-row-label">Max contact pages</span>
-            <div class="action-row-buttons" style="align-items:center; gap:0.35rem;">
-              <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0 = unlimited" style="width:6ch; padding:0.25rem 0.35rem; font-size:0.875rem;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited. User and admin cannot create new pages when at limit; deletion is allowed.">
-              <span class="form-hint" style="margin:0; font-size:0.8rem;">0 = unlimited</span>
-            </div>
-          </div>
-        </div>
-        <div class="action-row action-row-combo">
-          <div class="action-combo-group">
-            <span class="action-row-label">Sign-in</span>
-            <div class="action-row-buttons">
-              <span class="form-hint" style="margin:0; font-size:0.875rem;">${hk ? 'Email &amp; password' : 'Set Secrets to enable sign-in'}</span>
-            </div>
-          </div>
-          <div class="action-combo-group">
-            <span class="action-row-label">Share Links</span>
-            <div class="action-row-buttons">
-              <button type="button" class="btn btn-primary btn-sm" onclick="sendViaEmail('${f}')">Send via Email</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="sendViaEmail('${f}')">Custom Email</button>
             </div>
           </div>
         </div>
@@ -3493,11 +3508,162 @@ async function debugUserApi(folder) {
     var data = await r.json();
     console.log('Debug user API response:', data);
     var d = data.debug || data;
-    var msg = (d.resolvedEmail ? 'Resolved email: ' + d.resolvedEmail : 'No email found in KV.') + '\nFirst: ' + (d.firstName || '(none)') + ', Last: ' + (d.lastName || '(none)') + '\nFull response in console (F12).';
+    if (!d) { showModal('Debug: ' + folder, (data.error || 'No data') + '\nFull response in console (F12).', 'btn-primary', 'OK', function() {}); return; }
+    var lines = [
+      'Username: ' + (d.username || folder),
+      'In GitHub repo: ' + (d.inGitHub ? 'Yes' : 'No (orphaned)'),
+      'Resolved email: ' + (d.resolvedEmail || '(none)'),
+      'First / Last: ' + (d.firstName || '(none)') + ' / ' + (d.lastName || '(none)'),
+      'Password set: ' + (d.passwordSet ? 'Yes' : 'No'),
+      'OTP set: ' + (d.otpSet ? 'Yes' : 'No'),
+      'Email verified: ' + (d.emailVerified ? 'Yes' : 'No') + (d.emailVerifiedAdmin ? ' (admin)' : ''),
+      'Access revoked: ' + (d.accessRevoked ? 'Yes' : 'No'),
+      'Max contact pages: ' + (d.maxContactPages != null ? d.maxContactPages : '(unset)'),
+      'Divert to dev: ' + (d.divertEmail ? 'Yes' : 'No'),
+      'Account details sent: ' + (d.accountDetailsSent ? 'Yes' : 'No'),
+      'DOB set: ' + (d.dobSet ? 'Yes' : 'No'),
+      'Recovery SQs: ' + (d.recoverySqCount || 0) + '/3',
+      'Contact page keys: ' + (d.contactPageKeysCount || 0)
+    ];
+    var msg = lines.join('\n') + '\n\nFull response in console (F12).';
     showModal('Debug: ' + folder, msg, 'btn-primary', 'OK', function() {});
   } catch (e) {
     console.error('Debug user API error:', e);
     showModal('Debug failed', (e && e.message) || 'Check console (F12).', 'btn-primary', 'OK', function() {});
+  }
+}
+
+var kvPurgeUsername = null;
+var kvPurgeReportData = null;
+
+function closeKvPurgeModal() {
+  document.getElementById('modal-kv-purge').classList.remove('show');
+  kvPurgeUsername = null;
+  kvPurgeReportData = null;
+}
+
+async function openKvPurgeModal(folder) {
+  kvPurgeUsername = folder;
+  kvPurgeReportData = null;
+  document.getElementById('modal-kv-purge-title').textContent = 'KV Purge - ' + folder;
+  document.getElementById('kv-purge-loading').classList.remove('hidden');
+  document.getElementById('kv-purge-content').classList.add('hidden');
+  document.getElementById('kv-purge-empty').classList.add('hidden');
+  document.getElementById('kv-purge-error').classList.add('hidden');
+  document.getElementById('kv-purge-error').textContent = '';
+  document.getElementById('kv-purge-actions').classList.add('hidden');
+  document.getElementById('kv-purge-confirm-block').classList.add('hidden');
+  document.getElementById('kv-purge-dry-run-result').textContent = '';
+  if (document.getElementById('kv-purge-confirm-checkbox')) document.getElementById('kv-purge-confirm-checkbox').checked = false;
+  document.getElementById('modal-kv-purge').classList.add('show');
+  try {
+    var r = await fetch(API + '/api/admin/kv-user-keys?username=' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+    var d = await r.json();
+    document.getElementById('kv-purge-loading').classList.add('hidden');
+    if (!r.ok) {
+      document.getElementById('kv-purge-error').textContent = (d && d.error) || 'Request failed';
+      document.getElementById('kv-purge-error').classList.remove('hidden');
+      return;
+    }
+    kvPurgeReportData = d;
+    var keys = d.keys || [];
+    if (keys.length === 0) {
+      document.getElementById('kv-purge-empty').classList.remove('hidden');
+      return;
+    }
+    var summaryEl = document.querySelector('#kv-purge-content .kv-report-summary');
+    if (summaryEl) summaryEl.textContent = keys.length + ' key(s). Orphaned: ' + keys.filter(function(k){ return k.orphaned; }).length + '. Select/deselect, then Dry run, then confirm and Delete.';
+    var listEl = document.getElementById('kv-purge-keys-list');
+    listEl.innerHTML = '';
+    keys.forEach(function(k) {
+      var label = document.createElement('label');
+      label.className = 'toggle-label';
+      label.style.cssText = 'display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.25rem 0;';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'kv-purge-key-cb';
+      cb.dataset.key = k.name;
+      cb.checked = true;
+      var span = document.createElement('span');
+      span.className = 'font-mono';
+      span.style.fontSize = '0.8rem';
+      span.textContent = k.name;
+      if (k.orphaned) {
+        var badge = document.createElement('span');
+        badge.className = 'badge badge-pink';
+        badge.style.marginLeft = '0.35rem';
+        badge.textContent = 'Orphaned';
+        span.appendChild(badge);
+      }
+      label.appendChild(cb);
+      label.appendChild(span);
+      listEl.appendChild(label);
+    });
+    document.getElementById('kv-purge-content').classList.remove('hidden');
+    document.getElementById('kv-purge-actions').classList.remove('hidden');
+    var dryRunBtn = document.getElementById('kv-purge-dry-run-btn');
+    var deleteBtn = document.getElementById('kv-purge-delete-btn');
+    deleteBtn.disabled = true;
+    dryRunBtn.onclick = runKvPurgeDryRun;
+    deleteBtn.onclick = runKvPurgeDelete;
+    document.getElementById('kv-purge-confirm-checkbox').onchange = function() { deleteBtn.disabled = !this.checked; };
+  } catch (e) {
+    document.getElementById('kv-purge-loading').classList.add('hidden');
+    document.getElementById('kv-purge-error').textContent = 'Connection error.';
+    document.getElementById('kv-purge-error').classList.remove('hidden');
+  }
+}
+
+function getKvPurgeSelectedKeys() {
+  var cbs = document.querySelectorAll('#kv-purge-keys-list .kv-purge-key-cb:checked');
+  return Array.prototype.map.call(cbs, function(cb) { return cb.dataset.key; });
+}
+
+async function runKvPurgeDryRun() {
+  var resultEl = document.getElementById('kv-purge-dry-run-result');
+  var keys = getKvPurgeSelectedKeys();
+  resultEl.textContent = 'Running dry run…';
+  try {
+    var r = await fetch(API + '/api/admin/kv-user-purge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body: JSON.stringify({ username: kvPurgeUsername, keys: keys, dryRun: true })
+    });
+    var d = await r.json();
+    if (r.ok) {
+      resultEl.textContent = 'Would delete ' + (d.deleted || 0) + ' key(s). Review, then check the box below and click Delete to confirm.';
+      document.getElementById('kv-purge-confirm-block').classList.remove('hidden');
+    } else {
+      resultEl.textContent = (d && d.error) || 'Dry run failed';
+    }
+  } catch (e) {
+    resultEl.textContent = 'Connection error';
+  }
+}
+
+async function runKvPurgeDelete() {
+  var check = document.getElementById('kv-purge-confirm-checkbox');
+  if (!check || !check.checked) return;
+  var deleteBtn = document.getElementById('kv-purge-delete-btn');
+  deleteBtn.disabled = true;
+  var keys = getKvPurgeSelectedKeys();
+  try {
+    var r = await fetch(API + '/api/admin/kv-user-purge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body: JSON.stringify({ username: kvPurgeUsername, keys: keys, dryRun: false })
+    });
+    var d = await r.json();
+    if (r.ok) {
+      showAlert('alert-manage', 'Deleted ' + (d.deleted || 0) + ' key(s).', 'success');
+      closeKvPurgeModal();
+    } else {
+      showAlert('alert-manage', (d && d.error) || 'Delete failed.', 'error');
+      deleteBtn.disabled = false;
+    }
+  } catch (e) {
+    showAlert('alert-manage', 'Connection error.', 'error');
+    deleteBtn.disabled = false;
   }
 }
 

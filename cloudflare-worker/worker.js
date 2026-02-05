@@ -380,6 +380,14 @@ export default {
       if (request.method === 'POST' && path === '/api/admin/kv-cleanup') {
         return await handleKvCleanup(request, env);
       }
+      if (request.method === 'GET' && path.startsWith('/api/admin/kv-user-keys')) {
+        const url = new URL(request.url);
+        const username = (url.searchParams.get('username') || '').trim();
+        return await handleGetKvUserKeys(username, request, env);
+      }
+      if (request.method === 'POST' && path === '/api/admin/kv-user-purge') {
+        return await handleKvUserPurge(request, env);
+      }
       if (request.method === 'GET' && path.startsWith('/api/admin/debug-user/')) {
         const raw = path.replace('/api/admin/debug-user/', '').replace(/\/$/, '');
         const username = raw ? decodeURIComponent(raw).trim() : '';
@@ -1625,7 +1633,7 @@ async function listAllKvKeys(env, prefix) {
 /** Collects orphaned KV keys (user no longer in GitHub) and expired admin temp keys. Returns { orphanedKeys, expiredTemp, validUsernamesCount }. */
 async function collectKvOrphans(env) {
   const validUsernames = await getValidUsernamesFromGitHub(env);
-  const validSet = new Set(validUsernames);
+  const validSet = new Set(validUsernames.map(x => (x || '').toLowerCase()));
   const orphanedKeys = [];
 
   const userPrefixes = [
@@ -1635,16 +1643,20 @@ async function collectKvOrphans(env) {
     'user_last_name:',
     'user_dob:',
     'user_recovery:',
+    'user_otp:',
     'email_verified:',
     'email_verified_admin:',
     'account_details_sent:',
     'access_revoked:',
-    'divert_email:'
+    'divert_email:',
+    'max_contact_pages:',
+    'otp_email_change:',
+    'pending_email_change:'
   ];
   for (const prefix of userPrefixes) {
     const keys = await listAllKvKeys(env, prefix);
     for (const name of keys) {
-      const username = name.slice(prefix.length).split(':')[0];
+      const username = (name.slice(prefix.length).split(':')[0] || '').toLowerCase();
       if (!validSet.has(username)) orphanedKeys.push(name);
     }
   }
@@ -1653,7 +1665,7 @@ async function collectKvOrphans(env) {
   const contactKeys = await listAllKvKeys(env, contactPrefix);
   for (const name of contactKeys) {
     const after = name.slice(contactPrefix.length);
-    const username = after.split(':')[0];
+    const username = (after.split(':')[0] || '').toLowerCase();
     if (!validSet.has(username)) orphanedKeys.push(name);
   }
 
@@ -1661,11 +1673,13 @@ async function collectKvOrphans(env) {
   const emailToFolderKeys = await listAllKvKeys(env, emailToFolderPrefix);
   for (const name of emailToFolderKeys) {
     const email = name.slice(emailToFolderPrefix.length);
-    const username = await env.EDIT_KEYS_KV.get(name);
-    if (!username || !validSet.has(username)) {
+    const rawUsername = (await env.EDIT_KEYS_KV.get(name) || '').trim();
+    const usernameLower = rawUsername.toLowerCase();
+    if (!rawUsername || !validSet.has(usernameLower)) {
       orphanedKeys.push(name);
     } else {
-      const currentEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+      // Use raw username for KV key (keys are stored with actual folder casing)
+      const currentEmail = await env.EDIT_KEYS_KV.get('account_email:' + rawUsername);
       if ((currentEmail || '').toLowerCase() !== email.toLowerCase()) orphanedKeys.push(name);
     }
   }
@@ -1718,6 +1732,66 @@ async function handleKvCleanup(request, env) {
     deletedKeys: toDelete,
     dryRun
   });
+}
+
+/** Collects all KV key names that belong to or reference the given username. Returns { keyNames, orphaned, validUsernamesCount }. */
+async function collectKvUserKeys(env, username) {
+  const u = username.trim().toLowerCase();
+  const validUsernames = await getValidUsernamesFromGitHub(env);
+  const validSet = new Set(validUsernames.map(x => x.toLowerCase()));
+  const orphaned = !validSet.has(u);
+  const keyNames = [];
+  const prefixes = [
+    'account_email:', 'user_password_hash:', 'user_first_name:', 'user_last_name:', 'user_dob:', 'user_recovery:',
+    'user_otp:', 'email_verified:', 'email_verified_admin:', 'account_details_sent:', 'access_revoked:',
+    'divert_email:', 'max_contact_pages:', 'otp_email_change:', 'pending_email_change:'
+  ];
+  for (const prefix of prefixes) {
+    const keys = await listAllKvKeys(env, prefix);
+    for (const name of keys) {
+      const suffix = name.slice(prefix.length).split(':')[0].toLowerCase();
+      if (suffix === u) keyNames.push(name);
+    }
+  }
+  const contactKeys = await listAllKvKeys(env, 'contact_page_name:' + u + ':');
+  keyNames.push(...contactKeys);
+  const toFolderKeys = await listAllKvKeys(env, 'account_email_to_folder:');
+  for (const name of toFolderKeys) {
+    const folder = await env.EDIT_KEYS_KV.get(name);
+    if ((folder || '').trim().toLowerCase() === u) keyNames.push(name);
+  }
+  const uniqueKeys = [...new Set(keyNames)];
+  return { keyNames: uniqueKeys, orphaned, validUsernamesCount: validUsernames.length };
+}
+
+/** GET /api/admin/kv-user-keys?username=X - Admin only. Returns { keys: [ { name, orphaned } ], validUsernamesCount }. */
+async function handleGetKvUserKeys(username, request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  const { keyNames, orphaned, validUsernamesCount } = await collectKvUserKeys(env, username);
+  const keys = keyNames.map(name => ({ name, orphaned }));
+  return jsonResponse({ keys, validUsernamesCount });
+}
+
+/** POST /api/admin/kv-user-purge - Admin only. Body: { username, keys: string[], dryRun?: boolean }. Deletes the listed keys (must belong to user). */
+async function handleKvUserPurge(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { body = {}; }
+  const username = (body.username || '').trim();
+  const keysToDelete = Array.isArray(body.keys) ? body.keys : [];
+  const dryRun = body.dryRun === true;
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  const { keyNames } = await collectKvUserKeys(env, username);
+  const allowedSet = new Set(keyNames);
+  const toDelete = keysToDelete.filter(k => allowedSet.has(k));
+  if (!dryRun && toDelete.length > 0) {
+    for (const key of toDelete) {
+      await env.EDIT_KEYS_KV.delete(key);
+    }
+  }
+  return jsonResponse({ deleted: toDelete.length, deletedKeys: toDelete, dryRun });
 }
 
 /** GET /api/admin/admin-email - Admin only. Returns { email, passwordSet }. */
@@ -2419,15 +2493,43 @@ async function handleDebugUser(username, request, env) {
     return suffix.trim().toLowerCase() === uLower;
   });
   const resolvedEmail = accountEmailFromKey || (toFolderEntries.length ? toFolderEntries[0].email : null);
+  const passwordSet = !!(await env.EDIT_KEYS_KV.get('user_password_hash:' + u) || await env.EDIT_KEYS_KV.get('user_password_hash:' + uLower));
+  const otpSet = !!(await env.EDIT_KEYS_KV.get('user_otp:' + u) || await env.EDIT_KEYS_KV.get('user_otp:' + uLower));
+  const emailVerified = (await env.EDIT_KEYS_KV.get('email_verified:' + u) || await env.EDIT_KEYS_KV.get('email_verified:' + uLower)) === '1';
+  const emailVerifiedAdmin = (await env.EDIT_KEYS_KV.get('email_verified_admin:' + u) || await env.EDIT_KEYS_KV.get('email_verified_admin:' + uLower)) === '1';
+  const accessRevoked = (await env.EDIT_KEYS_KV.get('access_revoked:' + u) || await env.EDIT_KEYS_KV.get('access_revoked:' + uLower)) === '1';
+  const maxContactPages = await env.EDIT_KEYS_KV.get('max_contact_pages:' + u) || await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
+  const divertEmail = (await env.EDIT_KEYS_KV.get('divert_email:' + u) || await env.EDIT_KEYS_KV.get('divert_email:' + uLower)) === '1';
+  const accountDetailsSent = (await env.EDIT_KEYS_KV.get('account_details_sent:' + u) || await env.EDIT_KEYS_KV.get('account_details_sent:' + uLower)) === '1';
+  const dobSet = !!(await env.EDIT_KEYS_KV.get('user_dob:' + u) || await env.EDIT_KEYS_KV.get('user_dob:' + uLower));
+  const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + u) || await env.EDIT_KEYS_KV.get('user_recovery:' + uLower);
+  let recoverySqCount = 0;
+  if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); recoverySqCount = Array.isArray(r.secretQuestions) ? r.secretQuestions.length : 0; } catch (_) {} }
+  const contactNameKeys = await listAllKvKeys(env, 'contact_page_name:' + uLower + ':');
+  const validUsernames = await getValidUsernamesFromGitHub(env);
+  const validSet = new Set(validUsernames.map(x => x.toLowerCase()));
+  const inGitHub = validSet.has(uLower);
   return jsonResponse({
     debug: {
       username: u,
       usernameLower: uLower,
+      inGitHub,
       accountEmailFromKey: accountEmailFromKey || null,
       accountEmailFromToFolder: toFolderEntries.length ? toFolderEntries[0].email : null,
       resolvedEmail: resolvedEmail || null,
       firstName: firstName || null,
       lastName: lastName || null,
+      passwordSet,
+      otpSet,
+      emailVerified,
+      emailVerifiedAdmin,
+      accessRevoked,
+      maxContactPages: maxContactPages != null ? maxContactPages : null,
+      divertEmail,
+      accountDetailsSent,
+      dobSet,
+      recoverySqCount,
+      contactPageKeysCount: contactNameKeys.length,
       toFolderEntries,
       matchingAccountEmailKeys
     }
