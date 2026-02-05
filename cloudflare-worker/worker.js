@@ -304,6 +304,9 @@ export default {
       if (request.method === 'POST' && path === '/api/profile/verify-email-change') {
         return await handleVerifyEmailChange(request, env);
       }
+      if (request.method === 'POST' && path === '/api/profile/cancel-email-change') {
+        return await handleCancelEmailChange(request, env);
+      }
       if (request.method === 'POST' && path === '/api/profile/set-password-after-otp') {
         return await handleSetPasswordAfterOtp(request, env);
       }
@@ -2688,8 +2691,7 @@ async function handlePutProfile(username, request, env) {
     const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. Use it in My Account to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>`;
     const sent = await sendEmail(env, { to: accountEmail.trim(), subject, text, html, username });
     if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send verification code' }, 500);
-    await env.EDIT_KEYS_KV.delete('email_verified:' + username);
-    await env.EDIT_KEYS_KV.delete('email_verified_admin:' + username);
+    // Do not clear email_verified here: account email is still the old one until OTP is completed. If user abandons OTP, they remain verified on the current email.
     return jsonResponse({ success: true, otpSent: true, message: 'Verification code sent to your new email.' });
   }
 
@@ -2728,6 +2730,21 @@ async function handleVerifyEmailChange(request, env) {
   await env.EDIT_KEYS_KV.put('account_email:' + username, newEmail);
   await env.EDIT_KEYS_KV.put('account_email_to_folder:' + newEmail.trim().toLowerCase(), username);
   await env.EDIT_KEYS_KV.put('email_verified:' + username, '1');
+  await env.EDIT_KEYS_KV.delete('otp_email_change:' + username);
+  await env.EDIT_KEYS_KV.delete('pending_email_change:' + username);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/profile/cancel-email-change - Bearer required. Clears pending email change and OTP so the account stays on the current email. */
+async function handleCancelEmailChange(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
   await env.EDIT_KEYS_KV.delete('otp_email_change:' + username);
   await env.EDIT_KEYS_KV.delete('pending_email_change:' + username);
   return jsonResponse({ success: true });
