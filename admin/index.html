@@ -298,11 +298,17 @@
                 </div>
                 <div id="site-push-message-user-wrap" class="mt-3 hidden">
                   <span class="form-label" style="display:block; margin-bottom:0.35rem;">Select users</span>
-                  <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
+                  <div class="site-push-user-filter-row" style="margin-bottom:0.5rem;">
+                    <input type="text" id="site-push-user-search" class="form-input" placeholder="Filter by username…" autocomplete="off" aria-label="Filter users by username" oninput="filterSitePushUserList()" style="max-width:100%;">
+                    <span id="site-push-user-count" class="form-hint" style="margin-top:0.25rem; display:block;"></span>
+                  </div>
+                  <div style="display:flex; flex-wrap:wrap; gap:0.35rem; margin-bottom:0.5rem; align-items:center;">
                     <button type="button" class="btn btn-ghost btn-sm" onclick="sitePushSelectAllUsers(true)">Select all</button>
                     <button type="button" class="btn btn-ghost btn-sm" onclick="sitePushSelectAllUsers(false)">Deselect all</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="sitePushSelectVisibleUsers(true)">Select visible</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="sitePushSelectVisibleUsers(false)">Deselect visible</button>
                   </div>
-                  <div id="site-push-message-user-list" class="site-push-user-list" style="max-height:12rem; overflow-y:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:0.5rem;"></div>
+                  <div id="site-push-message-user-list" class="site-push-user-list" style="max-height:14rem; overflow-y:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:0.5rem;"></div>
                 </div>
                 <div id="site-push-message-error" class="alert alert-error hidden mt-2"></div>
                 <div class="modal-footer" style="margin-top:1rem; padding:0;">
@@ -831,9 +837,9 @@
               </div>
               <button type="button" class="btn btn-secondary btn-sm hidden" id="secrets-clear-sq-btn" onclick="clearSqInSecretsModal()">Reset SQ</button>
             </div>
-            <div class="secret-q-row"><select id="secrets-sq1" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div></div>
-            <div class="secret-q-row"><select id="secrets-sq2" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq2-answer" role="alert"></span></div></div>
-            <div class="secret-q-row"><select id="secrets-sq3" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq3-answer" role="alert"></span></div></div></div>
+            <div class="secret-q-row"><select id="secrets-sq1" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div></div>
+            <div class="secret-q-row"><select id="secrets-sq2" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq2-answer" role="alert"></span></div></div>
+            <div class="secret-q-row"><select id="secrets-sq3" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq3-answer" role="alert"></span></div></div></div>
           </div>
         </div>
         <div id="modal-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div><div id="modal-secrets-success" class="alert alert-success hidden" style="margin-top:0.5rem">Secrets saved successfully.</div>
@@ -3650,12 +3656,17 @@ function toggleSitePushUserList() {
 
 function populateSitePushUserList() {
   var list = document.getElementById('site-push-message-user-list');
+  var searchEl = document.getElementById('site-push-user-search');
   if (!list) return;
   list.innerHTML = '';
+  if (searchEl) searchEl.value = '';
   var users = (typeof pages !== 'undefined' && Array.isArray(pages)) ? pages : [];
   users.forEach(function(f) {
+    var wrap = document.createElement('div');
+    wrap.className = 'site-push-user-option';
+    wrap.dataset.username = f;
     var label = document.createElement('label');
-    label.className = 'toggle-label site-push-user-option';
+    label.className = 'toggle-label';
     label.style.cssText = 'display:flex; align-items:center; gap:0.35rem; cursor:pointer; margin-bottom:0.25rem;';
     var cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -3666,14 +3677,42 @@ function populateSitePushUserList() {
     span.textContent = f;
     label.appendChild(cb);
     label.appendChild(span);
-    list.appendChild(label);
+    wrap.appendChild(label);
+    list.appendChild(wrap);
   });
   if (users.length === 0) {
     var empty = document.createElement('p');
     empty.className = 'form-hint';
     empty.textContent = 'No users. Add users in Manage Users first.';
     list.appendChild(empty);
+  } else {
+    filterSitePushUserList();
   }
+}
+
+function filterSitePushUserList() {
+  var list = document.getElementById('site-push-message-user-list');
+  var searchEl = document.getElementById('site-push-user-search');
+  var countEl = document.getElementById('site-push-user-count');
+  if (!list || !searchEl) return;
+  var q = (searchEl.value || '').trim().toLowerCase();
+  var options = list.querySelectorAll('.site-push-user-option');
+  var visible = 0;
+  options.forEach(function(wrap) {
+    var name = (wrap.dataset.username || '').toLowerCase();
+    var show = !q || name.indexOf(q) !== -1;
+    wrap.classList.toggle('site-push-user-option-hidden', !show);
+    if (show) visible++;
+  });
+  if (countEl) {
+    if (options.length === 0) countEl.textContent = '';
+    else if (q) countEl.textContent = 'Showing ' + visible + ' of ' + options.length + ' users';
+    else countEl.textContent = options.length + ' user' + (options.length === 1 ? '' : 's');
+  }
+}
+
+function sitePushSelectVisibleUsers(checked) {
+  document.querySelectorAll('#site-push-message-user-list .site-push-user-option:not(.site-push-user-option-hidden) .site-push-user-cb').forEach(function(cb) { cb.checked = !!checked; });
 }
 
 function sitePushSelectAllUsers(checked) {
@@ -3873,7 +3912,7 @@ function closeQrModal() {
 var secretsModalFolder = null; var lastSavedSecretsData = null; var secretsModalOtpLocal = null;
 var profileModalFolder = null;
 var profileModalSnapshot = null;
-var SQ_OPTIONS = [{v:'',t:'- Select question -'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
+var SQ_OPTIONS = [{v:'',t:'- Select question -'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce? \uD83E\uDD5A'}];
 
 function syncSecretsModalSqOptions() {
   var v1 = document.getElementById('secrets-sq1').value, v2 = document.getElementById('secrets-sq2').value, v3 = document.getElementById('secrets-sq3').value;
