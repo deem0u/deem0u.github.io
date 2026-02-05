@@ -2735,7 +2735,7 @@ async function handleVerifyEmailChange(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** POST /api/profile/cancel-email-change - Bearer required. Clears pending email change and OTP so the account stays on the current email. */
+/** POST /api/profile/cancel-email-change - Bearer required. Clears pending email change and OTP so the account stays on the current email. Restores email_verified so the user stays Verified when they did not complete the change. */
 async function handleCancelEmailChange(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
@@ -2747,6 +2747,8 @@ async function handleCancelEmailChange(request, env) {
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
   await env.EDIT_KEYS_KV.delete('otp_email_change:' + username);
   await env.EDIT_KEYS_KV.delete('pending_email_change:' + username);
+  // Account email was never changed (only handleVerifyEmailChange updates it), so keep user Verified.
+  await env.EDIT_KEYS_KV.put('email_verified:' + username, '1');
   return jsonResponse({ success: true });
 }
 
