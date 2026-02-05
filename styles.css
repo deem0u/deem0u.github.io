@@ -234,9 +234,11 @@ body {
 
 .app-header .app-logo-text-wrap {
   display: inline-flex;
-  align-items: center;
-  gap: 0.2em;
-  flex-wrap: nowrap;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.15em;
+  line-height: 1.2;
 }
 
 /* DigiCon iD wordmark – header on all pages (home overrides font-size to 36px) */
