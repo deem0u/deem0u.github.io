@@ -57,12 +57,12 @@
   .contact-pages-dropdown-trigger .trigger-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .contact-pages-dropdown-trigger .trigger-chevron { flex-shrink: 0; font-size: 0.75rem; color: var(--color-text-secondary); transition: transform 0.2s; }
   .contact-pages-dropdown.open .contact-pages-dropdown-trigger .trigger-chevron { transform: rotate(180deg); }
-  .contact-pages-dropdown-panel { display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 0.25rem; background: var(--white, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 6px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 50; max-height: 560px; flex-direction: column; }
+  .contact-pages-dropdown-panel { display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 0.25rem; background: var(--white, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 6px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 50; max-height: 448px; flex-direction: column; }
   .contact-pages-dropdown.open .contact-pages-dropdown-panel { display: flex; }
   .contact-pages-dropdown-search { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--color-border, #eee); flex-shrink: 0; }
   .contact-pages-dropdown-search input { width: 100%; padding: 0.4rem 0.5rem; font-size: 0.875rem; border: 1px solid var(--color-border, #ccc); border-radius: var(--radius-sm, 4px); box-sizing: border-box; }
   .contact-pages-dropdown-search input:focus { outline: none; border-color: var(--accent-teal); }
-  .contact-pages-dropdown-options { overflow-y: auto; flex: 1; min-height: 0; padding: 0.35rem 0; max-height: 480px; }
+  .contact-pages-dropdown-options { overflow-y: auto; flex: 1; min-height: 0; padding: 0.35rem 0; max-height: 384px; }
   .contact-pages-dropdown-option { padding: 0.4rem 0.6rem; font-size: 0.8125rem; cursor: pointer; display: block; width: 100%; text-align: left; border: none; background: none; color: var(--color-text); }
   .contact-pages-dropdown-option:hover { background: var(--color-bg-subtle, #f5f5f5); }
   .contact-pages-dropdown-option.selected { background: rgba(147, 112, 219, 0.12); font-weight: 600; color: var(--accent-purple, #9370db); }
@@ -2944,16 +2944,26 @@ ${formatTimestampScript}
 function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 
+var statusBannerAutoHideTimer = null;
 function showStatusBanner(msg, type) {
   var el = document.getElementById('status-banner');
   if (!el) return;
+  if (statusBannerAutoHideTimer) { clearTimeout(statusBannerAutoHideTimer); statusBannerAutoHideTimer = null; }
   if (!msg) { el.classList.add('hidden'); el.className = 'status-banner hidden'; el.innerHTML = ''; return; }
   var alertType = (type === 'loading' || type === 'saving' || type === 'refreshing') ? 'info' : (type === 'success' || type === 'saved') ? 'success' : 'error';
   var content = msg;
   if (type === 'loading' || type === 'saving' || type === 'refreshing') content = '<span class="spinner"></span> ' + msg;
+  if (alertType === 'error') {
+    content = '<div class="alert-content">' + content + '</div><div class="alert-actions" style="margin-top:0.5rem"><button type="button" class="btn btn-primary btn-sm" onclick="hideStatusBanner()">OK</button></div>';
+  } else {
+    content = '<div class="alert-content">' + content + '</div>';
+  }
   el.className = 'status-banner alert alert-' + alertType + ' show';
-  el.innerHTML = '<div class="alert-content">' + content + '</div>';
+  el.innerHTML = content;
   el.classList.remove('hidden');
+  if (alertType === 'success' || alertType === 'info') {
+    statusBannerAutoHideTimer = setTimeout(function() { hideStatusBanner(); statusBannerAutoHideTimer = null; }, 7000);
+  }
 }
 function hideStatusBanner() { showStatusBanner('', null); }
 </script>
