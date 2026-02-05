@@ -679,23 +679,23 @@
 
   <div id="modal-profile" class="modal-overlay">
     <div class="modal" style="max-width: 480px;">
-      <div class="modal-header"><h3 class="modal-title" id="modal-profile-title">Edit Account &amp; Name</h3></div>
+      <div class="modal-header"><h3 class="modal-title" id="modal-profile-title">Edit Profile</h3></div>
       <div class="modal-body">
         <div id="modal-profile-loading" class="modal-qr-loading"><span class="spinner"></span> Loading...</div>
         <div id="modal-profile-form" class="hidden">
           <div class="form-group">
             <label class="form-label">Account Username</label>
-            <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_\u002D]{3,32}" maxlength="32" autocomplete="username">
+            <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_\u002D]{3,32}" maxlength="32" autocomplete="username" oninput="updateProfileModalState()" onblur="updateProfileModalState()">
             <span class="form-hint">3–32 characters: letters, numbers, hyphens, underscores. Changing this renames the user folder and URL. After rename, they sign in with the same account email (now tied to the new username).</span>
             <span class="form-error" id="error-profile-username" role="alert"></span>
           </div>
           <div class="form-group">
             <label class="form-label">First Name</label>
-            <input type="text" id="profile-first-name" class="form-input" placeholder="First name" maxlength="32">
+            <input type="text" id="profile-first-name" class="form-input" placeholder="First name" maxlength="32" oninput="updateProfileModalState()">
           </div>
           <div class="form-group">
             <label class="form-label">Last Name</label>
-            <input type="text" id="profile-last-name" class="form-input" placeholder="Last name" maxlength="32">
+            <input type="text" id="profile-last-name" class="form-input" placeholder="Last name" maxlength="32" oninput="updateProfileModalState()">
           </div>
         </div>
         <div id="modal-profile-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
@@ -2381,14 +2381,15 @@ function renderList(t) {
     const secretsNotSet = !(u.secretsComplete === true);
     const isNew = hk && !(u.accountDetailsSent === true);
     const needsSetup = !(u.accountEmail || '').trim();
+    const hasAccountEmail = !!(u.accountEmail || '').trim();
     const ver = u.emailVerification;
-    const emailBadge = ver === 'admin' ? '<span class="badge badge-cyan">Admin Verified</span>' : ver === 'user' ? '<span class="badge badge-cyan">User Verified</span>' : '<span class="badge badge-pink">Not Verified</span>';
+    const emailBadge = hasAccountEmail ? (ver === 'admin' ? '<span class="badge badge-cyan">Admin Verified</span>' : ver === 'user' ? '<span class="badge badge-cyan">User Verified</span>' : '<span class="badge badge-pink">Not Verified</span>') : '';
     return `<div class="user-card" id="user-card-${f}" data-username="${f}">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
           <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}${needsSetup ? ' <span class="badge badge-pink">Account Setup Incomplete</span>' : ''}</div>
-          <div class="user-meta">${escapeHtml(emailDisplay)} ${emailBadge}</div>
+          <div class="user-meta">${escapeHtml(emailDisplay)}${emailBadge ? ' ' + emailBadge : ''}</div>
         </div>
         <div class="user-status">
           <div class="user-status-badges">
@@ -2424,7 +2425,7 @@ function renderList(t) {
           <div class="action-combo-group">
             <span class="action-row-label">Recovery</span>
             <div class="action-row-buttons">
-              <button class="btn btn-primary btn-sm" onclick="showProfileModal('${f}')">Edit Account &amp; Name</button>
+              <button class="btn btn-primary btn-sm" onclick="showProfileModal('${f}')">Edit Profile</button>
               <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
               <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
               <button type="button" class="btn btn-ghost btn-sm" onclick="debugUserApi('${escapeHtml(f).replace(/'/g, "\\'")}')" title="See what the API returns for this user">Debug API</button>
@@ -3339,6 +3340,7 @@ function closeQrModal() {
 
 var secretsModalFolder = null; var lastSavedSecretsData = null; var secretsModalOtpLocal = null;
 var profileModalFolder = null;
+var profileModalSnapshot = null;
 var SQ_OPTIONS = [{v:'',t:'- Select question -'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}];
 
 function syncSecretsModalSqOptions() {
@@ -3501,7 +3503,7 @@ async function debugUserApi(folder) {
 
 async function showProfileModal(folder) {
   profileModalFolder = folder;
-  document.getElementById('modal-profile-title').textContent = 'Edit Account & Name - ' + folder;
+  document.getElementById('modal-profile-title').textContent = 'Edit Profile - ' + folder;
   document.getElementById('modal-profile-loading').classList.remove('hidden');
   document.getElementById('modal-profile-form').classList.add('hidden');
   document.getElementById('modal-profile-error').classList.add('hidden');
@@ -3510,7 +3512,7 @@ async function showProfileModal(folder) {
   if (succ) succ.classList.add('hidden');
   document.getElementById('modal-profile').classList.add('show');
   var saveBtn = document.getElementById('profile-save-btn');
-  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Save'; }
   try {
     var r = await fetch(API + '/api/profile/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
     var d = await r.json();
@@ -3520,6 +3522,9 @@ async function showProfileModal(folder) {
     document.getElementById('profile-first-name').value = d.firstName || '';
     document.getElementById('profile-last-name').value = d.lastName || '';
     document.getElementById('error-profile-username').textContent = '';
+    document.getElementById('profile-username').classList.remove('is-invalid');
+    profileModalSnapshot = { username: folder, firstName: (d.firstName || '').trim(), lastName: (d.lastName || '').trim() };
+    updateProfileModalState();
   } catch (e) {
     document.getElementById('modal-profile-loading').classList.add('hidden');
     document.getElementById('modal-profile-form').classList.remove('hidden');
@@ -3531,6 +3536,53 @@ async function showProfileModal(folder) {
 function closeProfileModal() {
   document.getElementById('modal-profile').classList.remove('show');
   profileModalFolder = null;
+  profileModalSnapshot = null;
+}
+
+var PROFILE_RESERVED_USERNAMES = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
+function validateProfileUsername() {
+  var unEl = document.getElementById('profile-username');
+  var errEl = document.getElementById('error-profile-username');
+  var val = (unEl && unEl.value) ? unEl.value.trim() : '';
+  if (!val) {
+    if (errEl) { errEl.textContent = 'Account username is required.'; errEl.classList.remove('hidden'); }
+    if (unEl) unEl.classList.add('is-invalid');
+    return false;
+  }
+  if (val.length < 3 || val.length > 32) {
+    if (errEl) { errEl.textContent = 'Username must be 3–32 characters.'; errEl.classList.remove('hidden'); }
+    if (unEl) unEl.classList.add('is-invalid');
+    return false;
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(val)) {
+    if (errEl) { errEl.textContent = 'Username: letters, numbers, hyphens, underscores only.'; errEl.classList.remove('hidden'); }
+    if (unEl) unEl.classList.add('is-invalid');
+    return false;
+  }
+  var lower = val.toLowerCase();
+  if (PROFILE_RESERVED_USERNAMES.indexOf(lower) !== -1) {
+    if (errEl) { errEl.textContent = 'This username is reserved.'; errEl.classList.remove('hidden'); }
+    if (unEl) unEl.classList.add('is-invalid');
+    return false;
+  }
+  if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+  if (unEl) unEl.classList.remove('is-invalid');
+  return true;
+}
+
+function updateProfileModalState() {
+  if (!profileModalSnapshot) return;
+  var unEl = document.getElementById('profile-username');
+  var fnEl = document.getElementById('profile-first-name');
+  var lnEl = document.getElementById('profile-last-name');
+  var saveBtn = document.getElementById('profile-save-btn');
+  if (!unEl || !saveBtn) return;
+  var username = (unEl.value || '').trim();
+  var firstName = (fnEl && fnEl.value) ? fnEl.value.trim() : '';
+  var lastName = (lnEl && lnEl.value) ? lnEl.value.trim() : '';
+  var dirty = username !== profileModalSnapshot.username || firstName !== profileModalSnapshot.firstName || lastName !== profileModalSnapshot.lastName;
+  var valid = validateProfileUsername();
+  saveBtn.disabled = !dirty || !valid;
 }
 
 async function saveProfile() {
