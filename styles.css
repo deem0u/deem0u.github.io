@@ -138,7 +138,7 @@ body {
 .app-header {
   background: var(--white);
   border-bottom: 1px solid var(--color-border);
-  padding: var(--space-4) var(--space-6);
+  padding: 0 var(--space-6);
   position: sticky;
   top: 0;
   z-index: 100;
