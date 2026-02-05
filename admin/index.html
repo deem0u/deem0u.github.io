@@ -219,7 +219,7 @@
             <div class="card-body">
               <div class="form-group mb-4">
                 <label class="form-label">Site Settings</label>
-                <p class="form-hint mb-3">Apply changes with Confirm. Maintenance and Lockdown are mutually exclusive. When Divert Emails is off, you can still turn on “Divert to dev” for individual users on their cards in Manage Users. To change these from a script or tool, see SETUP-GUIDE for API details.</p>
+                <p class="form-hint mb-3">Apply changes with Confirm. Maintenance and Lockdown are mutually exclusive. When Divert Emails is off, you can still turn on “Divert Emails” for individual users on their cards in Manage Users. To change these from a script or tool, see SETUP-GUIDE for API details.</p>
                 <div class="site-settings-row">
                   <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer;">
                     <input type="checkbox" id="site-divert-all">
@@ -2433,11 +2433,12 @@ async function toggleContactPagesSelect(username) {
     try {
       const r = await fetch(`${API}/api/contact-pages/${encodeURIComponent(username)}`, { headers: { 'X-Admin-Key': adminKey } });
       const d = await r.json();
-      const raw = (d.contactPages && d.contactPages.length) ? d.contactPages : [{ slug: 'index', name: 'index (default)' }];
+      const raw = (d.contactPages && d.contactPages.length) ? d.contactPages : [{ slug: 'index', name: 'Main (index)' }];
       optionsEl.innerHTML = raw.map(item => {
         const slug = typeof item === 'string' ? item : (item.slug || 'index');
-        const label = typeof item === 'string' ? (item === 'index' ? 'index (default)' : item) : (item.name || item.slug || (slug === 'index' ? 'index (default)' : slug));
-        return `<div class="searchable-select-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(label).replace(/"/g, '&quot;')}">${escapeHtml(label)}</div>`;
+        const name = typeof item === 'string' ? (item === 'index' ? 'Main' : item) : (item.name || (slug === 'index' ? 'Main' : slug));
+        const displayLabel = name + ' (' + slug + ')';
+        return `<div class="searchable-select-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(displayLabel).replace(/"/g, '&quot;')}">${escapeHtml(displayLabel)}</div>`;
       }).join('');
       optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
         opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.label));
@@ -2450,7 +2451,7 @@ async function toggleContactPagesSelect(username) {
     const rect = trigger.getBoundingClientRect();
     dropdown.style.top = (rect.bottom + 4) + 'px';
     dropdown.style.left = rect.left + 'px';
-    dropdown.style.minWidth = rect.width + 'px';
+    dropdown.style.minWidth = (rect.width * 2) + 'px';
     dropdown.classList.add('show');
   }
   const searchEl = document.getElementById('contact-pages-search-' + username);
@@ -2570,7 +2571,7 @@ function renderList(t) {
                 <button type="button" class="searchable-select-trigger searchable-select-trigger-sm" id="contact-pages-trigger-${f}" data-selected-contact="index" onclick="toggleContactPagesSelect('${f}')">
                   <span id="contact-pages-text-${f}" class="searchable-select-value">index</span>
                 </button>
-                <div class="searchable-select-dropdown" id="contact-pages-dropdown-${f}">
+                <div class="searchable-select-dropdown searchable-select-dropdown-contact-pages" id="contact-pages-dropdown-${f}">
                   <div class="searchable-select-search">
                     <input type="text" id="contact-pages-search-${f}" placeholder="Search pages..." oninput="filterContactPagesOptions('${f}')">
                   </div>
@@ -2584,15 +2585,16 @@ function renderList(t) {
           </div>
         </div>
         <div class="action-row action-row-combo">
-          <div class="action-combo-group">
+          <div class="action-combo-group action-combo-group-access">
             <span class="action-row-label">Account &amp; Access Recovery</span>
-            <div class="action-row-buttons" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
+            <div class="action-row-buttons action-row-buttons-access" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
               <button class="btn btn-black btn-sm ${profileIncomplete ? 'btn-incomplete' : ''}" onclick="showProfileModal('${f}')">Edit Profile</button>
               <button class="btn btn-black btn-sm ${secretsIncomplete ? 'btn-incomplete' : ''}" onclick="showSecretsModal('${f}')">Set Secrets</button>
-              <span class="max-pages-wrap" style="display:inline-flex; flex-direction:column; align-items:flex-start; gap:0.2rem;">
-                <span class="form-hint" style="margin:0; font-size:0.8rem;">max pages</span>
-                <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0=unlimited" style="width:4.25rem; min-width:4.25rem; padding:0.25rem 0.35rem; font-size:0.875rem; box-sizing:border-box;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited">
+              <span class="max-pages-wrap">
+                <span class="max-pages-label">Max Pages</span>
+                <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input max-pages-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0=unlimited" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited">
               </span>
+              <span class="action-row-end"><button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button></span>
             </div>
           </div>
         </div>
@@ -2603,7 +2605,6 @@ function renderList(t) {
               <button type="button" class="btn btn-secondary btn-sm" onclick="debugUserApi('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Diagnose anything related to this user that might be broken">Debug API</button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="openKvPurgeModal('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Report and purge KV keys for this user">KV Purge</button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="showAccountReportModal('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Generate summary stats and account report including contact cards">Summary</button>
-              <button class="btn btn-danger btn-sm developer-delete-btn" onclick="confirmDeleteUser('${f}')">Delete User</button>
             </div>
           </div>
         </div>
@@ -2611,7 +2612,7 @@ function renderList(t) {
           <div class="action-combo-group">
             <span class="action-row-label">Communications</span>
             <div class="action-row-buttons" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
-              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer; font-size:0.875rem;"><input type="checkbox" class="divert-user-toggle" id="divert-${escapeHtml(f)}" data-username="${escapeHtml(f)}" onchange="toggleDivertUser(this)" ${(siteSettings.divertAllGlobal || siteSettings.divertUsers[f]) ? ' checked' : ''}><span>Divert to dev</span></label>
+              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer; font-size:0.875rem;"><input type="checkbox" class="divert-user-toggle" id="divert-${escapeHtml(f)}" data-username="${escapeHtml(f)}" onchange="toggleDivertUser(this)" ${(siteSettings.divertAllGlobal || siteSettings.divertUsers[f]) ? ' checked' : ''}><span>Divert Emails</span></label>
               <button type="button" class="btn btn-primary btn-sm" onclick="sendViaEmail('${f}')">Custom Email</button>
               <button type="button" class="btn btn-primary btn-sm" onclick="showPushMessageModal('${escapeHtml(f).replace(/'/g, "\\'")}')">Push Message</button>
             </div>
@@ -2712,7 +2713,7 @@ async function showAccountReportModal(folder) {
       '',
       '--- Limits & Flags ---',
       'Max contact pages: ' + (d.maxContactPages != null ? d.maxContactPages : '(unset)'),
-      'Divert to dev: ' + (d.divertEmail ? 'Yes' : 'No'),
+      'Divert Emails: ' + (d.divertEmail ? 'Yes' : 'No'),
       'Account details sent: ' + (d.accountDetailsSent ? 'Yes' : 'No'),
       '',
       '--- Contact Pages (' + pages.length + ') ---'
@@ -4099,7 +4100,7 @@ async function debugUserApi(folder) {
       debugLine('Email verified', (emailVer ? 'Yes' : 'No') + (emailVerAdmin ? ' (admin)' : ''), !emailVer && !emailVerAdmin) +
       debugLine('Access revoked', revoked ? 'Yes' : 'No', revoked) +
       debugLine('Max contact pages', maxPages, false) +
-      debugLine('Divert to dev', divert ? 'Yes' : 'No', false) +
+      debugLine('Divert Emails', divert ? 'Yes' : 'No', false) +
       debugLine('Account details sent', detailsSent ? 'Yes' : 'No', false) +
       debugLine('DOB set', dobSet ? 'Yes' : 'No', !dobSet) +
       debugLine('Recovery SQs', sqCount, sqCountNum < 3) +

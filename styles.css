@@ -985,6 +985,24 @@ body {
   min-width: 100px;
 }
 
+/* Admin: Contact Page dropdown — 2x width set in JS; more compact list */
+.searchable-select-dropdown-contact-pages .searchable-select-options {
+  max-height: 200px;
+  padding: 0.15rem 0;
+}
+.searchable-select-dropdown-contact-pages .searchable-select-option {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+.searchable-select-dropdown-contact-pages .searchable-select-search {
+  padding: 0.35rem 0.5rem;
+}
+.searchable-select-dropdown-contact-pages .searchable-select-search input {
+  padding: 0.25rem 0.4rem;
+  font-size: 0.8125rem;
+}
+
 .searchable-select-trigger-sm {
   padding: var(--space-2) var(--space-3);
   padding-right: var(--space-8);
@@ -1636,15 +1654,54 @@ body {
   margin-right: var(--space-5);
 }
 
-.action-row-combo .action-combo-group-developer .action-row-buttons-developer {
+/* Account & Access Recovery row: buttons + Max Pages + Delete User aligned right */
+.action-row-combo .action-combo-group-access .action-row-buttons-access {
   flex: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
 }
-.action-row-combo .developer-delete-btn {
+.action-row-combo .action-combo-group-access .action-row-end {
   margin-left: auto;
+}
+
+/* Max Pages: centered label over counter, outline, smaller font, gap from Set Secrets */
+.max-pages-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  margin-left: 0.75rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #000;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--white, #fff);
+}
+.max-pages-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #000;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.max-pages-input {
+  width: 4rem;
+  min-width: 4rem;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.8rem;
+  box-sizing: border-box;
+  border: 1px solid #000;
+  color: #000;
+  text-align: center;
+}
+
+.action-row-combo .action-combo-group-developer .action-row-buttons-developer {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .user-details .user-meta-muted {
