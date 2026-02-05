@@ -1706,6 +1706,11 @@ body {
   margin-top: 0.5rem;
 }
 
+#modal-secrets-form .secrets-checkbox-label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
 #modal-secrets-form .badge-cyan {
   background: var(--accent-teal);
   color: var(--white);
