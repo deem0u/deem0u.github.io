@@ -359,7 +359,7 @@
               <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" placeholder="e.g. john-smith" autocomplete="username"><span class="form-hint">3–32 characters. Letters, numbers, hyphens, underscores. Must be unique.</span><span class="form-error" id="error-profile-username" role="alert"></span></div>
               <div class="form-group"><label class="form-label">First Name</label><input type="text" id="profile-edit-first-name" class="form-input" maxlength="32"></div>
               <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="profile-edit-last-name" class="form-input" maxlength="32"></div>
-              <div class="form-group"><label class="form-label">Account Email</label><input type="email" id="profile-edit-email" class="form-input"></div>
+              <div class="form-group"><label class="form-label">Account Email <span class="form-required">*</span></label><input type="email" id="profile-edit-email" class="form-input"></div>
               <div class="form-group"><span class="form-label">Date Of Birth</span><span class="profile-value" id="profile-edit-dob">—</span></div>
               <div class="profile-edit-actions">
                 <button type="button" class="btn btn-primary btn-sm" id="profile-save-btn" onclick="saveProfileFromStrip()" disabled>Save</button>
@@ -607,6 +607,12 @@
           <label class="form-label" for="change-pwd-confirm">Confirm new password</label>
           <input type="password" id="change-pwd-confirm" class="form-input" autocomplete="new-password" placeholder="Enter your new password again">
           <span class="form-error" id="error-change-pwd-confirm" role="alert"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth</label>
+          <input type="text" id="change-pwd-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="bday">
+          <span class="form-hint">Format: dd/mm/yyyy. Leave blank to keep current.</span>
+          <span class="form-error" id="error-change-pwd-dob" role="alert"></span>
         </div>
         <div class="form-group">
           <label class="form-label">Security Questions</label>
@@ -2399,6 +2405,8 @@ function updateChangePwdSqSaveButton() {
   var cur = document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value.trim();
   var newP = document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value;
   var conf = document.getElementById('change-pwd-confirm') && document.getElementById('change-pwd-confirm').value;
+  var dobVal = (document.getElementById('change-pwd-dob') && document.getElementById('change-pwd-dob').value || '').trim().replace(/\s/g, '');
+  var hasDob = !!dobVal && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dobVal);
   var sq1 = document.getElementById('change-sq1') && document.getElementById('change-sq1').value;
   var sq2 = document.getElementById('change-sq2') && document.getElementById('change-sq2').value;
   var sq3 = document.getElementById('change-sq3') && document.getElementById('change-sq3').value;
@@ -2408,7 +2416,7 @@ function updateChangePwdSqSaveButton() {
   var hasNewPwd = newP && newP.length >= 8 && newP === conf;
   var hasSq = sq1 && sq2 && sq3 && [sq1,sq2,sq3].filter(function(x,i,a){return a.indexOf(x)===i;}).length === 3 && a1.length >= 4 && a2.length >= 4 && a3.length >= 4;
   var btn = document.getElementById('change-pwd-sq-save-btn');
-  if (btn) btn.disabled = !cur || (!hasNewPwd && !hasSq);
+  if (btn) btn.disabled = !cur || (!hasNewPwd && !hasDob && !hasSq);
 }
 
 function openChangePasswordSqModal() {
@@ -2417,6 +2425,8 @@ function openChangePasswordSqModal() {
   document.getElementById('change-pwd-current').value = '';
   document.getElementById('change-pwd-new').value = '';
   document.getElementById('change-pwd-confirm').value = '';
+  var dobEl = document.getElementById('change-pwd-dob');
+  if (dobEl) dobEl.value = (typeof profileData !== 'undefined' && profileData && profileData.dob) ? profileData.dob : '';
   var confirmWrap = document.getElementById('change-pwd-confirm-wrap');
   if (confirmWrap) confirmWrap.classList.add('hidden');
   ['change-sq1','change-sq2','change-sq3'].forEach(function(id) {
@@ -2434,7 +2444,7 @@ function openChangePasswordSqModal() {
   m.classList.add('show');
   var curInp = document.getElementById('change-pwd-current');
   if (curInp) curInp.focus();
-  ['change-pwd-current','change-pwd-new','change-pwd-confirm'].forEach(function(id) {
+  ['change-pwd-current','change-pwd-new','change-pwd-confirm','change-pwd-dob'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', updateChangePwdSqSaveButton);
   });
@@ -2459,34 +2469,39 @@ async function saveChangePasswordSq() {
   var cur = (document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value) || '';
   var newP = (document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value) || '';
   var conf = (document.getElementById('change-pwd-confirm') && document.getElementById('change-pwd-confirm').value) || '';
+  var dobRaw = (document.getElementById('change-pwd-dob') && document.getElementById('change-pwd-dob').value || '').trim().replace(/\s/g, '');
   var errEl = document.getElementById('change-pwd-sq-error');
   var btn = document.getElementById('change-pwd-sq-save-btn');
   if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
   if (!cur.trim()) {
     if (errEl) { errEl.textContent = 'Enter your current password.'; errEl.classList.remove('hidden'); return; }
   }
+  if (dobRaw && !/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dobRaw)) {
+    if (errEl) { errEl.textContent = 'Date of birth must be dd/mm/yyyy.'; errEl.classList.remove('hidden'); return; }
+  }
   var hasNewPwd = newP.length >= 8 && newP === conf;
+  var hasDob = !!dobRaw;
   var sq = [
     { questionId: parseInt((document.getElementById('change-sq1') && document.getElementById('change-sq1').value) || 0, 10), answer: (document.getElementById('change-sq1-answer') && document.getElementById('change-sq1-answer').value) || '' },
     { questionId: parseInt((document.getElementById('change-sq2') && document.getElementById('change-sq2').value) || 0, 10), answer: (document.getElementById('change-sq2-answer') && document.getElementById('change-sq2-answer').value) || '' },
     { questionId: parseInt((document.getElementById('change-sq3') && document.getElementById('change-sq3').value) || 0, 10), answer: (document.getElementById('change-sq3-answer') && document.getElementById('change-sq3-answer').value) || '' }
   ];
   var hasSq = sq[0].questionId && sq[1].questionId && sq[2].questionId && sq.every(function(q){ return (q.answer || '').trim().length >= 4 && (q.answer || '').trim().length <= 30; }) && (new Set(sq.map(function(q){ return q.questionId; }))).size === 3;
-  if (!hasNewPwd && !hasSq) {
-    if (errEl) { errEl.textContent = 'Enter a new password (and confirm) and/or 3 security questions with answers (4–30 chars each).'; errEl.classList.remove('hidden'); return; }
+  if (!hasNewPwd && !hasDob && !hasSq) {
+    if (errEl) { errEl.textContent = 'Enter a new password (and confirm), and/or Date of Birth, and/or 3 security questions with answers (4–30 chars each).'; errEl.classList.remove('hidden'); return; }
   }
   if (hasNewPwd && newP !== conf) {
     if (errEl) { errEl.textContent = 'New password and confirmation do not match.'; errEl.classList.remove('hidden'); return; }
   }
   if (btn) btn.disabled = true;
   try {
-    var body = { currentPassword: cur.trim(), newPassword: hasNewPwd ? newP : '', secretQuestions: hasSq ? sq.map(function(q){ return { questionId: q.questionId, answer: (q.answer || '').trim() }; }) : [] };
+    var body = { currentPassword: cur.trim(), newPassword: hasNewPwd ? newP : '', secretQuestions: hasSq ? sq.map(function(q){ return { questionId: q.questionId, answer: (q.answer || '').trim() }; }) : [], dob: hasDob ? dobRaw : '' };
     var r = await fetch(API + '/api/profile/change-password-and-sq', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
     var d = {};
     try { d = await r.json(); } catch (_) { d = { error: 'Invalid response' }; }
     if (r.ok && d.error !== true && d.success !== false) {
       closeChangePasswordSqModal();
-      if (typeof showStatusBanner === 'function') showStatusBanner('Your password (and security questions if changed) have been updated. Use your new password next time you sign in.', 'success');
+      if (typeof showStatusBanner === 'function') showStatusBanner('Your password, date of birth, and/or security questions have been updated. Use your new password next time you sign in if you changed it.', 'success');
     } else {
       if (errEl) { errEl.textContent = (d && d.error) || 'Failed to update.'; errEl.classList.remove('hidden'); }
     }

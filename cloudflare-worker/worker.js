@@ -1616,6 +1616,15 @@ async function getValidUsernamesFromGitHub(env) {
   return valid;
 }
 
+/** Get a user-scoped KV value; tries lowercase key first to reduce reads when keys are stored lowercase. */
+async function getKvUser(env, prefix, uLower, u) {
+  let v = await env.EDIT_KEYS_KV.get(prefix + uLower);
+  if (v != null) return v;
+  const uTrim = (u || '').trim();
+  if (uTrim.toLowerCase() === uLower) return v;
+  return await env.EDIT_KEYS_KV.get(prefix + uTrim);
+}
+
 /** List KV keys by prefix; handles pagination (cursor). Returns array of key names. */
 async function listAllKvKeys(env, prefix) {
   const out = [];
@@ -1630,57 +1639,63 @@ async function listAllKvKeys(env, prefix) {
   return out;
 }
 
-/** Collects orphaned KV keys (user no longer in GitHub) and expired admin temp keys. Returns { orphanedKeys, expiredTemp, validUsernamesCount }. */
+/** Collects orphaned KV keys (user no longer in GitHub) and expired admin temp keys. Returns { orphanedKeys, expiredTemp, validUsernamesCount, githubUnavailable? }. */
 async function collectKvOrphans(env) {
   const validUsernames = await getValidUsernamesFromGitHub(env);
   const validSet = new Set(validUsernames.map(x => (x || '').toLowerCase()));
   const orphanedKeys = [];
 
-  const userPrefixes = [
-    'account_email:',
-    'user_password_hash:',
-    'user_first_name:',
-    'user_last_name:',
-    'user_dob:',
-    'user_recovery:',
-    'user_otp:',
-    'email_verified:',
-    'email_verified_admin:',
-    'account_details_sent:',
-    'access_revoked:',
-    'divert_email:',
-    'max_contact_pages:',
-    'otp_email_change:',
-    'pending_email_change:'
-  ];
-  for (const prefix of userPrefixes) {
-    const keys = await listAllKvKeys(env, prefix);
-    for (const name of keys) {
-      const username = (name.slice(prefix.length).split(':')[0] || '').toLowerCase();
+  // Do NOT mark any user keys as orphaned when GitHub returned no users (API failure, bad token, wrong repo/branch).
+  // Otherwise we would treat every user key as orphaned and cleanup would wipe all First Name, Last Name, and Secrets.
+  const haveValidUsers = validUsernames.length > 0;
+
+  if (haveValidUsers) {
+    const userPrefixes = [
+      'account_email:',
+      'user_password_hash:',
+      'user_first_name:',
+      'user_last_name:',
+      'user_dob:',
+      'user_recovery:',
+      'user_otp:',
+      'email_verified:',
+      'email_verified_admin:',
+      'account_details_sent:',
+      'access_revoked:',
+      'divert_email:',
+      'max_contact_pages:',
+      'otp_email_change:',
+      'pending_email_change:'
+    ];
+    for (const prefix of userPrefixes) {
+      const keys = await listAllKvKeys(env, prefix);
+      for (const name of keys) {
+        const username = (name.slice(prefix.length).split(':')[0] || '').toLowerCase();
+        if (!validSet.has(username)) orphanedKeys.push(name);
+      }
+    }
+
+    const contactPrefix = 'contact_page_name:';
+    const contactKeys = await listAllKvKeys(env, contactPrefix);
+    for (const name of contactKeys) {
+      const after = name.slice(contactPrefix.length);
+      const username = (after.split(':')[0] || '').toLowerCase();
       if (!validSet.has(username)) orphanedKeys.push(name);
     }
-  }
 
-  const contactPrefix = 'contact_page_name:';
-  const contactKeys = await listAllKvKeys(env, contactPrefix);
-  for (const name of contactKeys) {
-    const after = name.slice(contactPrefix.length);
-    const username = (after.split(':')[0] || '').toLowerCase();
-    if (!validSet.has(username)) orphanedKeys.push(name);
-  }
-
-  const emailToFolderPrefix = 'account_email_to_folder:';
-  const emailToFolderKeys = await listAllKvKeys(env, emailToFolderPrefix);
-  for (const name of emailToFolderKeys) {
-    const email = name.slice(emailToFolderPrefix.length);
-    const rawUsername = (await env.EDIT_KEYS_KV.get(name) || '').trim();
-    const usernameLower = rawUsername.toLowerCase();
-    if (!rawUsername || !validSet.has(usernameLower)) {
-      orphanedKeys.push(name);
-    } else {
-      // Use raw username for KV key (keys are stored with actual folder casing)
-      const currentEmail = await env.EDIT_KEYS_KV.get('account_email:' + rawUsername);
-      if ((currentEmail || '').toLowerCase() !== email.toLowerCase()) orphanedKeys.push(name);
+    const emailToFolderPrefix = 'account_email_to_folder:';
+    const emailToFolderKeys = await listAllKvKeys(env, emailToFolderPrefix);
+    for (const name of emailToFolderKeys) {
+      const email = name.slice(emailToFolderPrefix.length);
+      const rawUsername = (await env.EDIT_KEYS_KV.get(name) || '').trim();
+      const usernameLower = rawUsername.toLowerCase();
+      if (!rawUsername || !validSet.has(usernameLower)) {
+        orphanedKeys.push(name);
+      } else {
+        // Use raw username for KV key (keys are stored with actual folder casing)
+        const currentEmail = await env.EDIT_KEYS_KV.get('account_email:' + rawUsername);
+        if ((currentEmail || '').toLowerCase() !== email.toLowerCase()) orphanedKeys.push(name);
+      }
     }
   }
 
@@ -1700,7 +1715,12 @@ async function collectKvOrphans(env) {
     } catch (_) {}
   }
 
-  return { orphanedKeys, expiredTemp, validUsernamesCount: validUsernames.length };
+  return {
+    orphanedKeys,
+    expiredTemp,
+    validUsernamesCount: validUsernames.length,
+    ...(haveValidUsers ? {} : { githubUnavailable: true })
+  };
 }
 
 /** GET /api/admin/kv-orphans - Admin only. Returns orphaned and expired temp KV keys (source of truth = GitHub user folders). */
@@ -2330,6 +2350,12 @@ async function handleListContactPages(username, request, env) {
   if (!u || !/^[a-zA-Z0-9_-]+$/.test(u)) {
     return jsonResponse({ error: 'Invalid username' }, 400);
   }
+  const uLower = (u || '').toLowerCase();
+  let maxContactPages = 0;
+  if (env.EDIT_KEYS_KV) {
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
+    maxContactPages = parseInt(maxRaw, 10) || 0;
+  }
   const response = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${u}?ref=${CONFIG.branch}`,
     {
@@ -2342,15 +2368,7 @@ async function handleListContactPages(username, request, env) {
   );
   if (!response.ok) {
     if (response.status === 404) {
-      let maxContactPages = 0;
-      if (env.EDIT_KEYS_KV) {
-        const uLower = (u || '').toLowerCase();
-        const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
-        maxContactPages = parseInt(maxRaw, 10) || 0;
-      }
-      const currentCount = 0;
-      const canCreate = maxContactPages === 0 || currentCount < maxContactPages;
-      return jsonResponse({ contactPages: [], maxContactPages, currentCount, canCreate });
+      return jsonResponse({ contactPages: [], maxContactPages, currentCount: 0, canCreate: maxContactPages === 0 });
     }
     return jsonResponse({ error: 'GitHub error' }, 500);
   }
@@ -2359,7 +2377,6 @@ async function handleListContactPages(username, request, env) {
   const slugs = files
     .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html'))
     .map(item => item.name.replace(/\.html$/i, ''));
-  const uLower = (u || '').toLowerCase();
   const contactPages = [];
   for (const slug of slugs) {
     const name = env.EDIT_KEYS_KV
@@ -2368,11 +2385,6 @@ async function handleListContactPages(username, request, env) {
     contactPages.push({ slug, name });
   }
   const currentCount = slugs.length;
-  let maxContactPages = 0;
-  if (env.EDIT_KEYS_KV) {
-    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
-    maxContactPages = parseInt(maxRaw, 10) || 0;
-  }
   const canCreate = maxContactPages === 0 || currentCount < maxContactPages;
   return jsonResponse({ contactPages, maxContactPages, currentCount, canCreate });
 }
@@ -2418,8 +2430,8 @@ async function handleGetAccountEmails(request, env) {
   const emailVerification = {};
   for (const keyLower of Object.keys(accountEmails)) {
     const orig = originalSuffixByLower[keyLower] || keyLower;
-    const byAdmin = (await env.EDIT_KEYS_KV.get('email_verified_admin:' + orig)) === '1';
-    const byUser = (await env.EDIT_KEYS_KV.get('email_verified:' + orig)) === '1';
+    const byAdmin = (await getKvUser(env, 'email_verified_admin:', keyLower, orig)) === '1';
+    const byUser = (await getKvUser(env, 'email_verified:', keyLower, orig)) === '1';
     emailVerification[keyLower] = byAdmin ? 'admin' : byUser ? 'user' : null;
   }
   return jsonResponse(
@@ -2451,16 +2463,13 @@ async function handleGetAccountProfiles(request, env) {
   for (const keyName of accountEmailKeys) {
     if (!keyName.startsWith('account_email_to_folder:')) addSuffix(keyName, 'account_email:');
   }
-  const getFirst = async (u) => (await env.EDIT_KEYS_KV.get('user_first_name:' + u)) || '';
-  const getLast = async (u) => (await env.EDIT_KEYS_KV.get('user_last_name:' + u)) || '';
-  const getEmail = async (u) => (await env.EDIT_KEYS_KV.get('account_email:' + u)) || '';
   for (const username of usernames) {
     const u = (username || '').trim();
     const uLower = u.toLowerCase();
     const canonical = lowerToOriginal[uLower] || u;
-    const firstName = (await getFirst(canonical)) || (await getFirst(uLower)) || '';
-    const lastName = (await getLast(canonical)) || (await getLast(uLower)) || '';
-    const accountEmail = (await getEmail(canonical)) || (await getEmail(uLower)) || '';
+    const firstName = (await getKvUser(env, 'user_first_name:', uLower, canonical)) || '';
+    const lastName = (await getKvUser(env, 'user_last_name:', uLower, canonical)) || '';
+    const accountEmail = (await getKvUser(env, 'account_email:', uLower, canonical)) || '';
     profiles[username] = { firstName, lastName, accountEmail };
   }
   return jsonResponse({ profiles });
@@ -2472,9 +2481,9 @@ async function handleDebugUser(username, request, env) {
   if (!env.EDIT_KEYS_KV) return jsonResponse({ debug: { username, message: 'KV not configured' } });
   const u = username.trim();
   const uLower = u.toLowerCase();
-  const accountEmailFromKey = await env.EDIT_KEYS_KV.get('account_email:' + u) || await env.EDIT_KEYS_KV.get('account_email:' + uLower);
-  const firstName = await env.EDIT_KEYS_KV.get('user_first_name:' + u) || await env.EDIT_KEYS_KV.get('user_first_name:' + uLower);
-  const lastName = await env.EDIT_KEYS_KV.get('user_last_name:' + u) || await env.EDIT_KEYS_KV.get('user_last_name:' + uLower);
+  const accountEmailFromKey = await getKvUser(env, 'account_email:', uLower, u);
+  const firstName = await getKvUser(env, 'user_first_name:', uLower, u);
+  const lastName = await getKvUser(env, 'user_last_name:', uLower, u);
   const toFolderKeys = await listAllKvKeys(env, 'account_email_to_folder:');
   const toFolderEntries = [];
   for (const keyName of toFolderKeys) {
@@ -2493,16 +2502,16 @@ async function handleDebugUser(username, request, env) {
     return suffix.trim().toLowerCase() === uLower;
   });
   const resolvedEmail = accountEmailFromKey || (toFolderEntries.length ? toFolderEntries[0].email : null);
-  const passwordSet = !!(await env.EDIT_KEYS_KV.get('user_password_hash:' + u) || await env.EDIT_KEYS_KV.get('user_password_hash:' + uLower));
-  const otpSet = !!(await env.EDIT_KEYS_KV.get('user_otp:' + u) || await env.EDIT_KEYS_KV.get('user_otp:' + uLower));
-  const emailVerified = (await env.EDIT_KEYS_KV.get('email_verified:' + u) || await env.EDIT_KEYS_KV.get('email_verified:' + uLower)) === '1';
-  const emailVerifiedAdmin = (await env.EDIT_KEYS_KV.get('email_verified_admin:' + u) || await env.EDIT_KEYS_KV.get('email_verified_admin:' + uLower)) === '1';
-  const accessRevoked = (await env.EDIT_KEYS_KV.get('access_revoked:' + u) || await env.EDIT_KEYS_KV.get('access_revoked:' + uLower)) === '1';
-  const maxContactPages = await env.EDIT_KEYS_KV.get('max_contact_pages:' + u) || await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
-  const divertEmail = (await env.EDIT_KEYS_KV.get('divert_email:' + u) || await env.EDIT_KEYS_KV.get('divert_email:' + uLower)) === '1';
-  const accountDetailsSent = (await env.EDIT_KEYS_KV.get('account_details_sent:' + u) || await env.EDIT_KEYS_KV.get('account_details_sent:' + uLower)) === '1';
-  const dobSet = !!(await env.EDIT_KEYS_KV.get('user_dob:' + u) || await env.EDIT_KEYS_KV.get('user_dob:' + uLower));
-  const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + u) || await env.EDIT_KEYS_KV.get('user_recovery:' + uLower);
+  const passwordSet = !!(await getKvUser(env, 'user_password_hash:', uLower, u));
+  const otpSet = !!(await getKvUser(env, 'user_otp:', uLower, u));
+  const emailVerified = (await getKvUser(env, 'email_verified:', uLower, u)) === '1';
+  const emailVerifiedAdmin = (await getKvUser(env, 'email_verified_admin:', uLower, u)) === '1';
+  const accessRevoked = (await getKvUser(env, 'access_revoked:', uLower, u)) === '1';
+  const maxContactPages = await getKvUser(env, 'max_contact_pages:', uLower, u);
+  const divertEmail = (await getKvUser(env, 'divert_email:', uLower, u)) === '1';
+  const accountDetailsSent = (await getKvUser(env, 'account_details_sent:', uLower, u)) === '1';
+  const dobSet = !!(await getKvUser(env, 'user_dob:', uLower, u));
+  const recoveryRaw = await getKvUser(env, 'user_recovery:', uLower, u);
   let recoverySqCount = 0;
   if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); recoverySqCount = Array.isArray(r.secretQuestions) ? r.secretQuestions.length : 0; } catch (_) {} }
   const contactNameKeys = await listAllKvKeys(env, 'contact_page_name:' + uLower + ':');
@@ -2564,12 +2573,9 @@ async function handleSecretsStatus(request, env) {
     const u = (username || '').trim();
     const uLower = u.toLowerCase();
     const canonical = lowerToOriginal[uLower] || u;
-    let accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + canonical);
-    if (accountEmail == null) accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + uLower);
-    let dob = await env.EDIT_KEYS_KV.get('user_dob:' + canonical);
-    if (dob == null) dob = await env.EDIT_KEYS_KV.get('user_dob:' + uLower);
-    let recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + canonical);
-    if (recoveryRaw == null) recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + uLower);
+    const accountEmail = await getKvUser(env, 'account_email:', uLower, canonical);
+    const dob = await getKvUser(env, 'user_dob:', uLower, canonical);
+    const recoveryRaw = await getKvUser(env, 'user_recovery:', uLower, canonical);
     let secretQuestions = [];
     if (recoveryRaw) {
       try {
@@ -2778,8 +2784,9 @@ async function handlePutProfile(username, request, env) {
     const existingFolder = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmailLower);
     if (existingFolder && existingFolder !== username) return jsonResponse({ error: 'This account email is already in use' }, 409);
   }
-  if (firstName) await env.EDIT_KEYS_KV.put('user_first_name:' + username, firstName);
-  if (lastName) await env.EDIT_KEYS_KV.put('user_last_name:' + username, lastName);
+  // Persist first/last name even when empty so clearing the fields in UI is saved
+  if (body.firstName !== undefined) await env.EDIT_KEYS_KV.put('user_first_name:' + username, firstName);
+  if (body.lastName !== undefined) await env.EDIT_KEYS_KV.put('user_last_name:' + username, lastName);
   const oldAccountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
   const oldEmailNorm = (oldAccountEmail || '').trim().toLowerCase();
   const newEmailNorm = accountEmail ? accountEmail.trim().toLowerCase() : '';
@@ -2877,7 +2884,7 @@ async function handleSetPasswordAfterOtp(request, env) {
   return jsonResponse({ success: true, token: newToken });
 }
 
-/** POST /api/profile/change-password-and-sq - Bearer required. Body: { currentPassword, newPassword?, secretQuestions? }. Verifies current password then updates password and/or security questions. */
+/** POST /api/profile/change-password-and-sq - Bearer required. Body: { currentPassword, newPassword?, secretQuestions?, dob? }. Verifies current password then updates password, date of birth, and/or security questions. */
 async function handleChangePasswordAndSq(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
@@ -2896,10 +2903,14 @@ async function handleChangePasswordAndSq(request, env) {
   if (!valid) return jsonResponse({ error: 'Current password is incorrect' }, 401);
   const newPassword = (body.newPassword || '').trim();
   const secretQuestions = Array.isArray(body.secretQuestions) ? body.secretQuestions : [];
-  if (newPassword.length > 0 && newPassword.length < 8) return jsonResponse({ error: 'New password must be at least 8 characters' }, 400);
+  const dobRaw = (body.dob || '').trim();
+  const dobNorm = dobRaw ? normalizeDob(dobRaw) : null;
+  if (dobRaw && !dobNorm) return jsonResponse({ error: 'Valid date of birth required (dd/mm/yyyy)' }, 400);
   const hasNewPwd = newPassword.length >= 8;
   const hasSq = secretQuestions.length === 3 && secretQuestions.every(q => q && q.questionId && (q.answer || '').trim().length >= 4);
-  if (!hasNewPwd && !hasSq) return jsonResponse({ error: 'Enter a new password (and confirm) and/or 3 security questions with answers' }, 400);
+  const hasDob = !!dobNorm;
+  if (!hasNewPwd && !hasSq && !hasDob) return jsonResponse({ error: 'Enter a new password (and confirm), and/or Date of Birth, and/or 3 security questions with answers' }, 400);
+  if (newPassword.length > 0 && newPassword.length < 8) return jsonResponse({ error: 'New password must be at least 8 characters' }, 400);
   if (secretQuestions.length > 0) {
     const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     const ids = secretQuestions.map(q => q.questionId);
@@ -2915,9 +2926,13 @@ async function handleChangePasswordAndSq(request, env) {
     const newHash = await hashPassword(newPassword);
     await env.EDIT_KEYS_KV.put('user_password_hash:' + username, newHash);
   }
+  if (dobNorm) {
+    await env.EDIT_KEYS_KV.put('user_dob:' + username, dobNorm);
+  }
+  let currentDob = dobNorm || (await env.EDIT_KEYS_KV.get('user_dob:' + username)) || '';
   if (secretQuestions.length === 3) {
     const existing = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
-    const dobForRecovery = (existing ? (JSON.parse(existing).dob || '') : '') || (await env.EDIT_KEYS_KV.get('user_dob:' + username)) || '';
+    const dobForRecovery = currentDob || (existing ? (JSON.parse(existing).dob || '') : '') || '';
     await env.EDIT_KEYS_KV.put('user_recovery:' + username, JSON.stringify({
       dob: dobForRecovery,
       secretQuestions: secretQuestions.map(q => ({ questionId: q.questionId, answer: (q.answer || '').trim() }))

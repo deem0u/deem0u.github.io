@@ -721,7 +721,13 @@
             </div>
             <div id="secrets-otp-value-wrap" class="secrets-otp-value-wrap hidden"><span id="secrets-otp-value"></span></div>
             <div class="form-inline-row form-inline-row-compact">
-              <input type="password" id="secrets-password" class="form-input form-input-compact" autocomplete="new-password" placeholder="" style="min-width:12ch;">
+              <div class="password-input-wrap" style="min-width:12ch; flex:1;">
+                <input type="password" id="secrets-password" class="form-input form-input-compact" autocomplete="new-password" placeholder="">
+                <button type="button" class="password-toggle-btn" id="secrets-toggle-password" aria-label="Show password" title="Show password">
+                  <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="icon-eye-off hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.16 13.16 0 0 0 2 12s3 7 10 7a9.9 9.9 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                </button>
+              </div>
               <button type="button" class="btn btn-secondary btn-sm" id="secrets-generate-otp-btn" onclick="generateOtpInSecretsModal()">Generate OTP</button>
               <button type="button" class="btn btn-secondary btn-sm hidden" id="secrets-clear-otp-btn" onclick="clearOtpInSecretsModal()">Clear OTP</button>
               <button type="button" class="btn btn-secondary btn-sm hidden" id="secrets-delete-otp-btn" onclick="deleteOtpInSecretsModal()">Delete OTP</button>
@@ -744,7 +750,7 @@
               <label class="form-label form-label-bold">Date of Birth</label>
               <span id="secrets-dob-badge" class="badge"></span>
             </div>
-            <input type="text" id="secrets-dob" class="form-input form-input-compact dob-mask" placeholder="" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
+            <input type="text" id="secrets-dob" class="form-input form-input-compact dob-mask" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
             <span class="form-error" id="error-secrets-dob" role="alert"></span>
           </div>
           <div class="form-group" id="secrets-sq-group">
@@ -866,6 +872,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (iconEyeOff) iconEyeOff.classList.toggle('hidden', hidden);
       });
     }
+    var secretsTogglePw = document.getElementById('secrets-toggle-password');
+    if (secretsTogglePw) {
+      var secretsIconEye = secretsTogglePw.querySelector('.icon-eye');
+      var secretsIconEyeOff = secretsTogglePw.querySelector('.icon-eye-off');
+      secretsTogglePw.addEventListener('click', function() {
+        var inp = document.getElementById('secrets-password');
+        if (!inp) return;
+        var hidden = inp.type === 'password';
+        inp.type = hidden ? 'text' : 'password';
+        secretsTogglePw.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+        secretsTogglePw.setAttribute('title', hidden ? 'Hide password' : 'Show password');
+        if (secretsIconEye) secretsIconEye.classList.toggle('hidden', !hidden);
+        if (secretsIconEyeOff) secretsIconEyeOff.classList.toggle('hidden', hidden);
+      });
+    }
     var forgotLink = document.getElementById('forgot-password-link');
     if (forgotLink) forgotLink.addEventListener('click', function(ev) { ev.preventDefault(); showScreen('recovery'); });
     if (recoveryForm1) recoveryForm1.addEventListener('submit', handleRecoveryStep1);
@@ -944,6 +965,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initCountryDropdowns();
   applyFormDescriptions();
   initFolderValidation();
+  if (typeof attachDobMask === 'function') attachDobMask();
   if (typeof initSecretsModalValidations === 'function') initSecretsModalValidations();
   initGivenNamesValidation();
   initFamilyNameValidation();
@@ -1402,8 +1424,19 @@ async function refreshKvOrphansReport() {
     }
     kvOrphansReportData = d;
     var total = (d.orphanedKeys && d.orphanedKeys.length) + (d.expiredTemp && d.expiredTemp.length) || 0;
+    if (d.githubUnavailable) {
+      if (errEl) {
+        errEl.textContent = 'Could not load user list from GitHub (check GITHUB_TOKEN and repo/branch). No user keys were marked as orphaned.';
+        errEl.classList.remove('hidden');
+      }
+    }
     if (total === 0) {
-      showKvOrphansState('empty');
+      if (d.githubUnavailable) {
+        if (errEl) { errEl.textContent = 'Could not load user list from GitHub (check GITHUB_TOKEN and repo/branch). No user keys were marked as orphaned.'; errEl.classList.remove('hidden'); }
+        showKvOrphansState('error');
+      } else {
+        showKvOrphansState('empty');
+      }
       return;
     }
     var summaryEl = document.querySelector('#kv-orphans-report .kv-report-summary');
@@ -2410,10 +2443,11 @@ function renderList(t) {
     const namePart = displayName || '? ?';
     const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
     const emailDisplay = u.accountEmail || 'No account email';
-    const secretsNotSet = !(u.secretsComplete === true);
     const isNew = hk && !(u.accountDetailsSent === true);
     const needsSetup = !(u.accountEmail || '').trim();
     const hasAccountEmail = !!(u.accountEmail || '').trim();
+    const profileIncomplete = needsSetup || !(u.firstName || '').trim() || !(u.lastName || '').trim();
+    const secretsIncomplete = !(u.secretsComplete === true);
     const ver = u.emailVerification;
     const emailBadge = hasAccountEmail ? (ver === 'admin' ? '<span class="badge badge-cyan">Admin Verified</span>' : ver === 'user' ? '<span class="badge badge-cyan">User Verified</span>' : '<span class="badge badge-pink">Not Verified</span>') : '';
     return `<div class="user-card" id="user-card-${f}" data-username="${f}">
@@ -2422,13 +2456,6 @@ function renderList(t) {
         <div class="user-details">
           <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}${needsSetup ? ' <span class="badge badge-pink">Account Setup Incomplete</span>' : ''}</div>
           <div class="user-meta">${escapeHtml(emailDisplay)}${emailBadge ? ' ' + emailBadge : ''}</div>
-        </div>
-        <div class="user-status">
-          <div class="user-status-badges">
-            ${isIncomplete(f) ? '<span class="badge badge-warning">Page Incomplete</span>' : ''}
-            ${needsSetup ? '<span class="badge badge-pink">Account Setup Incomplete</span>' : ''}
-            ${secretsNotSet ? '<span class="badge badge-error">Secrets Not Set</span>' : ''}
-          </div>
         </div>
       </div>
       <div class="user-card-actions">
@@ -2457,8 +2484,8 @@ function renderList(t) {
           <div class="action-combo-group">
             <span class="action-row-label">Account &amp; Access Recovery</span>
             <div class="action-row-buttons" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
-              <button class="btn btn-primary btn-sm" onclick="showProfileModal('${f}')">Edit Profile</button>
-              <button class="btn btn-primary btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
+              <button class="btn ${profileIncomplete ? 'btn-warning' : 'btn-black'} btn-sm" onclick="showProfileModal('${f}')">Edit Profile</button>
+              <button class="btn ${secretsIncomplete ? 'btn-warning' : 'btn-black'} btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
               <span style="display:inline-flex; align-items:center; gap:0.35rem;">
                 <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0=unlimited" style="width:5ch; padding:0.25rem 0.35rem; font-size:0.875rem;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited">
                 <span class="form-hint" style="margin:0; font-size:0.8rem;">max pages</span>
@@ -3387,6 +3414,8 @@ function syncSecretsModalSqOptions() {
   var chk=document.getElementById('secrets-email-verified-admin');if(chk)chk.addEventListener('change',secretsModalSetDirty);
 })();
 
+function formatDob(val){var d=(val||'').replace(/\D/g,'').substring(0,8);if(!d.length)return '';if(d.length<=2)return d;if(d.length<=4)return d.substring(0,2)+'/'+d.substring(2);return d.substring(0,2)+'/'+d.substring(2,4)+'/'+d.substring(4);}
+function attachDobMask(){document.querySelectorAll('.dob-mask').forEach(function(inp){if(inp.dataset.dobMaskAttached)return;inp.dataset.dobMaskAttached='1';inp.addEventListener('input',function(){var val=this.value;var formatted=formatDob(val);if(formatted!==val)this.value=formatted;});});}
 function initSecretsModalValidations(){
   function validateDob(val){var s=(val||'').trim().replace(/\s+/g,'');if(!s)return{valid:true};var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)return{valid:false,message:'Please enter a valid date in dd/mm/yyyy format.'};var d=parseInt(m[1],10),mo=parseInt(m[2],10),y=parseInt(m[3],10);if(d<1||d>31||mo<1||mo>12||y<1900||y>2100)return{valid:false,message:'Please enter a valid date.'};return{valid:true};}
   function validateSecretAnswer(a){var t=(a||'').trim();if(t.length<4)return{valid:false,message:'Answer must be at least 4 characters.'};if(t.length>30)return{valid:false,message:'Answer must be 30 characters or fewer.'};return{valid:true};}

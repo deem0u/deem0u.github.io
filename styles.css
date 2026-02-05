@@ -1005,6 +1005,15 @@ body {
   background: var(--color-primary-hover);
 }
 
+.btn-black {
+  background: var(--black);
+  color: var(--white);
+}
+
+.btn-black:hover:not(:disabled) {
+  background: #1a1a1a;
+}
+
 .btn-secondary {
   background: var(--white);
   color: var(--color-text);
