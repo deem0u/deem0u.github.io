@@ -611,6 +611,37 @@
     </div>
   </div>
 
+  <div id="modal-delete-user" class="modal-overlay hidden">
+    <div class="modal" style="max-width: 420px;">
+      <div class="modal-header"><h3 class="modal-title">Delete User?</h3></div>
+      <div class="modal-body">
+        <p id="modal-delete-user-message">This will permanently delete this user's contact page. This cannot be undone.</p>
+        <label class="toggle-label delete-user-confirm-label" style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 1rem;">
+          <input type="checkbox" id="modal-delete-user-checkbox" onchange="toggleDeleteUserConfirmBtn()">
+          <span>I confirm I want to permanently delete this user (4-eye check)</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeDeleteUserModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="modal-delete-user-confirm-btn" disabled onclick="confirmDeleteUserExecute()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-account-report" class="modal-overlay hidden">
+    <div class="modal" style="max-width: 640px;">
+      <div class="modal-header"><h3 class="modal-title" id="modal-account-report-title">Account Report</h3></div>
+      <div class="modal-body">
+        <div id="modal-account-report-loading" class="modal-qr-loading"><span class="spinner"></span> Generating report…</div>
+        <pre id="modal-account-report-content" class="debug-output hidden" style="max-height: 70vh; overflow: auto; white-space: pre-wrap;"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAccountReportModal()">Close</button>
+        <button type="button" class="btn btn-primary hidden" id="modal-account-report-copy-btn" onclick="copyAccountReport()">Copy</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-password-reset" class="modal-overlay hidden">
     <div class="modal" style="max-width:400px;">
       <div class="modal-header"><h3 class="modal-title">Reset password</h3></div>
@@ -776,11 +807,10 @@
   </div>
 
   <div id="modal-push-message" class="modal-overlay hidden">
-    <div class="modal" style="max-width: 560px;">
+    <div class="modal modal-push-message" style="max-width: 560px;">
       <div class="modal-header"><h3 class="modal-title" id="modal-push-message-title">Push Message</h3></div>
-      <div class="modal-body">
-        <p class="form-hint mb-3">Compose a message to show as a banner on this user's My Account page. Only bullets, numbered lists, bold, italic, underline and links are allowed.</p>
-        <div class="push-message-toolbar mb-2" role="toolbar" aria-label="Formatting">
+      <div class="modal-body modal-push-message-body">
+        <div class="push-message-toolbar" role="toolbar" aria-label="Formatting">
           <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('bold')" title="Bold"><b>B</b></button>
           <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('italic')" title="Italic"><i>I</i></button>
           <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('underline')" title="Underline"><u>U</u></button>
@@ -788,14 +818,17 @@
           <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('insertUnorderedList')" title="Bullet list">• List</button>
           <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('insertOrderedList')" title="Numbered list">1. List</button>
           <span class="push-message-toolbar-sep" aria-hidden="true">|</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('indent')" title="Increase indent">Indent</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('outdent')" title="Decrease indent">Outdent</button>
+          <span class="push-message-toolbar-sep" aria-hidden="true">|</span>
           <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('createLink')" title="Insert link">Link</button>
         </div>
-        <div id="push-message-editor" class="form-input push-message-editor" contenteditable="true" data-placeholder="Type your message here…" style="min-height: 140px; max-height: 280px; overflow-y: auto;"></div>
-        <div id="modal-push-message-error" class="alert alert-error hidden mt-2"></div>
+        <div id="push-message-editor" class="form-input push-message-editor" contenteditable="true" data-placeholder="Type your message here…" oninput="updatePushMessageButtonState()" onkeyup="updatePushMessageButtonState()"></div>
+        <div id="modal-push-message-error" class="alert alert-error hidden"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="push-message-save-btn" onclick="savePushMessage()">Push to user</button>
-        <button type="button" class="btn btn-secondary" onclick="closePushMessageModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="push-message-save-btn" disabled onclick="handlePushMessagePrimaryClick()">Push</button>
+        <button type="button" class="btn btn-secondary" id="push-message-cancel-btn" onclick="handlePushMessageCancelClick()">Cancel</button>
       </div>
     </div>
   </div>
@@ -2511,13 +2544,21 @@ function renderList(t) {
             <div class="action-row-buttons" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
               <button class="btn btn-black btn-sm ${profileIncomplete ? 'btn-incomplete' : ''}" onclick="showProfileModal('${f}')">Edit Profile</button>
               <button class="btn btn-black btn-sm ${secretsIncomplete ? 'btn-incomplete' : ''}" onclick="showSecretsModal('${f}')">Set Secrets</button>
-              <span style="display:inline-flex; align-items:center; gap:0.35rem;">
-                <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0=unlimited" style="width:5ch; padding:0.25rem 0.35rem; font-size:0.875rem;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited">
+              <span class="max-pages-wrap" style="display:inline-flex; flex-direction:column; align-items:flex-start; gap:0.2rem;">
                 <span class="form-hint" style="margin:0; font-size:0.8rem;">max pages</span>
+                <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0=unlimited" style="width:4.25rem; min-width:4.25rem; padding:0.25rem 0.35rem; font-size:0.875rem; box-sizing:border-box;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited">
               </span>
-              <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${f}')">Delete User</button>
+            </div>
+          </div>
+        </div>
+        <div class="action-row action-row-combo">
+          <div class="action-combo-group action-combo-group-developer">
+            <span class="action-row-label">Developer</span>
+            <div class="action-row-buttons action-row-buttons-developer" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
               <button type="button" class="btn btn-secondary btn-sm" onclick="debugUserApi('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Diagnose anything related to this user that might be broken">Debug API</button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="openKvPurgeModal('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Report and purge KV keys for this user">KV Purge</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="showAccountReportModal('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Generate summary stats and account report including contact cards">Summary</button>
+              <button class="btn btn-danger btn-sm developer-delete-btn" onclick="confirmDeleteUser('${f}')">Delete User</button>
             </div>
           </div>
         </div>
@@ -2550,10 +2591,107 @@ async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/$
 function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-pink', 'Revoke', () => removeKey(f)); }
 async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); fetchAccountEmailsAndRefresh(); showAlert('alert-manage', 'Access revoked', 'success'); } catch {} }
 
+var deleteUserModalFolder = null;
+
 function confirmDeleteUser(f) {
-  const u = userInfo[f] || {};
-  const displayName = getDisplayName(u, f);
-  showModal('Delete User?', `This will permanently delete ${displayName}'s contact page. This cannot be undone.`, 'btn-danger', 'Delete', () => deleteUser(f));
+  deleteUserModalFolder = f;
+  var u = userInfo[f] || {};
+  var displayName = getDisplayName(u, f);
+  document.getElementById('modal-delete-user-message').textContent = 'This will permanently delete ' + displayName + "'s contact page. This cannot be undone.";
+  document.getElementById('modal-delete-user-checkbox').checked = false;
+  document.getElementById('modal-delete-user-confirm-btn').disabled = true;
+  document.getElementById('modal-delete-user').classList.remove('hidden');
+  document.getElementById('modal-delete-user').classList.add('show');
+}
+
+function toggleDeleteUserConfirmBtn() {
+  var cb = document.getElementById('modal-delete-user-checkbox');
+  document.getElementById('modal-delete-user-confirm-btn').disabled = !(cb && cb.checked);
+}
+
+function closeDeleteUserModal() {
+  document.getElementById('modal-delete-user').classList.remove('show');
+  document.getElementById('modal-delete-user').classList.add('hidden');
+  deleteUserModalFolder = null;
+}
+
+function confirmDeleteUserExecute() {
+  if (!deleteUserModalFolder) return;
+  var f = deleteUserModalFolder;
+  closeDeleteUserModal();
+  deleteUser(f);
+}
+
+var accountReportModalFolder = null;
+
+function closeAccountReportModal() {
+  document.getElementById('modal-account-report').classList.remove('show');
+  document.getElementById('modal-account-report').classList.add('hidden');
+  accountReportModalFolder = null;
+}
+
+async function showAccountReportModal(folder) {
+  accountReportModalFolder = folder;
+  document.getElementById('modal-account-report-title').textContent = 'Account Report - ' + folder;
+  document.getElementById('modal-account-report-loading').classList.remove('hidden');
+  document.getElementById('modal-account-report-content').classList.add('hidden');
+  document.getElementById('modal-account-report-content').textContent = '';
+  document.getElementById('modal-account-report-copy-btn').classList.add('hidden');
+  document.getElementById('modal-account-report').classList.remove('hidden');
+  document.getElementById('modal-account-report').classList.add('show');
+  try {
+    var debugRes = await fetch(API + '/api/admin/debug-user/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+    var contactRes = await fetch(API + '/api/contact-pages/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+    var debugData = await debugRes.json().catch(function() { return {}; });
+    var contactData = await contactRes.json().catch(function() { return {}; });
+    var d = debugData.debug || debugData;
+    var pages = (contactData.contactPages && Array.isArray(contactData.contactPages)) ? contactData.contactPages : [];
+    var u = userInfo[folder] || {};
+    var lines = [
+      '=== Account Report: ' + folder + ' ===',
+      '',
+      '--- Profile ---',
+      'Username: ' + (d.username || folder),
+      'Resolved email: ' + (d.resolvedEmail || '(none)'),
+      'First name: ' + (d.firstName || '(none)'),
+      'Last name: ' + (d.lastName || '(none)'),
+      'In GitHub repo: ' + (d.inGitHub ? 'Yes' : 'No'),
+      '',
+      '--- Access & Recovery ---',
+      'Password set: ' + (d.passwordSet ? 'Yes' : 'No'),
+      'OTP set: ' + (d.otpSet ? 'Yes' : 'No'),
+      'Email verified: ' + (d.emailVerified ? 'Yes' : 'No') + (d.emailVerifiedAdmin ? ' (admin)' : ''),
+      'Access revoked: ' + (d.accessRevoked ? 'Yes' : 'No'),
+      'DOB set: ' + (d.dobSet ? 'Yes' : 'No'),
+      'Recovery SQs: ' + (d.recoverySqCount || 0) + '/3',
+      '',
+      '--- Limits & Flags ---',
+      'Max contact pages: ' + (d.maxContactPages != null ? d.maxContactPages : '(unset)'),
+      'Divert to dev: ' + (d.divertEmail ? 'Yes' : 'No'),
+      'Account details sent: ' + (d.accountDetailsSent ? 'Yes' : 'No'),
+      '',
+      '--- Contact Pages (' + pages.length + ') ---'
+    ];
+    pages.forEach(function(p) {
+      lines.push('  - ' + (p.slug || p.name || '') + (p.name && p.slug ? ' → ' + p.name : ''));
+    });
+    lines.push('');
+    lines.push('--- End report ---');
+    document.getElementById('modal-account-report-content').textContent = lines.join('\n');
+    document.getElementById('modal-account-report-loading').classList.add('hidden');
+    document.getElementById('modal-account-report-content').classList.remove('hidden');
+    document.getElementById('modal-account-report-copy-btn').classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('modal-account-report-loading').classList.add('hidden');
+    document.getElementById('modal-account-report-content').textContent = 'Error generating report: ' + (e && e.message) || 'Unknown error';
+    document.getElementById('modal-account-report-content').classList.remove('hidden');
+  }
+}
+
+function copyAccountReport() {
+  var pre = document.getElementById('modal-account-report-content');
+  if (!pre || !pre.textContent) return;
+  navigator.clipboard.writeText(pre.textContent).then(function() { showAlert('alert-manage', 'Report copied to clipboard.', 'success'); }).catch(function() {});
 }
 
 async function deleteUser(f) {
@@ -3297,22 +3435,66 @@ function generateMailto(toEmail, folder) {
 }
 
 var pushMessageModalFolder = null;
+var pushMessageConfirmStep = false;
 
 function showPushMessageModal(folder) {
   pushMessageModalFolder = folder;
+  pushMessageConfirmStep = false;
   document.getElementById('modal-push-message-title').textContent = 'Push Message - ' + folder;
   var editor = document.getElementById('push-message-editor');
   if (editor) { editor.innerHTML = ''; editor.focus(); }
   document.getElementById('modal-push-message-error').classList.add('hidden');
   document.getElementById('modal-push-message-error').textContent = '';
+  document.getElementById('push-message-save-btn').textContent = 'Push';
+  document.getElementById('push-message-cancel-btn').textContent = 'Cancel';
   document.getElementById('modal-push-message').classList.remove('hidden');
   document.getElementById('modal-push-message').classList.add('show');
+  updatePushMessageButtonState();
 }
 
 function closePushMessageModal() {
   document.getElementById('modal-push-message').classList.remove('show');
   document.getElementById('modal-push-message').classList.add('hidden');
   pushMessageModalFolder = null;
+  pushMessageConfirmStep = false;
+  document.getElementById('push-message-save-btn').textContent = 'Push';
+  document.getElementById('push-message-cancel-btn').textContent = 'Cancel';
+}
+
+function revertPushMessageConfirm() {
+  pushMessageConfirmStep = false;
+  document.getElementById('push-message-save-btn').textContent = 'Push';
+  document.getElementById('push-message-cancel-btn').textContent = 'Cancel';
+  updatePushMessageButtonState();
+}
+
+function handlePushMessageCancelClick() {
+  if (pushMessageConfirmStep) revertPushMessageConfirm();
+  else closePushMessageModal();
+}
+
+function updatePushMessageButtonState() {
+  var editor = document.getElementById('push-message-editor');
+  var btn = document.getElementById('push-message-save-btn');
+  if (!editor || !btn) return;
+  var raw = (editor.innerText || editor.textContent || '').trim();
+  var hasContent = raw.length > 0;
+  if (pushMessageConfirmStep) {
+    btn.disabled = false;
+  } else {
+    btn.disabled = !hasContent;
+  }
+}
+
+function handlePushMessagePrimaryClick() {
+  if (pushMessageConfirmStep) {
+    savePushMessage();
+    return;
+  }
+  pushMessageConfirmStep = true;
+  document.getElementById('push-message-save-btn').textContent = 'Confirm Push';
+  document.getElementById('push-message-cancel-btn').textContent = 'Abort';
+  document.getElementById('push-message-save-btn').disabled = false;
 }
 
 function pushMessageCmd(cmd) {
@@ -3329,6 +3511,7 @@ function pushMessageCmd(cmd) {
   } else {
     document.execCommand(cmd, false, null);
   }
+  updatePushMessageButtonState();
 }
 
 function sanitizePushMessageHtml(html) {

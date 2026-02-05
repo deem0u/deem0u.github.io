@@ -684,9 +684,12 @@ body {
 }
 
 /* Admin: Push Message modal toolbar */
-.push-message-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem; }
-.push-message-toolbar-sep { margin: 0 0.25rem; color: var(--color-text-secondary); }
+.push-message-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem; }
+.push-message-toolbar-sep { margin: 0 0.15rem; color: var(--color-text-secondary); }
+.push-message-editor { min-height: 140px; max-height: 280px; overflow-y: auto; margin-top: 0; }
 .push-message-editor:empty::before { content: attr(data-placeholder); color: var(--color-text-secondary); }
+.modal-push-message .modal-body { padding: var(--space-4) var(--space-5); }
+.modal-push-message .modal-footer .btn + .btn { margin-left: 0.5rem; }
 
 /* Debug API modal: formatted output, issues in red */
 .debug-output { font-family: var(--font-mono, monospace); font-size: var(--text-sm); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
@@ -1057,8 +1060,8 @@ body {
 
 /* Black button with thicker yellow border when incomplete (e.g. Edit Profile / Set Secrets) */
 .btn-black.btn-incomplete {
-  border-width: 2px;
-  border-color: var(--accent-yellow);
+  border-width: 3px;
+  border-color: var(--accent-pink);
 }
 
 .btn-secondary {
@@ -1616,6 +1619,17 @@ body {
   min-width: 80px;
   flex-shrink: 0;
   margin-right: var(--space-5);
+}
+
+.action-row-combo .action-combo-group-developer .action-row-buttons-developer {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.action-row-combo .developer-delete-btn {
+  margin-left: auto;
 }
 
 .user-details .user-meta-muted {
