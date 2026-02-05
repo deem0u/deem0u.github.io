@@ -402,15 +402,19 @@
             <button type="button" class="btn btn-primary btn-sm" id="push-message-ok-btn" onclick="dismissPushMessage()">OK</button>
           </div>
         </div>
-        <div class="card card-welcome">
+        <div class="card card-welcome" id="welcome-card">
           <div class="card-body">
             <p class="card-welcome-text">
-              Welcome, <strong id="user-name">User</strong>. Here are your current Contact Information. Make the required updates to your details below and click Save.
+              Welcome <strong id="user-name">User</strong>! This is your DigiCon iD account portal where you can manage all things related to your account and Contact Pages. If you ever need support please don't hesitate to reach out using the Contact form.
             </p>
           </div>
         </div>
 
         <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
+
+        <div id="no-contact-pages-banner" class="no-contact-pages-banner hidden" role="status">
+          You have no Contact Pages
+        </div>
 
         <div id="secrets-banner" class="banner-reminder hidden">
           <div class="banner-reminder-content">
@@ -1597,17 +1601,17 @@ async function fetchContactPagesList() {
     var r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json();
     if (!r.ok) {
-      contactPagesListData = [{ slug: 'index', name: 'Main (index)' }];
+      contactPagesListData = [];
       if (list) list.classList.remove('hidden');
       if (dropdownWrap) dropdownWrap.classList.remove('show');
-      list.innerHTML = '<div class="contact-page-card selected" data-contactpagename="index" role="button" tabindex="0" onclick="selectContactPage(\'index\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">Main (index)</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">index</span></div></div>';
+      list.innerHTML = '';
       if (newBtn) { newBtn.classList.remove('hidden'); newBtn.disabled = false; }
       if (limitMsg) { limitMsg.classList.add('hidden'); limitMsg.textContent = ''; }
       section.classList.remove('hidden');
+      updateMainContentVisibility();
       return;
     }
     var pages = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : [];
-    if (pages.length === 0) pages = [{ slug: 'index', name: 'Main (index)' }];
     contactPagesListData = pages.map(normalizePageItem);
     contactPagesLimit.maxContactPages = typeof d.maxContactPages === 'number' ? d.maxContactPages : 0;
     contactPagesLimit.currentCount = typeof d.currentCount === 'number' ? d.currentCount : contactPagesListData.length;
@@ -1663,14 +1667,26 @@ async function fetchContactPagesList() {
     section.classList.remove('hidden');
   } catch (e) {
     contactPagesLimit.canCreate = true;
-    contactPagesListData = [{ slug: 'index', name: 'Main (index)' }];
+    contactPagesListData = [];
     if (dropdownWrap) dropdownWrap.classList.remove('show');
     list.classList.remove('hidden');
-    list.innerHTML = '<div class="contact-page-card selected" data-contactpagename="index" role="button" tabindex="0" onclick="selectContactPage(\'index\')"><div class="contact-page-card-row"><span class="contact-page-card-label">Page Name:</span><span class="contact-page-card-value">Main (index)</span></div><div class="contact-page-card-row"><span class="contact-page-card-label">URL Slug:</span><span class="contact-page-card-value">index</span></div></div>';
+    list.innerHTML = '';
     if (newBtn) { newBtn.classList.remove('hidden'); newBtn.disabled = false; }
     if (limitMsg) { limitMsg.classList.add('hidden'); limitMsg.textContent = ''; }
     section.classList.remove('hidden');
   }
+  updateMainContentVisibility();
+}
+
+function updateMainContentVisibility() {
+  var noBanner = document.getElementById('no-contact-pages-banner');
+  var welcomeCard = document.getElementById('welcome-card');
+  var editorCard = document.getElementById('editor-contact-card');
+  var empty = contactPagesListData.length === 0;
+  var showBanner = empty && !isCreateMode;
+  if (noBanner) noBanner.classList.toggle('hidden', !showBanner);
+  if (welcomeCard) welcomeCard.classList.remove('hidden');
+  if (editorCard) editorCard.classList.toggle('hidden', empty && !isCreateMode);
 }
 
 function enterCreateMode() {
@@ -1694,6 +1710,7 @@ function enterCreateMode() {
   updateSaveButtonLabel();
   updateFormDirtyState();
   showStatusBanner('To create a new Contact Page fill out the form and click "Save".', 'info');
+  updateMainContentVisibility();
 }
 function selectContactPage(contactpagename) {
   if (!username || !token) return Promise.resolve();
@@ -1780,6 +1797,11 @@ async function authenticateWithStoredSession() {
     applyUnverifiedRestriction();
     await fetchAndShowPushMessage();
     await fetchContactPagesList();
+    if (contactPagesListData.length === 0) {
+      isCreateMode = false;
+      currentContactpagename = '';
+      updateMainContentVisibility();
+    }
     var list = document.getElementById('contact-pages-list');
     var dropdownWrap = document.getElementById('contact-pages-dropdown-wrap');
     var firstCard = list && list.querySelector('.contact-page-card');
@@ -1789,12 +1811,13 @@ async function authenticateWithStoredSession() {
     } else if (firstCard) {
       firstSlug = firstCard.getAttribute('data-contactpagename') || 'index';
     }
-    if ((dropdownWrap && dropdownWrap.classList.contains('show')) || firstCard) {
+    if (contactPagesListData.length > 0 && ((dropdownWrap && dropdownWrap.classList.contains('show')) || firstCard)) {
       await selectContactPage(firstSlug);
       enterViewMode();
-    } else {
+    } else if (contactPagesListData.length > 0) {
       enterCreateMode();
     }
+    // When contactPagesListData.length === 0, main area already shows "You have no Contact Pages" via updateMainContentVisibility()
   } catch (e) {
     sessionStorage.removeItem('edit_session');
     username = null;
@@ -1854,6 +1877,11 @@ async function continueAfterAuth() {
     applyUnverifiedRestriction();
     await fetchAndShowPushMessage();
     await fetchContactPagesList();
+    if (contactPagesListData.length === 0) {
+      isCreateMode = false;
+      currentContactpagename = '';
+      updateMainContentVisibility();
+    }
     var list = document.getElementById('contact-pages-list');
     var dropdownWrap = document.getElementById('contact-pages-dropdown-wrap');
     var firstCard = list && list.querySelector('.contact-page-card');
@@ -1863,12 +1891,13 @@ async function continueAfterAuth() {
     } else if (firstCard) {
       firstSlug = firstCard.getAttribute('data-contactpagename') || 'index';
     }
-    if ((dropdownWrap && dropdownWrap.classList.contains('show')) || firstCard) {
+    if (contactPagesListData.length > 0 && ((dropdownWrap && dropdownWrap.classList.contains('show')) || firstCard)) {
       await selectContactPage(firstSlug);
       enterViewMode();
-    } else {
+    } else if (contactPagesListData.length > 0) {
       enterCreateMode();
     }
+    // When contactPagesListData.length === 0, main area shows "You have no Contact Pages" only
   } catch (e) {
     console.error('Auth error:', e);
     showAlert('auth-alert', 'Error after sign-in. Open Console (F12) for details.', 'error');
@@ -1964,7 +1993,7 @@ function tryShowEasterEgg() {
 function updateWelcomeUserName() {
   if (!username) return;
   var firstName = (profileData && profileData.firstName && String(profileData.firstName).trim()) || (document.getElementById("first-name") && document.getElementById("first-name").value && document.getElementById("first-name").value.trim()) || "";
-  var display = firstName ? firstName + " (" + username + ")" : username;
+  var display = firstName || username;
   var el = document.getElementById("user-name");
   if (el) el.textContent = display;
 }
