@@ -2036,9 +2036,27 @@ function selectEditContactPage(slug, label) {
 
 var adminCreateNewPage = false;
 
-function adminEnterCreateContactPage() {
+async function adminEnterCreateContactPage() {
   const username = document.getElementById('page-select').value;
   if (!username) return;
+  try {
+    const r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'X-Admin-Key': adminKey } });
+    const d = await r.json();
+    if (r.ok) {
+      const maxContactPages = typeof d.maxContactPages === 'number' ? d.maxContactPages : 0;
+      const currentCount = typeof d.currentCount === 'number' ? d.currentCount : (d.contactPages && Array.isArray(d.contactPages) ? d.contactPages.length : 0);
+      const canCreate = typeof d.canCreate === 'boolean' ? d.canCreate : (maxContactPages === 0 || currentCount < maxContactPages);
+      if (!canCreate && maxContactPages > 0) {
+        document.getElementById('editor-card').classList.remove('hidden');
+        showAlert('alert-editor', 'Maximum number of contact pages (' + maxContactPages + ') reached for this user. Delete an existing page to create a new one, or increase the limit in Manage Users.', 'error');
+        return;
+      }
+    }
+  } catch (e) {
+    document.getElementById('editor-card').classList.remove('hidden');
+    showAlert('alert-editor', 'Could not check contact page limit.', 'error');
+    return;
+  }
   adminCreateNewPage = true;
   currentFolder = username;
   currentContactPageName = '';
