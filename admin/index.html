@@ -271,6 +271,45 @@
                 <div id="kv-orphans-loading" class="hidden form-hint mt-2">Loading…</div>
                 <div id="kv-orphans-error" class="alert hidden mt-2"></div>
               </div>
+
+              <hr class="card-divider" style="border:0; border-top:1px solid var(--color-border); margin: 1.5rem 0;">
+              <div class="form-group" id="site-push-message-section">
+                <label class="form-label">Push message to users</label>
+                <p class="form-hint mb-3">Compose a message to show as a banner on selected users’ My Account page until they click OK.</p>
+                <div class="push-message-toolbar mb-2" role="toolbar" aria-label="Formatting">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="sitePushMessageCmd('bold')" title="Bold"><b>B</b></button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="sitePushMessageCmd('italic')" title="Italic"><i>I</i></button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="sitePushMessageCmd('underline')" title="Underline"><u>U</u></button>
+                  <span class="push-message-toolbar-sep" aria-hidden="true">|</span>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="sitePushMessageCmd('insertUnorderedList')" title="Bullet list">• List</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="sitePushMessageCmd('insertOrderedList')" title="Numbered list">1. List</button>
+                  <span class="push-message-toolbar-sep" aria-hidden="true">|</span>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="sitePushMessageCmd('indent')" title="Increase indent">Indent</button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="sitePushMessageCmd('outdent')" title="Decrease indent">Outdent</button>
+                  <span class="push-message-toolbar-sep" aria-hidden="true">|</span>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="sitePushMessageCmd('createLink')" title="Insert link">Link</button>
+                </div>
+                <div id="site-push-message-editor" class="form-input push-message-editor" contenteditable="true" data-placeholder="Type your message here…" oninput="updateSitePushMessageButtonState()" onkeyup="updateSitePushMessageButtonState()"></div>
+                <div class="mt-3">
+                  <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.5rem;">
+                    <input type="checkbox" id="site-push-to-all" onchange="toggleSitePushUserList()">
+                    <span>Push to all users</span>
+                  </label>
+                </div>
+                <div id="site-push-message-user-wrap" class="mt-3 hidden">
+                  <span class="form-label" style="display:block; margin-bottom:0.35rem;">Select users</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="sitePushSelectAllUsers(true)">Select all</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="sitePushSelectAllUsers(false)">Deselect all</button>
+                  </div>
+                  <div id="site-push-message-user-list" class="site-push-user-list" style="max-height:12rem; overflow-y:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:0.5rem;"></div>
+                </div>
+                <div id="site-push-message-error" class="alert alert-error hidden mt-2"></div>
+                <div class="modal-footer" style="margin-top:1rem; padding:0;">
+                  <button type="button" class="btn btn-primary" id="site-push-message-btn" disabled onclick="handleSitePushMessagePrimaryClick()">Push</button>
+                  <button type="button" class="btn btn-secondary" id="site-push-message-cancel-btn" onclick="handleSitePushMessageCancelClick()">Cancel</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -3572,6 +3611,155 @@ async function savePushMessage() {
   if (btn) btn.disabled = false;
 }
 
+var sitePushConfirmStep = false;
+
+function sitePushMessageCmd(cmd) {
+  var editor = document.getElementById('site-push-message-editor');
+  if (!editor) return;
+  editor.focus();
+  if (cmd === 'createLink') {
+    var url = prompt('Link URL:', 'https://');
+    if (url == null) return;
+    url = (url || '').trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    document.execCommand(cmd, false, url);
+  } else {
+    document.execCommand(cmd, false, null);
+  }
+  updateSitePushMessageButtonState();
+}
+
+function updateSitePushMessageButtonState() {
+  var editor = document.getElementById('site-push-message-editor');
+  var btn = document.getElementById('site-push-message-btn');
+  if (!editor || !btn) return;
+  var raw = (editor.innerText || editor.textContent || '').trim();
+  var hasContent = raw.length > 0;
+  if (sitePushConfirmStep) btn.disabled = false;
+  else btn.disabled = !hasContent;
+}
+
+function toggleSitePushUserList() {
+  var pushToAll = document.getElementById('site-push-to-all');
+  var wrap = document.getElementById('site-push-message-user-wrap');
+  if (!pushToAll || !wrap) return;
+  if (pushToAll.checked) wrap.classList.add('hidden');
+  else { wrap.classList.remove('hidden'); populateSitePushUserList(); }
+}
+
+function populateSitePushUserList() {
+  var list = document.getElementById('site-push-message-user-list');
+  if (!list) return;
+  list.innerHTML = '';
+  var users = (typeof pages !== 'undefined' && Array.isArray(pages)) ? pages : [];
+  users.forEach(function(f) {
+    var label = document.createElement('label');
+    label.className = 'toggle-label site-push-user-option';
+    label.style.cssText = 'display:flex; align-items:center; gap:0.35rem; cursor:pointer; margin-bottom:0.25rem;';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'site-push-user-cb';
+    cb.dataset.username = f;
+    cb.value = f;
+    var span = document.createElement('span');
+    span.textContent = f;
+    label.appendChild(cb);
+    label.appendChild(span);
+    list.appendChild(label);
+  });
+  if (users.length === 0) {
+    var empty = document.createElement('p');
+    empty.className = 'form-hint';
+    empty.textContent = 'No users. Add users in Manage Users first.';
+    list.appendChild(empty);
+  }
+}
+
+function sitePushSelectAllUsers(checked) {
+  document.querySelectorAll('#site-push-message-user-list .site-push-user-cb').forEach(function(cb) { cb.checked = !!checked; });
+}
+
+function getSitePushTargetUsers() {
+  var pushToAll = document.getElementById('site-push-to-all');
+  if (pushToAll && pushToAll.checked) return (typeof pages !== 'undefined' && Array.isArray(pages)) ? pages.slice() : [];
+  var checked = [];
+  document.querySelectorAll('#site-push-message-user-list .site-push-user-cb:checked').forEach(function(cb) { checked.push(cb.value); });
+  return checked;
+}
+
+function handleSitePushMessageCancelClick() {
+  if (sitePushConfirmStep) {
+    sitePushConfirmStep = false;
+    document.getElementById('site-push-message-btn').textContent = 'Push';
+    document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
+    updateSitePushMessageButtonState();
+  }
+}
+
+function handleSitePushMessagePrimaryClick() {
+  if (sitePushConfirmStep) {
+    executeSitePushMessage();
+    return;
+  }
+  var targets = getSitePushTargetUsers();
+  var pushToAll = document.getElementById('site-push-to-all');
+  if (!pushToAll || !pushToAll.checked) {
+    if (targets.length === 0) {
+      showAlert('alert-admin-access', 'Select at least one user or check “Push to all users”.', 'error');
+      return;
+    }
+  }
+  sitePushConfirmStep = true;
+  document.getElementById('site-push-message-btn').textContent = 'Confirm Push';
+  document.getElementById('site-push-message-cancel-btn').textContent = 'Abort';
+  document.getElementById('site-push-message-btn').disabled = false;
+}
+
+async function executeSitePushMessage() {
+  var editor = document.getElementById('site-push-message-editor');
+  var errEl = document.getElementById('site-push-message-error');
+  var btn = document.getElementById('site-push-message-btn');
+  var raw = (editor && editor.innerHTML) ? editor.innerHTML.trim() : '';
+  if (!raw) {
+    errEl.textContent = 'Please enter a message.';
+    errEl.classList.remove('hidden');
+    sitePushConfirmStep = false;
+    document.getElementById('site-push-message-btn').textContent = 'Push';
+    document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
+    updateSitePushMessageButtonState();
+    return;
+  }
+  var html = sanitizePushMessageHtml(raw);
+  var targets = getSitePushTargetUsers();
+  if (targets.length === 0) {
+    showAlert('alert-admin-access', 'No users selected.', 'error');
+    return;
+  }
+  errEl.classList.add('hidden');
+  if (btn) btn.disabled = true;
+  var ok = 0;
+  var fail = 0;
+  for (var i = 0; i < targets.length; i++) {
+    try {
+      var r = await fetch(API + '/api/push-message/' + encodeURIComponent(targets[i]), { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ html: html }) });
+      if (r.ok) ok++; else fail++;
+    } catch (e) { fail++; }
+  }
+  sitePushConfirmStep = false;
+  document.getElementById('site-push-message-btn').textContent = 'Push';
+  document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
+  if (btn) btn.disabled = false;
+  updateSitePushMessageButtonState();
+  if (fail === 0) {
+    showAlert('alert-admin-access', 'Push message sent to ' + ok + ' user(s).', 'success');
+    editor.innerHTML = '';
+    updateSitePushMessageButtonState();
+  } else {
+    showAlert('alert-admin-access', 'Sent to ' + ok + ' user(s); ' + fail + ' failed.', 'error');
+  }
+}
+
 async function applySiteSettings() {
   var sdAll = document.getElementById('site-divert-all');
   var sdMaint = document.getElementById('site-maintenance');
@@ -3668,7 +3856,7 @@ async function setMaxContactPagesForUser(username, value) {
   } catch (e) { delete siteSettings.maxContactPagesByUser[uLower]; var inp = document.getElementById('max-pages-' + username); if (inp) inp.value = ''; showAlert('alert-manage', 'Connection error.', 'error'); }
 }
 
-function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); }
+function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); if (n === 'admin-access') populateSitePushUserList(); }
 
 function showModal(t, m, bc, bt, cb, useHtml) { document.getElementById('modal-title').textContent = t; var msgEl = document.getElementById('modal-message'); if (useHtml) msgEl.innerHTML = m; else msgEl.textContent = m; const b = document.getElementById('modal-confirm'); b.className = 'btn ' + bc; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
 function closeModal() { document.getElementById('modal').classList.remove('show'); modalCallback = null; }

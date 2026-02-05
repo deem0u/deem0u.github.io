@@ -102,12 +102,24 @@
   .signup-step1-card .card-body { padding: var(--space-3) var(--space-4); }
   .signup-step1-card .form-group { margin-bottom: var(--space-2); }
   .signup-step1-card .form-group:last-of-type { margin-bottom: 0; }
-  .signup-steps-section .signup-progress { margin-bottom: var(--space-3); }
-  .signup-step1-card .text-secondary.mb-3 { margin-bottom: var(--space-2); }
-  .signup-step1-card .secret-q-row { margin-bottom: var(--space-2); }
+  .signup-step1-card .step1-account-email-row { margin-bottom: var(--space-3); margin-top: 0; }
+  .signup-step1-card .form-input-readonly { background: var(--color-bg-muted, #f3f4f6); color: var(--color-text); min-height: 2.5rem; display: flex; align-items: center; }
+  .signup-step1-card .form-label { margin-bottom: 0.35rem; }
+  .signup-step1-card .form-hint { margin-top: 0.25rem; margin-bottom: 0; }
+  .signup-step1-card .form-hint-sq { margin-bottom: 0.5rem; }
+  .signup-step1-card .form-label-sq { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .signup-step1-card .easter-egg-sq { display: inline-flex; align-items: center; line-height: 0; }
+  .signup-step1-card .easter-egg-svg { width: 36px; height: 47px; color: var(--accent-teal, #1ac5b0); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1)); }
+  .signup-step1-card .secret-q-row { margin-bottom: 0.6rem; }
+  .signup-step1-card .secret-q-select { min-height: 2.5rem; }
+  .signup-step1-card .secret-q-answer { min-height: 2.25rem; }
+  .signup-steps-section .signup-progress { margin-bottom: var(--space-2); }
   .signup-step1-card #secret-questions-container .secret-q-row:last-child { margin-bottom: 0; }
-  .signup-step1-card .form-actions { margin-top: var(--space-3); }
+  .signup-step1-card .form-actions { margin-top: var(--space-2); }
   .signup-step1-card .consent-group { margin-top: 0; }
+  .signup-step1-card .form-actions .btn { padding: 0.5rem 1rem; }
+  .signup-step1-card #signup-step1-alert { margin-top: 0.5rem; margin-bottom: 0; }
+  .signup-step1-card .consent-text { font-size: 0.85rem; line-height: 1.5; }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -205,14 +217,16 @@
             <span class="step-pill" id="progress-step3">3. Finalise</span>
           </div>
           <div id="signup-step1-card" class="card signup-step1-card hidden">
-            <div class="card-header"><span class="card-title">Step 1 — Create Your Account</span></div>
             <div class="card-body">
-              <p class="text-secondary mb-3">Account Email: <strong id="step1-email-display"></strong></p>
+              <div class="form-group step1-account-email-row">
+                <label class="form-label">Account Email</label>
+                <div class="form-input form-input-readonly" id="step1-email-display" aria-readonly="true">—</div>
+              </div>
               <form id="signup-step1-form">
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
                   <input type="text" id="signup-folder" class="form-input" pattern="^[a-zA-Z0-9_-]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
-                  <span class="form-hint">Used in your contact page URL. e.g. john-smith → deem0u.github.io/john-smith/</span>
+                  <span class="form-hint">Will be used in your Contact Page URL e.g. john-smith → https://deem0u.github.io/user/john-smith/[Card URL Slug]</span>
                   <span class="form-error" id="error-signup-folder" role="alert"></span>
                 </div>
                 <div class="form-group">
@@ -222,8 +236,8 @@
                   <span class="form-error" id="error-signup-dob" role="alert"></span>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Security Questions <span class="form-required">*</span></label>
-                  <span class="form-hint" style="display:block; margin-bottom: 0.75rem;">Select 3 different questions and provide answers (4–30 characters each). Used for account recovery.</span>
+                  <label class="form-label form-label-sq"><span class="sq-label-inner">Security Questions <span class="form-required">*</span></span> <span class="easter-egg-sq" aria-hidden="true" title="Easter egg"><svg class="easter-egg-svg" viewBox="0 0 40 52" width="32" height="42" role="img" aria-label="Easter egg"><ellipse cx="20" cy="26" rx="18" ry="24" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 20 Q20 14 32 20 Q20 26 8 20" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 32 Q20 38 30 32" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="20" cy="12" r="2" fill="currentColor"/></svg></span></label>
+                  <span class="form-hint form-hint-sq">Select 3 different questions and provide answers (4–30 characters each). Used for account recovery.</span>
                   <div id="secret-questions-container">
                     <div class="secret-q-row"><select id="sq1" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><input type="text" id="sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq1-answer" role="alert"></span></div>
                     <div class="secret-q-row"><select id="sq2" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? 🥚</option></select><input type="text" id="sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq2-answer" role="alert"></span></div>
@@ -324,7 +338,7 @@
   const PAGES_URL = 'https://deem0u.github.io/user/';
   const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
   const SQ_OPTIONS = [
-    {v:'',t:'— Select question —'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce?'}
+    {v:'',t:'— Select question —'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce? 🥚'}
   ];
 
   function syncSecretQuestionOptions() {
