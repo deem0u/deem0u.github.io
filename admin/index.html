@@ -715,42 +715,46 @@
         <div id="modal-secrets-loading" class="modal-qr-loading"><span class="spinner"></span> Loading...</div>
         <div id="modal-secrets-form" class="hidden">
           <div class="form-group" id="secrets-password-group">
-            <div class="form-label-row form-label-row-badges" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
-              <label class="form-label" style="margin-bottom:0;">Password (User My Account sign-in)</label>
+            <div class="form-label-row form-label-row-badges">
+              <label class="form-label form-label-bold">Password (User My Account sign-in)</label>
               <span id="secrets-password-badge" class="badge"></span>
-              <span id="secrets-otp-value-wrap" class="secrets-otp-value-wrap hidden"><span id="secrets-otp-value"></span></span>
             </div>
-            <div class="form-inline-row" style="flex-wrap:wrap; gap:0.5rem; align-items:center;">
-              <input type="password" id="secrets-password" class="form-input" autocomplete="new-password" placeholder="" style="min-width:12ch;">
+            <div id="secrets-otp-value-wrap" class="secrets-otp-value-wrap hidden"><span id="secrets-otp-value"></span></div>
+            <div class="form-inline-row form-inline-row-compact">
+              <input type="password" id="secrets-password" class="form-input form-input-compact" autocomplete="new-password" placeholder="" style="min-width:12ch;">
               <button type="button" class="btn btn-secondary btn-sm" id="secrets-generate-otp-btn" onclick="generateOtpInSecretsModal()">Generate OTP</button>
-              <button type="button" class="btn btn-ghost btn-sm hidden" id="secrets-clear-otp-btn" onclick="clearOtpInSecretsModal()">Clear OTP</button>
+              <button type="button" class="btn btn-secondary btn-sm hidden" id="secrets-clear-otp-btn" onclick="clearOtpInSecretsModal()">Clear OTP</button>
               <button type="button" class="btn btn-ghost btn-sm hidden" id="secrets-delete-otp-btn" onclick="deleteOtpInSecretsModal()">Delete OTP</button>
             </div>
-            <span class="form-hint">Min 8 characters. Generate OTP to email a one-time sign-in; user will set a new password on first login.</span>
             <span class="form-error" id="error-secrets-password" role="alert"></span>
           </div>
           <div class="form-group" id="secrets-account-email-group">
-            <label class="form-label">Account Email</label>
-            <span id="secrets-email-verified-badge" class="badge hidden"></span>
-            <input type="email" id="secrets-account-email" class="form-input" autocomplete="email" placeholder="">
-            <span class="form-hint">Valid email for account management &amp; recovery. User can change in My Account; they then sign in with the new email.</span>
+            <div class="form-label-row form-label-row-badges">
+              <label class="form-label form-label-bold">Account Email</label>
+              <span id="secrets-email-verified-badge" class="badge hidden"></span>
+            </div>
+            <input type="email" id="secrets-account-email" class="form-input form-input-compact" autocomplete="email" placeholder="">
             <span class="form-error" id="error-secrets-account-email" role="alert"></span>
-            <div class="form-group" style="margin-top:0.5rem;">
-              <label class="consent-group" style="cursor:pointer;"><input type="checkbox" id="secrets-email-verified-admin"> <span>Admin: Email verified</span></label>
+            <div class="form-group form-group-compact">
+              <label class="consent-group" style="cursor:pointer;"><input type="checkbox" id="secrets-email-verified-admin"> <span>Email Verified (Admin Override)</span></label>
             </div>
           </div>
           <div class="form-group" id="secrets-dob-group">
-            <label class="form-label">Date of Birth</label>
-            <span id="secrets-dob-badge" class="badge"></span>
-            <input type="text" id="secrets-dob" class="form-input dob-mask" placeholder="" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
-            <span class="form-hint">Format: dd/mm/yyyy</span>
+            <div class="form-label-row form-label-row-badges">
+              <label class="form-label form-label-bold">Date of Birth</label>
+              <span id="secrets-dob-badge" class="badge"></span>
+            </div>
+            <input type="text" id="secrets-dob" class="form-input form-input-compact dob-mask" placeholder="" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
             <span class="form-error" id="error-secrets-dob" role="alert"></span>
           </div>
           <div class="form-group" id="secrets-sq-group">
-            <label class="form-label">Security Questions</label>
-            <span id="secrets-sq-badge" class="badge"></span>
-            <span class="form-hint" style="display:block; margin-bottom: 0.5rem;">Select 3 different questions and provide answers (4-30 characters each).</span>
-            <button type="button" class="btn btn-ghost btn-sm hidden" id="secrets-clear-sq-btn" onclick="clearSqInSecretsModal()" style="margin-bottom:0.5rem;">Reset SQ</button>
+            <div class="form-label-row form-label-row-badges form-label-row-sq">
+              <div class="form-label-badge-inner">
+                <label class="form-label form-label-bold">Security Questions</label>
+                <span id="secrets-sq-badge" class="badge"></span>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm hidden" id="secrets-clear-sq-btn" onclick="clearSqInSecretsModal()">Reset SQ</button>
+            </div>
             <div class="secret-q-row"><select id="secrets-sq1" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq1-answer" role="alert"></span></div></div>
             <div class="secret-q-row"><select id="secrets-sq2" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq2-answer" role="alert"></span></div></div>
             <div class="secret-q-row"><select id="secrets-sq3" class="form-input secret-q-select"><option value="">- Select question -</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce?</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="secrets-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-secrets-sq3-answer" role="alert"></span></div></div></div>
@@ -3425,8 +3429,7 @@ async function generateOtpInSecretsModal() {
       pwBadge.textContent = 'OTP generated (save to set)';
       pwBadge.className = 'badge badge-cyan';
       var otpWrap = document.getElementById('secrets-otp-value-wrap');
-      var otpVal = document.getElementById('secrets-otp-value');
-      if (otpWrap && otpVal) { otpVal.textContent = d.otp; otpWrap.classList.remove('hidden'); }
+      if (otpWrap) otpWrap.classList.add('hidden');
       document.getElementById('secrets-clear-otp-btn').classList.remove('hidden');
       document.getElementById('secrets-generate-otp-btn').classList.add('hidden');
       secretsModalSetDirty();
@@ -3446,7 +3449,7 @@ function clearOtpInSecretsModal() {
     if (lastSavedSecretsData.otpSet) {
       pwBadge.textContent = 'OTP Set';
       pwBadge.className = 'badge badge-cyan';
-      if (otpWrap && otpVal) { otpVal.textContent = 'Active'; otpWrap.classList.remove('hidden'); }
+      if (otpWrap && otpVal) { otpVal.textContent = (lastSavedSecretsData.otp && lastSavedSecretsData.otp.trim()) ? lastSavedSecretsData.otp : 'Active'; otpWrap.classList.remove('hidden'); }
     } else if (lastSavedSecretsData.passwordSet) {
       pwBadge.textContent = 'Password Set';
       pwBadge.className = 'badge badge-success';
@@ -3670,7 +3673,7 @@ function resetSecretsModal() {
   if (d.otpSet) {
     pwBadge.textContent = 'OTP Set';
     pwBadge.className = 'badge badge-cyan';
-    if (otpWrap && otpVal) { otpVal.textContent = 'Active'; otpWrap.classList.remove('hidden'); }
+    if (otpWrap && otpVal) { otpVal.textContent = (d.otp && d.otp.trim()) ? d.otp : 'Active'; otpWrap.classList.remove('hidden'); }
   } else if (d.passwordSet) {
     pwBadge.textContent = 'Password Set';
     pwBadge.className = 'badge badge-success';
@@ -3734,7 +3737,8 @@ async function showSecretsModal(folder) {
       emailVerified: !!d.emailVerified,
       emailVerification: d.emailVerification || null,
       passwordSet: !!d.passwordSet,
-      otpSet: !!d.otpSet
+      otpSet: !!d.otpSet,
+      otp: (d.otp && typeof d.otp === 'string') ? d.otp : null
     };
     document.getElementById('secrets-account-email').value = d.accountEmail || '';
     document.getElementById('secrets-dob').value = d.dob || '';
@@ -3765,7 +3769,7 @@ async function showSecretsModal(folder) {
     if (d.otpSet) {
       pwBadge.textContent = 'OTP Set';
       pwBadge.className = 'badge badge-cyan';
-      if (otpWrap && otpVal) { otpVal.textContent = 'Active'; otpWrap.classList.remove('hidden'); }
+      if (otpWrap && otpVal) { otpVal.textContent = (d.otp && d.otp.trim()) ? d.otp : 'Active'; otpWrap.classList.remove('hidden'); }
     } else if (d.passwordSet) {
       pwBadge.textContent = 'Password Set';
       pwBadge.className = 'badge badge-success';

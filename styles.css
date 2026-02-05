@@ -1654,10 +1654,76 @@ body {
 .secrets-otp-value-wrap {
   background: var(--grey-100);
   color: var(--color-text-secondary, var(--grey-500));
-  padding: 0.2rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   font-family: ui-monospace, monospace;
+  margin-bottom: 0.5rem;
+}
+
+/* Set Secrets modal: badges like user cards (teal/pink), compact fields, bold labels */
+#modal-secrets-form .form-label-row-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+#modal-secrets-form .form-label-row-sq {
+  justify-content: space-between;
+}
+
+#modal-secrets-form .form-label-badge-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#modal-secrets-form .form-label-bold {
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+#modal-secrets-form .form-input-compact,
+#modal-secrets-form .form-input-compact.form-input,
+#modal-secrets-form .secret-q-select.form-input,
+#modal-secrets-form .secret-q-answer.form-input {
+  padding: var(--space-2) var(--space-3);
+  min-height: 2rem;
+  box-sizing: border-box;
+}
+
+#modal-secrets-form .form-inline-row-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+#modal-secrets-form .form-group-compact {
+  margin-top: 0.5rem;
+}
+
+#modal-secrets-form .badge-cyan {
+  background: var(--accent-teal);
+  color: var(--white);
+}
+
+#modal-secrets-form .badge-pink {
+  background: var(--accent-pink);
+  color: var(--white);
+}
+
+#modal-secrets-form .badge-success {
+  background: var(--accent-teal);
+  color: var(--white);
+}
+
+#modal-secrets-form .badge-secondary {
+  background: var(--grey-200);
+  color: var(--grey-500);
 }
 
 /* ========================================

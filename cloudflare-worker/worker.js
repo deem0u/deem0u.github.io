@@ -2936,7 +2936,8 @@ async function handleGetSecrets(username, request, env) {
   const byUser = (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
   const emailVerification = byAdmin ? 'admin' : byUser ? 'user' : null;
   const passwordSet = !!(await env.EDIT_KEYS_KV.get('user_password_hash:' + username));
-  const otpSet = !!(await env.EDIT_KEYS_KV.get('user_otp:' + username));
+  const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
+  const otpSet = !!storedOtp;
   let secretQuestions = [];
   if (recoveryRaw) {
     try {
@@ -2944,7 +2945,9 @@ async function handleGetSecrets(username, request, env) {
       secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : [];
     } catch (_) {}
   }
-  return jsonResponse({ accountEmail: accountEmail || '', dob: dob || '', secretQuestions, emailVerified: byUser || byAdmin, emailVerification, passwordSet, otpSet });
+  const payload = { accountEmail: accountEmail || '', dob: dob || '', secretQuestions, emailVerified: byUser || byAdmin, emailVerification, passwordSet, otpSet };
+  if (auth.isAdmin && storedOtp) payload.otp = storedOtp;
+  return jsonResponse(payload);
 }
 
 async function handlePutSecrets(username, request, env) {
