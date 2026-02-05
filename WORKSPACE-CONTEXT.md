@@ -29,6 +29,7 @@ Proj.DigitalLuggageTags/   (= deem0u.github.io repo root)
 ├── form-descriptions.js
 ├── countries-data.js
 ├── SETUP-GUIDE.md
+├── DIGICON-ID-BRAND-TYPOGRAPHY.md   # Brand wordmark: Inter Bold, teal dot on dotless ı, sizes & colours
 ├── release/
 │   └── digital-luggage-tags-artifacts.zip
 └── WORKSPACE-CONTEXT.md  # This file
@@ -54,7 +55,10 @@ Proj.DigitalLuggageTags/   (= deem0u.github.io repo root)
    - New "Additional Information" feature and editing notes.
    - Updated "Files to Deploy" and daily-usage instructions.
 
-4. **Release artifacts**
+4. **DigiCon iD brand**
+   - **DIGICON-ID-BRAND-TYPOGRAPHY.md** — Reference for the wordmark: Inter Bold (700), letter-spacing -0.02em, dotless i (ı) with CSS teal dot (#00c9b7, 0.26em, top 0.12em). Header logo on home uses this (32px to fit 96px header height).
+
+5. **Release artifacts**
    - `release/digital-luggage-tags-artifacts.zip` includes SETUP-GUIDE, worker, wrangler, `styles.css`, `admin/index.html`, `myaccount/index.html`.
 
 ## Updating from GitHub
