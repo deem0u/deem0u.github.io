@@ -715,8 +715,11 @@
         <div id="modal-secrets-loading" class="modal-qr-loading"><span class="spinner"></span> Loading...</div>
         <div id="modal-secrets-form" class="hidden">
           <div class="form-group" id="secrets-password-group">
-            <label class="form-label">Password (User My Account sign-in)</label>
-            <span id="secrets-password-badge" class="badge"></span>
+            <div class="form-label-row form-label-row-badges" style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+              <label class="form-label" style="margin-bottom:0;">Password (User My Account sign-in)</label>
+              <span id="secrets-password-badge" class="badge"></span>
+              <span id="secrets-otp-value-wrap" class="secrets-otp-value-wrap hidden"><span id="secrets-otp-value"></span></span>
+            </div>
             <div class="form-inline-row" style="flex-wrap:wrap; gap:0.5rem; align-items:center;">
               <input type="password" id="secrets-password" class="form-input" autocomplete="new-password" placeholder="" style="min-width:12ch;">
               <button type="button" class="btn btn-secondary btn-sm" id="secrets-generate-otp-btn" onclick="generateOtpInSecretsModal()">Generate OTP</button>
@@ -3418,8 +3421,12 @@ async function generateOtpInSecretsModal() {
       secretsModalOtpLocal = d.otp;
       var pwInp = document.getElementById('secrets-password');
       if (pwInp) { pwInp.value = d.otp; pwInp.type = 'text'; pwInp.readOnly = true; pwInp.classList.add('readonly'); }
-      document.getElementById('secrets-password-badge').textContent = 'OTP generated (save to set)';
-      document.getElementById('secrets-password-badge').className = 'badge badge-cyan';
+      var pwBadge = document.getElementById('secrets-password-badge');
+      pwBadge.textContent = 'OTP generated (save to set)';
+      pwBadge.className = 'badge badge-cyan';
+      var otpWrap = document.getElementById('secrets-otp-value-wrap');
+      var otpVal = document.getElementById('secrets-otp-value');
+      if (otpWrap && otpVal) { otpVal.textContent = d.otp; otpWrap.classList.remove('hidden'); }
       document.getElementById('secrets-clear-otp-btn').classList.remove('hidden');
       document.getElementById('secrets-generate-otp-btn').classList.add('hidden');
       secretsModalSetDirty();
@@ -3433,11 +3440,25 @@ function clearOtpInSecretsModal() {
   var pwInp = document.getElementById('secrets-password');
   if (pwInp) { pwInp.value = ''; pwInp.type = 'password'; pwInp.readOnly = false; pwInp.disabled = false; pwInp.classList.remove('readonly'); }
   var pwBadge = document.getElementById('secrets-password-badge');
+  var otpWrap = document.getElementById('secrets-otp-value-wrap');
+  var otpVal = document.getElementById('secrets-otp-value');
   if (lastSavedSecretsData) {
-    if (lastSavedSecretsData.otpSet) { pwBadge.textContent = 'OTP Set'; pwBadge.className = 'badge badge-cyan'; }
-    else if (lastSavedSecretsData.passwordSet) { pwBadge.textContent = 'Password Set'; pwBadge.className = 'badge badge-success'; pwInp.placeholder = 'Set New Password or leave Empty to keep current'; }
-    else { pwBadge.textContent = 'Password Not Set'; pwBadge.className = 'badge badge-secondary'; pwInp.placeholder = ''; }
-  }
+    if (lastSavedSecretsData.otpSet) {
+      pwBadge.textContent = 'OTP Set';
+      pwBadge.className = 'badge badge-cyan';
+      if (otpWrap && otpVal) { otpVal.textContent = 'Active'; otpWrap.classList.remove('hidden'); }
+    } else if (lastSavedSecretsData.passwordSet) {
+      pwBadge.textContent = 'Password Set';
+      pwBadge.className = 'badge badge-success';
+      if (pwInp) pwInp.placeholder = 'Set New Password or leave Empty to keep current';
+      if (otpWrap) otpWrap.classList.add('hidden');
+    } else {
+      pwBadge.textContent = 'Password Not Set';
+      pwBadge.className = 'badge badge-secondary';
+      if (pwInp) pwInp.placeholder = '';
+      if (otpWrap) otpWrap.classList.add('hidden');
+    }
+  } else if (otpWrap) otpWrap.classList.add('hidden');
   document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
   document.getElementById('secrets-delete-otp-btn').classList.add('hidden');
   document.getElementById('secrets-generate-otp-btn').classList.remove('hidden');
@@ -3644,9 +3665,21 @@ function resetSecretsModal() {
     pwInp.classList.remove('readonly');
   }
   var pwBadge = document.getElementById('secrets-password-badge');
-  if (d.otpSet) { pwBadge.textContent = 'OTP Set'; pwBadge.className = 'badge badge-cyan'; }
-  else if (d.passwordSet) { pwBadge.textContent = 'Password Set'; pwBadge.className = 'badge badge-success'; }
-  else { pwBadge.textContent = 'Password Not Set'; pwBadge.className = 'badge badge-secondary'; }
+  var otpWrap = document.getElementById('secrets-otp-value-wrap');
+  var otpVal = document.getElementById('secrets-otp-value');
+  if (d.otpSet) {
+    pwBadge.textContent = 'OTP Set';
+    pwBadge.className = 'badge badge-cyan';
+    if (otpWrap && otpVal) { otpVal.textContent = 'Active'; otpWrap.classList.remove('hidden'); }
+  } else if (d.passwordSet) {
+    pwBadge.textContent = 'Password Set';
+    pwBadge.className = 'badge badge-success';
+    if (otpWrap) otpWrap.classList.add('hidden');
+  } else {
+    pwBadge.textContent = 'Password Not Set';
+    pwBadge.className = 'badge badge-secondary';
+    if (otpWrap) otpWrap.classList.add('hidden');
+  }
   document.getElementById('secrets-generate-otp-btn').classList.remove('hidden');
   document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
   document.getElementById('secrets-delete-otp-btn').classList.toggle('hidden', !d.otpSet);
@@ -3727,9 +3760,21 @@ async function showSecretsModal(folder) {
       pwInp.classList.remove('readonly');
     }
     var pwBadge = document.getElementById('secrets-password-badge');
-    if (d.otpSet) { pwBadge.textContent = 'OTP Set'; pwBadge.className = 'badge badge-cyan'; }
-    else if (d.passwordSet) { pwBadge.textContent = 'Password Set'; pwBadge.className = 'badge badge-success'; }
-    else { pwBadge.textContent = 'Password Not Set'; pwBadge.className = 'badge badge-secondary'; }
+    var otpWrap = document.getElementById('secrets-otp-value-wrap');
+    var otpVal = document.getElementById('secrets-otp-value');
+    if (d.otpSet) {
+      pwBadge.textContent = 'OTP Set';
+      pwBadge.className = 'badge badge-cyan';
+      if (otpWrap && otpVal) { otpVal.textContent = 'Active'; otpWrap.classList.remove('hidden'); }
+    } else if (d.passwordSet) {
+      pwBadge.textContent = 'Password Set';
+      pwBadge.className = 'badge badge-success';
+      if (otpWrap) otpWrap.classList.add('hidden');
+    } else {
+      pwBadge.textContent = 'Password Not Set';
+      pwBadge.className = 'badge badge-secondary';
+      if (otpWrap) otpWrap.classList.add('hidden');
+    }
     document.getElementById('secrets-generate-otp-btn').classList.remove('hidden');
     document.getElementById('secrets-clear-otp-btn').classList.add('hidden');
     document.getElementById('secrets-delete-otp-btn').classList.toggle('hidden', !d.otpSet);
