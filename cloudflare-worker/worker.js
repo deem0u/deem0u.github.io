@@ -361,6 +361,18 @@ export default {
       if (request.method === 'POST' && path === '/api/admin/delete-otp') {
         return await handleAdminDeleteOtp(request, env);
       }
+      if (request.method === 'PUT' && path.startsWith('/api/push-message/')) {
+        const raw = path.replace('/api/push-message/', '').replace(/\/$/, '');
+        let username = raw || '';
+        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
+        return await handlePutPushMessage(username, request, env);
+      }
+      if (request.method === 'GET' && path === '/api/push-message') {
+        return await handleGetPushMessage(request, env);
+      }
+      if (request.method === 'DELETE' && path === '/api/push-message') {
+        return await handleDismissPushMessage(request, env);
+      }
 
       if (request.method === 'POST' && path === '/api/recover/verify-reset-token') {
         return await handleVerifyResetToken(request, env);
@@ -2858,6 +2870,48 @@ async function handleCancelEmailChange(request, env) {
   await env.EDIT_KEYS_KV.delete('pending_email_change:' + username);
   // Account email was never changed (only handleVerifyEmailChange updates it), so keep user Verified.
   await env.EDIT_KEYS_KV.put('email_verified:' + username, '1');
+  return jsonResponse({ success: true });
+}
+
+/** PUT /api/push-message/:username - Admin only. Body: { html }. Stores a banner message for the user; shown on My Account until they click OK. */
+async function handlePutPushMessage(username, request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  const u = (username || '').trim();
+  if (!u) return jsonResponse({ error: 'Username required' }, 400);
+  const uLower = u.toLowerCase();
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const html = typeof body.html === 'string' ? body.html.trim() : '';
+  if (!html) return jsonResponse({ error: 'Message content required' }, 400);
+  await env.EDIT_KEYS_KV.put('push_message:' + uLower, html);
+  return jsonResponse({ success: true });
+}
+
+/** GET /api/push-message - Bearer required. Returns the current user's push message if any. */
+async function handleGetPushMessage(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ html: null });
+  const html = await env.EDIT_KEYS_KV.get('push_message:' + username);
+  return jsonResponse(html ? { html } : { html: null });
+}
+
+/** DELETE /api/push-message - Bearer required. Dismisses the current user's push message (clears from KV). */
+async function handleDismissPushMessage(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ success: true });
+  await env.EDIT_KEYS_KV.delete('push_message:' + username);
   return jsonResponse({ success: true });
 }
 

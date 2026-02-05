@@ -603,7 +603,7 @@
   <div id="modal" class="modal-overlay">
     <div class="modal">
       <div class="modal-header"><h3 class="modal-title" id="modal-title">Confirm</h3></div>
-      <div class="modal-body"><p id="modal-message">Are you sure?</p></div>
+      <div class="modal-body"><div id="modal-message">Are you sure?</div></div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
         <button class="btn" id="modal-confirm">Confirm</button>
@@ -771,6 +771,31 @@
           <button type="button" class="btn btn-primary" id="secrets-save-btn" onclick="saveSecrets()" disabled>Save</button>
           <button type="button" class="btn btn-secondary" onclick="resetSecretsModal(); closeSecretsModal();">Cancel</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-push-message" class="modal-overlay hidden">
+    <div class="modal" style="max-width: 560px;">
+      <div class="modal-header"><h3 class="modal-title" id="modal-push-message-title">Push Message</h3></div>
+      <div class="modal-body">
+        <p class="form-hint mb-3">Compose a message to show as a banner on this user's My Account page. Only bullets, numbered lists, bold, italic, underline and links are allowed.</p>
+        <div class="push-message-toolbar mb-2" role="toolbar" aria-label="Formatting">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('bold')" title="Bold"><b>B</b></button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('italic')" title="Italic"><i>I</i></button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('underline')" title="Underline"><u>U</u></button>
+          <span class="push-message-toolbar-sep" aria-hidden="true">|</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('insertUnorderedList')" title="Bullet list">• List</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('insertOrderedList')" title="Numbered list">1. List</button>
+          <span class="push-message-toolbar-sep" aria-hidden="true">|</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('createLink')" title="Insert link">Link</button>
+        </div>
+        <div id="push-message-editor" class="form-input push-message-editor" contenteditable="true" data-placeholder="Type your message here…" style="min-height: 140px; max-height: 280px; overflow-y: auto;"></div>
+        <div id="modal-push-message-error" class="alert alert-error hidden mt-2"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="push-message-save-btn" onclick="savePushMessage()">Push to user</button>
+        <button type="button" class="btn btn-secondary" onclick="closePushMessageModal()">Cancel</button>
       </div>
     </div>
   </div>
@@ -2484,8 +2509,8 @@ function renderList(t) {
           <div class="action-combo-group">
             <span class="action-row-label">Account &amp; Access Recovery</span>
             <div class="action-row-buttons" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
-              <button class="btn ${profileIncomplete ? 'btn-warning' : 'btn-black'} btn-sm" onclick="showProfileModal('${f}')">Edit Profile</button>
-              <button class="btn ${secretsIncomplete ? 'btn-warning' : 'btn-black'} btn-sm" onclick="showSecretsModal('${f}')">Set Secrets</button>
+              <button class="btn btn-black btn-sm ${profileIncomplete ? 'btn-incomplete' : ''}" onclick="showProfileModal('${f}')">Edit Profile</button>
+              <button class="btn btn-black btn-sm ${secretsIncomplete ? 'btn-incomplete' : ''}" onclick="showSecretsModal('${f}')">Set Secrets</button>
               <span style="display:inline-flex; align-items:center; gap:0.35rem;">
                 <input type="number" id="max-pages-${escapeHtml(f)}" class="form-input" min="0" step="1" value="${(function(){ var v = getMaxContactPagesForFolder(f); return v !== undefined ? Number(v) : ''; })()}" placeholder="0=unlimited" style="width:5ch; padding:0.25rem 0.35rem; font-size:0.875rem;" onchange="setMaxContactPagesForUser('${escapeHtml(f).replace(/'/g, "\\'")}', this.value)" title="0 = unlimited">
                 <span class="form-hint" style="margin:0; font-size:0.8rem;">max pages</span>
@@ -2502,6 +2527,7 @@ function renderList(t) {
             <div class="action-row-buttons" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
               <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.35rem; cursor:pointer; font-size:0.875rem;"><input type="checkbox" class="divert-user-toggle" id="divert-${escapeHtml(f)}" data-username="${escapeHtml(f)}" onchange="toggleDivertUser(this)" ${(siteSettings.divertAllGlobal || siteSettings.divertUsers[f]) ? ' checked' : ''}><span>Divert to dev</span></label>
               <button type="button" class="btn btn-primary btn-sm" onclick="sendViaEmail('${f}')">Custom Email</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="showPushMessageModal('${escapeHtml(f).replace(/'/g, "\\'")}')">Push Message</button>
             </div>
           </div>
         </div>
@@ -3270,6 +3296,99 @@ function generateMailto(toEmail, folder) {
   return 'mailto:' + (toEmail ? encodeURIComponent(toEmail) : '') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 }
 
+var pushMessageModalFolder = null;
+
+function showPushMessageModal(folder) {
+  pushMessageModalFolder = folder;
+  document.getElementById('modal-push-message-title').textContent = 'Push Message - ' + folder;
+  var editor = document.getElementById('push-message-editor');
+  if (editor) { editor.innerHTML = ''; editor.focus(); }
+  document.getElementById('modal-push-message-error').classList.add('hidden');
+  document.getElementById('modal-push-message-error').textContent = '';
+  document.getElementById('modal-push-message').classList.remove('hidden');
+  document.getElementById('modal-push-message').classList.add('show');
+}
+
+function closePushMessageModal() {
+  document.getElementById('modal-push-message').classList.remove('show');
+  document.getElementById('modal-push-message').classList.add('hidden');
+  pushMessageModalFolder = null;
+}
+
+function pushMessageCmd(cmd) {
+  var editor = document.getElementById('push-message-editor');
+  if (!editor) return;
+  editor.focus();
+  if (cmd === 'createLink') {
+    var url = prompt('Link URL:', 'https://');
+    if (url == null) return;
+    url = (url || '').trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    document.execCommand(cmd, false, url);
+  } else {
+    document.execCommand(cmd, false, null);
+  }
+}
+
+function sanitizePushMessageHtml(html) {
+  var allowedTags = { b:1, i:1, u:1, strong:1, em:1, ul:1, ol:1, li:1, a:1, p:1, br:1, span:1 };
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  function walk(node) {
+    if (node.nodeType === 1) {
+      var tag = node.tagName.toLowerCase();
+      if (!allowedTags[tag]) {
+        while (node.firstChild) node.parentNode.insertBefore(node.firstChild, node);
+        node.parentNode.removeChild(node);
+        return;
+      }
+      if (tag === 'a') {
+        var href = node.getAttribute('href') || '';
+        if (!/^https?:\/\//i.test(href)) node.removeAttribute('href');
+      }
+      for (var i = node.childNodes.length - 1; i >= 0; i--) walk(node.childNodes[i]);
+    }
+  }
+  walk(div);
+  return div.innerHTML;
+}
+
+async function savePushMessage() {
+  if (!pushMessageModalFolder) return;
+  var editor = document.getElementById('push-message-editor');
+  var errEl = document.getElementById('modal-push-message-error');
+  var raw = (editor && editor.innerHTML) ? editor.innerHTML.trim() : '';
+  if (!raw) {
+    errEl.textContent = 'Please enter a message.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  var html = sanitizePushMessageHtml(raw);
+  errEl.classList.add('hidden');
+  var btn = document.getElementById('push-message-save-btn');
+  if (btn) btn.disabled = true;
+  try {
+    var r = await fetch(API + '/api/push-message/' + encodeURIComponent(pushMessageModalFolder), {
+      method: 'PUT',
+      headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html: html })
+    });
+    var d = await r.json().catch(function() { return {}; });
+    if (r.ok) {
+      showAlert('alert-manage', 'Push message set. The user will see it on their My Account page until they click OK.', 'success');
+      closePushMessageModal();
+    } else {
+      errEl.textContent = (d && d.error) || 'Failed to save.';
+      errEl.classList.remove('hidden');
+    }
+  } catch (e) {
+    errEl.textContent = 'Connection error.';
+    errEl.classList.remove('hidden');
+  }
+  if (btn) btn.disabled = false;
+}
+
 async function applySiteSettings() {
   var sdAll = document.getElementById('site-divert-all');
   var sdMaint = document.getElementById('site-maintenance');
@@ -3368,7 +3487,7 @@ async function setMaxContactPagesForUser(username, value) {
 
 function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); }
 
-function showModal(t, m, bc, bt, cb) { document.getElementById('modal-title').textContent = t; document.getElementById('modal-message').textContent = m; const b = document.getElementById('modal-confirm'); b.className = `btn ${bc}`; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
+function showModal(t, m, bc, bt, cb, useHtml) { document.getElementById('modal-title').textContent = t; var msgEl = document.getElementById('modal-message'); if (useHtml) msgEl.innerHTML = m; else msgEl.textContent = m; const b = document.getElementById('modal-confirm'); b.className = 'btn ' + bc; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
 function closeModal() { document.getElementById('modal').classList.remove('show'); modalCallback = null; }
 document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
 
@@ -3531,31 +3650,52 @@ function clearSqInSecretsModal() {
   secretsModalSetDirty();
 }
 
+function debugLine(label, value, isIssue) {
+  var v = escapeHtml(String(value));
+  return '<div class="debug-line">' + escapeHtml(label) + ': ' + (isIssue ? '<span class="debug-issue">' + v + '</span>' : v) + '</div>';
+}
+
 async function debugUserApi(folder) {
   try {
     var r = await fetch(API + '/api/admin/debug-user/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
     var data = await r.json();
     console.log('Debug user API response:', data);
     var d = data.debug || data;
-    if (!d) { showModal('Debug: ' + folder, (data.error || 'No data') + '\nFull response in console (F12).', 'btn-primary', 'OK', function() {}); return; }
-    var lines = [
-      'Username: ' + (d.username || folder),
-      'In GitHub repo: ' + (d.inGitHub ? 'Yes' : 'No (orphaned)'),
-      'Resolved email: ' + (d.resolvedEmail || '(none)'),
-      'First / Last: ' + (d.firstName || '(none)') + ' / ' + (d.lastName || '(none)'),
-      'Password set: ' + (d.passwordSet ? 'Yes' : 'No'),
-      'OTP set: ' + (d.otpSet ? 'Yes' : 'No'),
-      'Email verified: ' + (d.emailVerified ? 'Yes' : 'No') + (d.emailVerifiedAdmin ? ' (admin)' : ''),
-      'Access revoked: ' + (d.accessRevoked ? 'Yes' : 'No'),
-      'Max contact pages: ' + (d.maxContactPages != null ? d.maxContactPages : '(unset)'),
-      'Divert to dev: ' + (d.divertEmail ? 'Yes' : 'No'),
-      'Account details sent: ' + (d.accountDetailsSent ? 'Yes' : 'No'),
-      'DOB set: ' + (d.dobSet ? 'Yes' : 'No'),
-      'Recovery SQs: ' + (d.recoverySqCount || 0) + '/3',
-      'Contact page keys: ' + (d.contactPageKeysCount || 0)
-    ];
-    var msg = lines.join('\n') + '\n\nFull response in console (F12).';
-    showModal('Debug: ' + folder, msg, 'btn-primary', 'OK', function() {});
+    if (!d) { showModal('Debug: ' + folder, (data.error || 'No data') + '\n\nFull response in console (F12).', 'btn-primary', 'OK', function() {}); return; }
+    var uname = d.username || folder;
+    var inGh = d.inGitHub;
+    var email = d.resolvedEmail || '(none)';
+    var first = d.firstName || '(none)';
+    var last = d.lastName || '(none)';
+    var pwdSet = d.passwordSet;
+    var otpSet = d.otpSet;
+    var emailVer = d.emailVerified;
+    var emailVerAdmin = d.emailVerifiedAdmin;
+    var revoked = d.accessRevoked;
+    var maxPages = d.maxContactPages != null ? String(d.maxContactPages) : '(unset)';
+    var divert = d.divertEmail;
+    var detailsSent = d.accountDetailsSent;
+    var dobSet = d.dobSet;
+    var sqCount = (d.recoverySqCount || 0) + '/3';
+    var sqCountNum = d.recoverySqCount || 0;
+    var contactKeys = String(d.contactPageKeysCount || 0);
+    var html = '<div class="debug-output">' +
+      debugLine('Username', uname, false) +
+      debugLine('In GitHub repo', inGh ? 'Yes' : 'No (orphaned)', !inGh) +
+      debugLine('Resolved email', email, !d.resolvedEmail) +
+      debugLine('First / Last', first + ' / ' + last, !(d.firstName && d.lastName)) +
+      debugLine('Password set', pwdSet ? 'Yes' : 'No', !pwdSet) +
+      debugLine('OTP set', otpSet ? 'Yes' : 'No', false) +
+      debugLine('Email verified', (emailVer ? 'Yes' : 'No') + (emailVerAdmin ? ' (admin)' : ''), !emailVer && !emailVerAdmin) +
+      debugLine('Access revoked', revoked ? 'Yes' : 'No', revoked) +
+      debugLine('Max contact pages', maxPages, false) +
+      debugLine('Divert to dev', divert ? 'Yes' : 'No', false) +
+      debugLine('Account details sent', detailsSent ? 'Yes' : 'No', false) +
+      debugLine('DOB set', dobSet ? 'Yes' : 'No', !dobSet) +
+      debugLine('Recovery SQs', sqCount, sqCountNum < 3) +
+      debugLine('Contact page keys', contactKeys, (d.contactPageKeysCount || 0) === 0) +
+      '<div class="debug-line" style="margin-top:0.75rem; color:var(--color-text-secondary);">Full response in console (F12).</div></div>';
+    showModal('Debug: ' + folder, html, 'btn-primary', 'OK', function() {}, true);
   } catch (e) {
     console.error('Debug user API error:', e);
     showModal('Debug failed', (e && e.message) || 'Check console (F12).', 'btn-primary', 'OK', function() {});

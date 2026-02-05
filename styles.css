@@ -653,6 +653,47 @@ body {
   font-weight: 600;
 }
 
+/* Manual push message (admin → user) — teal banner, subtle teal background, black text; persistent until OK */
+.banner-push-message {
+  background: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.banner-push-message .banner-push-message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.banner-push-message .banner-push-message-content ul,
+.banner-push-message .banner-push-message-content ol {
+  margin: 0.5rem 0 0 1.25rem;
+  padding-left: 0.5rem;
+}
+
+.banner-push-message .banner-push-message-actions {
+  flex-shrink: 0;
+  margin-top: 1rem;
+}
+
+/* Admin: Push Message modal toolbar */
+.push-message-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem; }
+.push-message-toolbar-sep { margin: 0 0.25rem; color: var(--color-text-secondary); }
+.push-message-editor:empty::before { content: attr(data-placeholder); color: var(--color-text-secondary); }
+
+/* Debug API modal: formatted output, issues in red */
+.debug-output { font-family: var(--font-mono, monospace); font-size: var(--text-sm); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.debug-output .debug-line { margin-bottom: 0.25rem; }
+.debug-output .debug-line:last-child { margin-bottom: 0; }
+.debug-output .debug-issue { color: var(--color-danger); font-weight: 500; }
+
 /* ========================================
    Forms
    ======================================== */
@@ -1012,6 +1053,12 @@ body {
 
 .btn-black:hover:not(:disabled) {
   background: #1a1a1a;
+}
+
+/* Black button with thicker yellow border when incomplete (e.g. Edit Profile / Set Secrets) */
+.btn-black.btn-incomplete {
+  border-width: 2px;
+  border-color: var(--accent-yellow);
 }
 
 .btn-secondary {

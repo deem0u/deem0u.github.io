@@ -396,6 +396,12 @@
         <div id="unverified-banner" class="banner-reminder hidden">
           <span id="unverified-banner-text"><strong>Verify your email</strong> to edit your Contact Page and add new contact pages.</span> <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
         </div>
+        <div id="push-message-banner" class="banner-push-message hidden">
+          <div class="banner-push-message-content" id="push-message-banner-content"></div>
+          <div class="banner-push-message-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="push-message-ok-btn" onclick="dismissPushMessage()">OK</button>
+          </div>
+        </div>
         <div class="card card-welcome">
           <div class="card-body">
             <p class="card-welcome-text">
@@ -1542,6 +1548,39 @@ function setupContactPagesDropdown() {
   });
 }
 
+async function fetchAndShowPushMessage() {
+  if (!token) return;
+  var banner = document.getElementById('push-message-banner');
+  var contentEl = document.getElementById('push-message-banner-content');
+  if (!banner || !contentEl) return;
+  try {
+    var r = await fetch(API + '/api/push-message', { headers: { 'Authorization': 'Bearer ' + token } });
+    var d = await r.json().catch(function() { return {}; });
+    if (r.ok && d && d.html) {
+      contentEl.innerHTML = d.html;
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+      contentEl.innerHTML = '';
+    }
+  } catch (e) {
+    banner.classList.add('hidden');
+    contentEl.innerHTML = '';
+  }
+}
+
+async function dismissPushMessage() {
+  if (!token) return;
+  var banner = document.getElementById('push-message-banner');
+  var contentEl = document.getElementById('push-message-banner-content');
+  if (!banner || !contentEl) return;
+  try {
+    await fetch(API + '/api/push-message', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+  } catch (e) {}
+  banner.classList.add('hidden');
+  contentEl.innerHTML = '';
+}
+
 async function fetchContactPagesList() {
   var section = document.getElementById('contact-pages-section');
   var list = document.getElementById('contact-pages-list');
@@ -1734,6 +1773,7 @@ async function authenticateWithStoredSession() {
     await loadProfile();
     tryShowEasterEgg();
     applyUnverifiedRestriction();
+    await fetchAndShowPushMessage();
     await fetchContactPagesList();
     var list = document.getElementById('contact-pages-list');
     var dropdownWrap = document.getElementById('contact-pages-dropdown-wrap');
@@ -1807,6 +1847,7 @@ async function continueAfterAuth() {
     await loadProfile();
     tryShowEasterEgg();
     applyUnverifiedRestriction();
+    await fetchAndShowPushMessage();
     await fetchContactPagesList();
     var list = document.getElementById('contact-pages-list');
     var dropdownWrap = document.getElementById('contact-pages-dropdown-wrap');
