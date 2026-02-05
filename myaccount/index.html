@@ -41,6 +41,10 @@
   .status-banner { margin-bottom: 1rem; }
   .status-banner.hidden { display: none; }
   .status-banner.show { display: block; }
+  .status-banner-error-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .status-banner-error-row .alert-content { flex: 1; min-width: 0; }
+  .status-banner-dismiss { background: none; border: none; padding: 0.25rem 0; font-size: inherit; color: inherit; opacity: 0.85; cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .status-banner-dismiss:hover { text-decoration: underline; opacity: 1; }
   .verify-otp-input { font-size: 1.25rem; letter-spacing: 0.2em; text-align: center; }
   .editor-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
   .contact-pages-container { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--white, #fff); border-radius: var(--radius-md, 6px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
@@ -2956,7 +2960,7 @@ function showStatusBanner(msg, type) {
   var content = msg;
   if (type === 'loading' || type === 'saving' || type === 'refreshing') content = '<span class="spinner"></span> ' + msg;
   if (alertType === 'error') {
-    content = '<div class="alert-content">' + content + '</div><div class="alert-actions" style="margin-top:0.5rem"><button type="button" class="btn btn-secondary btn-sm" onclick="hideStatusBanner()">OK</button></div>';
+    content = '<div class="status-banner-error-row"><div class="alert-content">' + content + '</div><button type="button" class="status-banner-dismiss" onclick="hideStatusBanner()">OK</button></div>';
   } else {
     content = '<div class="alert-content">' + content + '</div>';
   }
