@@ -221,7 +221,7 @@ body {
 
 /* Consistent header: logo gap and title styling across all pages */
 .app-header .app-logo {
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 .app-header .app-logo-text {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
