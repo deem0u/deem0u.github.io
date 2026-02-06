@@ -249,10 +249,11 @@
                 <button type="button" class="btn btn-secondary" id="kv-orphans-refresh-btn">Check for orphaned keys</button>
                 <div id="kv-orphans-report" class="hidden mt-3">
                 <div class="kv-report-summary mb-3" style="padding:0.75rem; background:var(--color-bg-muted); border-radius:var(--radius-md);"></div>
-                <details class="mb-3" id="kv-orphans-details">
-                  <summary class="form-hint">Show key names</summary>
-                  <pre id="kv-orphans-keys" class="mt-2 p-2 font-mono text-sm" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); max-height:12rem; overflow:auto;"></pre>
-                </details>
+                <div class="mb-2" style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="document.querySelectorAll('#kv-orphans-keys-wrap .kv-orphans-key-cb').forEach(function(cb){ cb.checked = true; });">Select all</button>
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="document.querySelectorAll('#kv-orphans-keys-wrap .kv-orphans-key-cb').forEach(function(cb){ cb.checked = false; });">Deselect all</button>
+                </div>
+                <div id="kv-orphans-keys-wrap" class="mb-3" style="max-height:14rem; overflow:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:0.5rem;"></div>
                 <div id="kv-cleanup-actions" class="hidden">
                   <div class="form-group mb-3">
                     <button type="button" class="btn btn-secondary" id="kv-cleanup-dry-run-btn">Dry run (preview delete)</button>
@@ -261,7 +262,7 @@
                   <div id="kv-cleanup-confirm-block" class="mb-3" style="padding:0.75rem; background:var(--color-bg-muted); border-radius:var(--radius-md);">
                     <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.5rem;">
                       <input type="checkbox" id="kv-cleanup-confirm-checkbox">
-                      <span>I have reviewed the list and want to permanently delete these keys</span>
+                      <span>I have reviewed the list and want to permanently delete the selected keys</span>
                     </label>
                       <button type="button" class="btn btn-primary" id="kv-cleanup-delete-btn" disabled>Delete these keys</button>
                     </div>
@@ -1544,12 +1545,36 @@ async function refreshKvOrphansReport() {
     }
     var summaryEl = document.querySelector('#kv-orphans-report .kv-report-summary');
     if (summaryEl) {
-      summaryEl.textContent = 'Valid user folders: ' + (d.validUsernamesCount ?? 0) + '. Orphaned keys: ' + (d.orphanedKeys && d.orphanedKeys.length) + '. Expired temporary keys: ' + (d.expiredTemp && d.expiredTemp.length) + '. Total to delete: ' + total + '.';
+      summaryEl.textContent = 'Valid user folders: ' + (d.validUsernamesCount ?? 0) + '. Orphaned keys: ' + (d.orphanedKeys && d.orphanedKeys.length) + '. Expired temporary keys: ' + (d.expiredTemp && d.expiredTemp.length) + '. Select/deselect below, then Dry run, then confirm and Delete.';
     }
-    var keysPre = document.getElementById('kv-orphans-keys');
-    if (keysPre) {
-      var all = [].concat(d.orphanedKeys || [], d.expiredTemp || []);
-      keysPre.textContent = all.join('\n');
+    var keysWrap = document.getElementById('kv-orphans-keys-wrap');
+    if (keysWrap) {
+      keysWrap.innerHTML = '';
+      var keyList = d.keys || [].concat((d.orphanedKeys || []).map(function(n){ return { name: n, type: 'orphan' }; }), (d.expiredTemp || []).map(function(n){ return { name: n, type: 'expired' }; }));
+      keyList.forEach(function(k) {
+        var name = typeof k === 'string' ? k : k.name;
+        var type = typeof k === 'object' && k.type ? k.type : (d.orphanedKeys && d.orphanedKeys.indexOf(name) >= 0 ? 'orphan' : 'expired');
+        var label = document.createElement('label');
+        label.className = 'toggle-label';
+        label.style.cssText = 'display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.25rem 0;';
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'kv-orphans-key-cb';
+        cb.dataset.key = name;
+        cb.checked = true;
+        var span = document.createElement('span');
+        span.className = 'font-mono';
+        span.style.fontSize = '0.8rem';
+        span.textContent = name;
+        var badge = document.createElement('span');
+        badge.className = type === 'orphan' ? 'badge badge-pink' : 'badge badge-secondary';
+        badge.style.marginLeft = '0.35rem';
+        badge.textContent = type === 'orphan' ? 'Orphaned' : 'Expired';
+        span.appendChild(badge);
+        label.appendChild(cb);
+        label.appendChild(span);
+        keysWrap.appendChild(label);
+      });
     }
     document.getElementById('kv-cleanup-actions').classList.remove('hidden');
     showKvOrphansState('report');
@@ -1559,19 +1584,25 @@ async function refreshKvOrphansReport() {
   }
 }
 
+function getKvOrphansSelectedKeys() {
+  var cbs = document.querySelectorAll('#kv-orphans-keys-wrap .kv-orphans-key-cb:checked');
+  return Array.prototype.map.call(cbs, function(cb) { return cb.dataset.key; });
+}
+
 async function runKvCleanupDryRun() {
   var dryRunResult = document.getElementById('kv-dry-run-result');
   if (!dryRunResult) return;
   dryRunResult.textContent = 'Running dry run…';
+  var selected = getKvOrphansSelectedKeys();
   try {
     var r = await fetch(API + '/api/admin/kv-cleanup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({ dryRun: true })
+      body: JSON.stringify({ dryRun: true, keys: selected })
     });
     var d = await r.json();
     if (r.ok) {
-      dryRunResult.textContent = 'Would delete ' + (d.deleted || 0) + ' keys. Review the list above, then confirm below to delete for real.';
+      dryRunResult.textContent = 'Would delete ' + (d.deleted || 0) + ' key(s). Review, then check the box below and click Delete to confirm.';
       document.getElementById('kv-cleanup-confirm-block').classList.remove('hidden');
     } else {
       dryRunResult.textContent = (d && d.error) || 'Dry run failed';
@@ -1592,11 +1623,12 @@ async function runKvCleanupDelete() {
   if (!check || !check.checked) return;
   var btn = document.getElementById('kv-cleanup-delete-btn');
   if (btn) btn.disabled = true;
+  var selected = getKvOrphansSelectedKeys();
   try {
     var r = await fetch(API + '/api/admin/kv-cleanup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({ dryRun: false })
+      body: JSON.stringify({ dryRun: false, keys: selected })
     });
     var d = await r.json();
     if (r.ok) {
@@ -4160,6 +4192,7 @@ async function openKvPurgeModal(folder) {
     if (summaryEl) summaryEl.textContent = keys.length + ' key(s). Orphaned: ' + keys.filter(function(k){ return k.orphaned; }).length + '. Select/deselect, then Dry run, then confirm and Delete.';
     var listEl = document.getElementById('kv-purge-keys-list');
     listEl.innerHTML = '';
+    var currentUserLower = (kvPurgeUsername || '').trim().toLowerCase();
     keys.forEach(function(k) {
       var label = document.createElement('label');
       label.className = 'toggle-label';
@@ -4179,6 +4212,13 @@ async function openKvPurgeModal(folder) {
         badge.style.marginLeft = '0.35rem';
         badge.textContent = 'Orphaned';
         span.appendChild(badge);
+      }
+      if (k.username && k.username !== currentUserLower) {
+        var oldBadge = document.createElement('span');
+        oldBadge.className = 'badge badge-secondary';
+        oldBadge.style.marginLeft = '0.35rem';
+        oldBadge.textContent = 'Old username';
+        span.appendChild(oldBadge);
       }
       label.appendChild(cb);
       label.appendChild(span);

@@ -1611,7 +1611,7 @@ async function handlePutSiteSettings(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** Returns list of usernames (folder names) that exist in GitHub under user/ and have at least one .html file. */
+/** Returns list of usernames (folder names) that exist in GitHub under user/. A folder counts as valid if it exists as a directory (used for orphan check so keys for existing folders are not marked orphaned). */
 async function getValidUsernamesFromGitHub(env) {
   const response = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}?ref=${CONFIG.branch}`,
@@ -1628,25 +1628,7 @@ async function getValidUsernamesFromGitHub(env) {
   const usernames = (Array.isArray(contents) ? contents : [])
     .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
     .map(item => item.name);
-  const valid = [];
-  for (const username of usernames) {
-    try {
-      const r = await fetch(
-        `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
-        {
-          headers: {
-            'Authorization': `token ${env.GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'ContactPageEditor/1.0'
-          }
-        }
-      );
-      if (!r.ok) continue;
-      const files = Array.isArray(await r.json()) ? await r.json() : [];
-      if (files.some(f => f.name && f.name.endsWith('.html'))) valid.push(username);
-    } catch (_) {}
-  }
-  return valid;
+  return usernames;
 }
 
 /** Get a user-scoped KV value; tries lowercase key first to reduce reads when keys are stored lowercase. */
@@ -1758,25 +1740,34 @@ async function collectKvOrphans(env) {
   };
 }
 
-/** GET /api/admin/kv-orphans - Admin only. Returns orphaned and expired temp KV keys (source of truth = GitHub user folders). */
+/** GET /api/admin/kv-orphans - Admin only. Returns orphaned and expired temp KV keys. keys[] has { name, type: 'orphan'|'expired' } for select/deselect in UI. */
 async function handleGetKvOrphans(request, env) {
   if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   const data = await collectKvOrphans(env);
+  const keys = [
+    ...(data.orphanedKeys || []).map(name => ({ name, type: 'orphan' })),
+    ...(data.expiredTemp || []).map(name => ({ name, type: 'expired' }))
+  ];
   return jsonResponse({
     ...data,
+    keys,
     summary: { orphaned: data.orphanedKeys.length, expiredTemp: data.expiredTemp.length }
   });
 }
 
-/** POST /api/admin/kv-cleanup - Admin only. Body: { dryRun?: boolean }. Deletes orphaned and expired temp KV keys. Returns { deleted, deletedKeys }. */
+/** POST /api/admin/kv-cleanup - Admin only. Body: { dryRun?: boolean, keys?: string[] }. If keys provided, only those (must be in orphaned/expired). Else deletes all. Returns { deleted, deletedKeys }. */
 async function handleKvCleanup(request, env) {
   if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { body = {}; }
   const dryRun = body.dryRun === true;
   const data = await collectKvOrphans(env);
-  const toDelete = [...data.orphanedKeys, ...data.expiredTemp];
+  const allowedSet = new Set([...(data.orphanedKeys || []), ...(data.expiredTemp || [])]);
+  const requested = Array.isArray(body.keys) ? body.keys : null;
+  const toDelete = requested === null
+    ? [...(data.orphanedKeys || []), ...(data.expiredTemp || [])]
+    : requested.filter(k => allowedSet.has(k));
   if (!dryRun && toDelete.length > 0) {
     for (const key of toDelete) {
       await env.EDIT_KEYS_KV.delete(key);
@@ -1789,13 +1780,30 @@ async function handleKvCleanup(request, env) {
   });
 }
 
-/** Collects all KV key names that belong to or reference the given username. Returns { keyNames, orphaned, validUsernamesCount }. */
+/** Collects all KV key names that belong to the given username or any "old" username (same account email, e.g. pre-rename). Returns { keys: [ { name, orphaned, username } ], validUsernamesCount }. Orphaned = folder not in GitHub. */
 async function collectKvUserKeys(env, username) {
   const u = username.trim().toLowerCase();
   const validUsernames = await getValidUsernamesFromGitHub(env);
-  const validSet = new Set(validUsernames.map(x => x.toLowerCase()));
-  const orphaned = !validSet.has(u);
-  const keyNames = [];
+  const validSet = new Set(validUsernames.map(x => (x || '').toLowerCase()));
+  const accountEmail = (await getKvUser(env, 'account_email:', u, u) || '').trim().toLowerCase();
+  const sameEmailUsernames = new Set([u]);
+  if (accountEmail) {
+    const accountEmailKeys = await listAllKvKeys(env, 'account_email:');
+    for (const name of accountEmailKeys) {
+      if (name.startsWith('account_email_to_folder:')) continue;
+      const suffix = (name.slice('account_email:'.length).split(':')[0] || '').trim().toLowerCase();
+      if (!suffix) continue;
+      const val = await env.EDIT_KEYS_KV.get(name);
+      if ((val || '').trim().toLowerCase() === accountEmail) sameEmailUsernames.add(suffix);
+    }
+  }
+  const keyEntries = [];
+  const seen = new Set();
+  const add = (name, suffixLower) => {
+    if (seen.has(name)) return;
+    seen.add(name);
+    keyEntries.push({ name, orphaned: !validSet.has(suffixLower), username: suffixLower });
+  };
   const prefixes = [
     'account_email:', 'user_password_hash:', 'user_first_name:', 'user_last_name:', 'user_dob:', 'user_recovery:',
     'user_otp:', 'email_verified:', 'email_verified_admin:', 'account_details_sent:', 'access_revoked:',
@@ -1804,28 +1812,28 @@ async function collectKvUserKeys(env, username) {
   for (const prefix of prefixes) {
     const keys = await listAllKvKeys(env, prefix);
     for (const name of keys) {
-      const suffix = name.slice(prefix.length).split(':')[0].toLowerCase();
-      if (suffix === u) keyNames.push(name);
+      const suffix = (name.slice(prefix.length).split(':')[0] || '').toLowerCase();
+      if (sameEmailUsernames.has(suffix)) add(name, suffix);
     }
   }
-  const contactKeys = await listAllKvKeys(env, 'contact_page_name:' + u + ':');
-  keyNames.push(...contactKeys);
+  for (const sameU of sameEmailUsernames) {
+    const contactKeys = await listAllKvKeys(env, 'contact_page_name:' + sameU + ':');
+    for (const name of contactKeys) add(name, sameU);
+  }
   const toFolderKeys = await listAllKvKeys(env, 'account_email_to_folder:');
   for (const name of toFolderKeys) {
-    const folder = await env.EDIT_KEYS_KV.get(name);
-    if ((folder || '').trim().toLowerCase() === u) keyNames.push(name);
+    const folder = (await env.EDIT_KEYS_KV.get(name) || '').trim().toLowerCase();
+    if (sameEmailUsernames.has(folder)) add(name, folder);
   }
-  const uniqueKeys = [...new Set(keyNames)];
-  return { keyNames: uniqueKeys, orphaned, validUsernamesCount: validUsernames.length };
+  return { keys: keyEntries, validUsernamesCount: validUsernames.length };
 }
 
-/** GET /api/admin/kv-user-keys?username=X - Admin only. Returns { keys: [ { name, orphaned } ], validUsernamesCount }. */
+/** GET /api/admin/kv-user-keys?username=X - Admin only. Returns { keys: [ { name, orphaned, username } ], validUsernamesCount }. */
 async function handleGetKvUserKeys(username, request, env) {
   if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!username) return jsonResponse({ error: 'Username required' }, 400);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
-  const { keyNames, orphaned, validUsernamesCount } = await collectKvUserKeys(env, username);
-  const keys = keyNames.map(name => ({ name, orphaned }));
+  const { keys, validUsernamesCount } = await collectKvUserKeys(env, username);
   return jsonResponse({ keys, validUsernamesCount });
 }
 
@@ -1838,8 +1846,8 @@ async function handleKvUserPurge(request, env) {
   const keysToDelete = Array.isArray(body.keys) ? body.keys : [];
   const dryRun = body.dryRun === true;
   if (!username) return jsonResponse({ error: 'Username required' }, 400);
-  const { keyNames } = await collectKvUserKeys(env, username);
-  const allowedSet = new Set(keyNames);
+  const { keys: keyList } = await collectKvUserKeys(env, username);
+  const allowedSet = new Set(keyList.map(k => k.name));
   const toDelete = keysToDelete.filter(k => allowedSet.has(k));
   if (!dryRun && toDelete.length > 0) {
     for (const key of toDelete) {

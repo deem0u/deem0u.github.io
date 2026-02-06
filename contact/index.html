@@ -8,17 +8,210 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <title>DigiCon iD - Contact</title>
   <link rel="stylesheet" href="/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
   .app-nav.tabs { margin-bottom: 0; }
   .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
-  .contact-form-card { max-width: 520px; margin: 0 auto; }
-  .contact-form-card .card-title { font-size: 1.5rem; }
-  .contact-confirm { display: none; padding: 1.25rem; margin-top: 1rem; border-radius: var(--radius-md, 0.5rem); }
-  .contact-confirm.success { background: var(--color-success-bg, #dcfce7); color: var(--color-success-text, #166534); border: 1px solid var(--color-success, #16a34a); }
-  .contact-confirm.error { background: var(--color-error-bg, #fef2f2); color: var(--color-error-text, #991b1b); border: 1px solid var(--color-error, #dc2626); }
+
+  /* Contact page – DigiCon-inspired card and form */
+  :root.contact-page {
+    --contact-teal: #00c9b7;
+    --contact-teal-dark: #00a89a;
+    --contact-teal-light: #e6faf8;
+    --contact-navy: #1a2b4a;
+    --contact-cream: #fdfbf7;
+    --contact-grey-100: #f7f7f8;
+    --contact-grey-200: #e8e8ec;
+    --contact-grey-400: #9d9dab;
+    --contact-grey-600: #6b6b7b;
+  }
+
+  .contact-page .app-main { background: var(--contact-cream, #fdfbf7); }
+  .contact-page .app-container { max-width: 920px; margin: 0 auto; padding: 2rem 1rem !important; }
+
+  .contact-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 48px;
+    box-shadow: 0 8px 32px rgba(26, 43, 74, 0.08);
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 48px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .contact-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--contact-teal), var(--contact-teal-dark));
+  }
+
+  .contact-form-info h2 {
+    font-size: 1.625rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--contact-navy);
+  }
+  .contact-form-info > p {
+    color: var(--contact-grey-600);
+    margin-bottom: 2rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .contact-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 1.5rem;
+  }
+  .contact-info-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--contact-teal-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .contact-info-icon svg {
+    width: 22px;
+    height: 22px;
+    color: var(--contact-teal-dark);
+  }
+  .contact-info-content h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--contact-navy);
+    margin-bottom: 2px;
+  }
+  .contact-info-content p,
+  .contact-info-content a {
+    font-size: 0.875rem;
+    color: var(--contact-grey-600);
+  }
+  .contact-info-content a {
+    color: var(--contact-teal-dark);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .contact-info-content a:hover { text-decoration: underline; }
+
+  .contact-form-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .contact-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .contact-form-inner .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .contact-form-inner .form-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--contact-navy);
+  }
+  .contact-form-inner .form-input,
+  .contact-form-inner .form-textarea,
+  .contact-form-inner select.form-input {
+    padding: 14px 16px;
+    border: 2px solid var(--contact-grey-200);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    color: var(--contact-navy);
+    background: var(--contact-grey-100);
+    transition: border-color 0.2s ease, background 0.2s ease;
+    outline: none;
+  }
+  .contact-form-inner .form-input:focus,
+  .contact-form-inner .form-textarea:focus,
+  .contact-form-inner select.form-input:focus {
+    border-color: var(--contact-teal);
+    background: #fff;
+  }
+  .contact-form-inner .form-input::placeholder,
+  .contact-form-inner .form-textarea::placeholder {
+    color: var(--contact-grey-400);
+  }
+  .contact-form-inner .form-textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+  .contact-form-inner select.form-input {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239d9dab' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 44px;
+  }
+  .contact-submit-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 32px;
+    background: var(--contact-teal);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    margin-top: 0.5rem;
+    align-self: flex-start;
+  }
+  .contact-submit-btn:hover:not(:disabled) {
+    background: var(--contact-teal-dark);
+    transform: translateY(-2px);
+  }
+  .contact-submit-btn:disabled { opacity: 0.8; cursor: not-allowed; }
+  .contact-submit-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .contact-confirm {
+    display: none;
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+  }
+  .contact-confirm.success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #16a34a;
+  }
+  .contact-confirm.error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #dc2626;
+  }
+
+  @media (max-width: 768px) {
+    .contact-card {
+      grid-template-columns: 1fr;
+      padding: 32px 24px;
+      gap: 32px;
+    }
+    .contact-form-row { grid-template-columns: 1fr; }
+    .contact-submit-btn { width: 100%; justify-content: center; }
+  }
   </style>
 </head>
-<body>
+<body class="contact-page">
   <div class="app">
     <header class="app-header">
       <div class="app-header-inner">
@@ -51,30 +244,49 @@
     </header>
 
     <main class="app-main">
-      <div class="app-container" style="padding: 2rem 1rem;">
-        <div class="card contact-form-card">
-          <div class="card-header">
-            <span class="card-title">Contact us</span>
+      <div class="app-container">
+        <div class="contact-card">
+          <div class="contact-form-info">
+            <h2>Get in Touch</h2>
+            <p>Have a question or need help? Fill out the form and we'll get back to you within 24 hours.</p>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </div>
+              <div class="contact-info-content">
+                <h4>Email</h4>
+                <p><a href="mailto:deem0u.github.io@gmail.com">deem0u.github.io@gmail.com</a></p>
+              </div>
+            </div>
+            <div class="contact-info-item">
+              <div class="contact-info-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="contact-info-content">
+                <h4>Response time</h4>
+                <p>Usually within 24 hours</p>
+              </div>
+            </div>
           </div>
-          <div class="card-body">
-            <p class="text-secondary" style="margin-bottom: 1.25rem;">Send a message and we’ll get back to you as soon as we can.</p>
 
-            <div id="contact-form-wrap">
-              <form id="contact-form">
-                <div class="form-group">
-                  <label class="form-label" for="contact-name">Name <span class="form-required">*</span></label>
-                  <input type="text" id="contact-name" name="name" class="form-input" required maxlength="120" autocomplete="name" placeholder="Your name">
-                  <span class="form-error" id="error-contact-name" role="alert"></span>
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="contact-email">Email <span class="form-required">*</span></label>
-                  <input type="email" id="contact-email" name="email" class="form-input" required autocomplete="email" placeholder="your@email.com">
-                  <span class="form-error" id="error-contact-email" role="alert"></span>
+          <div id="contact-form-wrap">
+              <form id="contact-form" class="contact-form-inner">
+                <div class="contact-form-row">
+                  <div class="form-group">
+                    <label class="form-label" for="contact-name">Name <span class="form-required">*</span></label>
+                    <input type="text" id="contact-name" name="name" class="form-input" required maxlength="120" autocomplete="name" placeholder="Your name">
+                    <span class="form-error" id="error-contact-name" role="alert"></span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="contact-email">Email <span class="form-required">*</span></label>
+                    <input type="email" id="contact-email" name="email" class="form-input" required autocomplete="email" placeholder="john@example.com">
+                    <span class="form-error" id="error-contact-email" role="alert"></span>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="contact-enquiry">Enquiry type <span class="form-required">*</span></label>
                   <select id="contact-enquiry" name="enquiryType" class="form-input" required>
-                    <option value="">— Select —</option>
+                    <option value="">Select a topic…</option>
                     <option value="General Enquiry">General Enquiry</option>
                     <option value="MyAccount & Contact Pages">MyAccount & Contact Pages</option>
                     <option value="Website & Technical Support">Website & Technical Support</option>
@@ -85,18 +297,18 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="contact-message">Message <span class="form-required">*</span></label>
-                  <textarea id="contact-message" name="message" class="form-input form-textarea" required rows="5" maxlength="5000" placeholder="Your message"></textarea>
+                  <textarea id="contact-message" name="message" class="form-input form-textarea" required rows="5" maxlength="5000" placeholder="How can we help?"></textarea>
                   <span class="form-error" id="error-contact-message" role="alert"></span>
                 </div>
-                <div class="form-actions">
-                  <button type="submit" id="contact-submit" class="btn btn-primary btn-lg">Send message</button>
-                </div>
+                <button type="submit" id="contact-submit" class="contact-submit-btn">
+                  Send message
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
               </form>
             </div>
-
-            <div id="contact-confirm" class="contact-confirm" role="alert"></div>
-          </div>
         </div>
+
+        <div id="contact-confirm" class="contact-confirm" role="alert"></div>
       </div>
     </main>
     <footer class="app-footer">
