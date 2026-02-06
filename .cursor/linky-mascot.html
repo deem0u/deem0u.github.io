@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linky Mascot Suite</title>
+    <title>DigiCon iD Mascot Suite — Linky Family</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -106,15 +106,16 @@
         }
 
         .mascot-card.brand::before { background: linear-gradient(90deg, var(--accent-teal), var(--accent-cyan)); }
-        .mascot-card.signup::before { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-cyan)); }
-        .mascot-card.maintenance::before { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-warm-border)); }
-        .mascot-card.terms::before { background: linear-gradient(90deg, var(--accent-teal), var(--accent-teal-hover)); }
-        .mascot-card.contact::before { background: linear-gradient(90deg, var(--accent-pink), var(--accent-magenta)); }
-        .mascot-card.myaccount::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan)); }
-        .mascot-card.admin::before { background: linear-gradient(90deg, var(--accent-dark), var(--grey-500)); }
-        .mascot-card.error::before { background: linear-gradient(90deg, var(--accent-red), var(--accent-red-hover)); }
+        .mascot-card.qr::before { background: linear-gradient(90deg, var(--accent-dark), var(--grey-500)); }
+        .mascot-card.nfc::before { background: linear-gradient(90deg, var(--accent-yellow), var(--accent-warm)); }
+        .mascot-card.combo::before { background: linear-gradient(90deg, var(--accent-teal), var(--accent-yellow)); }
+        .mascot-card.terms::before { background: linear-gradient(90deg, var(--accent-teal), var(--accent-cyan)); }
+        .mascot-card.contact::before { background: linear-gradient(90deg, var(--accent-pink), var(--accent-purple)); }
+        .mascot-card.myaccount::before { background: linear-gradient(90deg, var(--accent-purple), var(--accent-magenta)); }
+        .mascot-card.admin::before { background: linear-gradient(90deg, var(--grey-500), var(--grey-900)); }
+        .mascot-card.error::before { background: linear-gradient(90deg, var(--accent-red), var(--grey-900)); }
         .mascot-card.loading::before { background: linear-gradient(90deg, var(--accent-cyan), var(--accent-teal)); }
-        .mascot-card.success::before { background: linear-gradient(90deg, var(--accent-teal), var(--accent-yellow)); }
+        .mascot-card.success::before { background: linear-gradient(90deg, var(--accent-teal), var(--accent-cyan)); }
 
         .mascot-card:hover {
             transform: translateY(-8px);
@@ -162,12 +163,84 @@
         }
 
         @keyframes wiggle {
-            0%, 100% { transform: rotate(-2deg); }
-            50% { transform: rotate(2deg); }
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.1; }
         }
 
         .float { animation: float 3s ease-in-out infinite; }
         .wiggle { animation: wiggle 2s ease-in-out infinite; }
+
+        /* Section header */
+        .section-header {
+            text-align: center;
+            margin: 60px 0 40px;
+        }
+
+        .section-header h2 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+            margin-bottom: 10px;
+        }
+
+        .section-header p {
+            color: var(--grey-500);
+            font-size: 1rem;
+        }
+
+        /* Trio Section */
+        .trio-section {
+            background: var(--white);
+            border-radius: 32px;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .trio-section h2 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+            margin-bottom: 40px;
+        }
+
+        .trio-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .trio-item {
+            text-align: center;
+        }
+
+        .trio-item svg {
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
+        }
+
+        .trio-item span {
+            display: block;
+            margin-top: 15px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            color: var(--accent-dark);
+        }
+
+        .trio-item small {
+            display: block;
+            color: var(--grey-500);
+            font-size: 0.8rem;
+        }
 
         /* Mini mascot grid */
         .mini-grid {
@@ -183,33 +256,94 @@
             font-size: 2rem;
             font-weight: 800;
             color: var(--accent-dark);
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             text-align: center;
         }
 
         .mini-mascots {
             display: flex;
             flex-wrap: wrap;
-            gap: 20px;
+            gap: 25px;
             justify-content: center;
         }
 
         .mini-item {
             text-align: center;
             padding: 15px;
-            transition: all 0.2s ease;
+            background: var(--grey-100);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .mini-item:hover {
+            background: var(--grey-200);
+            transform: translateY(-3px);
+        }
+
+        .mini-item svg {
+            width: 64px;
+            height: 64px;
         }
 
         .mini-item span {
             display: block;
-            margin-top: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent-dark);
+        }
+
+        .mini-item small {
+            display: block;
+            font-size: 0.7rem;
             color: var(--grey-500);
         }
 
         .mini-icon {
             transition: width 0.2s ease, height 0.2s ease;
+        }
+
+        /* How They Relate */
+        .relate-section {
+            background: var(--white);
+            border-radius: 32px;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        .relate-section h2 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+            margin-bottom: 10px;
+        }
+        .relate-intro {
+            color: var(--grey-500);
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+        .relate-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .relate-svg { display: block; }
+        .relate-arrow {
+            font-size: 1.5rem;
+            color: var(--grey-400);
+            font-weight: 700;
+        }
+        .relate-result {
+            background: var(--accent-teal);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-family: 'Nunito', sans-serif;
         }
 
         /* Color Palette Section */
@@ -255,21 +389,154 @@
 <body>
     <div class="container">
         <header>
-            <h1>📱 <span>Linky</span> Mascot Suite</h1>
-            <p class="subtitle">One character, every context — your friendly digital contact companion</p>
+            <h1>📱 <span>Linky</span> Mascot Family</h1>
+            <p class="subtitle">One character, multiple roles — Brand, QR, NFC & Combined</p>
         </header>
 
-        <!-- Main Mascots -->
-        <div class="mascot-grid">
+        <!-- The Family -->
+        <div class="trio-section">
+            <h2>Meet the Linky Family 👋</h2>
+            <div class="trio-container">
+                <!-- Linky QR -->
+                <div class="trio-item">
+                    <svg width="130" height="130" viewBox="0 0 160 160" class="wiggle" style="animation-delay: 0.2s;">
+                        <!-- Phone body -->
+                        <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+                        <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+                        <!-- Eyes -->
+                        <ellipse cx="67" cy="58" rx="10" ry="12" fill="#272932"/>
+                        <ellipse cx="93" cy="58" rx="10" ry="12" fill="#272932"/>
+                        <ellipse cx="67" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                        <ellipse cx="93" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                        <circle cx="69" cy="60" r="5" fill="#272932"/>
+                        <circle cx="95" cy="60" r="5" fill="#272932"/>
+                        <circle cx="71" cy="58" r="2" fill="#ffffff"/>
+                        <circle cx="97" cy="58" r="2" fill="#ffffff"/>
+                        <!-- Cheeks -->
+                        <ellipse cx="54" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                        <ellipse cx="106" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                        <!-- Smile -->
+                        <path d="M 68 78 Q 80 90 92 78" stroke="#272932" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <!-- Notch -->
+                        <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+                        <!-- Arms -->
+                        <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                        <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                        <circle cx="18" cy="60" r="9" fill="#272932"/>
+                        <circle cx="142" cy="60" r="9" fill="#272932"/>
+                        <!-- Feet -->
+                        <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+                        <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+                        <!-- QR Code on screen -->
+                        <rect x="60" y="88" width="40" height="28" rx="4" fill="#272932"/>
+                        <rect x="64" y="92" width="8" height="8" rx="1" fill="#ffffff"/>
+                        <rect x="88" y="92" width="8" height="8" rx="1" fill="#ffffff"/>
+                        <rect x="64" y="104" width="8" height="8" rx="1" fill="#ffffff"/>
+                        <rect x="75" y="95" width="4" height="4" fill="#ffffff"/>
+                        <rect x="81" y="99" width="4" height="4" fill="#ffffff"/>
+                        <rect x="75" y="104" width="4" height="4" fill="#1ac5b0"/>
+                        <rect x="81" y="108" width="4" height="4" fill="#ffffff"/>
+                        <rect x="88" y="104" width="4" height="4" fill="#ffffff"/>
+                        <rect x="92" y="108" width="4" height="4" fill="#ffffff"/>
+                    </svg>
+                    <span>Linky QR</span>
+                    <small>Scan to connect</small>
+                </div>
 
-            <!-- Brand Icon / Hero -->
+                <!-- Linky Brand (center, larger) -->
+                <div class="trio-item">
+                    <svg width="160" height="160" viewBox="0 0 160 160" class="float">
+                        <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+                        <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+                        <ellipse cx="67" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+                        <ellipse cx="93" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+                        <ellipse cx="67" cy="62" rx="7" ry="9" fill="#ffffff"/>
+                        <ellipse cx="93" cy="62" rx="7" ry="9" fill="#ffffff"/>
+                        <circle cx="69" cy="64" r="5" fill="#272932"/>
+                        <circle cx="95" cy="64" r="5" fill="#272932"/>
+                        <circle cx="71" cy="62" r="2" fill="#ffffff"/>
+                        <circle cx="97" cy="62" r="2" fill="#ffffff"/>
+                        <ellipse cx="54" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                        <ellipse cx="106" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                        <path d="M 65 85 Q 80 100 95 85" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                        <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+                        <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                        <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                        <circle cx="18" cy="60" r="9" fill="#272932"/>
+                        <circle cx="142" cy="60" r="9" fill="#272932"/>
+                        <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+                        <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+                        <rect x="62" y="102" width="36" height="16" rx="4" fill="#1ac5b0" opacity="0.9"/>
+                        <circle cx="72" cy="110" r="4" fill="#ffffff"/>
+                        <rect x="79" y="107" width="14" height="2.5" rx="1" fill="#ffffff"/>
+                        <rect x="79" y="112" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+                    </svg>
+                    <span>Linky</span>
+                    <small>Brand / Contact Page</small>
+                </div>
+
+                <!-- Linky NFC -->
+                <div class="trio-item">
+                    <svg width="130" height="130" viewBox="0 0 160 160" class="wiggle">
+                        <!-- Signal waves -->
+                        <circle cx="80" cy="85" r="72" fill="none" stroke="#fdf500" stroke-width="2" opacity="0.15" style="animation: pulse-ring 2s ease-in-out infinite;"/>
+                        <circle cx="80" cy="85" r="60" fill="none" stroke="#fdf500" stroke-width="2" opacity="0.25" style="animation: pulse-ring 2s ease-in-out infinite 0.3s;"/>
+                        <circle cx="80" cy="85" r="48" fill="none" stroke="#fdf500" stroke-width="2" opacity="0.35" style="animation: pulse-ring 2s ease-in-out infinite 0.6s;"/>
+                        <!-- Phone body -->
+                        <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+                        <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+                        <!-- Eyes -->
+                        <ellipse cx="67" cy="58" rx="10" ry="12" fill="#f0c14b"/>
+                        <ellipse cx="93" cy="58" rx="10" ry="12" fill="#f0c14b"/>
+                        <ellipse cx="67" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                        <ellipse cx="93" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                        <circle cx="69" cy="60" r="5" fill="#272932"/>
+                        <circle cx="95" cy="60" r="5" fill="#272932"/>
+                        <circle cx="71" cy="58" r="2" fill="#ffffff"/>
+                        <circle cx="97" cy="58" r="2" fill="#ffffff"/>
+                        <!-- Cheeks -->
+                        <ellipse cx="54" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                        <ellipse cx="106" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                        <!-- Smile -->
+                        <path d="M 68 78 Q 80 90 92 78" stroke="#272932" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <!-- Notch -->
+                        <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+                        <!-- Arms -->
+                        <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                        <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                        <circle cx="18" cy="60" r="9" fill="#272932"/>
+                        <circle cx="142" cy="60" r="9" fill="#272932"/>
+                        <!-- Feet -->
+                        <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+                        <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+                        <!-- NFC chip on screen -->
+                        <rect x="60" y="88" width="40" height="28" rx="6" fill="#f0c14b"/>
+                        <rect x="64" y="94" width="12" height="2" rx="1" fill="#b8860b" opacity="0.6"/>
+                        <rect x="64" y="99" width="16" height="2" rx="1" fill="#b8860b" opacity="0.6"/>
+                        <rect x="64" y="104" width="10" height="2" rx="1" fill="#b8860b" opacity="0.6"/>
+                        <rect x="64" y="109" width="14" height="2" rx="1" fill="#b8860b" opacity="0.6"/>
+                        <!-- NFC waves on chip -->
+                        <path d="M 84 96 Q 90 100 84 104" stroke="#b8860b" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        <path d="M 88 94 Q 96 100 88 106" stroke="#b8860b" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    </svg>
+                    <span>Linky NFC</span>
+                    <small>Tap to connect</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Size Cards -->
+        <div class="section-header">
+            <h2>Individual Mascots</h2>
+            <p>Use separately based on context</p>
+        </div>
+
+        <div class="mascot-grid">
+            <!-- Linky Brand -->
             <div class="mascot-card brand">
                 <svg class="mascot-svg float" viewBox="0 0 160 160">
-                    <!-- Phone body -->
                     <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
-                    <!-- Screen -->
                     <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
-                    <!-- Eyes -->
                     <ellipse cx="67" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
                     <ellipse cx="93" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
                     <ellipse cx="67" cy="62" rx="7" ry="9" fill="#ffffff"/>
@@ -278,11 +545,46 @@
                     <circle cx="95" cy="64" r="5" fill="#272932"/>
                     <circle cx="71" cy="62" r="2" fill="#ffffff"/>
                     <circle cx="97" cy="62" r="2" fill="#ffffff"/>
-                    <!-- Cheeks -->
                     <ellipse cx="54" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
                     <ellipse cx="106" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
-                    <!-- Smile -->
                     <path d="M 65 85 Q 80 100 95 85" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+                    <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                    <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                    <circle cx="18" cy="60" r="9" fill="#272932"/>
+                    <circle cx="142" cy="60" r="9" fill="#272932"/>
+                    <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+                    <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+                    <rect x="62" y="102" width="36" height="16" rx="4" fill="#1ac5b0" opacity="0.9"/>
+                    <circle cx="72" cy="110" r="4" fill="#ffffff"/>
+                    <rect x="79" y="107" width="14" height="2.5" rx="1" fill="#ffffff"/>
+                    <rect x="79" y="112" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+                </svg>
+                <h3>Linky</h3>
+                <p>The main brand mascot — your digital contact page personified</p>
+                <span class="context-tag">Brand / Hero / Contact</span>
+            </div>
+
+            <!-- Linky QR -->
+            <div class="mascot-card qr">
+                <svg class="mascot-svg wiggle" viewBox="0 0 160 160">
+                    <!-- Phone body -->
+                    <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+                    <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+                    <!-- Eyes - dark/monochrome for QR theme -->
+                    <ellipse cx="67" cy="58" rx="10" ry="12" fill="#272932"/>
+                    <ellipse cx="93" cy="58" rx="10" ry="12" fill="#272932"/>
+                    <ellipse cx="67" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                    <ellipse cx="93" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                    <circle cx="69" cy="60" r="5" fill="#272932"/>
+                    <circle cx="95" cy="60" r="5" fill="#272932"/>
+                    <circle cx="71" cy="58" r="2" fill="#ffffff"/>
+                    <circle cx="97" cy="58" r="2" fill="#ffffff"/>
+                    <!-- Cheeks -->
+                    <ellipse cx="54" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                    <ellipse cx="106" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                    <!-- Smile -->
+                    <path d="M 68 78 Q 80 90 92 78" stroke="#272932" stroke-width="3" fill="none" stroke-linecap="round"/>
                     <!-- Notch -->
                     <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
                     <!-- Arms -->
@@ -293,124 +595,145 @@
                     <!-- Feet -->
                     <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
                     <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
-                    <!-- Contact badge -->
-                    <rect x="62" y="102" width="36" height="16" rx="4" fill="#1ac5b0" opacity="0.9"/>
-                    <circle cx="72" cy="110" r="4" fill="#ffffff"/>
-                    <rect x="79" y="107" width="14" height="2.5" rx="1" fill="#ffffff"/>
-                    <rect x="79" y="112" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+                    <!-- QR Code on screen -->
+                    <rect x="58" y="86" width="44" height="32" rx="4" fill="#272932"/>
+                    <!-- QR corners -->
+                    <rect x="62" y="90" width="10" height="10" rx="2" fill="#ffffff"/>
+                    <rect x="64" y="92" width="6" height="6" rx="1" fill="#272932"/>
+                    <rect x="88" y="90" width="10" height="10" rx="2" fill="#ffffff"/>
+                    <rect x="90" y="92" width="6" height="6" rx="1" fill="#272932"/>
+                    <rect x="62" y="104" width="10" height="10" rx="2" fill="#ffffff"/>
+                    <rect x="64" y="106" width="6" height="6" rx="1" fill="#272932"/>
+                    <!-- QR data -->
+                    <rect x="75" y="92" width="4" height="4" fill="#ffffff"/>
+                    <rect x="81" y="96" width="4" height="4" fill="#ffffff"/>
+                    <rect x="75" y="100" width="4" height="4" fill="#1ac5b0"/>
+                    <rect x="81" y="104" width="4" height="4" fill="#ffffff"/>
+                    <rect x="88" y="104" width="4" height="4" fill="#ffffff"/>
+                    <rect x="92" y="108" width="4" height="4" fill="#ffffff"/>
+                    <rect x="75" y="108" width="4" height="4" fill="#ffffff"/>
+                    <!-- Scan lines decoration -->
+                    <line x1="52" y1="45" x2="52" y2="55" stroke="#1ac5b0" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                    <line x1="108" y1="45" x2="108" y2="55" stroke="#1ac5b0" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
                 </svg>
-                <h3>Brand Icon</h3>
-                <p>The primary Linky — friendly, approachable, ready to connect</p>
-                <span class="context-tag">Logo / Hero</span>
+                <h3>Linky QR</h3>
+                <p>Point your camera, scan the code, connect instantly</p>
+                <span class="context-tag">QR Generation / Scanning</span>
             </div>
 
-            <!-- Sign Up -->
-            <div class="mascot-card signup">
+            <!-- Linky NFC -->
+            <div class="mascot-card nfc">
                 <svg class="mascot-svg float" viewBox="0 0 160 160">
+                    <!-- Signal waves -->
+                    <circle cx="80" cy="85" r="75" fill="none" stroke="#fdf500" stroke-width="2" opacity="0.12"/>
+                    <circle cx="80" cy="85" r="65" fill="none" stroke="#fdf500" stroke-width="2" opacity="0.2"/>
+                    <circle cx="80" cy="85" r="55" fill="none" stroke="#fdf500" stroke-width="2" opacity="0.3"/>
                     <!-- Phone body -->
                     <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
-                    <!-- Screen -->
                     <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
-                    <!-- Excited eyes - wider -->
-                    <ellipse cx="67" cy="60" rx="11" ry="13" fill="#37ebf3"/>
-                    <ellipse cx="93" cy="60" rx="11" ry="13" fill="#37ebf3"/>
-                    <ellipse cx="67" cy="60" rx="8" ry="10" fill="#ffffff"/>
-                    <ellipse cx="93" cy="60" rx="8" ry="10" fill="#ffffff"/>
-                    <circle cx="69" cy="62" r="5" fill="#272932"/>
-                    <circle cx="95" cy="62" r="5" fill="#272932"/>
-                    <circle cx="71" cy="60" r="2" fill="#ffffff"/>
-                    <circle cx="97" cy="60" r="2" fill="#ffffff"/>
-                    <!-- Sparkle eyes -->
-                    <circle cx="66" cy="56" r="1.5" fill="#fdf500"/>
-                    <circle cx="92" cy="56" r="1.5" fill="#fdf500"/>
-                    <!-- Cheeks - more prominent -->
-                    <ellipse cx="52" cy="76" rx="6" ry="5" fill="#e455ae" opacity="0.5"/>
-                    <ellipse cx="108" cy="76" rx="6" ry="5" fill="#e455ae" opacity="0.5"/>
-                    <!-- Big excited smile -->
-                    <path d="M 62 82 Q 80 102 98 82" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <!-- Eyes - golden for NFC theme -->
+                    <ellipse cx="67" cy="58" rx="10" ry="12" fill="#f0c14b"/>
+                    <ellipse cx="93" cy="58" rx="10" ry="12" fill="#f0c14b"/>
+                    <ellipse cx="67" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                    <ellipse cx="93" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                    <circle cx="69" cy="60" r="5" fill="#272932"/>
+                    <circle cx="95" cy="60" r="5" fill="#272932"/>
+                    <circle cx="71" cy="58" r="2" fill="#ffffff"/>
+                    <circle cx="97" cy="58" r="2" fill="#ffffff"/>
+                    <!-- Cheeks -->
+                    <ellipse cx="54" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                    <ellipse cx="106" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                    <!-- Smile -->
+                    <path d="M 68 78 Q 80 90 92 78" stroke="#272932" stroke-width="3" fill="none" stroke-linecap="round"/>
                     <!-- Notch -->
                     <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
-                    <!-- Waving arm -->
-                    <path d="M 40 70 Q 22 55 12 40" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                    <!-- Arms -->
+                    <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
                     <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
-                    <circle cx="12" cy="40" r="9" fill="#272932"/>
+                    <circle cx="18" cy="60" r="9" fill="#272932"/>
                     <circle cx="142" cy="60" r="9" fill="#272932"/>
                     <!-- Feet -->
                     <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
                     <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
-                    <!-- Welcome banner -->
-                    <rect x="55" y="100" width="50" height="18" rx="9" fill="#fdf500"/>
-                    <text x="80" y="113" text-anchor="middle" fill="#272932" font-size="9" font-weight="bold" font-family="Nunito, sans-serif">WELCOME!</text>
-                    <!-- Sparkles -->
-                    <circle cx="135" cy="30" r="4" fill="#fdf500"/>
-                    <circle cx="25" cy="35" r="3" fill="#37ebf3"/>
-                    <circle cx="145" cy="95" r="3" fill="#e455ae"/>
+                    <!-- NFC chip on screen -->
+                    <rect x="58" y="86" width="44" height="32" rx="6" fill="url(#goldGradient)"/>
+                    <!-- Circuit lines -->
+                    <rect x="62" y="92" width="14" height="3" rx="1.5" fill="#b8860b" opacity="0.5"/>
+                    <rect x="62" y="98" width="18" height="3" rx="1.5" fill="#b8860b" opacity="0.5"/>
+                    <rect x="62" y="104" width="12" height="3" rx="1.5" fill="#b8860b" opacity="0.5"/>
+                    <rect x="62" y="110" width="16" height="3" rx="1.5" fill="#b8860b" opacity="0.5"/>
+                    <!-- NFC signal icon -->
+                    <path d="M 84 94 Q 92 100 84 106" stroke="#b8860b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M 89 91 Q 100 100 89 109" stroke="#b8860b" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+                    <defs>
+                        <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f9d976"/>
+                            <stop offset="50%" style="stop-color:#f0c14b"/>
+                            <stop offset="100%" style="stop-color:#d4a826"/>
+                        </linearGradient>
+                    </defs>
                 </svg>
-                <h3>Sign Up</h3>
-                <p>Excited to welcome new users with open arms</p>
-                <span class="context-tag">Registration / Onboarding</span>
+                <h3>Linky NFC</h3>
+                <p>Just tap your phone — magic connection in a blink</p>
+                <span class="context-tag">NFC Tags / Tap Actions</span>
             </div>
 
-            <!-- Maintenance -->
-            <div class="mascot-card maintenance">
-                <svg class="mascot-svg" viewBox="0 0 160 160">
+            <!-- Linky QR+NFC (Combo) -->
+            <div class="mascot-card combo">
+                <svg class="mascot-svg float" viewBox="0 0 160 160">
+                    <!-- Signal waves (NFC) -->
+                    <circle cx="80" cy="85" r="70" fill="none" stroke="#fdf500" stroke-width="2" opacity="0.12"/>
+                    <circle cx="80" cy="85" r="55" fill="none" stroke="#fdf500" stroke-width="2" opacity="0.2"/>
                     <!-- Phone body -->
                     <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
-                    <!-- Screen -->
                     <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
-                    <!-- Focused eyes - looking up/working -->
-                    <ellipse cx="67" cy="60" rx="10" ry="12" fill="#37ebf3"/>
-                    <ellipse cx="93" cy="60" rx="10" ry="12" fill="#37ebf3"/>
-                    <ellipse cx="67" cy="60" rx="7" ry="9" fill="#ffffff"/>
-                    <ellipse cx="93" cy="60" rx="7" ry="9" fill="#ffffff"/>
-                    <circle cx="67" cy="58" r="5" fill="#272932"/>
-                    <circle cx="93" cy="58" r="5" fill="#272932"/>
-                    <circle cx="69" cy="56" r="2" fill="#ffffff"/>
-                    <circle cx="95" cy="56" r="2" fill="#ffffff"/>
-                    <!-- Determined brows -->
-                    <path d="M 57 50 L 65 52" stroke="#272932" stroke-width="2.5" stroke-linecap="round"/>
-                    <path d="M 95 52 L 103 50" stroke="#272932" stroke-width="2.5" stroke-linecap="round"/>
-                    <!-- Cheeks -->
-                    <ellipse cx="54" cy="76" rx="5" ry="4" fill="#e455ae" opacity="0.3"/>
-                    <ellipse cx="106" cy="76" rx="5" ry="4" fill="#e455ae" opacity="0.3"/>
-                    <!-- Focused mouth - small o -->
-                    <ellipse cx="80" cy="90" rx="6" ry="5" fill="#272932"/>
-                    <ellipse cx="80" cy="89" rx="4" ry="3" fill="#ffffff"/>
-                    <!-- Notch -->
+                    <!-- Eyes - teal + gold hint -->
+                    <ellipse cx="67" cy="58" rx="10" ry="12" fill="#1ac5b0"/>
+                    <ellipse cx="93" cy="58" rx="10" ry="12" fill="#f0c14b"/>
+                    <ellipse cx="67" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                    <ellipse cx="93" cy="58" rx="7" ry="9" fill="#ffffff"/>
+                    <circle cx="69" cy="60" r="5" fill="#272932"/>
+                    <circle cx="95" cy="60" r="5" fill="#272932"/>
+                    <circle cx="71" cy="58" r="2" fill="#ffffff"/>
+                    <circle cx="97" cy="58" r="2" fill="#ffffff"/>
+                    <ellipse cx="54" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                    <ellipse cx="106" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                    <path d="M 68 78 Q 80 90 92 78" stroke="#272932" stroke-width="3" fill="none" stroke-linecap="round"/>
                     <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
-                    <!-- Hard hat -->
-                    <ellipse cx="80" cy="22" rx="30" ry="8" fill="#fdf500"/>
-                    <path d="M 50 22 Q 50 5 80 5 Q 110 5 110 22" fill="#fdf500"/>
-                    <rect x="65" y="8" width="30" height="6" rx="3" fill="#d1c5c0"/>
-                    <!-- Arms holding wrench -->
-                    <path d="M 40 75 Q 20 80 15 95" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
-                    <path d="M 120 75 Q 140 80 145 95" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
-                    <circle cx="15" cy="95" r="9" fill="#272932"/>
-                    <circle cx="145" cy="95" r="9" fill="#272932"/>
-                    <!-- Wrench -->
-                    <rect x="8" y="100" width="25" height="6" rx="3" fill="#666666"/>
-                    <circle cx="8" cy="103" r="6" fill="#666666"/>
-                    <circle cx="8" cy="103" r="3" fill="#ffffff"/>
-                    <!-- Feet -->
+                    <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                    <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                    <circle cx="18" cy="60" r="9" fill="#272932"/>
+                    <circle cx="142" cy="60" r="9" fill="#272932"/>
                     <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
                     <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
-                    <!-- Progress bar on screen -->
-                    <rect x="58" y="105" width="44" height="8" rx="4" fill="#DDDDDD"/>
-                    <rect x="58" y="105" width="28" height="8" rx="4" fill="#1ac5b0"/>
+                    <!-- Split: QR left, NFC right -->
+                    <rect x="52" y="88" width="32" height="28" rx="4" fill="#272932"/>
+                    <rect x="56" y="92" width="6" height="6" rx="1" fill="#ffffff"/>
+                    <rect x="74" y="92" width="6" height="6" rx="1" fill="#ffffff"/>
+                    <rect x="56" y="102" width="6" height="6" rx="1" fill="#ffffff"/>
+                    <rect x="64" y="96" width="3" height="3" fill="#1ac5b0"/>
+                    <rect x="76" y="88" width="32" height="28" rx="6" fill="url(#comboGold)"/>
+                    <rect x="80" y="94" width="12" height="2" rx="1" fill="#b8860b" opacity="0.6"/>
+                    <rect x="80" y="99" width="16" height="2" rx="1" fill="#b8860b" opacity="0.6"/>
+                    <path d="M 92 96 Q 98 100 92 104" stroke="#b8860b" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="comboGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f9d976"/>
+                            <stop offset="100%" style="stop-color:#d4a826"/>
+                        </linearGradient>
+                    </defs>
                 </svg>
-                <h3>Maintenance</h3>
-                <p>Hard at work making things better — back soon!</p>
-                <span class="context-tag">Under Construction</span>
+                <h3>Linky QR+NFC</h3>
+                <p>Scan or tap — one mascot for both entry points</p>
+                <span class="context-tag">Dual QR & NFC</span>
             </div>
 
             <!-- Terms & Conditions -->
             <div class="mascot-card terms">
                 <svg class="mascot-svg float" style="animation-duration: 4s" viewBox="0 0 160 160">
-                    <!-- Phone body -->
                     <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
-                    <!-- Screen -->
                     <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
-                    <!-- Trustworthy eyes -->
                     <ellipse cx="67" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
                     <ellipse cx="93" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
                     <ellipse cx="67" cy="62" rx="7" ry="9" fill="#ffffff"/>
@@ -419,25 +742,18 @@
                     <circle cx="95" cy="64" r="5" fill="#272932"/>
                     <circle cx="71" cy="62" r="2" fill="#ffffff"/>
                     <circle cx="97" cy="62" r="2" fill="#ffffff"/>
-                    <!-- Cheeks -->
                     <ellipse cx="54" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.3"/>
                     <ellipse cx="106" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.3"/>
-                    <!-- Reassuring smile -->
                     <path d="M 68 86 Q 80 96 92 86" stroke="#272932" stroke-width="3" fill="none" stroke-linecap="round"/>
-                    <!-- Notch -->
                     <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
-                    <!-- Arms crossed/secure -->
                     <path d="M 40 72 Q 30 78 35 90" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
                     <path d="M 120 72 Q 130 78 125 90" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
                     <circle cx="35" cy="90" r="9" fill="#272932"/>
                     <circle cx="125" cy="90" r="9" fill="#272932"/>
-                    <!-- Feet -->
                     <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
                     <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
-                    <!-- Shield badge -->
                     <path d="M 80 98 L 80 118 Q 80 125 72 128 Q 80 130 88 128 Q 96 125 96 118 L 96 98 Q 88 95 80 98" fill="#1ac5b0"/>
                     <path d="M 82 108 L 86 112 L 94 104" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                    <!-- Document icon floating -->
                     <rect x="125" y="35" width="22" height="28" rx="3" fill="#1ac5b0" opacity="0.8"/>
                     <rect x="129" y="42" width="14" height="2" rx="1" fill="#ffffff"/>
                     <rect x="129" y="47" width="10" height="2" rx="1" fill="#ffffff"/>
@@ -733,6 +1049,30 @@
                 <span class="context-tag">Confirmation / Done</span>
             </div>
 
+        </div>
+
+        <!-- How They Relate -->
+        <div class="relate-section">
+            <h2>How They Relate</h2>
+            <p class="relate-intro">QR or NFC → Contact Page</p>
+            <div class="relate-flow">
+                <svg class="relate-svg" viewBox="0 0 80 80" width="64" height="64">
+                    <rect x="20" y="12" width="40" height="56" rx="9" fill="#272932"/>
+                    <rect x="25" y="18" width="30" height="44" rx="5" fill="#fff"/>
+                    <rect x="32" y="50" width="16" height="12" rx="2" fill="#272932"/>
+                    <rect x="35" y="53" width="4" height="4" fill="#fff"/>
+                    <rect x="45" y="53" width="4" height="4" fill="#fff"/>
+                </svg>
+                <span class="relate-arrow">→</span>
+                <svg class="relate-svg" viewBox="0 0 80 80" width="64" height="64">
+                    <rect x="20" y="12" width="40" height="56" rx="9" fill="#272932"/>
+                    <rect x="25" y="18" width="30" height="44" rx="5" fill="#fff"/>
+                    <rect x="32" y="52" width="16" height="8" rx="4" fill="#f0c14b"/>
+                    <path d="M 38 56 Q 42 60 46 56" stroke="#b8860b" stroke-width="1.5" fill="none"/>
+                </svg>
+                <span class="relate-arrow">→</span>
+                <div class="relate-result">Contact Page</div>
+            </div>
         </div>
 
         <!-- Mini Icons Grid -->

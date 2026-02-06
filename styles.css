@@ -2,6 +2,7 @@
  * Contact Page Editor - Design System
  * Clean, modern interface with clear visual hierarchy
  */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap');
 
 :root {
   /* Grey palette */
@@ -66,8 +67,8 @@
   --focus-ring: rgba(26, 197, 176, 0.35);
   --focus-ring-primary: rgba(39, 41, 50, 0.3);
 
-  /* Typography */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Typography – main font matches How It Works (Quicksand) */
+  --font-sans: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, monospace;
   
   /* Font sizes */
