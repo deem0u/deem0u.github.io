@@ -178,22 +178,25 @@
   .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; min-height: 2.8em; cursor: default; position: relative; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
-  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.35rem; text-align: right; line-height: 1.2; user-select: none; -webkit-user-select: none; }
-  /* Hover: ring, inner padding, outline-offset for outer gap; label has margin-top for gap below box */
-  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.35rem; outline: 2px solid transparent; outline-offset: 2px; }
-  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.35rem; outline: 2px solid transparent; outline-offset: 2px; }
+  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.55rem; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; }
+  /* Hover: ring only (no padding to avoid vertical shift); margin for gap to adjacent "/"; label centered, more gap below box */
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); margin-right: 0.4rem; }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); margin-left: 0.4rem; }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
-  /* Edit mode: no boxes on username; slug field matches form inputs (border/background), teal/purple text; wrap slug to next line when needed */
-  #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; }
-  .editor-edit-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0; min-height: 2.25rem; font-size: var(--text-sm, 0.875rem); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-edit-prefix { flex: none; white-space: nowrap; display: inline-flex; align-items: center; }
+  /* Edit mode: row 1 = prefix; row 2 = slug full width; row 3 = warning full width; no space masking */
+  #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; display: flex; flex-direction: column; gap: 0.35rem 0; width: 100%; }
+  .editor-edit-url-anatomy .editor-edit-url-row { display: flex; align-items: flex-start; gap: 0.5rem; min-height: 2.25rem; font-size: var(--text-sm, 0.875rem); width: 100%; }
+  .editor-edit-url-anatomy .editor-edit-url-row-prefix { align-items: center; }
+  .editor-edit-url-anatomy .editor-edit-url-row-prefix .url-edit-prefix { flex: none; white-space: nowrap; display: inline-flex; align-items: center; }
+  .editor-edit-url-anatomy .editor-edit-url-row-slug { display: block; width: 100%; }
+  .editor-edit-url-anatomy .editor-edit-url-row-slug .url-slug-input { display: block; width: 100%; min-width: 0; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
+  .editor-edit-url-anatomy .editor-edit-url-row-slug .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
+  .editor-edit-url-anatomy .contact-page-slug-warning-full-width { width: 100%; margin: 0; box-sizing: border-box; }
   .editor-edit-url-anatomy .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); }
   .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { display: inline; font-size: inherit; font-weight: 700; color: var(--accent-teal, #1ac5b0); border: none; background: none; padding: 0; margin: 0; }
   .editor-edit-url-anatomy .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { flex: 0 1 auto; min-width: 3ch; width: auto; max-width: 100%; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   #contact-pages-section .profile-title { color: var(--accent-purple, #9370db); }
   #profile-username { color: var(--accent-teal, #1ac5b0); }
   .header-username-teal { color: var(--accent-teal, #1ac5b0); }
@@ -536,9 +539,14 @@
               <div class="form-group">
                 <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
                 <div class="editor-view-url-anatomy editor-edit-url-anatomy" id="edit-contact-page-url-anatomy">
-                  <div class="editor-view-url-line" id="edit-contact-page-url-line"><span class="url-edit-prefix"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span><input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" title="Contact Page URL" required></div>
+                  <div class="editor-edit-url-row editor-edit-url-row-prefix">
+                    <span class="url-edit-prefix editor-view-url-line"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span>
+                  </div>
+                  <div class="editor-edit-url-row editor-edit-url-row-slug">
+                    <input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" title="Contact Page URL" required>
+                  </div>
+                  <div id="contact-page-slug-warning" class="contact-page-slug-warning contact-page-slug-warning-full-width hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten.</div>
                 </div>
-                <div id="contact-page-slug-warning" class="contact-page-slug-warning hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten.</div>
                 <span class="form-hint form-hint-full-width">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
                 <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
               </div>
@@ -1378,18 +1386,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     viewUrlResizeTimer = setTimeout(function() { scaleViewUrlToFit(); scaleEditUrlToFit(); }, 150);
   });
   var slugInp = document.getElementById('contact-page-url-slug');
-  if (slugInp) slugInp.addEventListener('input', function() { setTimeout(scaleEditUrlToFit, 0); });
+  if (slugInp) {
+    slugInp.addEventListener('input', function() {
+      var v = this.value;
+      if (/\s/.test(v)) { this.value = v.replace(/\s/g, ''); }
+      setTimeout(scaleEditUrlToFit, 0);
+    });
+  }
   var slugWarning = document.getElementById('contact-page-slug-warning');
-  function showSlugWarning() { if (slugWarning) slugWarning.classList.remove('hidden'); }
+  var slugWarningEditText = 'Changes to the slug will change this page\'s URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten.';
+  var slugWarningCreateText = 'Once saved, changes to the slug will change this page\'s URL. Any QR codes and NFC tags pointing to the URL will need to be regenerated, reprinted, or rewritten.';
+  function showSlugWarning() {
+    if (slugWarning) {
+      slugWarning.textContent = isCreateMode ? slugWarningCreateText : slugWarningEditText;
+      slugWarning.classList.remove('hidden');
+    }
+  }
   function hideSlugWarning() { if (slugWarning) slugWarning.classList.add('hidden'); }
   if (slugInp) {
     slugInp.addEventListener('focus', showSlugWarning);
     slugInp.addEventListener('select', showSlugWarning);
     slugInp.addEventListener('blur', hideSlugWarning);
   }
-  var editUrlLine = document.getElementById('edit-contact-page-url-line');
-  if (editUrlLine && slugInp) {
-    editUrlLine.addEventListener('focusin', function(e) { if (e.target === slugInp) setTimeout(scaleEditUrlToFit, 0); });
+  var editUrlAnatomy = document.getElementById('edit-contact-page-url-anatomy');
+  if (editUrlAnatomy && slugInp) {
+    editUrlAnatomy.addEventListener('focusin', function(e) { if (e.target === slugInp) setTimeout(scaleEditUrlToFit, 0); });
   }
   var viewUrlAnatomy = document.getElementById('view-contact-page-url-anatomy');
   if (viewUrlAnatomy) {
@@ -1419,7 +1440,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (profileUsernameEl) {
     profileUsernameEl.addEventListener('focus', showProfileUsernameWarning);
     profileUsernameEl.addEventListener('select', showProfileUsernameWarning);
-    profileUsernameEl.addEventListener('input', scheduleProfileUsernameCheck);
+    profileUsernameEl.addEventListener('input', function() {
+      var v = this.value;
+      if (/\s/.test(v)) { this.value = v.replace(/\s/g, ''); }
+      scheduleProfileUsernameCheck();
+    });
     profileUsernameEl.addEventListener('blur', function() {
       var v = (this.value || '').trim();
       if (/^[a-zA-Z0-9_-]{3,28}$/.test(v)) this.value = v.toLowerCase();
@@ -1611,7 +1636,13 @@ function enterViewMode() {
 
 function cancelForm() {
   if (isCreateMode) {
-    enterViewMode();
+    if (contactPagesListData.length > 0) {
+      var firstSlug = (contactPagesListData[0] && contactPagesListData[0].slug != null) ? contactPagesListData[0].slug : 'index';
+      selectContactPage(firstSlug);
+    } else {
+      isCreateMode = false;
+      updateMainContentVisibility();
+    }
     return;
   }
   resetForm().then(function() {
