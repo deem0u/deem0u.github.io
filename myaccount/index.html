@@ -185,11 +185,13 @@
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
-  /* Edit mode: one wrap row (prefix + slug inline, slug expands/wraps); warning full width; slug text stays purple when invalid */
-  #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; display: flex; flex-direction: column; gap: 0.35rem 0; width: 100%; }
-  .editor-edit-url-anatomy .editor-edit-url-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.35rem; min-height: 2.25rem; font-size: var(--text-sm, 0.875rem); width: 100%; }
+  /* Edit mode: URL row extends to form edge; prefix then slug fills rest; slug wraps to own line when too long; warning full width */
+  #editor-contact-edit .form-group:has(#edit-contact-page-url-anatomy) { width: 100%; }
+  #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; display: flex; flex-direction: column; gap: 0.35rem 0; width: 100%; max-width: 100%; }
+  .editor-edit-url-anatomy .editor-edit-url-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-height: 2.25rem; font-size: var(--text-sm, 0.875rem); width: 100%; max-width: 100%; }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-edit-prefix { flex: none; white-space: nowrap; display: inline-flex; align-items: center; }
-  .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input { flex: 1 1 20ch; min-width: 3ch; max-width: 100%; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
+  .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input { flex: 1 1 0%; min-width: 10ch; max-width: 100%; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
+  .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input[size] { width: auto; }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input.is-invalid { color: var(--accent-purple, #9370db); }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   .editor-edit-url-anatomy .contact-page-slug-warning-full-width { width: 100%; margin: 0; box-sizing: border-box; }
@@ -1559,7 +1561,9 @@ function scaleEditUrlToFit() {
   if (!slugInput) return;
   var len = (slugInput.value || '').length;
   var minCh = len < 3 ? 3 : (len < 10 ? len + 1 : 10);
-  slugInput.size = Math.max(minCh, Math.min(28, len + 2));
+  var size = Math.max(minCh, Math.min(28, len + 2));
+  slugInput.size = size;
+  slugInput.style.minWidth = size + 'ch';
 }
 
 function getFormSnapshot() {

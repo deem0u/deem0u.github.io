@@ -204,13 +204,15 @@
     </main>
 
     <main id="screen-dashboard" class="app-main hidden">
-      <div class="app-container">
-        <div class="tabs">
-          <button class="tab" data-tab="admin-access">Admin Access &amp; Site Management</button>
-          <button class="tab active" data-tab="manage">Manage Users</button>
-          <button class="tab" data-tab="edit">Add Users / Edit Contact Information</button>
-        </div>
-
+      <div class="app-container dashboard-layout">
+        <nav class="dashboard-nav" aria-label="Dashboard sections">
+          <div class="dashboard-nav-tabs">
+            <button type="button" class="dashboard-tab tab" data-tab="admin-access">Admin Access &amp; Site Management</button>
+            <button type="button" class="dashboard-tab tab active" data-tab="manage">Manage Users</button>
+            <button type="button" class="dashboard-tab tab" data-tab="edit">Add Users / Edit Contact Information</button>
+          </div>
+        </nav>
+        <div class="dashboard-content">
         <div id="tab-admin-access" class="tab-content">
           <div id="alert-admin-access" class="alert mb-4" role="status" aria-live="polite"></div>
 
@@ -639,6 +641,7 @@
           </div>
         </div>
 
+        </div>
       </div>
     </main>
     <footer class="app-footer">

@@ -32,7 +32,7 @@ window.FORM_DESCRIPTIONS = {
   },
   'home-country': {
     label: 'Home Country',
-    hint: 'Your main country of residence.'
+    hint: 'Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.'
   },
   'dest-name': { label: 'Destination Name' },
   'dest-address': { label: 'Destination Address' },
