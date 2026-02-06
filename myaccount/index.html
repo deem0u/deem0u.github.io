@@ -82,6 +82,7 @@
   .contact-page-card .contact-page-card-row:first-child { margin-top: 0; }
   .contact-page-card .contact-page-card-label { flex-shrink: 0; font-size: 0.65rem; font-weight: 600; color: var(--color-text-secondary, #666); }
   .contact-page-card .contact-page-card-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; }
+  .contact-page-card .contact-page-card-row:nth-child(2) .contact-page-card-value { color: var(--accent-purple, #9370db); }
   #editor-contact-card .card-header-fields { gap: 0.35rem; }
   .card-header-fields { display: flex; flex-direction: column; gap: 0.5rem; }
   .card-header-field-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; }
@@ -144,20 +145,24 @@
   #editor-contact-edit #home-country-edit-container .searchable-select-options { max-height: 160px; }
   #editor-contact-edit #home-country-edit-container .searchable-select-option { padding: 0.25rem 0.35rem; font-size: 0.8125rem; }
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
-  .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+  .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
-  .editor-view-url-anatomy { display: grid; grid-template-columns: auto auto auto; grid-template-rows: auto auto; gap: 0 0; align-items: start; margin-top: 0.35rem; margin-bottom: 0.5rem; }
+  .editor-view-url-anatomy { display: grid; grid-template-columns: auto auto auto auto; grid-template-rows: auto auto; gap: 0 0; align-items: start; margin-top: 0.15rem; margin-bottom: 0.5rem; }
   .editor-view-url-line { display: contents; }
-  .editor-view-url-line .url-base { grid-column: 1; grid-row: 1; color: var(--color-text-secondary, #666); font-size: 0.9em; }
-  .editor-view-url-line .url-username { grid-column: 2; grid-row: 1; color: var(--accent-teal, #1ac5b0); font-weight: 600; word-break: break-all; }
-  .editor-view-url-line .url-slug { grid-column: 3; grid-row: 1; color: var(--accent-teal, #1ac5b0); font-weight: 600; word-break: break-all; padding-left: 0.15rem; }
+  .editor-view-url-line .url-base { grid-column: 1; grid-row: 1; color: var(--color-text-secondary, #666); font-size: 1em; text-decoration: none; }
+  .editor-view-url-line .url-username { grid-column: 2; grid-row: 1; color: var(--accent-teal, #1ac5b0); font-weight: 600; word-break: break-all; font-size: 1em; text-decoration: none; }
+  .editor-view-url-line .url-slash { grid-column: 3; grid-row: 1; color: var(--color-text-secondary, #999); font-weight: 600; font-size: 1em; text-decoration: none; }
+  .editor-view-url-line .url-slug { grid-column: 4; grid-row: 1; color: var(--accent-purple, #9370db); font-weight: 600; word-break: break-all; font-size: 1em; text-decoration: none; }
   .editor-view-url-underbracket { display: contents; }
-  .editor-view-url-underbracket .bracket-spacer { grid-column: 1; grid-row: 2; min-height: 1.5rem; }
+  .editor-view-url-underbracket .bracket-spacer { grid-column: 1; grid-row: 2; min-height: 0.75rem; }
   .editor-view-url-underbracket .bracket-segment { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
   .editor-view-url-underbracket .bracket-username { grid-column: 2; grid-row: 2; }
-  .editor-view-url-underbracket .bracket-slug { grid-column: 3; grid-row: 2; }
-  .editor-view-url-underbracket .bracket-line { border-bottom: 2px solid var(--color-border-strong, #999); margin-bottom: 0.2rem; min-height: 2px; }
+  .editor-view-url-underbracket .bracket-slug { grid-column: 4; grid-row: 2; }
+  .editor-view-url-underbracket .bracket-line { border-bottom: 2px solid var(--color-border-strong, #999); margin-bottom: 0.15rem; min-height: 2px; }
   .editor-view-url-underbracket .bracket-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; color: var(--color-text-secondary, #666); text-transform: uppercase; }
+  .editor-view-url-underbracket .bracket-slug .bracket-label { color: var(--accent-purple, #9370db); }
+  #contact-pages-section .profile-title { color: var(--accent-purple, #9370db); }
+  #profile-username { color: var(--accent-teal, #1ac5b0); }
   .header-username-teal { color: var(--accent-teal, #1ac5b0); }
   /* Easter egg: floating astronaut (only when eligible, first login of day) */
   .easter-egg-overlay { position: fixed; inset: 0; z-index: 9998; pointer-events: none; overflow: hidden; }
@@ -457,6 +462,7 @@
                   <div class="editor-view-url-line">
                     <span class="url-part url-base" id="view-contact-page-url-base">https://deem0u.github.io/user/</span>
                     <span class="url-part url-username" id="view-contact-page-url-username-part"></span>
+                    <span class="url-part url-slash" id="view-contact-page-url-slash">/</span>
                     <span class="url-part url-slug" id="view-contact-page-url-slug-part"></span>
                   </div>
                   <div class="editor-view-url-underbracket">
@@ -1415,8 +1421,10 @@ function refreshViewModeDisplay() {
   setView('view-contact-page-name', nameInp ? nameInp.value : '');
   var usernamePartEl = document.getElementById('view-contact-page-url-username-part');
   var slugPartEl = document.getElementById('view-contact-page-url-slug-part');
+  var slashEl = document.getElementById('view-contact-page-url-slash');
   if (usernamePartEl) usernamePartEl.textContent = u || '';
-  if (slugPartEl) slugPartEl.textContent = slug ? '/' + slug : '/';
+  if (slugPartEl) slugPartEl.textContent = slug || '';
+  if (slashEl) slashEl.textContent = (u || slug) ? '/' : '';
   setView('view-first-name', el('first-name'));
   setView('view-surname', el('surname'));
   setView('view-email', el('email'));
