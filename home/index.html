@@ -302,8 +302,8 @@
               <form id="signup-step1-form">
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
-                  <input type="text" id="signup-folder" class="form-input" pattern="^[a-zA-Z0-9_-]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
-                  <span class="form-hint">Used in your contact page URL. Letters, numbers, hyphens, underscores (3–32 chars). Stored as lowercase, e.g. John-Smith → john-smith.</span>
+                  <input type="text" id="signup-folder" class="form-input" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" required autocomplete="username">
+                  <span class="form-hint">Used in your contact page URL. Letters, numbers, hyphens, underscores (3–28 chars). Stored as lowercase, e.g. John-Smith → john-smith.</span>
                   <span class="form-error" id="error-signup-folder" role="alert"></span>
                 </div>
                 <div class="form-group">
@@ -464,9 +464,9 @@
 
   function validateFolder(val) {
     var s = (val || '').trim().toLowerCase();
-    var msg = 'User name must be 3–32 characters, using only letters, numbers, hyphens and underscores.';
+    var msg = 'User name must be 3–28 characters, using only letters, numbers, hyphens and underscores.';
     if (!s) return { valid: false, message: 'User name is required.' };
-    if (s.length < 3 || s.length > 32) return { valid: false, message: msg };
+    if (s.length < 3 || s.length > 28) return { valid: false, message: msg };
     if (!/^[a-zA-Z0-9_-]+$/.test(s)) return { valid: false, message: msg };
     return { valid: true };
   }
@@ -689,7 +689,7 @@
     var sq1 = document.getElementById('sq1').value, sq2 = document.getElementById('sq2').value, sq3 = document.getElementById('sq3').value;
     var a1 = document.getElementById('sq1-answer').value.trim(), a2 = document.getElementById('sq2-answer').value.trim(), a3 = document.getElementById('sq3-answer').value.trim();
     var consent = document.getElementById('signup-consent').checked;
-    var folderOk = /^[a-zA-Z0-9_-]{3,32}$/.test(username);
+    var folderOk = /^[a-zA-Z0-9_-]{3,28}$/.test(username);
     var namesOk = firstName && lastName && /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(firstName) && /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(lastName);
     var pwOk = storedPw.length >= 8;
     var dobOk = !!normalizeDob(dob);

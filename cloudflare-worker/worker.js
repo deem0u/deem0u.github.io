@@ -713,7 +713,7 @@ async function handleAuthUser(request, env) {
 
 async function handleCheckUsername(username, env) {
   const u = normalizeUsername(username);
-  if (!u || !/^[a-z0-9_-]{3,32}$/.test(u)) {
+  if (!u || !/^[a-z0-9_-]{3,28}$/.test(u)) {
     return jsonResponse({ available: false, error: 'Invalid username format (letters, numbers, hyphens, underscores only; stored as lowercase)' });
   }
   const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
@@ -765,8 +765,8 @@ async function handleSignup(request, env) {
   const dob = (body.dob || '').trim();
   const secretQuestions = Array.isArray(body.secretQuestions) ? body.secretQuestions : [];
 
-  if (!username || !/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
-    return jsonResponse({ error: 'Valid username required (3-32 chars, letters, numbers, hyphens, underscores)' }, 400);
+  if (!username || !/^[a-zA-Z0-9_-]{3,28}$/.test(username)) {
+    return jsonResponse({ error: 'Valid username required (3-28 chars, letters, numbers, hyphens, underscores)' }, 400);
   }
   if (!accountEmail || !accountEmail.includes('@')) {
     return jsonResponse({ error: 'Valid account email required' }, 400);
@@ -1079,10 +1079,10 @@ async function handleCreatePage(request, env) {
   }
 
   // Validate username (allow mixed case; stored as lowercase)
-  if (!/^[a-zA-Z0-9_-]{3,32}$/.test(usernameRaw)) {
-    return jsonResponse({ error: 'Invalid username. Use only letters, numbers, hyphens, and underscores (3–32 characters). Stored as lowercase.' }, 400);
+  if (!/^[a-zA-Z0-9_-]{3,28}$/.test(usernameRaw)) {
+    return jsonResponse({ error: 'Invalid username. Use only letters, numbers, hyphens, and underscores (3–28 characters). Stored as lowercase.' }, 400);
   }
-  if (!/^[a-z0-9_-]{3,32}$/.test(username)) {
+  if (!/^[a-z0-9_-]{3,28}$/.test(username)) {
     return jsonResponse({ error: 'Invalid username format' }, 400);
   }
 
@@ -1094,6 +1094,9 @@ async function handleCreatePage(request, env) {
   const contactpagename = (body.contactpagename || 'index').trim() || 'index';
   if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
     return jsonResponse({ error: 'Invalid contact page name' }, 400);
+  }
+  if (contactpagename !== 'index' && (contactpagename.length < 3 || contactpagename.length > 28)) {
+    return jsonResponse({ error: 'Contact page URL must be 3–28 characters' }, 400);
   }
 
   // Enforce max contact pages per account (0 = unlimited)
@@ -1213,8 +1216,8 @@ async function handleUserCreatePage(username, request, env) {
   if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
     return jsonResponse({ error: 'Contact page URL can only use letters, numbers, hyphens, and underscores' }, 400);
   }
-  if (contactpagename.length < 2 || contactpagename.length > 64) {
-    return jsonResponse({ error: 'Contact page URL must be 2–64 characters' }, 400);
+  if (contactpagename.length < 3 || contactpagename.length > 28) {
+    return jsonResponse({ error: 'Contact page URL must be 3–28 characters' }, 400);
   }
   const contactPageName = (body.contactPageName || '').trim();
   if (contactPageName && contactPageName.length > 128) {
@@ -1447,8 +1450,9 @@ async function handleAdminRenameUser(request, env) {
   const newUsername = (body.newUsername || '').trim().toLowerCase();
   if (!oldUsername || !newUsername) return jsonResponse({ error: 'oldUsername and newUsername required' }, 400);
   if (oldUsername === newUsername) return jsonResponse({ error: 'New username must be different' }, 400);
-  if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUsername)) {
-    return jsonResponse({ error: 'New username must be 3-32 characters, letters, numbers, hyphens, underscores' }, 400);
+  if (newUsername.length > 28) return jsonResponse({ error: 'New username must be 3-28 characters' }, 400);
+  if (!/^[a-zA-Z0-9_-]{3,28}$/.test(newUsername)) {
+    return jsonResponse({ error: 'New username must be 3-28 characters, letters, numbers, hyphens, underscores' }, 400);
   }
   const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
   if (reserved.includes(newUsername)) return jsonResponse({ error: 'This username is reserved' }, 400);
@@ -2668,7 +2672,7 @@ async function handleRecoveryCheck(request, env) {
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
   const username = (body.username || '').trim().toLowerCase();
-  if (!username || username.length < 3) return jsonResponse({ exists: false, canRecover: false });
+  if (!username || username.length < 3 || username.length > 28) return jsonResponse({ exists: false, canRecover: false });
   const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
   if (!pwHash) return jsonResponse({ exists: false, canRecover: false });
   const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
@@ -3039,8 +3043,9 @@ async function handleProfileRename(request, env) {
   if (!oldUsername || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const newUsername = (body.newUsername || '').trim().toLowerCase();
-  if (!newUsername || newUsername.length < 3) return jsonResponse({ error: 'New username required (3-32 characters)' }, 400);
-  if (!/^[a-zA-Z0-9_-]{3,32}$/.test(newUsername)) return jsonResponse({ error: 'Username must be 3-32 characters, letters, numbers, hyphens, underscores' }, 400);
+  if (!newUsername || newUsername.length < 3) return jsonResponse({ error: 'New username required (3-28 characters)' }, 400);
+  if (newUsername.length > 28) return jsonResponse({ error: 'New username must be 3-28 characters' }, 400);
+  if (!/^[a-zA-Z0-9_-]{3,28}$/.test(newUsername)) return jsonResponse({ error: 'Username must be 3-28 characters, letters, numbers, hyphens, underscores' }, 400);
   const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
   if (reserved.includes(newUsername)) return jsonResponse({ error: 'This username is reserved' }, 400);
   if (oldUsername === newUsername) return jsonResponse({ error: 'New username must be different' }, 400);
