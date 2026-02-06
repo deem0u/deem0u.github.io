@@ -73,11 +73,16 @@ function pageUrl(username, contactpagename) {
   return name === 'index' ? `${base}/` : `${base}/${name}.html`;
 }
 
-/** Parse path after /api/page/ into username and optional contactpagename (default 'index'). */
+/** Normalize username for API, KV, and GitHub paths: trim and lowercase. */
+function normalizeUsername(u) {
+  return (u || '').trim().toLowerCase();
+}
+
+/** Parse path after /api/page/ into username and optional contactpagename (default 'index'). Username is normalized to lowercase. */
 function parsePagePath(path) {
   const suffix = path.replace(/^\/api\/page\//, '').replace(/\/$/, '').trim();
   const parts = suffix.split('/').filter(Boolean);
-  const username = parts[0] || '';
+  const username = normalizeUsername(parts[0] || '');
   const contactpagename = (parts[1] && /^[a-zA-Z0-9_-]+$/.test(parts[1])) ? parts[1] : 'index';
   return { username, contactpagename };
 }
@@ -181,7 +186,7 @@ export default {
 
       // Check username availability (no auth)
       if (request.method === 'GET' && path.startsWith('/api/check-username/')) {
-        const username = path.replace('/api/check-username/', '').replace(/\/$/, '');
+        const username = path.replace('/api/check-username/', '').replace(/\/$/, '').trim();
         return await handleCheckUsername(username, env);
       }
       if (request.method === 'GET' && path.startsWith('/api/check-account-email/')) {
@@ -232,7 +237,7 @@ export default {
 
       // Route: POST /api/page/{username}/create - User creates a new contact page (Bearer, same user)
       if (request.method === 'POST' && path.match(/^\/api\/page\/[^/]+\/create$/)) {
-        const username = path.replace(/^\/api\/page\//, '').replace(/\/create$/, '').trim();
+        const username = normalizeUsername(path.replace(/^\/api\/page\//, '').replace(/\/create$/, ''));
         return await handleUserCreatePage(username, request, env);
       }
 
@@ -242,7 +247,7 @@ export default {
         return await handleGetPage(username, contactpagename, request, env);
       }
       if (request.method === 'POST' && path.match(/^\/api\/page\/[^/]+\/rename$/)) {
-        const username = path.replace(/^\/api\/page\//, '').replace(/\/rename$/, '').trim();
+        const username = normalizeUsername(path.replace(/^\/api\/page\//, '').replace(/\/rename$/, ''));
         return await handleRenamePage(username, request, env);
       }
       if (request.method === 'POST' && path.startsWith('/api/page/')) {
@@ -262,7 +267,7 @@ export default {
         return await handleListPages(request, env);
       }
       if (request.method === 'GET' && path.startsWith('/api/contact-pages/')) {
-        const username = path.replace('/api/contact-pages/', '').replace(/\/$/, '').trim();
+        const username = normalizeUsername(path.replace('/api/contact-pages/', '').replace(/\/$/, ''));
         return await handleListContactPages(username, request, env);
       }
       if (request.method === 'GET' && path === '/api/account-emails') {
@@ -272,7 +277,7 @@ export default {
         return await handleGetAccountProfiles(request, env);
       }
       if (request.method === 'POST' && path.startsWith('/api/account-details-sent/')) {
-        const username = path.replace('/api/account-details-sent/', '').replace(/\/$/, '');
+        const username = normalizeUsername(path.replace('/api/account-details-sent/', '').replace(/\/$/, ''));
         return await handleAccountDetailsSent(username, request, env);
       }
       if (request.method === 'POST' && path === '/api/secrets-status') {
@@ -282,23 +287,23 @@ export default {
         return await handleGetKeys(request, env);
       }
       if (request.method === 'PUT' && path.startsWith('/api/keys/')) {
-        const username = path.replace('/api/keys/', '').replace(/\/$/, '');
+        const username = normalizeUsername(path.replace('/api/keys/', '').replace(/\/$/, ''));
         return await handleResetAccess(username, request, env);
       }
       if (request.method === 'DELETE' && path.startsWith('/api/keys/')) {
-        const username = path.replace('/api/keys/', '').replace(/\/$/, '');
+        const username = normalizeUsername(path.replace('/api/keys/', '').replace(/\/$/, ''));
         return await handleRevokeAccess(username, request, env);
       }
       if (request.method === 'GET' && path.startsWith('/api/profile/')) {
-        const raw = path.replace('/api/profile/', '').replace(/\/$/, '');
-        let username = raw || '';
-        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
+        let raw = path.replace('/api/profile/', '').replace(/\/$/, '');
+        try { if (raw) raw = decodeURIComponent(raw); } catch (_) {}
+        const username = normalizeUsername(raw);
         return await handleGetProfile(username, request, env);
       }
       if (request.method === 'PUT' && path.startsWith('/api/profile/')) {
-        const raw = path.replace('/api/profile/', '').replace(/\/$/, '');
-        let username = raw || '';
-        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
+        let raw = path.replace('/api/profile/', '').replace(/\/$/, '');
+        try { if (raw) raw = decodeURIComponent(raw); } catch (_) {}
+        const username = normalizeUsername(raw);
         return await handlePutProfile(username, request, env);
       }
       if (request.method === 'POST' && path === '/api/profile/verify-email-change') {
@@ -707,18 +712,19 @@ async function handleAuthUser(request, env) {
 
 
 async function handleCheckUsername(username, env) {
-  if (!username || !/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
-    return jsonResponse({ available: false, error: 'Invalid username format' });
+  const u = normalizeUsername(username);
+  if (!u || !/^[a-z0-9_-]{3,32}$/.test(u)) {
+    return jsonResponse({ available: false, error: 'Invalid username format (letters, numbers, hyphens, underscores only; stored as lowercase)' });
   }
   const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
-  if (reserved.includes(username.toLowerCase())) {
+  if (reserved.includes(u)) {
     return jsonResponse({ available: false });
   }
   if (!env.GITHUB_TOKEN) {
     return jsonResponse({ available: true });
   }
   const res = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${u}?ref=${CONFIG.branch}`,
     {
       headers: {
         'Authorization': 'token ' + env.GITHUB_TOKEN,
@@ -1018,11 +1024,15 @@ async function validateAuth(username, request, env) {
   const secret = env.JWT_SECRET || env.SESSION_SECRET;
   if (token && secret) {
     const payload = await verifyJwt(token, secret);
-    if (payload && payload.username === username) {
+    const payloadUser = (payload && payload.username || '').trim();
+    const pathUser = (username || '').trim();
+    const match = payloadUser && pathUser && payloadUser.toLowerCase() === pathUser.toLowerCase();
+    if (payload && match) {
       if (payload.otpLogin) {
         return { authorized: false, isAdmin: false };
       }
-      if (env.EDIT_KEYS_KV && (await env.EDIT_KEYS_KV.get(`access_revoked:${username}`)) === '1') {
+      const normUser = pathUser.toLowerCase();
+      if (env.EDIT_KEYS_KV && (await env.EDIT_KEYS_KV.get(`access_revoked:${normUser}`)) === '1') {
         return { authorized: false, isAdmin: false };
       }
       return { authorized: true, isAdmin: false };
@@ -1043,7 +1053,8 @@ async function handleCreatePage(request, env) {
   }
 
   const body = await request.json();
-  const username = (body.username || body.folder || '').trim();
+  const usernameRaw = (body.username || body.folder || '').trim();
+  const username = normalizeUsername(usernameRaw);
   const content = body.content;
   const accountEmail = body.accountEmail;
   const firstName = (body.firstName || '').trim();
@@ -1053,7 +1064,6 @@ async function handleCreatePage(request, env) {
     return jsonResponse({ error: 'Missing username or content' }, 400);
   }
 
-  const usernameTrim = username.trim().toLowerCase();
   const accountEmailVal = (accountEmail || '').trim();
   if (accountEmailVal) {
     if (!accountEmailVal.includes('@')) {
@@ -1068,14 +1078,17 @@ async function handleCreatePage(request, env) {
     }
   }
 
-  // Validate username name (alphanumeric, hyphens, underscores only)
-  if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-    return jsonResponse({ error: 'Invalid username. Use only letters, numbers, hyphens, and underscores.' }, 400);
+  // Validate username (allow mixed case; stored as lowercase)
+  if (!/^[a-zA-Z0-9_-]{3,32}$/.test(usernameRaw)) {
+    return jsonResponse({ error: 'Invalid username. Use only letters, numbers, hyphens, and underscores (3–32 characters). Stored as lowercase.' }, 400);
+  }
+  if (!/^[a-z0-9_-]{3,32}$/.test(username)) {
+    return jsonResponse({ error: 'Invalid username format' }, 400);
   }
 
   // Check reserved names
-  if (['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user', 'styles.css', 'countries-data.js', 'form-descriptions.js'].includes(username.toLowerCase())) {
-    return jsonResponse({ error: 'This username name is reserved' }, 400);
+  if (['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user', 'styles.css', 'countries-data.js', 'form-descriptions.js'].includes(username)) {
+    return jsonResponse({ error: 'This username is reserved' }, 400);
   }
 
   const contactpagename = (body.contactpagename || 'index').trim() || 'index';
@@ -1083,9 +1096,9 @@ async function handleCreatePage(request, env) {
     return jsonResponse({ error: 'Invalid contact page name' }, 400);
   }
 
-  // Enforce max contact pages per account (0 = unlimited). Use username (not lowercase) for GitHub path - repo paths are case-sensitive.
+  // Enforce max contact pages per account (0 = unlimited)
   if (env.EDIT_KEYS_KV) {
-    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + usernameTrim);
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + username);
     const maxPages = parseInt(maxRaw, 10) || 0;
     if (maxPages > 0) {
       const currentCount = await getContactPageCountForUser(username, env);
@@ -1144,12 +1157,12 @@ async function handleCreatePage(request, env) {
   if (env.EDIT_KEYS_KV) {
     if (accountEmailVal && accountEmailVal.includes('@')) {
       const accountEmailLower = accountEmailVal.toLowerCase();
-      await env.EDIT_KEYS_KV.put('account_email:' + usernameTrim, accountEmailVal);
-      await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmailLower, usernameTrim);
+      await env.EDIT_KEYS_KV.put('account_email:' + username, accountEmailVal);
+      await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmailLower, username);
     }
-    if (firstName) await env.EDIT_KEYS_KV.put('user_first_name:' + usernameTrim, firstName);
-    if (lastName) await env.EDIT_KEYS_KV.put('user_last_name:' + usernameTrim, lastName);
-    await env.EDIT_KEYS_KV.put(`contact_page_name:${usernameTrim}:${contactpagename}`, displayName);
+    if (firstName) await env.EDIT_KEYS_KV.put('user_first_name:' + username, firstName);
+    if (lastName) await env.EDIT_KEYS_KV.put('user_last_name:' + username, lastName);
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${username}:${contactpagename}`, displayName);
   }
 
   return jsonResponse({
@@ -2362,20 +2375,19 @@ async function handlePageSummaries(request, env) {
   return jsonResponse({ pages, summaries });
 }
 
-/** GET /api/contact-pages/:username - List contact page names for a user (admin or same user via Bearer). */
+/** GET /api/contact-pages/:username - List contact page names for a user (admin or same user via Bearer). Username normalized to lowercase. */
 async function handleListContactPages(username, request, env) {
-  const u = (username || '').trim();
+  const u = normalizeUsername(username);
   const auth = await validateAuth(u, request, env);
   if (!auth.authorized) {
     return jsonResponse({ error: auth.isAdmin ? 'Admin access required' : 'Unauthorized' }, 401);
   }
-  if (!u || !/^[a-zA-Z0-9_-]+$/.test(u)) {
+  if (!u || !/^[a-z0-9_-]+$/.test(u)) {
     return jsonResponse({ error: 'Invalid username' }, 400);
   }
-  const uLower = (u || '').toLowerCase();
   let maxContactPages = 0;
   if (env.EDIT_KEYS_KV) {
-    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + uLower);
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + u);
     maxContactPages = parseInt(maxRaw, 10) || 0;
   }
   const response = await fetch(
@@ -2402,7 +2414,7 @@ async function handleListContactPages(username, request, env) {
   const contactPages = [];
   for (const slug of slugs) {
     const name = env.EDIT_KEYS_KV
-      ? (await env.EDIT_KEYS_KV.get(`contact_page_name:${uLower}:${slug}`)) || (slug === 'index' ? 'Main (index)' : slug)
+      ? (await env.EDIT_KEYS_KV.get(`contact_page_name:${u}:${slug}`)) || (slug === 'index' ? 'Main (index)' : slug)
       : (slug === 'index' ? 'Main (index)' : slug);
     contactPages.push({ slug, name });
   }
@@ -2775,14 +2787,16 @@ async function handleGetProfile(username, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) return jsonResponse({ error: 'Unauthorized' }, 401);
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
-  const firstName = await env.EDIT_KEYS_KV.get('user_first_name:' + username);
-  const lastName = await env.EDIT_KEYS_KV.get('user_last_name:' + username);
-  const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
-  const emailVerified = (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
-  const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
+  const u = (username || '').trim();
+  const uLower = u.toLowerCase();
+  const firstName = await getKvUser(env, 'user_first_name:', uLower, u);
+  const lastName = await getKvUser(env, 'user_last_name:', uLower, u);
+  const accountEmail = await getKvUser(env, 'account_email:', uLower, u);
+  const emailVerified = (await getKvUser(env, 'email_verified:', uLower, u)) === '1';
+  const dob = await getKvUser(env, 'user_dob:', uLower, u);
   const dobMasked = (dob && dob.length >= 4) ? '**/**/' + dob.slice(-4) : '';
   return jsonResponse({
-    username: username || '',
+    username: u || '',
     firstName: firstName || '',
     lastName: lastName || '',
     accountEmail: accountEmail || '',

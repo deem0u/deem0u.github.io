@@ -356,7 +356,7 @@
               <button type="button" class="btn btn-primary btn-sm mt-2 hidden" id="change-password-sq-btn" onclick="openChangePasswordSqModal()">Change Password &amp; Security Questions</button>
             </div>
             <div id="profile-edit" class="profile-edit hidden">
-              <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" placeholder="e.g. john-smith" autocomplete="username"><span class="form-hint">3–32 characters. Letters, numbers, hyphens, underscores. Must be unique.</span><span class="form-error" id="error-profile-username" role="alert"></span></div>
+              <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" placeholder="e.g. john-smith" autocomplete="username"><span class="form-hint">3–32 characters. Letters, numbers, hyphens, underscores. Stored as lowercase (e.g. John-Smith → john-smith). Must be unique.</span><span class="form-error" id="error-profile-username" role="alert"></span></div>
               <div class="form-group"><label class="form-label">First Name</label><input type="text" id="profile-edit-first-name" class="form-input" maxlength="32"></div>
               <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="profile-edit-last-name" class="form-input" maxlength="32"></div>
               <div class="form-group"><label class="form-label">Account Email <span class="form-required">*</span></label><input type="email" id="profile-edit-email" class="form-input"></div>
@@ -1310,6 +1310,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (profileUsernameEl) {
     profileUsernameEl.addEventListener('input', scheduleProfileUsernameCheck);
     profileUsernameEl.addEventListener('blur', function() {
+      var v = (this.value || '').trim();
+      if (/^[a-zA-Z0-9_-]{3,32}$/.test(v)) this.value = v.toLowerCase();
       if (profileUsernameCheckTimer) { clearTimeout(profileUsernameCheckTimer); profileUsernameCheckTimer = null; }
       runProfileUsernameValidation();
     });

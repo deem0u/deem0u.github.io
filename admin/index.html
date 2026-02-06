@@ -454,7 +454,7 @@
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
                   <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
-                  <span class="form-hint" id="hint-new-username"></span>
+                  <span class="form-hint" id="hint-new-username">3–32 characters. Letters, numbers, hyphens, underscores. Stored as lowercase (e.g. John-Smith → john-smith).</span>
                   <span class="form-error" id="error-new-username" role="alert"></span>
                 </div>
                 <div class="form-group">
@@ -2807,7 +2807,12 @@ function initFolderValidation() {
   function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
   inp.addEventListener('blur', function() {
     var r = validateFolder(this.value);
-    if (r.valid) clearErr(); else showErr(r.message);
+    if (r.valid) {
+      this.value = this.value.trim().toLowerCase();
+      clearErr();
+    } else {
+      showErr(r.message);
+    }
   });
   inp.addEventListener('input', function() {
     var r = validateFolder(this.value);
@@ -4323,6 +4328,8 @@ function updateProfileModalState() {
   var lnEl = document.getElementById('profile-last-name');
   var saveBtn = document.getElementById('profile-save-btn');
   if (!unEl || !saveBtn) return;
+  var raw = (unEl.value || '').trim();
+  if (/^[a-zA-Z0-9_-]{3,32}$/.test(raw)) unEl.value = raw.toLowerCase();
   var username = (unEl.value || '').trim();
   var firstName = (fnEl && fnEl.value) ? fnEl.value.trim() : '';
   var lastName = (lnEl && lnEl.value) ? lnEl.value.trim() : '';

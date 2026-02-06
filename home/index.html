@@ -227,7 +227,7 @@
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
                   <input type="text" id="signup-folder" class="form-input" pattern="^[a-zA-Z0-9_-]{3,32}$" minlength="3" maxlength="32" required autocomplete="username">
-                  <span class="form-hint">Will be used in your Contact Page URL e.g. john-smith → https://deem0u.github.io/user/john-smith/[Card URL Slug]</span>
+                  <span class="form-hint">Used in your contact page URL. Letters, numbers, hyphens, underscores (3–32 chars). Stored as lowercase, e.g. John-Smith → john-smith.</span>
                   <span class="form-error" id="error-signup-folder" role="alert"></span>
                 </div>
                 <div class="form-group">
@@ -672,6 +672,7 @@
         var r = validateFolder(this.value);
         if (!r.valid) { showErr(r.message); return; }
         var u = this.value.trim().toLowerCase();
+        this.value = u;
         if (u.length >= 3) await checkUsernameAvailability(u, true);
         else clearErr();
       });
