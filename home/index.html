@@ -52,7 +52,13 @@
   .home-right-col { flex: 1; max-width: 480px; min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .home-hero { text-align: center; max-width: 480px; }
   .home-heading { font-size: 1.75rem; margin-bottom: 0.5rem; }
-  .home-subheading { font-size: 1.1rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 1rem; }
+  .home-heading .highlight {
+    background: linear-gradient(135deg, var(--accent-teal, #1ac5b0), var(--accent-cyan, #37ebf3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .home-subheading { font-size: 1.1rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 1.5rem; }
   .home-blurb { font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
   .home-actions { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
   .home-action-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; width: 165px; min-width: 165px; padding: var(--space-3) var(--space-4); font-size: var(--text-sm); }
@@ -163,9 +169,8 @@
       <div class="app-container home-two-col">
         <div id="home-left-col" class="home-left-col">
           <div class="home-hero">
-            <h1 class="home-heading">Your Digital Contact Page</h1>
-            <p class="home-subheading">Manage and share your contact information online</p>
-            <p class="home-blurb">Create your own personal contact page that you can share with friends, family, or anyone who needs to reach you. You control the information — update it anytime with our simple editor. Perfect for travellers, professionals, or anyone who wants a central place for their contact details.</p>
+            <h1 class="home-heading">Your details. <span class="highlight">Your control.</span></h1>
+            <p class="home-subheading">Ditch bulky luggage tags. Go digital, stay private.</p>
             <div class="home-actions">
               <button type="button" class="btn btn-primary btn-lg home-action-btn" onclick="showSignupForm()">
                 <span class="btn-main">Get Started</span>

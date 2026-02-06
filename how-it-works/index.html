@@ -12,67 +12,6 @@
     .app-nav.tabs { margin-bottom: 0; }
     .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
     .how-page main { padding: 0; }
-    .how-hero {
-      min-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 3rem 1.5rem;
-      background: linear-gradient(180deg, var(--grey-100) 0%, var(--white) 100%);
-    }
-    .how-hero-badge {
-      display: inline-block;
-      background: var(--accent-dark);
-      color: var(--accent-cyan);
-      font-family: 'Nunito', sans-serif;
-      font-weight: 800;
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
-      padding: 0.4rem 1rem;
-      border-radius: 9999px;
-      margin-bottom: 1.5rem;
-    }
-    .how-hero h1 {
-      font-family: 'Nunito', sans-serif;
-      font-size: clamp(1.75rem, 5vw, 2.75rem);
-      font-weight: 900;
-      color: var(--accent-dark);
-      margin-bottom: 0.75rem;
-      line-height: 1.2;
-    }
-    .how-hero h1 .highlight {
-      background: linear-gradient(135deg, var(--accent-teal), var(--accent-cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .how-hero-sub {
-      font-family: 'Quicksand', sans-serif;
-      font-size: 1.1rem;
-      color: var(--grey-500);
-      margin-bottom: 2rem;
-      max-width: 420px;
-    }
-    .how-hero-mascot {
-      width: 200px;
-      height: 200px;
-      margin: 1rem 0;
-      animation: float 3s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    .how-scroll-hint {
-      margin-top: 2rem;
-      animation: bounce 2s ease-in-out infinite;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(8px); }
-    }
     .how-section {
       padding: 4rem 1.5rem;
       width: 100%;
@@ -288,9 +227,6 @@
       transition: background 0.2s, color 0.2s;
     }
     .how-cta .btn-second:hover { background: var(--accent-dark); color: var(--white); }
-    @media (prefers-reduced-motion: reduce) {
-      .how-hero-mascot, .how-scroll-hint { animation: none; }
-    }
   </style>
 </head>
 <body class="how-page">
@@ -326,39 +262,6 @@
     </header>
 
     <main class="app-main">
-      <section class="how-hero" aria-label="Hero">
-        <span class="how-hero-badge">Digital Contact iD</span>
-        <h1>Your details. <span class="highlight">Your control.</span></h1>
-        <p class="how-hero-sub">Ditch bulky luggage tags. Go digital, stay private.</p>
-        <svg class="how-hero-mascot" viewBox="0 0 160 160" aria-hidden="true">
-          <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
-          <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
-          <ellipse cx="67" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
-          <ellipse cx="93" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
-          <ellipse cx="67" cy="62" rx="7" ry="9" fill="#ffffff"/>
-          <ellipse cx="93" cy="62" rx="7" ry="9" fill="#ffffff"/>
-          <circle cx="69" cy="64" r="5" fill="#272932"/>
-          <circle cx="95" cy="64" r="5" fill="#272932"/>
-          <ellipse cx="54" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
-          <ellipse cx="106" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
-          <path d="M 65 85 Q 80 100 95 85" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-          <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
-          <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
-          <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
-          <circle cx="18" cy="60" r="9" fill="#272932"/>
-          <circle cx="142" cy="60" r="9" fill="#272932"/>
-          <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
-          <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
-          <rect x="62" y="102" width="36" height="16" rx="4" fill="#1ac5b0" opacity="0.9"/>
-          <circle cx="72" cy="110" r="4" fill="#ffffff"/>
-          <rect x="79" y="107" width="14" height="2.5" rx="1" fill="#ffffff"/>
-          <rect x="79" y="112" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
-        </svg>
-        <div class="how-scroll-hint" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-        </div>
-      </section>
-
       <section class="how-section how-section-dark" aria-labelledby="problem-heading">
         <div class="how-section-inner">
         <div class="how-label">The Problem</div>
