@@ -123,30 +123,36 @@
   #profile-edit-username { color: var(--accent-teal, #1ac5b0); font-weight: 600; }
   .profile-username-warning { margin-top: 0.5rem; padding: 0.5rem 0.75rem; background: var(--banner-reminder-bg, #fef9e7); border: 1px solid var(--banner-reminder-border, #d4a017); border-radius: var(--radius-md, 8px); font-size: 0.8125rem; line-height: 1.4; color: var(--color-text, #333); }
   .profile-username-warning.hidden { display: none; }
+  .contact-page-slug-warning { margin-top: 0.5rem; padding: 0.5rem 0.75rem; background: var(--banner-reminder-bg, #fef9e7); border: 1px solid var(--banner-reminder-border, #d4a017); border-radius: var(--radius-md, 8px); font-size: 0.8125rem; line-height: 1.4; color: var(--color-text, #333); }
+  .contact-page-slug-warning.hidden { display: none; }
   .profile-edit-actions { display: flex; gap: 0.35rem; margin-top: 0.5rem; }
   .contact-page-url-inline { display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem; }
   .contact-page-url-inline .form-input { flex: 1; min-width: 8ch; }
   .contact-page-url-inline .card-header-url-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
   .contact-page-url-inline .card-header-url-suffix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
-  /* Compact form: edit only; view mode keeps default spacing/font */
+  /* Compact form: edit only; consistent label/field/hint spacing; section gap 0.5rem */
   #editor-contact-edit .card-header { padding: 0.5rem 0.75rem; }
   #editor-contact-edit .card-body { padding: 0.5rem 0.75rem; }
-  #editor-contact-edit .form-group { margin-bottom: 0.4rem; }
+  #editor-contact-edit .form-group { margin-bottom: 0.5rem; }
   #editor-contact-edit .form-group:last-child { margin-bottom: 0; }
   #editor-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
-  #editor-contact-edit .form-hint { margin-top: 0.15rem; min-height: 1.6em; }
-  #editor-contact-edit.form-hints-hidden .form-hint { visibility: hidden; }
-  #editor-contact-edit .card-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.4rem; }
-  #editor-contact-edit .form-hint-row { display: block; margin-top: 0.15rem; margin-bottom: 0.4rem; }
-  #editor-contact-edit .form-hint-above { display: block; margin-top: 0.15rem; margin-bottom: 0.35rem; }
-  .form-hints-toggle-wrap { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+  #editor-contact-edit .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; min-height: 0; line-height: 1.4; font-size: 0.8125rem; }
+  #editor-contact-edit.form-hints-hidden .form-hint { display: none !important; }
+  #editor-contact-edit .card-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; }
+  #editor-contact-edit .form-hint-row { display: block; margin-top: 0.25rem; margin-bottom: 0.5rem; }
+  #editor-contact-edit .form-hint-above { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
+  #editor-contact-edit .form-hint-full-width { display: block; width: 100%; }
+  #editor-contact-edit .form-row.form-row-with-hint { margin-bottom: 0; }
+  #editor-contact-edit.form-hints-hidden .form-row.form-row-with-hint { margin-bottom: 0.5rem; }
+  .form-hints-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex-shrink: 0; }
   .form-hints-toggle-label { font-size: 0.8125rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
   .form-hints-toggle-btn { font-size: 0.8125rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-bg, #fff); color: var(--color-text, #333); cursor: pointer; white-space: nowrap; }
   .form-hints-toggle-btn:hover { border-color: var(--accent-teal, #1ac5b0); color: var(--accent-teal, #1ac5b0); }
   .editor-edit-mode-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
   #editor-contact-edit .form-row { gap: 0.5rem; }
-  #editor-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0.35rem; }
+  #editor-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0; }
   #editor-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
+  #editor-contact-edit .form-section .form-group:last-child { margin-bottom: 0; }
   #editor-contact-edit .form-actions { margin-top: 0.5rem; padding-top: 0.5rem; }
   #editor-contact-edit .form-input, #editor-contact-edit .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
   #editor-contact-edit .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
@@ -155,10 +161,10 @@
   #editor-contact-edit #home-country-edit-container .searchable-select-search input { padding: 0.25rem 0.35rem; font-size: 0.8125rem; min-height: 1.75rem; }
   #editor-contact-edit #home-country-edit-container .searchable-select-options { max-height: 160px; }
   #editor-contact-edit #home-country-edit-container .searchable-select-option { padding: 0.25rem 0.35rem; font-size: 0.8125rem; }
-  .editor-contact-view-content .editor-view-header { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
+  .editor-contact-view-content .editor-view-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
-  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.5rem; min-height: 1.5em; line-height: 1.5; overflow: visible; padding: 2px 0; }
+  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.5; overflow: visible; padding: 2px 0; }
   #view-contact-page-url-anatomy .editor-view-url-line { display: block; font-size: 0.875rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
   .editor-view-url-line { display: block; font-size: 0.875rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
   .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
@@ -169,13 +175,13 @@
   .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; }
   .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; min-height: 2.5em; cursor: default; position: relative; }
+  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; min-height: 2.8em; cursor: default; position: relative; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
-  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; text-align: right; line-height: 1.2; user-select: none; -webkit-user-select: none; }
-  /* Hover: ring only (no padding) and show label in reserved space so content below stays static */
-  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); }
-  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); }
+  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.35rem; text-align: right; line-height: 1.2; user-select: none; -webkit-user-select: none; }
+  /* Hover: ring, inner padding, outline-offset for outer gap; label has margin-top for gap below box */
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.35rem; outline: 2px solid transparent; outline-offset: 2px; }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.35rem; outline: 2px solid transparent; outline-offset: 2px; }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
@@ -186,7 +192,7 @@
   .editor-edit-url-anatomy .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); }
   .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { display: inline; font-size: inherit; font-weight: 700; color: var(--accent-teal, #1ac5b0); border: none; background: none; padding: 0; margin: 0; }
   .editor-edit-url-anatomy .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { flex: 0 1 20ch; min-width: 10ch; max-width: 100%; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { flex: 0 1 auto; min-width: 3ch; width: auto; max-width: 100%; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
   .editor-edit-url-anatomy .editor-view-url-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   #contact-pages-section .profile-title { color: var(--accent-purple, #9370db); }
   #profile-username { color: var(--accent-teal, #1ac5b0); }
@@ -524,7 +530,7 @@
               <div class="form-group">
                 <label class="form-label" for="contact-page-name">Page Name <span class="form-required">*</span></label>
                 <input type="text" id="contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off" title="Page Name" required>
-                <span class="form-hint">A name to identify this page on your Contact Pages. Must be unique among your Contact Pages.</span>
+                <span class="form-hint">A name to identify this page on your list of Contact Pages. Must be unique amongst the list.</span>
                 <span class="form-error" id="error-contact-page-name" role="alert"></span>
               </div>
               <div class="form-group">
@@ -532,7 +538,8 @@
                 <div class="editor-view-url-anatomy editor-edit-url-anatomy" id="edit-contact-page-url-anatomy">
                   <div class="editor-view-url-line" id="edit-contact-page-url-line"><span class="url-edit-prefix"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span><input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" title="Contact Page URL" required></div>
                 </div>
-                <span class="form-hint">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique among your Contact Pages.</span>
+                <div id="contact-page-slug-warning" class="contact-page-slug-warning hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten.</div>
+                <span class="form-hint form-hint-full-width">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
                 <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
               </div>
             </div>
@@ -550,7 +557,7 @@
                 <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-first-name" role="alert"></span></div>
                 <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-surname" role="alert"></span></div>
               </div>
-              <span class="form-hint form-hint-row">Usually First and Last Name. Consider whether or not this needs to exactly match any formal ID.</span>
+              <span class="form-hint form-hint-row">Usually First and Last Name. Consider whether this needs to exactly match any formal ID.</span>
               <div class="form-row form-row-with-hint">
                 <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="off"><span class="form-error" id="error-email" role="alert"></span></div>
                 <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-error" id="error-mobile" role="alert"></span></div>
@@ -1372,6 +1379,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   var slugInp = document.getElementById('contact-page-url-slug');
   if (slugInp) slugInp.addEventListener('input', function() { setTimeout(scaleEditUrlToFit, 0); });
+  var slugWarning = document.getElementById('contact-page-slug-warning');
+  function showSlugWarning() { if (slugWarning) slugWarning.classList.remove('hidden'); }
+  function hideSlugWarning() { if (slugWarning) slugWarning.classList.add('hidden'); }
+  if (slugInp) {
+    slugInp.addEventListener('focus', showSlugWarning);
+    slugInp.addEventListener('select', showSlugWarning);
+    slugInp.addEventListener('blur', hideSlugWarning);
+  }
   var editUrlLine = document.getElementById('edit-contact-page-url-line');
   if (editUrlLine && slugInp) {
     editUrlLine.addEventListener('focusin', function(e) { if (e.target === slugInp) setTimeout(scaleEditUrlToFit, 0); });
@@ -1521,7 +1536,8 @@ function scaleEditUrlToFit() {
   var slugInput = document.getElementById('contact-page-url-slug');
   if (!slugInput) return;
   var len = (slugInput.value || '').length;
-  slugInput.size = Math.max(10, Math.min(30, len + 2));
+  var minCh = len < 3 ? 3 : (len < 10 ? len + 1 : 10);
+  slugInput.size = Math.max(minCh, Math.min(28, len + 2));
 }
 
 function getFormSnapshot() {
