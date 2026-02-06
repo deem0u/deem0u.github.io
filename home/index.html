@@ -60,6 +60,16 @@
   }
   .home-subheading { font-size: 1.1rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 1.5rem; }
   .home-blurb { font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+  .home-hero-mascot {
+    width: 200px;
+    height: 200px;
+    animation: home-float 3s ease-in-out infinite;
+  }
+  @keyframes home-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .home-two-col.signup-steps-active #home-mascot-col { display: none; }
   .home-actions { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
   .home-action-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; width: 165px; min-width: 165px; padding: var(--space-3) var(--space-4); font-size: var(--text-sm); }
   .home-action-btn.btn-lg { padding: var(--space-3) var(--space-4); font-size: var(--text-sm); }
@@ -180,6 +190,34 @@
               </a>
             </div>
           </div>
+        </div>
+        <div id="home-mascot-col" class="home-right-col" aria-hidden="true">
+          <svg class="home-hero-mascot" viewBox="0 0 160 160" focusable="false">
+            <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+            <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+            <ellipse cx="67" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+            <ellipse cx="93" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+            <ellipse cx="67" cy="62" rx="7" ry="9" fill="#ffffff"/>
+            <ellipse cx="93" cy="62" rx="7" ry="9" fill="#ffffff"/>
+            <circle cx="69" cy="64" r="5" fill="#272932"/>
+            <circle cx="95" cy="64" r="5" fill="#272932"/>
+            <circle cx="71" cy="62" r="2" fill="#ffffff"/>
+            <circle cx="97" cy="62" r="2" fill="#ffffff"/>
+            <ellipse cx="54" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+            <ellipse cx="106" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+            <path d="M 65 85 Q 80 100 95 85" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+            <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <circle cx="18" cy="60" r="9" fill="#272932"/>
+            <circle cx="142" cy="60" r="9" fill="#272932"/>
+            <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+            <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+            <rect x="62" y="102" width="36" height="16" rx="4" fill="#1ac5b0" opacity="0.9"/>
+            <circle cx="72" cy="110" r="4" fill="#ffffff"/>
+            <rect x="79" y="107" width="14" height="2.5" rx="1" fill="#ffffff"/>
+            <rect x="79" y="112" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+          </svg>
         </div>
         <div id="signup-step0-section" class="home-right-col hidden">
           <div class="card signup-form-card signup-step0-card">
@@ -434,6 +472,8 @@
   }
 
   function showSignupForm() {
+    var mascotCol = document.getElementById('home-mascot-col');
+    if (mascotCol) mascotCol.classList.add('hidden');
     document.getElementById('signup-step0-section').classList.remove('hidden');
     document.getElementById('signup-email').focus();
   }
@@ -484,6 +524,8 @@
     document.getElementById('signup-step3-card').classList.add('hidden');
     var twoCol = document.querySelector('.home-two-col');
     if (twoCol) twoCol.classList.remove('signup-steps-active');
+    var mascotCol = document.getElementById('home-mascot-col');
+    if (mascotCol) mascotCol.classList.remove('hidden');
     document.getElementById('signup-step0-section').classList.remove('hidden');
     document.getElementById('signup-step0-form').reset();
     var pwInput = document.getElementById('signup-step0-password');
