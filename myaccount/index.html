@@ -2954,7 +2954,7 @@ function generateHTML() {
   const css = `
     *{box-sizing:border-box;margin:0;padding:0}
     html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
-    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}
+    body{font-family:'Quicksand',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}
     .container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}
     @media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}
     @media(min-width:640px){.container{padding:48px 40px;max-width:760px}}
@@ -3047,7 +3047,7 @@ function generateHTML() {
 <style>${css}</style>
 </head>
 <body>
-<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>
+<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:'Quicksand',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>
 <div class="container">
 ${lastUpdatedBlockHtml}
 <h1>${lblBoth('section-title')}</h1>
