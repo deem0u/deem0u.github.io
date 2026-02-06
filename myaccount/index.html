@@ -151,20 +151,22 @@
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
   .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.5rem; min-height: 1.5em; line-height: 1.5; overflow: hidden; }
-  #view-contact-page-url-anatomy .editor-view-url-line { display: block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
-  .editor-view-url-line { display: block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
+  #view-contact-page-url-anatomy .editor-view-url-line { display: block; font-size: 0.875rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
+  .editor-view-url-line { display: block; font-size: 0.875rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
   .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
   .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
   .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
   /* View mode: teal text (username); purple text (slug); slug hidden when empty; on hover show boxes + labels */
-  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: border-color 0.15s, padding 0.15s, border-radius 0.15s; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: border-color 0.15s, padding 0.15s, border-radius 0.15s; }
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: baseline; }
-  .editor-view-url-line .url-anatomy-label { display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin-top: 0.15rem; text-align: right; }
-  #view-contact-page-url-anatomy:hover .editor-view-url-line .url-username-view { border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; }
-  #view-contact-page-url-anatomy:hover .editor-view-url-line .url-slug-view { border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; }
+  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; }
+  .editor-view-url-line .url-segment-wrap .url-username-view,
+  .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
+  .editor-view-url-line .url-anatomy-label { display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin-top: 0.2rem; text-align: right; line-height: 1.2; }
+  #view-contact-page-url-anatomy:hover .editor-view-url-line .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); }
+  #view-contact-page-url-anatomy:hover .editor-view-url-line .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); }
   #view-contact-page-url-anatomy:hover .editor-view-url-line .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy:hover .editor-view-url-line .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy:hover .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none; }
@@ -1460,7 +1462,7 @@ function scaleViewUrlToFit() {
   if (view && view.classList.contains('hidden')) return;
   line.style.fontSize = '';
   line.style.whiteSpace = '';
-  var baseFontSize = 13;
+  var baseFontSize = 14;
   var minFontSize = 10;
   line.style.whiteSpace = 'nowrap';
   var contentW = line.scrollWidth;

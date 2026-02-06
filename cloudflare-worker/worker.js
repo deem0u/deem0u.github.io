@@ -2093,7 +2093,7 @@ async function handleUpdatePage(username, contactpagename, request, env) {
     const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
     for (const key of nameList.keys) {
       const slugForKey = key.name.replace(`contact_page_name:${username}:`, '');
-      if (slugForKey === contactpagename) continue;
+      if (slugForKey.toLowerCase() === contactpagename.toLowerCase()) continue; // current page: allow same name
       const existing = await env.EDIT_KEYS_KV.get(key.name);
       if (existing && existing.trim().toLowerCase() === contactPageNameTrim.toLowerCase()) {
         return jsonResponse({ error: 'Another contact page already uses this Contact Page Name' }, 409);
@@ -2180,7 +2180,7 @@ async function handleRenamePage(username, request, env) {
     const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
     for (const key of nameList.keys) {
       const slugForKey = key.name.replace(`contact_page_name:${username}:`, '');
-      if (slugForKey === newSlug) continue;
+      if (slugForKey.toLowerCase() === newSlug.toLowerCase()) continue; // new slug is current page when only renaming; allow same name
       const existing = await env.EDIT_KEYS_KV.get(key.name);
       if (existing && existing.trim().toLowerCase() === contactPageNameTrim.toLowerCase()) {
         return jsonResponse({ error: 'Another contact page already uses this Contact Page Name' }, 409);
