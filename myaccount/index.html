@@ -75,13 +75,13 @@
   .contact-pages-dropdown-option.selected { background: rgba(147, 112, 219, 0.12); font-weight: 600; color: var(--accent-purple, #9370db); }
   .contact-pages-dropdown-option .option-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .contact-pages-dropdown-option .option-slug { font-size: 0.7rem; color: var(--color-text-secondary); margin-top: 0.1rem; }
-  .contact-page-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 6px); padding: 0.4rem 0.5rem; cursor: pointer; font-size: 0.75rem; line-height: 1.35; text-align: left; transition: border-color 0.15s, background 0.15s; }
+  .contact-page-card { background: var(--color-bg, #fff); border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-md, 6px); padding: 0.5rem 0.65rem; cursor: pointer; font-size: 0.875rem; line-height: 1.4; text-align: left; transition: border-color 0.15s, background 0.15s; }
   .contact-page-card:hover { border-color: var(--accent-purple, #9370db); background: var(--color-bg-subtle, #f5f5f5); }
   .contact-page-card.selected { border-color: var(--accent-purple, #9370db); background: rgba(147, 112, 219, 0.12); font-weight: 600; }
-  .contact-page-card .contact-page-card-row { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 0.25rem; margin-top: 0.15rem; min-height: 0; }
+  .contact-page-card .contact-page-card-row { display: flex; align-items: baseline; flex-wrap: nowrap; gap: 0.35rem; margin-top: 0.2rem; min-height: 0; }
   .contact-page-card .contact-page-card-row:first-child { margin-top: 0; }
-  .contact-page-card .contact-page-card-label { flex-shrink: 0; font-size: 0.65rem; font-weight: 600; color: var(--color-text-secondary, #666); }
-  .contact-page-card .contact-page-card-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.75rem; }
+  .contact-page-card .contact-page-card-label { flex-shrink: 0; font-size: 0.8125rem; font-weight: 600; color: var(--color-text-secondary, #666); }
+  .contact-page-card .contact-page-card-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; }
   .contact-page-card .contact-page-card-row:nth-child(2) .contact-page-card-value { color: var(--accent-purple, #9370db); }
   #editor-contact-card .card-header-fields { gap: 0.35rem; }
   .card-header-fields { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -128,9 +128,6 @@
   .contact-page-url-inline .form-input { flex: 1; min-width: 8ch; }
   .contact-page-url-inline .card-header-url-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
   .contact-page-url-inline .card-header-url-suffix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { grid-column: 4; grid-row: 1; min-width: 8ch; color: var(--accent-purple, #9370db); font-weight: 700; font-size: 0.8125rem; border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.25rem 0.35rem; background: rgba(147, 112, 219, 0.08); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input:focus { border-color: var(--accent-purple, #9370db); outline: none; box-shadow: 0 0 0 2px rgba(147, 112, 219, 0.25); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   /* Compact form: edit only; view mode keeps default spacing/font */
   #editor-contact-edit .card-header { padding: 0.5rem 0.75rem; }
   #editor-contact-edit .card-body { padding: 0.5rem 0.75rem; }
@@ -153,17 +150,24 @@
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
-  .editor-view-url-anatomy { display: grid; grid-template-columns: auto auto auto auto; grid-template-rows: auto; gap: 0; align-items: start; margin-top: 0.15rem; margin-bottom: 0.5rem; }
-  .editor-view-url-line { display: contents; }
-  .editor-view-url-line .url-base { grid-column: 1; grid-row: 1; color: var(--color-text-secondary, #666); font-size: 0.8125rem; font-weight: 700; text-decoration: none; }
-  .editor-view-url-line .url-username { grid-column: 2; grid-row: 1; font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
-  .editor-view-url-line .url-slash { grid-column: 3; grid-row: 1; color: var(--color-text-secondary, #666); font-size: 0.8125rem; font-weight: 700; text-decoration: none; }
-  .editor-view-url-line .url-slug { grid-column: 4; grid-row: 1; font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
-  /* View mode: teal border + teal text (username); purple border + purple text (slug) */
-  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.15rem 0.35rem; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.15rem 0.35rem; }
-  /* Edit mode: teal border + teal text (username); purple field box + purple text (slug input) */
-  .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { color: var(--accent-teal, #1ac5b0); font-weight: 700; border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.15rem 0.35rem; }
+  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.5rem; min-height: 2.8em; line-height: 1.5; }
+  .editor-view-url-line { display: block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
+  .editor-view-url-line .url-base { display: inline; color: var(--color-text-secondary, #666); text-decoration: none; }
+  .editor-view-url-line .url-username { display: inline-block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
+  .editor-view-url-line .url-slash { display: inline; color: var(--color-text-secondary, #666); text-decoration: none; }
+  .editor-view-url-line .url-slug { display: inline-block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
+  /* View mode: tight teal border + teal text (username); tight purple border + purple text (slug); slug hidden when empty */
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; margin: 0; vertical-align: baseline; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; margin: 0; vertical-align: baseline; }
+  .editor-view-url-line .url-slug-view:empty { display: none; }
+  /* Edit mode: tight teal border (username); purple field box (slug); same height for both */
+  .editor-edit-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0; min-height: 2.25rem; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-base { display: inline; flex: none; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { display: inline-block; color: var(--accent-teal, #1ac5b0); font-weight: 700; border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.2rem 0.35rem; margin: 0; min-height: 1.75rem; box-sizing: border-box; line-height: 1.3; vertical-align: middle; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slash { display: inline; flex: none; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { flex: none; min-width: 8ch; width: auto; color: var(--accent-purple, #9370db); font-weight: 700; font-size: 0.8125rem; border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.2rem 0.35rem; min-height: 1.75rem; box-sizing: border-box; line-height: 1.3; background: rgba(147, 112, 219, 0.08); vertical-align: middle; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input:focus { border-color: var(--accent-purple, #9370db); outline: none; box-shadow: 0 0 0 2px rgba(147, 112, 219, 0.25); }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   #contact-pages-section .profile-title { color: var(--accent-purple, #9370db); }
   #profile-username { color: var(--accent-teal, #1ac5b0); }
   .header-username-teal { color: var(--accent-teal, #1ac5b0); }
