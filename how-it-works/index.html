@@ -5,25 +5,282 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&family=Nunito:wght@700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <title>DigiCon iD - How It Works</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
-  .app-nav.tabs { margin-bottom: 0; }
-  .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
-  .how-section { margin-bottom: 2rem; }
-  .how-section h2 { font-size: 1.25rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #ddd); }
-  .how-section p { margin-bottom: 1rem; line-height: 1.7; }
-  .how-section ol, .how-section ul { margin: 0.5rem 0 1rem 1.5rem; line-height: 1.7; }
+    .app-nav.tabs { margin-bottom: 0; }
+    .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
+    .how-page main { padding: 0; }
+    .how-hero {
+      min-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      background: linear-gradient(180deg, var(--grey-100) 0%, var(--white) 100%);
+    }
+    .how-hero-badge {
+      display: inline-block;
+      background: var(--accent-dark);
+      color: var(--accent-cyan);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      padding: 0.4rem 1rem;
+      border-radius: 9999px;
+      margin-bottom: 1.5rem;
+    }
+    .how-hero h1 {
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(1.75rem, 5vw, 2.75rem);
+      font-weight: 900;
+      color: var(--accent-dark);
+      margin-bottom: 0.75rem;
+      line-height: 1.2;
+    }
+    .how-hero h1 .highlight {
+      background: linear-gradient(135deg, var(--accent-teal), var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .how-hero-sub {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 1.1rem;
+      color: var(--grey-500);
+      margin-bottom: 2rem;
+      max-width: 420px;
+    }
+    .how-hero-mascot {
+      width: 200px;
+      height: 200px;
+      margin: 1rem 0;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .how-scroll-hint {
+      margin-top: 2rem;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(8px); }
+    }
+    .how-section {
+      padding: 4rem 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .how-section-dark {
+      background: var(--accent-dark);
+      color: var(--white);
+    }
+    .how-section-dark .how-label { color: var(--accent-pink); }
+    .how-section-dark .how-section-heading { color: var(--white); }
+    .how-section-light .how-label { color: var(--accent-teal); }
+    .how-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .how-section-heading {
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 900;
+      color: var(--accent-dark);
+      margin-bottom: 1.5rem;
+    }
+    .how-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .how-card {
+      background: rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .how-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.2); }
+    .how-card-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .how-card h3 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+    .how-card p {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      line-height: 1.5;
+    }
+    .how-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+    .how-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--grey-100);
+      padding: 0.75rem 1.25rem;
+      border-radius: 9999px;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      color: var(--accent-dark);
+      transition: background 0.2s, color 0.2s, transform 0.2s;
+    }
+    .how-pill:hover {
+      background: var(--accent-teal);
+      color: var(--white);
+      transform: scale(1.02);
+    }
+    .how-pill svg { width: 24px; height: 24px; flex-shrink: 0; }
+    .how-steps {
+      margin-top: 2rem;
+    }
+    .how-step {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 2rem;
+      align-items: center;
+      margin-bottom: 3rem;
+    }
+    .how-step:nth-child(even) .how-step-content { order: 3; }
+    .how-step:nth-child(even) .how-step-visual { order: 1; }
+    .how-step-number {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: var(--accent-dark);
+      color: var(--accent-cyan);
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .how-step-content h3 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--accent-dark);
+    }
+    .how-step-content p {
+      font-family: 'Quicksand', sans-serif;
+      color: var(--grey-500);
+      line-height: 1.6;
+    }
+    .how-step-visual {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto;
+    }
+    .how-who-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .how-who-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.2s, border 0.2s;
+      border: 2px solid transparent;
+    }
+    .how-who-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent-teal);
+    }
+    .how-who-card .emoji { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .how-who-card span {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      font-size: 0.95rem;
+    }
+    .how-cta {
+      padding: 4rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(135deg, var(--accent-teal) 0%, var(--accent-cyan) 100%);
+      color: var(--accent-dark);
+    }
+    .how-cta h2 {
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 900;
+      margin-bottom: 0.5rem;
+    }
+    .how-cta p { font-family: 'Quicksand', sans-serif; margin-bottom: 1.5rem; }
+    .how-cta-btns { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+    .how-cta .btn-prime {
+      background: var(--accent-dark);
+      color: var(--white);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .how-cta .btn-prime:hover { background: var(--accent-dark-hover); }
+    .how-cta .btn-second {
+      background: transparent;
+      color: var(--accent-dark);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      text-decoration: none;
+      border: 2px solid var(--accent-dark);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .how-cta .btn-second:hover { background: var(--accent-dark); color: var(--white); }
+    @media (max-width: 768px) {
+      .how-step {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .how-step:nth-child(even) .how-step-content,
+      .how-step:nth-child(even) .how-step-visual { order: unset; }
+      .how-step-number { margin: 0 auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .how-hero-mascot, .how-scroll-hint { animation: none; }
+    }
   </style>
 </head>
-<body>
+<body class="how-page">
   <div class="app">
     <header class="app-header">
       <div class="app-header-inner">
         <div class="app-logo">
           <span class="app-logo-icon app-logo-icon-mascot" aria-hidden="true">
-            <svg viewBox="0 0 80 80" width="96" height="96" fill="none" xmlns="http://www.w3.org/2000/svg" class="app-header-logo-svg">
+            <svg viewBox="0 0 80 80" width="96" height="96" fill="none" xmlns="http://www.w3.org/2000/svg" class="app-header-logo-svg" aria-hidden="true">
               <rect x="20" y="12" width="40" height="56" rx="9" fill="#272932"/>
               <rect x="25" y="18" width="30" height="44" rx="5" fill="#ffffff"/>
               <ellipse cx="34" cy="32" rx="5" ry="6" fill="#1ac5b0"/>
@@ -50,31 +307,209 @@
     </header>
 
     <main class="app-main">
-      <div class="app-container" style="max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem;">
-        <h1 style="font-size: 1.5rem; margin-bottom: 1.5rem;">How It Works</h1>
+      <section class="how-hero" aria-label="Hero">
+        <span class="how-hero-badge">Digital Contact iD</span>
+        <h1>Your details. <span class="highlight">Your control.</span></h1>
+        <p class="how-hero-sub">Ditch bulky luggage tags. Go digital, stay private.</p>
+        <svg class="how-hero-mascot" viewBox="0 0 160 160" aria-hidden="true">
+          <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+          <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+          <ellipse cx="67" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+          <ellipse cx="93" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+          <ellipse cx="67" cy="62" rx="7" ry="9" fill="#ffffff"/>
+          <ellipse cx="93" cy="62" rx="7" ry="9" fill="#ffffff"/>
+          <circle cx="69" cy="64" r="5" fill="#272932"/>
+          <circle cx="95" cy="64" r="5" fill="#272932"/>
+          <ellipse cx="54" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+          <ellipse cx="106" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+          <path d="M 65 85 Q 80 100 95 85" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+          <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <circle cx="18" cy="60" r="9" fill="#272932"/>
+          <circle cx="142" cy="60" r="9" fill="#272932"/>
+          <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+          <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+          <rect x="62" y="102" width="36" height="16" rx="4" fill="#1ac5b0" opacity="0.9"/>
+          <circle cx="72" cy="110" r="4" fill="#ffffff"/>
+          <rect x="79" y="107" width="14" height="2.5" rx="1" fill="#ffffff"/>
+          <rect x="79" y="112" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+        </svg>
+        <div class="how-scroll-hint" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+        </div>
+      </section>
 
-        <section class="how-section">
-          <h2>1. Create your account</h2>
-          <p>On the <a href="/home/">Home</a> page, click <strong>Get Started</strong> and sign up with your email. You’ll choose a user name and set a password. Once your account is created, you can sign in anytime from <a href="https://deem0u.github.io/myaccount/">My Account</a>.</p>
-        </section>
+      <section class="how-section how-section-dark" aria-labelledby="problem-heading">
+        <div class="how-label">The Problem</div>
+        <h2 id="problem-heading" class="how-section-heading">Traditional tags are a privacy nightmare 😬</h2>
+        <div class="how-cards">
+          <div class="how-card">
+            <div class="how-card-icon" aria-hidden="true">👀</div>
+            <h3>Too Visible</h3>
+            <p>Anyone walking past can read your name, number & address</p>
+          </div>
+          <div class="how-card">
+            <div class="how-card-icon" aria-hidden="true">🏷️</div>
+            <h3>Bulky & Ugly</h3>
+            <p>Big plastic tags that get caught, break, or look naff</p>
+          </div>
+          <div class="how-card">
+            <div class="how-card-icon" aria-hidden="true">✏️</div>
+            <h3>Hard to Update</h3>
+            <p>New number? New address? Time for a new tag...</p>
+          </div>
+        </div>
+      </section>
 
-        <section class="how-section">
-          <h2>2. Your Digital Contact Page</h2>
-          <p>Each account has a public contact page that shows the details you enter: your name, contact info, destination details, and any extra information you add. You can have one main page (index) and optionally more pages (e.g. for different trips or purposes).</p>
-        </section>
+      <section class="how-section how-section-light" aria-labelledby="solution-heading">
+        <div class="how-label">The Solution</div>
+        <h2 id="solution-heading" class="how-section-heading">DigiCon iD fixes all of this ✨</h2>
+        <p style="font-family: Quicksand, sans-serif; color: var(--grey-500); margin-bottom: 0.5rem;">A tiny QR code or NFC tag links to your digital contact page. Simple.</p>
+        <div class="how-pills">
+          <span class="how-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Private by default</span>
+          <span class="how-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Tiny QR or NFC</span>
+          <span class="how-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Update anytime</span>
+          <span class="how-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Just enough friction</span>
+        </div>
+      </section>
 
-        <section class="how-section">
-          <h2>3. Edit and update</h2>
-          <p>Sign in at <strong>My Account</strong> to add or change your contact details. You can update your page whenever you like. Changes are saved and appear on your live page straight away.</p>
-        </section>
+      <section class="how-section" style="background: linear-gradient(180deg, var(--grey-100) 0%, var(--white) 100%);" aria-labelledby="steps-heading">
+        <div class="how-label" style="color: var(--accent-yellow); background: var(--accent-dark); display: inline-block; padding: 0.2rem 0.75rem; border-radius: 6px;">How It Works</div>
+        <h2 id="steps-heading" class="how-section-heading">4 steps. That's it.</h2>
+        <div class="how-steps">
+          <div class="how-step">
+            <div class="how-step-content">
+              <h3>Sign Up</h3>
+              <p>Quick account. Just email & password. No life story needed.</p>
+            </div>
+            <div class="how-step-number" aria-hidden="true">1</div>
+            <div class="how-step-visual">
+              <svg viewBox="0 0 160 160" style="width:100%;height:100%">
+                <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+                <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+                <ellipse cx="67" cy="60" rx="11" ry="13" fill="#37ebf3"/>
+                <ellipse cx="93" cy="60" rx="11" ry="13" fill="#37ebf3"/>
+                <ellipse cx="67" cy="60" rx="8" ry="10" fill="#ffffff"/>
+                <ellipse cx="93" cy="60" rx="8" ry="10" fill="#ffffff"/>
+                <circle cx="69" cy="62" r="5" fill="#272932"/>
+                <circle cx="95" cy="62" r="5" fill="#272932"/>
+                <ellipse cx="52" cy="76" rx="6" ry="5" fill="#e455ae" opacity="0.5"/>
+                <ellipse cx="108" cy="76" rx="6" ry="5" fill="#e455ae" opacity="0.5"/>
+                <path d="M 62 82 Q 80 102 98 82" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+                <path d="M 40 70 Q 22 55 12 40" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <circle cx="12" cy="40" r="9" fill="#272932"/>
+                <circle cx="142" cy="60" r="9" fill="#272932"/>
+                <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+                <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+                <rect x="55" y="100" width="50" height="18" rx="9" fill="#fdf500"/>
+                <text x="80" y="113" text-anchor="middle" fill="#272932" font-size="9" font-weight="bold" font-family="Nunito,sans-serif">WELCOME!</text>
+              </svg>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-content">
+              <h3>Create Contact Page</h3>
+              <p>Add only what you want to share. Name, email, whatever works for you.</p>
+            </div>
+            <div class="how-step-number" aria-hidden="true">2</div>
+            <div class="how-step-visual">
+              <svg viewBox="0 0 160 160" style="width:100%;height:100%">
+                <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+                <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+                <ellipse cx="67" cy="60" rx="10" ry="12" fill="#e455ae"/>
+                <ellipse cx="93" cy="60" rx="10" ry="12" fill="#e455ae"/>
+                <ellipse cx="67" cy="60" rx="7" ry="9" fill="#ffffff"/>
+                <ellipse cx="93" cy="60" rx="7" ry="9" fill="#ffffff"/>
+                <circle cx="69" cy="62" r="5" fill="#272932"/>
+                <circle cx="95" cy="62" r="5" fill="#272932"/>
+                <ellipse cx="54" cy="76" rx="5" ry="4" fill="#e455ae" opacity="0.5"/>
+                <ellipse cx="106" cy="76" rx="5" ry="4" fill="#e455ae" opacity="0.5"/>
+                <path d="M 65 84 Q 80 100 95 84" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+                <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+                <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+                <circle cx="68" cy="105" r="8" fill="#e455ae"/>
+                <rect x="65" y="102" width="6" height="6" rx="1" fill="#ffffff"/>
+                <circle cx="92" cy="105" r="8" fill="#9370db"/>
+                <path d="M 89 103 L 92 106 L 95 103" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+              </svg>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-content">
+              <h3>Get Your QR / NFC</h3>
+              <p>Generate a QR code. Stick it on, or tap it into an NFC tag.</p>
+            </div>
+            <div class="how-step-number" aria-hidden="true">3</div>
+            <div class="how-step-visual">
+              <svg viewBox="0 0 160 160" style="width:100%;height:100%">
+                <rect x="35" y="35" width="90" height="90" rx="8" fill="#ffffff" stroke="#272932" stroke-width="3"/>
+                <rect x="42" y="42" width="18" height="18" fill="#272932"/>
+                <rect x="65" y="42" width="18" height="18" fill="#272932"/>
+                <rect x="42" y="65" width="18" height="18" fill="#272932"/>
+                <rect x="65" y="65" width="18" height="18" fill="#272932"/>
+                <rect x="88" y="42" width="18" height="18" fill="#272932"/>
+                <rect x="111" y="42" width="18" height="18" fill="#272932"/>
+                <rect x="88" y="65" width="18" height="18" fill="#272932"/>
+                <rect x="111" y="65" width="18" height="18" fill="#272932"/>
+                <rect x="42" y="88" width="18" height="18" fill="#272932"/>
+                <rect x="65" y="88" width="18" height="18" fill="#272932"/>
+                <rect x="88" y="88" width="18" height="18" fill="#272932"/>
+                <rect x="111" y="88" width="18" height="18" fill="#272932"/>
+              </svg>
+            </div>
+          </div>
+          <div class="how-step">
+            <div class="how-step-content">
+              <h3>Done! 🎉</h3>
+              <p>Manage everything from your dashboard. Update anytime, anywhere.</p>
+            </div>
+            <div class="how-step-number" aria-hidden="true">4</div>
+            <div class="how-step-visual">
+              <svg viewBox="0 0 160 160" style="width:100%;height:100%">
+                <circle cx="80" cy="80" r="60" fill="#1ac5b0" opacity="0.1"/>
+                <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+                <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+                <path d="M 58 60 Q 67 52 76 60" stroke="#1ac5b0" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path d="M 84 60 Q 93 52 102 60" stroke="#1ac5b0" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <ellipse cx="54" cy="72" rx="6" ry="5" fill="#e455ae" opacity="0.5"/>
+                <ellipse cx="106" cy="72" rx="6" ry="5" fill="#e455ae" opacity="0.5"/>
+                <path d="M 62 78 Q 80 98 98 78" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+                <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+                <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+                <circle cx="80" cy="105" r="12" fill="#1ac5b0"/>
+                <path d="M 74 105 L 78 109 L 88 99" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <section class="how-section">
-          <h2>4. Share your link</h2>
-          <p>Your page has a unique URL (for example <code>https://deem0u.github.io/user/yourname/</code>). Share this link with family, friends, or anyone who needs to reach you. You can use it on luggage tags, in emails, or on social profiles.</p>
-        </section>
+      <section class="how-section how-section-dark" aria-labelledby="who-heading">
+        <div class="how-label" style="color: var(--accent-purple);">Perfect For</div>
+        <h2 id="who-heading" class="how-section-heading">Who's using DigiCon iD?</h2>
+        <div class="how-who-cards">
+          <div class="how-who-card"><span class="emoji" aria-hidden="true">✈️</span><span>Travellers</span></div>
+          <div class="how-who-card"><span class="emoji" aria-hidden="true">💼</span><span>Business Pros</span></div>
+          <div class="how-who-card"><span class="emoji" aria-hidden="true">🏢</span><span>Small Business</span></div>
+          <div class="how-who-card"><span class="emoji" aria-hidden="true">🎒</span><span>Gear Lovers</span></div>
+          <div class="how-who-card"><span class="emoji" aria-hidden="true">🐕</span><span>Pet Parents</span></div>
+          <div class="how-who-card"><span class="emoji" aria-hidden="true">🔑</span><span>Key Losers</span></div>
+        </div>
+      </section>
 
-        <p style="margin-top: 2rem;"><a href="/home/" class="btn btn-primary">Get Started</a></p>
-      </div>
+      <section class="how-cta" aria-labelledby="cta-heading">
+        <h2 id="cta-heading">Ready to go digital?</h2>
+        <p>Free to start. Takes 2 minutes.</p>
+        <div class="how-cta-btns">
+          <a href="/home/" class="btn-prime">Get Started →</a>
+          <a href="/contact/" class="btn-second">See Demo</a>
+        </div>
+      </section>
     </main>
     <footer class="app-footer">
       <a href="/terms-and-privacy/">Terms of Use &amp; Privacy</a>
