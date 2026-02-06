@@ -52,7 +52,7 @@
   .editor-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
   .contact-pages-container { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--white, #fff); border-radius: var(--radius-md, 6px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
   .contact-pages-section .profile-title { margin-bottom: 0.5rem; }
-  .editor-profile-strip .profile-title, .contact-pages-section .profile-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: var(--accent-teal, #1ac5b0); }
+  .editor-profile-strip .profile-title, .contact-pages-section .profile-title { font-size: 1.25rem; font-weight: 700; text-transform: uppercase; color: var(--accent-teal, #1ac5b0); }
   #contact-pages-section .mb-3 { margin-bottom: 0.75rem; }
   .contact-pages-list { display: flex; flex-direction: column; gap: 0.35rem; }
   .contact-pages-list.hidden { display: none; }
@@ -98,7 +98,8 @@
   .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
   .editor-contact-view-content { font-size: 0.95rem; line-height: 1.5; }
   .editor-contact-view-content .editor-view-value { font-weight: 500; }
-  .editor-contact-view-content .editor-view-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: #9370db; }
+  .editor-contact-view-content .editor-view-title { font-size: 1.25rem; font-weight: 700; text-transform: uppercase; color: #000; }
+  .card-welcome-text .welcome-first-name { color: #000; font-weight: 700; }
   .editor-profile-strip .profile-row { display: block; margin-bottom: 0.5rem; }
   .editor-profile-strip .profile-label { display: block; margin-bottom: 0.15rem; font-size: 0.8rem; }
   .editor-profile-strip .profile-value { display: block; font-weight: 500; }
@@ -115,7 +116,6 @@
   .editor-contact-view-content .editor-view-header { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
   .editor-contact-edit .card-header-fields { flex: 1; min-width: 0; }
-  .editor-edit-mode-actions { flex-shrink: 0; }
   .profile-edit.hidden { display: none; }
   .profile-edit .form-group { margin-bottom: 0.4rem; }
   .profile-edit .form-label { font-size: 0.8125rem; font-weight: 700; margin-bottom: 0.2rem; }
@@ -134,9 +134,16 @@
   #editor-contact-edit .form-group { margin-bottom: 0.4rem; }
   #editor-contact-edit .form-group:last-child { margin-bottom: 0; }
   #editor-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
-  #editor-contact-edit .form-hint { margin-top: 0.15rem; min-height: 1.6em; visibility: hidden; }
-  #editor-contact-edit .form-group:focus-within .form-hint { visibility: visible; }
+  #editor-contact-edit .form-hint { margin-top: 0.15rem; min-height: 1.6em; }
+  #editor-contact-edit.form-hints-hidden .form-hint { visibility: hidden; }
   #editor-contact-edit .card-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.4rem; }
+  #editor-contact-edit .form-hint-row { display: block; margin-top: 0.15rem; margin-bottom: 0.4rem; }
+  #editor-contact-edit .form-hint-above { display: block; margin-top: 0.15rem; margin-bottom: 0.35rem; }
+  .form-hints-toggle-wrap { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+  .form-hints-toggle-label { font-size: 0.8125rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
+  .form-hints-toggle-btn { font-size: 0.8125rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-bg, #fff); color: var(--color-text, #333); cursor: pointer; white-space: nowrap; }
+  .form-hints-toggle-btn:hover { border-color: var(--accent-teal, #1ac5b0); color: var(--accent-teal, #1ac5b0); }
+  .editor-edit-mode-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
   #editor-contact-edit .form-row { gap: 0.5rem; }
   #editor-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0.35rem; }
   #editor-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
@@ -159,15 +166,16 @@
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
   .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
   /* View mode: teal text (username); purple text (slug); hover only on username/slug; labels unselectable */
-  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s, padding 0.15s; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s, padding 0.15s; }
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; min-height: 1.25em; cursor: default; }
+  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; min-height: 2.5em; cursor: default; position: relative; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
-  .editor-view-url-line .url-anatomy-label { display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin-top: 0.2rem; text-align: right; line-height: 1.2; user-select: none; -webkit-user-select: none; }
-  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.08rem 0.2rem; }
-  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.08rem 0.2rem; }
+  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; text-align: right; line-height: 1.2; user-select: none; -webkit-user-select: none; }
+  /* Hover: ring only (no padding) and show label in reserved space so content below stays static */
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
@@ -178,7 +186,7 @@
   .editor-edit-url-anatomy .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); }
   .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { display: inline; font-size: inherit; font-weight: 700; color: var(--accent-teal, #1ac5b0); border: none; background: none; padding: 0; margin: 0; }
   .editor-edit-url-anatomy .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { flex: 1 1 100%; min-width: 10ch; max-width: 100%; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { flex: 0 1 20ch; min-width: 10ch; max-width: 100%; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
   .editor-edit-url-anatomy .editor-view-url-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   #contact-pages-section .profile-title { color: var(--accent-purple, #9370db); }
   #profile-username { color: var(--accent-teal, #1ac5b0); }
@@ -443,7 +451,7 @@
         <div class="card card-welcome" id="welcome-card">
           <div class="card-body">
             <p class="card-welcome-text">
-              Welcome <strong id="user-name">User</strong>! This is your DigiCon iD account portal where you can manage all things related to your account and Contact Pages. If you ever need support please don't hesitate to reach out using the Contact form.
+              Welcome to MyAccount <b id="user-name" class="welcome-first-name">User</b> ! This is your DigiCon iD portal where you can manage account profile and contact pages.
             </p>
           </div>
         </div>
@@ -514,36 +522,43 @@
           <div class="card-header">
             <div class="card-header-fields">
               <div class="form-group">
-                <label class="form-label" for="contact-page-name">Contact Page Name <span class="form-required">*</span></label>
-                <span class="form-hint">A name to identify this page on your card/tile. Must be unique among your contact pages.</span>
-                <input type="text" id="contact-page-name" class="form-input" placeholder="Contact Page Name" maxlength="28" autocomplete="off" title="Contact Page Name" required>
+                <label class="form-label" for="contact-page-name">Page Name <span class="form-required">*</span></label>
+                <input type="text" id="contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off" title="Page Name" required>
+                <span class="form-hint">A name to identify this page on your Contact Pages. Must be unique among your Contact Pages.</span>
                 <span class="form-error" id="error-contact-page-name" role="alert"></span>
               </div>
               <div class="form-group">
                 <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
-                <span class="form-hint">The slug for this page’s URL (stored under your user folder). Letters, numbers, hyphens, underscores. 3–28 characters. Must be unique among your contact pages.</span>
                 <div class="editor-view-url-anatomy editor-edit-url-anatomy" id="edit-contact-page-url-anatomy">
                   <div class="editor-view-url-line" id="edit-contact-page-url-line"><span class="url-edit-prefix"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span><input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" title="Contact Page URL" required></div>
                 </div>
+                <span class="form-hint">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique among your Contact Pages.</span>
                 <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
               </div>
             </div>
             <div class="editor-edit-mode-actions">
+              <div class="form-hints-toggle-wrap">
+                <span class="form-hints-toggle-label">Form Hints:</span>
+                <button type="button" id="form-hints-toggle-btn" class="form-hints-toggle-btn" onclick="toggleFormHints()" aria-pressed="true" aria-label="Form hints visible. Click to hide.">Hide</button>
+              </div>
               <button type="button" class="btn btn-primary btn-sm" id="view-mode-btn" onclick="backToViewMode()">Back to View Mode</button>
             </div>
           </div>
           <div class="card-body" id="editor-contact-form-wrap">
             <form id="contact-form">
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
-                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
+              <div class="form-row form-row-with-hint">
+                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-first-name" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-surname" role="alert"></span></div>
               </div>
-              <div class="form-row">
-                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-email" role="alert"></span></div>
-                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-mobile" role="alert"></span></div>
+              <span class="form-hint form-hint-row">Usually First and Last Name. Consider whether or not this needs to exactly match any formal ID.</span>
+              <div class="form-row form-row-with-hint">
+                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="off"><span class="form-error" id="error-email" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-error" id="error-mobile" role="alert"></span></div>
               </div>
+              <span class="form-hint form-hint-row">A suitable email and contact number you have access to so that you can be reached.</span>
               <div class="form-group">
                 <label class="form-label">Home Country</label>
+                <span class="form-hint form-hint-above">Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.</span>
                 <div class="searchable-select" id="home-country-edit-container">
                   <button type="button" class="searchable-select-trigger" id="home-country-edit-trigger" onclick="toggleCountrySelectEdit()">
                     <span id="home-country-edit-text" class="searchable-select-placeholder">Select country</span>
@@ -556,11 +571,9 @@
                   </div>
                 </div>
                 <input type="hidden" id="home-country" value="">
-                <span class="form-hint">Your country of residence. Shown on your contact page for identification.</span>
               </div>
               <div class="form-group">
                 <label class="form-label">Destination Details</label>
-                <span class="form-hint" id="hint-destination-details"></span>
                 <div class="form-section">
                   <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
                   <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
@@ -569,6 +582,7 @@
                     <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input" autocomplete="off"><span class="form-error" id="error-dest-email" role="alert"></span></div>
                   </div>
                 </div>
+                <span class="form-hint" id="hint-destination-details"></span>
               </div>
               <div class="form-group">
                 <label class="form-label">Additional Information</label>
@@ -1589,6 +1603,16 @@ function cancelForm() {
     updateFormDirtyState();
     enterViewMode();
   });
+}
+
+function toggleFormHints() {
+  var panel = document.getElementById('editor-contact-edit');
+  var btn = document.getElementById('form-hints-toggle-btn');
+  if (!panel || !btn) return;
+  var hidden = panel.classList.toggle('form-hints-hidden');
+  btn.textContent = hidden ? 'Show' : 'Hide';
+  btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+  btn.setAttribute('aria-label', hidden ? 'Form hints hidden. Click to show.' : 'Form hints visible. Click to hide.');
 }
 
 function backToViewMode() {
