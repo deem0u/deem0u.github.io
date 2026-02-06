@@ -153,10 +153,10 @@
   .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.5rem; min-height: 1.5em; line-height: 1.5; overflow: hidden; }
   #view-contact-page-url-anatomy .editor-view-url-line { display: block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
   .editor-view-url-line { display: block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
-  .editor-view-url-line .url-base { display: inline; color: var(--color-text-secondary, #666); text-decoration: none; }
-  .editor-view-url-line .url-username { display: inline-block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
-  .editor-view-url-line .url-slash { display: inline; color: var(--color-text-secondary, #666); text-decoration: none; }
-  .editor-view-url-line .url-slug { display: inline-block; font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
+  .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
+  .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
+  .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
+  .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
   /* View mode: tight teal border + teal text (username); tight purple border + purple text (slug); slug hidden when empty */
   .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; margin: 0; vertical-align: baseline; }
   .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; margin: 0; vertical-align: baseline; }
@@ -164,10 +164,11 @@
   /* Edit mode: tight teal border (username); purple field box (slug); same height for both; scale to fit one line */
   #edit-contact-page-url-anatomy { overflow: hidden; min-height: 1.5em; }
   .editor-edit-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0; min-height: 2.25rem; }
-  .editor-edit-url-anatomy .editor-view-url-line .url-base { display: inline; flex: none; }
-  .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { display: inline-block; color: var(--accent-teal, #1ac5b0); font-weight: 700; border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.2rem 0.35rem; margin: 0; min-height: 1.75rem; box-sizing: border-box; line-height: 1.3; vertical-align: middle; }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slash { display: inline; flex: none; }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { flex: none; min-width: 8ch; width: auto; color: var(--accent-purple, #9370db); font-weight: 700; font-size: 0.8125rem; border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.2rem 0.35rem; min-height: 1.75rem; box-sizing: border-box; line-height: 1.3; background: rgba(147, 112, 219, 0.08); vertical-align: middle; }
+  .editor-edit-url-anatomy .editor-view-url-line { font-size: 0.8125rem; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-base { display: inline; flex: none; font-size: inherit; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { display: inline-block; font-size: inherit; color: var(--accent-teal, #1ac5b0); font-weight: 700; border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.2rem 0.35rem; margin: 0; min-height: 1.75rem; box-sizing: border-box; line-height: 1.3; vertical-align: middle; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slash { display: inline; flex: none; font-size: inherit; }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { flex: none; min-width: 8ch; width: auto; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.2rem 0.35rem; min-height: 1.75rem; box-sizing: border-box; line-height: 1.3; background: rgba(147, 112, 219, 0.08); vertical-align: middle; }
   .editor-edit-url-anatomy .editor-view-url-line .url-slug-input:focus { border-color: var(--accent-purple, #9370db); outline: none; box-shadow: 0 0 0 2px rgba(147, 112, 219, 0.25); }
   .editor-edit-url-anatomy .editor-view-url-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   #contact-pages-section .profile-title { color: var(--accent-purple, #9370db); }
@@ -1485,7 +1486,6 @@ function scaleEditUrlToFit() {
     var newSize = Math.max(minFontSize, Math.floor(baseFontSize * containerW / contentW));
     line.style.fontSize = newSize + 'px';
     line.style.flexWrap = 'nowrap';
-    if (slugInput) slugInput.style.fontSize = newSize + 'px';
   }
 }
 
