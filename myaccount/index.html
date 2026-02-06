@@ -161,15 +161,15 @@
   .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s, padding 0.15s; }
   .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s, padding 0.15s; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; }
+  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; min-height: 1.25em; cursor: default; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
   .editor-view-url-line .url-anatomy-label { display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin-top: 0.2rem; text-align: right; line-height: 1.2; user-select: none; -webkit-user-select: none; }
-  .url-username-wrap:hover .editor-view-url-line .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.08rem 0.2rem; }
-  .url-slug-wrap:hover .editor-view-url-line .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.08rem 0.2rem; }
-  .url-username-wrap:hover .editor-view-url-line .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
-  .url-slug-wrap:hover .editor-view-url-line .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
-  .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.08rem 0.2rem; }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.08rem 0.2rem; }
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
+  #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
   /* Edit mode: no boxes on username; slug field matches form inputs (border/background), teal/purple text; wrap slug to next line when needed */
   #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; }
   .editor-edit-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0; min-height: 2.25rem; font-size: var(--text-sm, 0.875rem); }
