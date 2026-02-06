@@ -127,10 +127,21 @@
       height: 60px;
       min-width: 60px;
       border-radius: 50%;
-      background-image: linear-gradient(var(--accent-dark), var(--accent-dark)), linear-gradient(180deg, var(--accent-teal), var(--accent-cyan));
-      background-size: calc(100% - 6px) calc(100% - 6px), 100% 100%;
-      background-position: center, center;
-      background-repeat: no-repeat;
+      background: linear-gradient(180deg, var(--accent-teal), var(--accent-cyan));
+      padding: 3px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    .how-step-number-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--accent-dark);
       color: var(--white);
       font-family: 'Nunito', sans-serif;
       font-size: 1.35rem;
@@ -138,9 +149,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
-      position: relative;
-      z-index: 1;
     }
     .how-step-body {
       flex: 1;
@@ -239,6 +247,17 @@
       transition: background 0.2s, color 0.2s;
     }
     .how-cta .btn-second:hover { background: var(--accent-dark); color: var(--white); }
+    .how-cta-signin {
+      margin-top: 1.25rem;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .how-cta-signin a {
+      color: var(--accent-dark);
+      text-decoration: underline;
+    }
+    .how-cta-signin a:hover { opacity: 0.85; }
   </style>
 </head>
 <body class="how-page">
@@ -314,11 +333,11 @@
 
       <section class="how-section" style="background: linear-gradient(180deg, var(--grey-100) 0%, var(--white) 100%);" aria-labelledby="steps-heading">
         <div class="how-section-inner">
-        <div class="how-label how-label-hero how-label-steps" style="background: var(--accent-dark); display: inline-block; padding: 0.2rem 0.75rem; border-radius: 6px;">How It Works</div>
+        <div class="how-label how-label-hero how-label-steps">How It Works</div>
         <h2 id="steps-heading" class="how-section-heading">4 steps. That's it.</h2>
         <div class="how-steps">
           <div class="how-step">
-            <div class="how-step-number" aria-hidden="true">1</div>
+            <div class="how-step-number" aria-hidden="true"><span class="how-step-number-inner">1</span></div>
             <div class="how-step-body">
               <div class="how-step-content">
                 <h3>Sign Up</h3>
@@ -351,7 +370,7 @@
             </div>
           </div>
           <div class="how-step">
-            <div class="how-step-number" aria-hidden="true">2</div>
+            <div class="how-step-number" aria-hidden="true"><span class="how-step-number-inner">2</span></div>
             <div class="how-step-body">
               <div class="how-step-content">
                 <h3>Create Contact Page</h3>
@@ -382,7 +401,7 @@
             </div>
           </div>
           <div class="how-step">
-            <div class="how-step-number" aria-hidden="true">3</div>
+            <div class="how-step-number" aria-hidden="true"><span class="how-step-number-inner">3</span></div>
             <div class="how-step-body">
               <div class="how-step-content">
                 <h3>Get Your QR / NFC</h3>
@@ -432,7 +451,7 @@
             </div>
           </div>
           <div class="how-step">
-            <div class="how-step-number" aria-hidden="true">4</div>
+            <div class="how-step-number" aria-hidden="true"><span class="how-step-number-inner">4</span></div>
             <div class="how-step-body">
               <div class="how-step-content">
                 <h3>Done!</h3>
@@ -483,6 +502,7 @@
         <div class="how-cta-btns">
           <a href="/home/#signup" class="btn-prime">Get Started</a>
         </div>
+        <p class="how-cta-signin">Already got an account? <a href="https://deem0u.github.io/myaccount/">Sign In</a></p>
         </div>
       </section>
     </main>
