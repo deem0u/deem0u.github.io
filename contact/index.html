@@ -35,11 +35,12 @@
     padding: 48px;
     box-shadow: 0 8px 32px rgba(26, 43, 74, 0.08);
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: 0.75fr 1.4fr;
     gap: 48px;
     width: 100%;
     position: relative;
     overflow: hidden;
+    align-items: center;
   }
   .contact-card::before {
     content: '';
@@ -51,6 +52,10 @@
     background: linear-gradient(180deg, var(--contact-teal), var(--contact-teal-dark));
   }
 
+  .contact-form-info {
+    position: relative;
+    box-shadow: 4px 0 20px -4px rgba(0, 201, 183, 0.18), inset 4px 0 14px -4px rgba(0, 201, 183, 0.08);
+  }
   .contact-form-info h2 {
     font-size: 1.625rem;
     font-weight: 700;
@@ -83,8 +88,9 @@
   .contact-info-icon svg {
     width: 22px;
     height: 22px;
+    stroke: var(--contact-teal);
     color: var(--contact-teal);
-    fill: rgba(0, 201, 183, 0.2);
+    fill: none;
   }
   .contact-info-content h4 {
     font-size: 0.875rem;
@@ -107,7 +113,7 @@
   .contact-form-inner {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.75rem;
   }
   .contact-form-row {
     display: grid;
@@ -117,37 +123,42 @@
   .contact-form-inner .form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
   .contact-form-inner .form-label {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--contact-navy);
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 500;
+    color: var(--color-text, var(--contact-navy));
+    margin-bottom: 0;
   }
   .contact-form-inner .form-input,
   .contact-form-inner .form-textarea,
   .contact-form-inner select.form-input {
-    padding: 14px 16px;
-    border: 2px solid rgba(0, 201, 183, 0.35);
-    border-radius: 12px;
+    padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+    border: 1px solid var(--color-border-strong, var(--contact-grey-200));
+    border-radius: var(--radius-md, 8px);
     font-family: inherit;
-    font-size: 0.9375rem;
-    color: var(--contact-navy);
-    background: #fff;
-    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--color-text, var(--contact-navy));
+    background: var(--white, #fff);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     outline: none;
-    box-shadow: 0 0 0 1px rgba(0, 201, 183, 0.08);
+    box-shadow: none;
+  }
+  .contact-form-inner .form-input:hover,
+  .contact-form-inner .form-textarea:hover,
+  .contact-form-inner select.form-input:hover {
+    border-color: var(--grey-400, var(--contact-grey-400));
   }
   .contact-form-inner .form-input:focus,
   .contact-form-inner .form-textarea:focus,
   .contact-form-inner select.form-input:focus {
-    border-color: var(--contact-teal);
-    background: #fff;
-    box-shadow: 0 0 0 2px rgba(0, 201, 183, 0.2);
+    border-color: var(--color-primary, var(--contact-navy));
+    box-shadow: 0 0 0 3px var(--focus-ring-primary, rgba(39, 41, 50, 0.2));
   }
   .contact-form-inner .form-input::placeholder,
   .contact-form-inner .form-textarea::placeholder {
-    color: var(--contact-grey-400);
+    color: var(--color-text-muted, var(--contact-grey-400));
   }
   .contact-form-inner .form-textarea {
     min-height: 120px;
@@ -156,10 +167,10 @@
   .contact-form-inner select.form-input {
     cursor: pointer;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2300a89a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 44px;
+    background-position: right var(--space-3, 0.75rem) center;
+    padding-right: 2.75rem;
   }
   #contact-form-wrap {
     border-left: 3px solid var(--contact-teal);
@@ -189,7 +200,6 @@
     transform: translateY(-2px);
   }
   .contact-submit-btn:disabled { opacity: 0.8; cursor: not-allowed; }
-  .contact-submit-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
 
   .contact-confirm {
     display: none;
@@ -260,7 +270,7 @@
             <p>Have a question or need help? Fill out the form and we'll get back to you within 3 business days.</p>
             <div class="contact-info-item">
               <div class="contact-info-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#00c9b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
               </div>
               <div class="contact-info-content">
                 <h4>Email</h4>
@@ -269,7 +279,7 @@
             </div>
             <div class="contact-info-item">
               <div class="contact-info-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#00c9b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               </div>
               <div class="contact-info-content">
                 <h4>Response time</h4>
@@ -309,7 +319,6 @@
                 </div>
                 <button type="submit" id="contact-submit" class="contact-submit-btn">
                   Send message
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </form>
             </div>
