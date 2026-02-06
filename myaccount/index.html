@@ -644,12 +644,16 @@
     <div class="modal" style="max-width:520px;">
       <div class="modal-header"><h3 class="modal-title">Change Password &amp; Security Questions</h3></div>
       <div class="modal-body">
-        <p class="form-hint" style="margin-bottom:1rem;">Enter your current password, then set a new password and/or update your security questions. You will use your new password the next time you sign in.</p>
-        <div class="form-group">
+        <p class="form-hint" style="margin-bottom:1rem;">Enter your current password and click Submit to continue. Then set a new password and/or update your security questions.</p>
+        <div class="form-group" id="change-pwd-current-row">
           <label class="form-label" for="change-pwd-current">Current password <span class="form-required">*</span></label>
-          <input type="password" id="change-pwd-current" class="form-input" autocomplete="off" placeholder="Enter current password to make changes">
+          <div class="form-inline-row" style="display:flex;gap:0.5rem;align-items:flex-start;flex-wrap:wrap;">
+            <input type="password" id="change-pwd-current" class="form-input" autocomplete="off" placeholder="Enter current password" style="flex:1;min-width:12rem;">
+            <button type="button" class="btn btn-primary" id="change-pwd-verify-btn" onclick="verifyChangePwdCurrent()" disabled>Submit</button>
+          </div>
           <span class="form-error" id="error-change-pwd-current" role="alert"></span>
         </div>
+        <fieldset id="change-pwd-fields-wrap" disabled style="border:none;margin:0;padding:0;">
         <div class="form-group">
           <label class="form-label" for="change-pwd-new">New password</label>
           <input type="password" id="change-pwd-new" class="form-input" autocomplete="off" placeholder="Leave blank to keep the same password or enter a new password" minlength="8">
@@ -675,6 +679,7 @@
             <div class="secret-q-row"><select id="change-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" autocomplete="off"></div></div>
           </div>
         </div>
+        </fieldset>
         <div id="change-pwd-sq-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
       </div>
       <div class="modal-footer">
@@ -2599,7 +2604,7 @@ function toggleChangePwdConfirmVisibility() {
 }
 
 function updateChangePwdSqSaveButton() {
-  var cur = document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value.trim();
+  var cur = changePwdCurrentVerified ? verifiedCurrentPassword : ((document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value) || '').trim();
   var newP = document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value;
   var conf = document.getElementById('change-pwd-confirm') && document.getElementById('change-pwd-confirm').value;
   var dobVal = (document.getElementById('change-pwd-dob') && document.getElementById('change-pwd-dob').value || '').trim().replace(/\s/g, '');
@@ -2613,12 +2618,18 @@ function updateChangePwdSqSaveButton() {
   var hasNewPwd = newP && newP.length >= 8 && newP === conf;
   var hasSq = sq1 && sq2 && sq3 && [sq1,sq2,sq3].filter(function(x,i,a){return a.indexOf(x)===i;}).length === 3 && a1.length >= 4 && a2.length >= 4 && a3.length >= 4;
   var btn = document.getElementById('change-pwd-sq-save-btn');
-  if (btn) btn.disabled = !cur || (!hasNewPwd && !hasDob && !hasSq);
+  /* Save stays disabled until current password is submitted and successfully verified (Submit step). No re-check of current password here. */
+  if (btn) btn.disabled = !changePwdCurrentVerified || !cur || (!hasNewPwd && !hasDob && !hasSq);
 }
+
+var changePwdCurrentVerified = false;
+var verifiedCurrentPassword = '';
 
 function openChangePasswordSqModal() {
   var m = document.getElementById('change-password-sq-modal');
   if (!m) return;
+  changePwdCurrentVerified = false;
+  verifiedCurrentPassword = '';
   document.getElementById('change-pwd-current').value = '';
   document.getElementById('change-pwd-new').value = '';
   document.getElementById('change-pwd-confirm').value = '';
@@ -2636,6 +2647,13 @@ function openChangePasswordSqModal() {
   });
   document.getElementById('change-pwd-sq-error').classList.add('hidden');
   document.getElementById('change-pwd-sq-error').textContent = '';
+  document.getElementById('error-change-pwd-current').textContent = '';
+  var currentRow = document.getElementById('change-pwd-current-row');
+  if (currentRow) currentRow.classList.remove('hidden');
+  var fieldsWrap = document.getElementById('change-pwd-fields-wrap');
+  if (fieldsWrap) fieldsWrap.disabled = true;
+  var verifyBtn = document.getElementById('change-pwd-verify-btn');
+  if (verifyBtn) { verifyBtn.disabled = true; verifyBtn.textContent = 'Submit'; }
   syncChangePwdSqOptions();
   m.classList.remove('hidden');
   m.classList.add('show');
@@ -2645,6 +2663,7 @@ function openChangePasswordSqModal() {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', updateChangePwdSqSaveButton);
   });
+  if (curInp) curInp.addEventListener('input', function() { var vb = document.getElementById('change-pwd-verify-btn'); if (vb) vb.disabled = !(curInp.value || '').trim(); });
   var newPwdEl = document.getElementById('change-pwd-new');
   if (newPwdEl) newPwdEl.addEventListener('input', toggleChangePwdConfirmVisibility);
   ['change-sq1','change-sq2','change-sq3','change-sq1-answer','change-sq2-answer','change-sq3-answer'].forEach(function(id) {
@@ -2655,23 +2674,59 @@ function openChangePasswordSqModal() {
     var el = document.getElementById(id);
     if (el) el.addEventListener('change', syncChangePwdSqOptions);
   });
+  updateChangePwdSqSaveButton();
+}
+
+async function verifyChangePwdCurrent() {
+  var curInp = document.getElementById('change-pwd-current');
+  var cur = (curInp && curInp.value) ? curInp.value.trim() : '';
+  var errEl = document.getElementById('error-change-pwd-current');
+  var verifyBtn = document.getElementById('change-pwd-verify-btn');
+  if (!cur) { if (errEl) errEl.textContent = 'Enter your current password.'; return; }
+  if (errEl) errEl.textContent = '';
+  if (verifyBtn) { verifyBtn.disabled = true; verifyBtn.textContent = 'Checking...'; }
+  try {
+    var r = await fetch(API + '/api/profile/verify-password', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ currentPassword: cur }) });
+    var d = {};
+    try { d = await r.json(); } catch (_) { d = {}; }
+    if (r.ok && d.success) {
+      changePwdCurrentVerified = true;
+      verifiedCurrentPassword = cur;
+      var currentRow = document.getElementById('change-pwd-current-row');
+      if (currentRow) currentRow.classList.add('hidden');
+      var fieldsWrap = document.getElementById('change-pwd-fields-wrap');
+      if (fieldsWrap) fieldsWrap.disabled = false;
+      var newPwdEl = document.getElementById('change-pwd-new');
+      if (newPwdEl) newPwdEl.focus();
+      updateChangePwdSqSaveButton();
+    } else {
+      if (errEl) errEl.textContent = (d && d.error) || 'Current password is incorrect.';
+      if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = 'Submit'; }
+    }
+  } catch (e) {
+    if (errEl) errEl.textContent = 'Connection error. Please try again.';
+    if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = 'Submit'; }
+  }
 }
 
 function closeChangePasswordSqModal() {
   var m = document.getElementById('change-password-sq-modal');
   if (m) { m.classList.remove('show'); m.classList.add('hidden'); }
+  changePwdCurrentVerified = false;
+  verifiedCurrentPassword = '';
 }
 
 async function saveChangePasswordSq() {
-  var cur = (document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value) || '';
+  /* Current password was already verified by Submit; we use the stored value (current field is hidden after verify). */
+  var cur = changePwdCurrentVerified ? verifiedCurrentPassword : ((document.getElementById('change-pwd-current') && document.getElementById('change-pwd-current').value) || '');
   var newP = (document.getElementById('change-pwd-new') && document.getElementById('change-pwd-new').value) || '';
   var conf = (document.getElementById('change-pwd-confirm') && document.getElementById('change-pwd-confirm').value) || '';
   var dobRaw = (document.getElementById('change-pwd-dob') && document.getElementById('change-pwd-dob').value || '').trim().replace(/\s/g, '');
   var errEl = document.getElementById('change-pwd-sq-error');
   var btn = document.getElementById('change-pwd-sq-save-btn');
   if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
-  if (!cur.trim()) {
-    if (errEl) { errEl.textContent = 'Enter your current password.'; errEl.classList.remove('hidden'); return; }
+  if (!changePwdCurrentVerified || !cur || !cur.trim()) {
+    if (errEl) { errEl.textContent = 'Verify your current password first.'; errEl.classList.remove('hidden'); return; }
   }
   if (dobRaw && !/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dobRaw)) {
     if (errEl) { errEl.textContent = 'Date of birth must be dd/mm/yyyy.'; errEl.classList.remove('hidden'); return; }

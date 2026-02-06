@@ -315,6 +315,9 @@ export default {
       if (request.method === 'POST' && path === '/api/profile/set-password-after-otp') {
         return await handleSetPasswordAfterOtp(request, env);
       }
+      if (request.method === 'POST' && path === '/api/profile/verify-password') {
+        return await handleVerifyPassword(request, env);
+      }
       if (request.method === 'POST' && path === '/api/profile/change-password-and-sq') {
         return await handleChangePasswordAndSq(request, env);
       }
@@ -2972,6 +2975,26 @@ async function handleSetPasswordAfterOtp(request, env) {
   const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
   const newToken = await signJwt({ username, exp }, secret);
   return jsonResponse({ success: true, token: newToken });
+}
+
+/** POST /api/profile/verify-password - Bearer required. Body: { currentPassword }. Verifies current password only; returns { success: true } or 401. */
+async function handleVerifyPassword(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const currentPassword = (body.currentPassword || '').trim();
+  if (!currentPassword) return jsonResponse({ error: 'Current password required' }, 400);
+  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
+  if (!pwHash) return jsonResponse({ error: 'No password set for this account' }, 400);
+  const valid = await verifyPassword(currentPassword, pwHash);
+  if (!valid) return jsonResponse({ error: 'Current password is incorrect' }, 401);
+  return jsonResponse({ success: true });
 }
 
 /** POST /api/profile/change-password-and-sq - Bearer required. Body: { currentPassword, newPassword?, secretQuestions?, dob? }. Verifies current password then updates password, date of birth, and/or security questions. */
