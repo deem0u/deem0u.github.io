@@ -144,6 +144,20 @@
   #editor-contact-edit #home-country-edit-container .searchable-select-options { max-height: 160px; }
   #editor-contact-edit #home-country-edit-container .searchable-select-option { padding: 0.25rem 0.35rem; font-size: 0.8125rem; }
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
+  .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+  .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
+  .editor-view-url-anatomy { display: grid; grid-template-columns: auto auto auto; grid-template-rows: auto auto; gap: 0 0; align-items: start; margin-top: 0.35rem; margin-bottom: 0.5rem; }
+  .editor-view-url-line { display: contents; }
+  .editor-view-url-line .url-base { grid-column: 1; grid-row: 1; color: var(--color-text-secondary, #666); font-size: 0.9em; }
+  .editor-view-url-line .url-username { grid-column: 2; grid-row: 1; color: var(--accent-teal, #1ac5b0); font-weight: 600; word-break: break-all; }
+  .editor-view-url-line .url-slug { grid-column: 3; grid-row: 1; color: var(--accent-teal, #1ac5b0); font-weight: 600; word-break: break-all; padding-left: 0.15rem; }
+  .editor-view-url-underbracket { display: contents; }
+  .editor-view-url-underbracket .bracket-spacer { grid-column: 1; grid-row: 2; min-height: 1.5rem; }
+  .editor-view-url-underbracket .bracket-segment { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+  .editor-view-url-underbracket .bracket-username { grid-column: 2; grid-row: 2; }
+  .editor-view-url-underbracket .bracket-slug { grid-column: 3; grid-row: 2; }
+  .editor-view-url-underbracket .bracket-line { border-bottom: 2px solid var(--color-border-strong, #999); margin-bottom: 0.2rem; min-height: 2px; }
+  .editor-view-url-underbracket .bracket-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; color: var(--color-text-secondary, #666); text-transform: uppercase; }
   .header-username-teal { color: var(--accent-teal, #1ac5b0); }
   /* Easter egg: floating astronaut (only when eligible, first login of day) */
   .easter-egg-overlay { position: fixed; inset: 0; z-index: 9998; pointer-events: none; overflow: hidden; }
@@ -437,7 +451,27 @@
                   <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit</button>
                 </div>
               </div>
-              <div class="editor-view-url-row editor-view-header"><span class="form-label">Page URL</span><span class="editor-view-value" id="view-contact-page-url"></span></div>
+              <div class="editor-view-url-block editor-view-header">
+                <div class="form-label">Page URL</div>
+                <div class="editor-view-url-anatomy">
+                  <div class="editor-view-url-line">
+                    <span class="url-part url-base" id="view-contact-page-url-base">https://deem0u.github.io/user/</span>
+                    <span class="url-part url-username" id="view-contact-page-url-username-part"></span>
+                    <span class="url-part url-slug" id="view-contact-page-url-slug-part"></span>
+                  </div>
+                  <div class="editor-view-url-underbracket">
+                    <span class="bracket-spacer" aria-hidden="true"></span>
+                    <span class="bracket-segment bracket-username">
+                      <span class="bracket-line" aria-hidden="true"></span>
+                      <span class="bracket-label">YOUR USER NAME</span>
+                    </span>
+                    <span class="bracket-segment bracket-slug">
+                      <span class="bracket-line" aria-hidden="true"></span>
+                      <span class="bracket-label">CONTACT PAGE SLUG</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
               <div class="form-row">
                 <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><span class="editor-view-value" id="view-first-name"></span></div>
                 <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><span class="editor-view-value" id="view-surname"></span></div>
@@ -1379,7 +1413,10 @@ function refreshViewModeDisplay() {
   if (slug && slug.toLowerCase() === 'index') slug = '';
   var url = u ? (PAGES_URL + u + '/' + (slug || '')) : '';
   setView('view-contact-page-name', nameInp ? nameInp.value : '');
-  setView('view-contact-page-url', url);
+  var usernamePartEl = document.getElementById('view-contact-page-url-username-part');
+  var slugPartEl = document.getElementById('view-contact-page-url-slug-part');
+  if (usernamePartEl) usernamePartEl.textContent = u || '';
+  if (slugPartEl) slugPartEl.textContent = slug ? '/' + slug : '/';
   setView('view-first-name', el('first-name'));
   setView('view-surname', el('surname'));
   setView('view-email', el('email'));
@@ -2901,6 +2938,16 @@ async function handleSave(e) {
 
       if (res.ok) {
         currentSha = data.sha;
+        setContactPageMeta(currentContactpagename, contactPageName || null, false);
+        document.getElementById('view-page-link').href = viewPageHref();
+        document.getElementById('view-page-link').style.pointerEvents = '';
+        await fetchContactPagesList();
+        var listEl = document.getElementById('contact-pages-list');
+        if (listEl) listEl.querySelectorAll('.contact-page-card').forEach(function(card) { card.classList.toggle('selected', (card.getAttribute('data-contactpagename') || 'index') === currentContactpagename); });
+        updateContactPagesDropdownTriggerText();
+        enterViewMode();
+        var selCard = listEl && listEl.querySelector('.contact-page-card.selected');
+        if (selCard) selCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         updateWelcomeUserName();
         formSnapshot = getFormSnapshot();
         updateFormDirtyState();
