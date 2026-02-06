@@ -128,8 +128,8 @@
   .contact-page-url-inline .form-input { flex: 1; min-width: 8ch; }
   .contact-page-url-inline .card-header-url-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
   .contact-page-url-inline .card-header-url-suffix { font-size: 0.875rem; color: var(--color-text-secondary, #666); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { grid-column: 4; grid-row: 1; min-width: 8ch; color: var(--accent-teal, #1ac5b0); font-weight: 700; font-size: 0.8125rem; border: 1px solid var(--color-border-strong, #ccc); border-radius: var(--radius-sm, 4px); padding: 0.25rem 0.35rem; background: var(--white, #fff); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input:focus { border-color: var(--accent-teal, #1ac5b0); outline: none; box-shadow: 0 0 0 2px rgba(26, 197, 176, 0.25); }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { grid-column: 4; grid-row: 1; min-width: 8ch; color: var(--accent-purple, #9370db); font-weight: 700; font-size: 0.8125rem; border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.25rem 0.35rem; background: rgba(147, 112, 219, 0.08); }
+  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input:focus { border-color: var(--accent-purple, #9370db); outline: none; box-shadow: 0 0 0 2px rgba(147, 112, 219, 0.25); }
   .editor-edit-url-anatomy .editor-view-url-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   /* Compact form: edit only; view mode keeps default spacing/font */
   #editor-contact-edit .card-header { padding: 0.5rem 0.75rem; }
@@ -153,22 +153,17 @@
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
-  .editor-view-url-anatomy { display: grid; grid-template-columns: auto auto auto auto; grid-template-rows: auto auto; gap: 0; column-gap: 0; row-gap: 0; align-items: start; margin-top: 0.15rem; margin-bottom: 0.5rem; }
+  .editor-view-url-anatomy { display: grid; grid-template-columns: auto auto auto auto; grid-template-rows: auto; gap: 0; align-items: start; margin-top: 0.15rem; margin-bottom: 0.5rem; }
   .editor-view-url-line { display: contents; }
-  .editor-view-url-line .url-base { grid-column: 1; grid-row: 1; color: var(--color-text, #333); font-size: 0.8125rem; font-weight: 700; text-decoration: none; }
-  .editor-view-url-line .url-username { grid-column: 2; grid-row: 1; color: var(--color-text, #333); font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
-  .editor-view-url-line .url-slash { grid-column: 3; grid-row: 1; color: var(--color-text, #333); font-size: 0.8125rem; font-weight: 700; text-decoration: none; }
-  .editor-view-url-line .url-slug { grid-column: 4; grid-row: 1; color: var(--color-text, #333); font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
-  .editor-edit-url-anatomy .editor-view-url-line .url-username { color: var(--accent-purple, #9370db); }
-  .editor-edit-url-anatomy .editor-view-url-line .url-slug-input { color: var(--accent-teal, #1ac5b0); }
-  .editor-view-url-underbracket { display: contents; }
-  .editor-view-url-underbracket .bracket-spacer { grid-column: 1; grid-row: 2; min-height: 0.75rem; }
-  .editor-view-url-underbracket .bracket-segment { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
-  .editor-view-url-underbracket .bracket-username { grid-column: 2; grid-row: 2; }
-  .editor-view-url-underbracket .bracket-slug { grid-column: 4; grid-row: 2; }
-  .editor-view-url-underbracket .bracket-line { border-bottom: 2px solid var(--color-border-strong, #999); margin-bottom: 0.15rem; min-height: 2px; }
-  .editor-view-url-underbracket .bracket-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; color: var(--color-text-secondary, #666); text-transform: uppercase; }
-  .editor-view-url-underbracket .bracket-slug .bracket-label { color: var(--color-text-secondary, #666); }
+  .editor-view-url-line .url-base { grid-column: 1; grid-row: 1; color: var(--color-text-secondary, #666); font-size: 0.8125rem; font-weight: 700; text-decoration: none; }
+  .editor-view-url-line .url-username { grid-column: 2; grid-row: 1; font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
+  .editor-view-url-line .url-slash { grid-column: 3; grid-row: 1; color: var(--color-text-secondary, #666); font-size: 0.8125rem; font-weight: 700; text-decoration: none; }
+  .editor-view-url-line .url-slug { grid-column: 4; grid-row: 1; font-size: 0.8125rem; font-weight: 700; word-break: break-all; text-decoration: none; }
+  /* View mode: teal border + teal text (username); purple border + purple text (slug) */
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.15rem 0.35rem; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.15rem 0.35rem; }
+  /* Edit mode: teal border + teal text (username); purple field box + purple text (slug input) */
+  .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { color: var(--accent-teal, #1ac5b0); font-weight: 700; border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.15rem 0.35rem; }
   #contact-pages-section .profile-title { color: var(--accent-purple, #9370db); }
   #profile-username { color: var(--accent-teal, #1ac5b0); }
   .header-username-teal { color: var(--accent-teal, #1ac5b0); }
@@ -467,18 +462,7 @@
               <div class="editor-view-url-block editor-view-header">
                 <div class="form-label">Page URL</div>
                 <div class="editor-view-url-anatomy">
-                  <div class="editor-view-url-line"><span class="url-part url-base" id="view-contact-page-url-base">https://deem0u.github.io/user/</span><span class="url-part url-username" id="view-contact-page-url-username-part"></span><span class="url-part url-slash" id="view-contact-page-url-slash">/</span><span class="url-part url-slug" id="view-contact-page-url-slug-part"></span></div>
-                  <div class="editor-view-url-underbracket">
-                    <span class="bracket-spacer" aria-hidden="true"></span>
-                    <span class="bracket-segment bracket-username">
-                      <span class="bracket-line" aria-hidden="true"></span>
-                      <span class="bracket-label">YOUR USER NAME</span>
-                    </span>
-                    <span class="bracket-segment bracket-slug">
-                      <span class="bracket-line" aria-hidden="true"></span>
-                      <span class="bracket-label">CONTACT PAGE SLUG</span>
-                    </span>
-                  </div>
+                  <div class="editor-view-url-line"><span class="url-part url-base" id="view-contact-page-url-base">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-view" id="view-contact-page-url-username-part"></span><span class="url-part url-slash" id="view-contact-page-url-slash">/</span><span class="url-part url-slug url-slug-view" id="view-contact-page-url-slug-part"></span></div>
                 </div>
               </div>
               <div class="form-row">
@@ -522,19 +506,8 @@
               <div class="form-group">
                 <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
                 <span class="form-hint">The slug for this page’s URL (stored under your user folder). Letters, numbers, hyphens, underscores. 2–28 characters. Must be unique.</span>
-                <div class="editor-view-url-anatomy editor-edit-url-anatomy" aria-describedby="edit-url-bracket-labels">
-                  <div class="editor-view-url-line"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span><input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]+$" maxlength="28" autocomplete="off" title="Contact Page URL" required></div>
-                  <div class="editor-view-url-underbracket" id="edit-url-bracket-labels">
-                    <span class="bracket-spacer" aria-hidden="true"></span>
-                    <span class="bracket-segment bracket-username">
-                      <span class="bracket-line" aria-hidden="true"></span>
-                      <span class="bracket-label">YOUR USER NAME</span>
-                    </span>
-                    <span class="bracket-segment bracket-slug">
-                      <span class="bracket-line" aria-hidden="true"></span>
-                      <span class="bracket-label">CONTACT PAGE SLUG</span>
-                    </span>
-                  </div>
+                <div class="editor-view-url-anatomy editor-edit-url-anatomy">
+                  <div class="editor-view-url-line"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span><input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]+$" maxlength="28" autocomplete="off" title="Contact Page URL" required></div>
                 </div>
                 <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
               </div>
