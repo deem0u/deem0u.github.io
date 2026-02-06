@@ -134,7 +134,8 @@
   #editor-contact-edit .form-group { margin-bottom: 0.4rem; }
   #editor-contact-edit .form-group:last-child { margin-bottom: 0; }
   #editor-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
-  #editor-contact-edit .form-hint { margin-top: 0.15rem; }
+  #editor-contact-edit .form-hint { margin-top: 0.15rem; min-height: 1.6em; visibility: hidden; }
+  #editor-contact-edit .form-group:focus-within .form-hint { visibility: visible; }
   #editor-contact-edit .card-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.4rem; }
   #editor-contact-edit .form-row { gap: 0.5rem; }
   #editor-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0.35rem; }
@@ -277,11 +278,11 @@
             <div class="alert alert-info show mb-4">Set a new permanent password. Your one-time password will no longer work after this.</div>
             <div class="form-group">
               <label class="form-label">New Password</label>
-              <input type="password" id="auth-new-password" class="form-input" placeholder="Min 8 characters" minlength="8" autocomplete="new-password">
+              <input type="password" id="auth-new-password" class="form-input" placeholder="Min 8 characters" minlength="8" autocomplete="off">
             </div>
             <div class="form-group">
               <label class="form-label">Confirm Password</label>
-              <input type="password" id="auth-confirm-password" class="form-input" placeholder="Same as above" minlength="8" autocomplete="new-password">
+              <input type="password" id="auth-confirm-password" class="form-input" placeholder="Same as above" minlength="8" autocomplete="off">
             </div>
             <button type="button" id="auth-set-password-btn" class="btn btn-primary btn-block btn-lg">Set Password &amp; Continue</button>
           </div>
@@ -305,14 +306,14 @@
             <div id="recovery-step1-username" class="recovery-step1-fields">
               <div class="form-group">
                 <label class="form-label">User Name</label>
-                <input type="text" id="recovery-username" class="form-input" placeholder="e.g. john-smith" autocomplete="username">
+                <input type="text" id="recovery-username" class="form-input" placeholder="e.g. john-smith" autocomplete="off">
                 <span class="form-error" id="error-recovery-username" role="alert"></span>
               </div>
             </div>
             <div id="recovery-step1-email" class="recovery-step1-fields hidden">
               <div class="form-group">
                 <label class="form-label">Account Email</label>
-                <input type="email" id="recovery-account-email-step1" class="form-input" placeholder="your@email.com" autocomplete="email">
+                <input type="email" id="recovery-account-email-step1" class="form-input" placeholder="your@email.com" autocomplete="off">
                 <span class="form-error" id="error-recovery-email" role="alert"></span>
               </div>
             </div>
@@ -332,23 +333,23 @@
           <form id="recovery-form-step2" onsubmit="return false;">
             <div class="form-group" id="recovery-account-email-group">
               <label class="form-label">Account Email</label>
-              <input type="email" id="recovery-account-email" class="form-input" autocomplete="email">
+              <input type="email" id="recovery-account-email" class="form-input" autocomplete="off">
               <span class="form-error" id="error-recovery-account-email" role="alert"></span>
             </div>
             <div class="form-group">
               <label class="form-label">Date of Birth</label>
-              <input type="text" id="recovery-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="bday">
+              <input type="text" id="recovery-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
               <span class="form-hint">Format: dd/mm/yyyy</span>
               <span class="form-error" id="error-recovery-dob" role="alert"></span>
             </div>
             <div class="form-group" id="recovery-sq-group">
               <label class="form-label" id="recovery-sq-label"></label>
-              <input type="text" id="recovery-sq-answer" class="form-input" maxlength="30" placeholder="Answer">
+              <input type="text" id="recovery-sq-answer" class="form-input" maxlength="30" placeholder="Answer" autocomplete="off">
               <span class="form-error" id="error-recovery-sq" role="alert"></span>
             </div>
             <div class="form-group hidden" id="recovery-sq2-group">
               <label class="form-label" id="recovery-sq2-label"></label>
-              <input type="text" id="recovery-sq2-answer" class="form-input" maxlength="30" placeholder="Answer">
+              <input type="text" id="recovery-sq2-answer" class="form-input" maxlength="30" placeholder="Answer" autocomplete="off">
               <span class="form-error" id="error-recovery-sq2" role="alert"></span>
             </div>
             <div class="recovery-actions">
@@ -393,10 +394,10 @@
               <button type="button" class="btn btn-primary btn-sm mt-2 hidden" id="change-password-sq-btn" onclick="openChangePasswordSqModal()">Change Password &amp; Security Questions</button>
             </div>
             <div id="profile-edit" class="profile-edit hidden">
-              <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" placeholder="e.g. john-smith" autocomplete="username"><span class="form-hint">3–28 characters. Letters, numbers, hyphens, underscores. Stored as lowercase (e.g. John-Smith → john-smith). Must be unique.</span><div id="profile-username-warning" class="profile-username-warning hidden" role="alert">Changes to your user name affect the URL of any contact pages already created. Your QR codes and NFC tags will point to the new URL, so they will need to be regenerated, reprinted, or rewritten.</div><span class="form-error" id="error-profile-username" role="alert"></span></div>
-              <div class="form-group"><label class="form-label">First Name</label><input type="text" id="profile-edit-first-name" class="form-input" maxlength="32"></div>
-              <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="profile-edit-last-name" class="form-input" maxlength="32"></div>
-              <div class="form-group"><label class="form-label">Account Email <span class="form-required">*</span></label><input type="email" id="profile-edit-email" class="form-input"></div>
+              <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" placeholder="e.g. john-smith" autocomplete="off"><span class="form-hint">3–28 characters. Letters, numbers, hyphens, underscores. Stored as lowercase (e.g. John-Smith → john-smith). Must be unique.</span><div id="profile-username-warning" class="profile-username-warning hidden" role="alert">Changes to your user name affect the URL of any contact pages already created. Your QR codes and NFC tags will point to the new URL, so they will need to be regenerated, reprinted, or rewritten.</div><span class="form-error" id="error-profile-username" role="alert"></span></div>
+<div class="form-group"><label class="form-label">First Name</label><input type="text" id="profile-edit-first-name" class="form-input" maxlength="32" autocomplete="off"></div>
+               <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="profile-edit-last-name" class="form-input" maxlength="32" autocomplete="off"></div>
+               <div class="form-group"><label class="form-label">Account Email <span class="form-required">*</span></label><input type="email" id="profile-edit-email" class="form-input" autocomplete="off"></div>
               <div class="form-group"><span class="form-label">Date Of Birth</span><span class="profile-value" id="profile-edit-dob">—</span></div>
               <div class="profile-edit-actions">
                 <button type="button" class="btn btn-primary btn-sm" id="profile-save-btn" onclick="saveProfileFromStrip()" disabled>Save</button>
@@ -520,7 +521,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
-                <span class="form-hint">The slug for this page’s URL (stored under your user folder). Letters, numbers, hyphens, underscores. 3–28 characters. Must be unique.</span>
+                <span class="form-hint">The slug for this page’s URL (stored under your user folder). Letters, numbers, hyphens, underscores. 3–28 characters. Must be unique among your contact pages.</span>
                 <div class="editor-view-url-anatomy editor-edit-url-anatomy" id="edit-contact-page-url-anatomy">
                   <div class="editor-view-url-line" id="edit-contact-page-url-line"><span class="url-edit-prefix"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span><input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" title="Contact Page URL" required></div>
                 </div>
@@ -534,12 +535,12 @@
           <div class="card-body" id="editor-contact-form-wrap">
             <form id="contact-form">
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
-                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-first-name" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-surname" role="alert"></span></div>
               </div>
               <div class="form-row">
-                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-email" role="alert"></span></div>
-                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="tel"><span class="form-hint"></span><span class="form-error" id="error-mobile" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-email" role="alert"></span></div>
+                <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-mobile" role="alert"></span></div>
               </div>
               <div class="form-group">
                 <label class="form-label">Home Country</label>
@@ -549,7 +550,7 @@
                   </button>
                   <div class="searchable-select-dropdown" id="home-country-edit-dropdown">
                     <div class="searchable-select-search">
-                      <input type="text" id="home-country-edit-search" oninput="filterCountryOptionsEdit()">
+                      <input type="text" id="home-country-edit-search" oninput="filterCountryOptionsEdit()" autocomplete="off">
                     </div>
                     <div class="searchable-select-options" id="home-country-edit-options"></div>
                   </div>
@@ -561,11 +562,11 @@
                 <label class="form-label">Destination Details</label>
                 <span class="form-hint" id="hint-destination-details"></span>
                 <div class="form-section">
-                  <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200"></div>
-                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200"></div>
+                  <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
+                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
                   <div class="form-row">
                     <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-dest-phone" role="alert"></span></div>
-                    <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-error" id="error-dest-email" role="alert"></span></div>
+                    <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input" autocomplete="off"><span class="form-error" id="error-dest-email" role="alert"></span></div>
                   </div>
                 </div>
               </div>
@@ -596,22 +597,22 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Account Email</label>
-          <input type="email" id="edit-secrets-account-email" class="form-input" autocomplete="email">
+          <input type="email" id="edit-secrets-account-email" class="form-input" autocomplete="off">
           <span class="form-hint">For account management &amp; recovery. Must not be used by another account.</span>
           <span class="form-error" id="error-edit-secrets-account-email" role="alert"></span>
         </div>
         <div class="form-group">
           <label class="form-label">Date of Birth</label>
-          <input type="text" id="edit-secrets-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="bday">
+          <input type="text" id="edit-secrets-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
           <span class="form-hint">Format: dd/mm/yyyy</span>
           <span class="form-error" id="error-edit-secrets-dob" role="alert"></span>
         </div>
         <div class="form-group">
           <label class="form-label">Security Questions</label>
           <span class="form-hint" style="display:block;margin-bottom:0.5rem;">Select 3 different questions (4-30 chars each).</span>
-          <div id="edit-secrets-sq-container">          <div class="secret-q-row"><select id="edit-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq1-answer" role="alert"></span></div></div>
-          <div class="secret-q-row"><select id="edit-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq2-answer" role="alert"></span></div></div>
-          <div class="secret-q-row"><select id="edit-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"><span class="form-error" id="error-edit-sq3-answer" role="alert"></span></div></div></div>
+          <div id="edit-secrets-sq-container">          <div class="secret-q-row"><select id="edit-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" autocomplete="off"><span class="form-error" id="error-edit-sq1-answer" role="alert"></span></div></div>
+          <div class="secret-q-row"><select id="edit-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" autocomplete="off"><span class="form-error" id="error-edit-sq2-answer" role="alert"></span></div></div>
+          <div class="secret-q-row"><select id="edit-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="edit-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" autocomplete="off"><span class="form-error" id="error-edit-sq3-answer" role="alert"></span></div></div></div>
         </div>
         <div id="edit-secrets-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
       </div>
@@ -628,7 +629,7 @@
         <p id="verify-email-modal-message">A 6-digit code was sent to your account email. Enter it below.</p>
         <div class="form-group">
           <label class="form-label" for="verify-email-code">6-digit code</label>
-          <input type="text" id="verify-email-code" class="form-input verify-otp-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code">
+          <input type="text" id="verify-email-code" class="form-input verify-otp-input" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="off">
           <span class="form-error" id="verify-email-error" role="alert"></span>
         </div>
         <div id="verify-email-alert" class="alert hidden"></div>
@@ -646,22 +647,22 @@
         <p class="form-hint" style="margin-bottom:1rem;">Enter your current password, then set a new password and/or update your security questions. You will use your new password the next time you sign in.</p>
         <div class="form-group">
           <label class="form-label" for="change-pwd-current">Current password <span class="form-required">*</span></label>
-          <input type="password" id="change-pwd-current" class="form-input" autocomplete="current-password" placeholder="Enter current password to make changes">
+          <input type="password" id="change-pwd-current" class="form-input" autocomplete="off" placeholder="Enter current password to make changes">
           <span class="form-error" id="error-change-pwd-current" role="alert"></span>
         </div>
         <div class="form-group">
           <label class="form-label" for="change-pwd-new">New password</label>
-          <input type="password" id="change-pwd-new" class="form-input" autocomplete="new-password" placeholder="Leave blank to keep the same password or enter a new password" minlength="8">
+          <input type="password" id="change-pwd-new" class="form-input" autocomplete="off" placeholder="Leave blank to keep the same password or enter a new password" minlength="8">
           <span class="form-error" id="error-change-pwd-new" role="alert"></span>
         </div>
         <div class="form-group hidden" id="change-pwd-confirm-wrap">
           <label class="form-label" for="change-pwd-confirm">Confirm new password</label>
-          <input type="password" id="change-pwd-confirm" class="form-input" autocomplete="new-password" placeholder="Enter your new password again">
+          <input type="password" id="change-pwd-confirm" class="form-input" autocomplete="off" placeholder="Enter your new password again">
           <span class="form-error" id="error-change-pwd-confirm" role="alert"></span>
         </div>
         <div class="form-group">
           <label class="form-label">Date of Birth</label>
-          <input type="text" id="change-pwd-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="bday">
+          <input type="text" id="change-pwd-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
           <span class="form-hint">Format: dd/mm/yyyy. Leave blank to keep current.</span>
           <span class="form-error" id="error-change-pwd-dob" role="alert"></span>
         </div>
@@ -669,9 +670,9 @@
           <label class="form-label">Security Questions</label>
           <span class="form-hint" style="display:block;margin-bottom:0.5rem;">Select 3 different questions and provide your secret answers (4–30 chars each). Leave unchanged if you do not want to update.</span>
           <div id="change-pwd-sq-container">
-            <div class="secret-q-row"><select id="change-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
-            <div class="secret-q-row"><select id="change-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
-            <div class="secret-q-row"><select id="change-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer"></div></div>
+            <div class="secret-q-row"><select id="change-sq1" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" autocomplete="off"></div></div>
+            <div class="secret-q-row"><select id="change-sq2" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" autocomplete="off"></div></div>
+            <div class="secret-q-row"><select id="change-sq3" class="form-input secret-q-select"><option value="">Select question</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><div class="secret-q-answer-wrap hidden"><input type="text" id="change-sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" autocomplete="off"></div></div>
           </div>
         </div>
         <div id="change-pwd-sq-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
@@ -1341,6 +1342,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('contact-form').addEventListener('change', updateFormDirtyState);
   document.getElementById('contact-page-name').addEventListener('input', updateFormDirtyState);
   document.getElementById('contact-page-url-slug').addEventListener('input', updateFormDirtyState);
+  var contactPageNameInp = document.getElementById('contact-page-name');
+  var contactPageSlugInp = document.getElementById('contact-page-url-slug');
+  if (contactPageNameInp) contactPageNameInp.addEventListener('blur', validateContactPageNameBlur);
+  if (contactPageSlugInp) contactPageSlugInp.addEventListener('blur', validateContactPageSlugBlur);
   var viewUrlResizeTimer;
   window.addEventListener('resize', function() {
     clearTimeout(viewUrlResizeTimer);
@@ -1551,6 +1556,8 @@ function enterEditMode() {
   document.getElementById('editor-contact-edit').classList.add('show');
   var delBtn = document.getElementById('form-delete-page-btn');
   if (delBtn) delBtn.style.display = '';
+  var viewModeBtn = document.getElementById('view-mode-btn');
+  if (viewModeBtn) viewModeBtn.style.display = '';
   formSnapshot = getFormSnapshot();
   updateSaveButtonLabel();
   updateFormDirtyState();
@@ -1816,10 +1823,12 @@ function enterCreateMode() {
   if (delBtn) delBtn.style.display = 'none';
   document.getElementById('editor-contact-view').classList.add('hidden');
   document.getElementById('editor-contact-edit').classList.add('show');
+  var viewModeBtn = document.getElementById('view-mode-btn');
+  if (viewModeBtn) viewModeBtn.style.display = 'none';
   formSnapshot = getFormSnapshot();
   updateSaveButtonLabel();
   updateFormDirtyState();
-  showStatusBanner('To create a new Contact Page fill out the form and click "Save".', 'info');
+  showStatusBanner('To create a new Contact Page fill out the form and click "Save".', 'neutral');
   updateMainContentVisibility();
 }
 function selectContactPage(contactpagename) {
@@ -2359,6 +2368,7 @@ async function saveProfileFromStrip() {
     document.getElementById("error-profile-username").textContent = "";
     var saveBtn = document.getElementById("profile-save-btn");
     if (saveBtn) saveBtn.disabled = true;
+    showStatusBanner('Saving...', 'saving');
     try {
       var rRename = await fetch(API + "/api/profile/rename", {
         method: "POST",
@@ -2416,6 +2426,7 @@ async function saveProfileFromStrip() {
   }
   var saveBtn = document.getElementById("profile-save-btn");
   if (saveBtn) saveBtn.disabled = true;
+  showStatusBanner('Saving...', 'saving');
   try {
     var r = await fetch(API + "/api/profile/" + encodeURIComponent(username), {
       method: "PUT",
@@ -2819,6 +2830,30 @@ async function resetForm() {
   } catch (e) { showStatusBanner('Failed to reload', 'error'); }
 }
 
+function validateContactPageNameBlur() {
+  var nameInp = document.getElementById('contact-page-name');
+  var nameErr = document.getElementById('error-contact-page-name');
+  if (!nameInp || !nameErr) return;
+  var v = (nameInp.value || '').trim();
+  nameErr.textContent = '';
+  if (!v) { nameErr.textContent = 'Contact Page Name is required.'; nameInp.classList.add('is-invalid'); return; }
+  nameInp.classList.remove('is-invalid');
+}
+
+function validateContactPageSlugBlur() {
+  var slugInp = document.getElementById('contact-page-url-slug');
+  var slugErr = document.getElementById('error-contact-page-url-slug');
+  if (!slugInp || !slugErr) return;
+  var rawSlug = (slugInp.value || '').trim();
+  var slug = (rawSlug === '' || rawSlug.toLowerCase() === 'index') ? 'index' : rawSlug;
+  slugErr.textContent = '';
+  if (slug !== 'index') {
+    if (!/^[a-zA-Z0-9_-]+$/.test(slug)) { slugErr.textContent = 'Use only letters, numbers, hyphens, and underscores.'; slugInp.classList.add('is-invalid'); return; }
+    if (slug.length < 3 || slug.length > 28) { slugErr.textContent = 'Page URL must be 3–28 characters.'; slugInp.classList.add('is-invalid'); return; }
+  }
+  slugInp.classList.remove('is-invalid');
+}
+
 async function handleSave(e) {
   e.preventDefault();
   const btn = document.getElementById('save-btn');
@@ -3193,7 +3228,7 @@ function showStatusBanner(msg, type) {
   if (!el) return;
   if (statusBannerAutoHideTimer) { clearTimeout(statusBannerAutoHideTimer); statusBannerAutoHideTimer = null; }
   if (!msg) { el.classList.add('hidden'); el.className = 'status-banner hidden'; el.innerHTML = ''; return; }
-  var alertType = (type === 'loading' || type === 'saving' || type === 'refreshing') ? 'info' : (type === 'success' || type === 'saved') ? 'success' : 'error';
+  var alertType = (type === 'loading' || type === 'saving' || type === 'refreshing') ? 'info' : (type === 'success' || type === 'saved') ? 'success' : (type === 'neutral') ? 'neutral' : 'error';
   var content = msg;
   if (type === 'loading' || type === 'saving' || type === 'refreshing') content = '<span class="spinner"></span> ' + msg;
   if (alertType === 'error') {
@@ -3206,6 +3241,9 @@ function showStatusBanner(msg, type) {
   el.classList.remove('hidden');
   if (alertType === 'success' || alertType === 'info') {
     statusBannerAutoHideTimer = setTimeout(function() { hideStatusBanner(); statusBannerAutoHideTimer = null; }, 7000);
+  }
+  if (alertType === 'neutral') {
+    statusBannerAutoHideTimer = setTimeout(function() { hideStatusBanner(); statusBannerAutoHideTimer = null; }, 6000);
   }
 }
 function hideStatusBanner() { showStatusBanner('', null); }

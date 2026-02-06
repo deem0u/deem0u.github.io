@@ -50,17 +50,17 @@
         <form id="setup-form" onsubmit="return false;">
           <div class="form-group">
             <label class="form-label">Create Admin Password</label>
-            <input type="password" id="setup-key" class="form-input" placeholder="Minimum 8 characters" minlength="8" required>
+            <input type="password" id="setup-key" class="form-input" placeholder="Minimum 8 characters" minlength="8" required autocomplete="off">
             <span class="form-hint">Choose a secure password you'll remember</span>
           </div>
           <div class="form-group">
             <label class="form-label">Recovery Email <span class="form-hint">(optional)</span></label>
-            <input type="email" id="setup-email" class="form-input" placeholder="your@email.com">
+            <input type="email" id="setup-email" class="form-input" placeholder="your@email.com" autocomplete="off">
             <span class="form-hint">Set now or later in Admin Access &amp; Site Management. Used for recovery and email sign-in.</span>
           </div>
           <div class="form-group">
             <label class="form-label">Password for email sign-in <span class="form-hint">(optional)</span></label>
-            <input type="password" id="setup-password" class="form-input" placeholder="Minimum 8 characters" minlength="8" autocomplete="new-password">
+            <input type="password" id="setup-password" class="form-input" placeholder="Minimum 8 characters" minlength="8" autocomplete="off">
             <span class="form-hint">Lets you sign in with this email + password as a fallback</span>
           </div>
           <div id="setup-alert" class="alert"></div>
@@ -85,7 +85,7 @@
           <div id="login-key-group" class="form-group">
             <label class="form-label">Admin Key</label>
             <div class="password-input-wrap">
-              <input type="password" id="login-key" class="form-input" placeholder="Enter your admin key" autocomplete="current-password">
+              <input type="password" id="login-key" class="form-input" placeholder="Enter your admin key" autocomplete="off">
               <button type="button" class="password-toggle-btn" id="login-toggle-password" aria-label="Show password" title="Show password">
                 <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                 <svg class="icon-eye-off hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.16 13.16 0 0 0 2 12s3 7 10 7a9.9 9.9 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
@@ -95,9 +95,9 @@
           </div>
           <div id="login-email-group" class="form-group hidden">
             <label class="form-label">Email</label>
-            <input type="email" id="login-email" class="form-input" placeholder="your@email.com" autocomplete="email">
+            <input type="email" id="login-email" class="form-input" placeholder="your@email.com" autocomplete="off">
             <label class="form-label mt-2">Password</label>
-            <input type="password" id="login-password" class="form-input" placeholder="Your password" autocomplete="current-password">
+            <input type="password" id="login-password" class="form-input" placeholder="Your password" autocomplete="off">
           </div>
           <div id="login-alert" class="alert"></div>
           <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-submit-btn">Sign In</button>
@@ -119,7 +119,7 @@
         <form id="recovery-form-step1" onsubmit="return false;">
           <div class="form-group">
             <label class="form-label">Email</label>
-            <input type="email" id="recovery-email" class="form-input" placeholder="your@email.com" required>
+            <input type="email" id="recovery-email" class="form-input" placeholder="your@email.com" required autocomplete="off">
           </div>
           <div id="recovery-alert-1" class="alert"></div>
           <button type="submit" id="recovery-submit-1" class="btn btn-primary btn-block btn-lg">Send Recovery Code</button>
@@ -133,7 +133,7 @@
           <form id="recovery-form-step2" onsubmit="return false;">
             <div class="form-group">
               <label class="form-label">Enter 6-Digit Code</label>
-              <input type="text" id="recovery-code" class="form-input form-input-code font-mono text-center" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required>
+              <input type="text" id="recovery-code" class="form-input form-input-code font-mono text-center" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
               <span class="form-hint">Code expires in 10 minutes</span>
             </div>
             <div id="recovery-alert-2" class="alert"></div>
@@ -191,11 +191,11 @@
         <form id="reset-password-form" onsubmit="return false;">
           <div class="form-group">
             <label class="form-label">New Password</label>
-            <input type="password" id="reset-new-password" class="form-input" placeholder="Minimum 8 characters" minlength="8" required autocomplete="new-password">
+            <input type="password" id="reset-new-password" class="form-input" placeholder="Minimum 8 characters" minlength="8" required autocomplete="off">
           </div>
           <div class="form-group">
             <label class="form-label">Confirm Password</label>
-            <input type="password" id="reset-confirm-password" class="form-input" placeholder="Same as above" minlength="8" required autocomplete="new-password">
+            <input type="password" id="reset-confirm-password" class="form-input" placeholder="Same as above" minlength="8" required autocomplete="off">
           </div>
           <div id="reset-password-alert" class="alert"></div>
           <button type="submit" class="btn btn-primary btn-block btn-lg" id="reset-password-btn">Set Password</button>
@@ -327,7 +327,7 @@
                 <label class="form-label">Administrator Email (For Recovery &amp; Sign In)</label>
                 <div id="admin-email-not-set">
                   <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                    <input type="email" id="admin-email-input" class="form-input" placeholder="your@email.com" style="max-width:20rem;" autocomplete="email">
+                    <input type="email" id="admin-email-input" class="form-input" placeholder="your@email.com" style="max-width:20rem;" autocomplete="off">
                     <button type="button" class="btn btn-secondary" id="save-admin-email-btn">Save</button>
                   </div>
                   <span class="form-hint">Set once from dashboard. Used for password recovery and email sign-in.</span>
@@ -342,8 +342,8 @@
                 <span id="admin-password-badge" class="badge badge-success hidden" style="margin-left:0.5rem;">Password Set</span>
                 <div id="admin-password-not-set">
                   <div style="display:flex; flex-direction:column; gap:0.5rem; max-width:20rem;">
-                    <input type="password" id="dashboard-password-new" class="form-input" placeholder="Password (min 8 characters)" minlength="8" autocomplete="new-password">
-                    <input type="password" id="dashboard-password-confirm" class="form-input" placeholder="Reconfirm password" minlength="8" autocomplete="new-password">
+                    <input type="password" id="dashboard-password-new" class="form-input" placeholder="Password (min 8 characters)" minlength="8" autocomplete="off">
+                    <input type="password" id="dashboard-password-confirm" class="form-input" placeholder="Reconfirm password" minlength="8" autocomplete="off">
                     <button type="button" class="btn btn-secondary" id="set-password-btn" disabled>Set Password</button>
                   </div>
                   <span class="form-hint">Enter password twice; button enables when both match and meet criteria.</span>
@@ -374,7 +374,7 @@
             <div class="search-filter-row">
               <div class="search-wrapper">
                 <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="search-manage" class="search-input" placeholder="Search users..." oninput="filterUsers('manage')">
+                <input type="text" id="search-manage" class="search-input" placeholder="Search users..." oninput="filterUsers('manage')" autocomplete="off">
               </div>
               <select id="filter-manage" class="filter-select" onchange="filterUsers('manage')">
                 <option value="all">All users</option>
@@ -419,7 +419,7 @@
                     </button>
                     <div class="searchable-select-dropdown" id="page-select-dropdown">
                       <div class="searchable-select-search">
-                        <input type="text" id="page-select-search" placeholder="Search users..." oninput="filterPageOptions()">
+                        <input type="text" id="page-select-search" placeholder="Search users..." oninput="filterPageOptions()" autocomplete="off">
                       </div>
                       <div class="searchable-select-options" id="page-select-options"></div>
                     </div>
@@ -434,7 +434,7 @@
                     </button>
                     <div class="searchable-select-dropdown" id="edit-contact-page-dropdown">
                       <div class="searchable-select-search">
-                        <input type="text" id="edit-contact-page-search" placeholder="Search pages..." oninput="filterEditContactPageOptions()">
+                        <input type="text" id="edit-contact-page-search" placeholder="Search pages..." oninput="filterEditContactPageOptions()" autocomplete="off">
                       </div>
                       <div class="searchable-select-options" id="edit-contact-page-options"></div>
                     </div>
@@ -454,23 +454,23 @@
               <form id="new-user-form">
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
-                  <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" required autocomplete="username">
+                  <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" required autocomplete="off">
                   <span class="form-hint" id="hint-new-username">3–28 characters. Letters, numbers, hyphens, underscores. Stored as lowercase (e.g. John-Smith → john-smith).</span>
                   <span class="form-error" id="error-new-username" role="alert"></span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Account Email</label>
-                  <input type="email" id="new-account-email" class="form-input" autocomplete="email">
+                  <input type="email" id="new-account-email" class="form-input" autocomplete="off">
                   <span class="form-hint">Must be unique. Used for recovery.</span>
                   <span class="form-error" id="error-new-account-email" role="alert"></span>
                 </div>
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="new-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="given-name"><span class="form-hint"></span><span class="form-error" id="error-new-first-name" role="alert"></span></div>
-                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="family-name"><span class="form-hint"></span><span class="form-error" id="error-new-surname" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="new-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-new-first-name" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-new-surname" role="alert"></span></div>
                 </div>
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Contact Page Email</label><input type="email" id="new-email" class="form-input" autocomplete="email"><span class="form-hint"></span><span class="form-error" id="error-new-email" role="alert"></span></div>
-                  <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="new-mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="tel"><span class="form-hint"></span><span class="form-error" id="error-new-mobile" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Contact Page Email</label><input type="email" id="new-email" class="form-input" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-new-email" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="new-mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-new-mobile" role="alert"></span></div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Home Country</label>
@@ -480,7 +480,7 @@
                     </button>
                     <div class="searchable-select-dropdown" id="home-country-new-dropdown">
                       <div class="searchable-select-search">
-                        <input type="text" id="home-country-new-search" oninput="filterCountryOptions('new')">
+                        <input type="text" id="home-country-new-search" oninput="filterCountryOptions('new')" autocomplete="off">
                       </div>
                       <div class="searchable-select-options" id="home-country-new-options"></div>
                     </div>
@@ -492,11 +492,11 @@
                   <label class="form-label">Destination Details</label>
                   <span class="form-hint" id="hint-destination-details-new"></span>
                   <div class="form-section">
-                    <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="new-dest-name" class="form-input" maxlength="200"></div>
-                    <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="new-dest-address" class="form-input" maxlength="200"></div>
+<div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="new-dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
+                   <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="new-dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
                     <div class="form-row">
                       <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="new-dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-new-dest-phone" role="alert"></span></div>
-                      <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="new-dest-email" class="form-input"><span class="form-error" id="error-new-dest-email" role="alert"></span></div>
+                      <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="new-dest-email" class="form-input" autocomplete="off"><span class="form-error" id="error-new-dest-email" role="alert"></span></div>
                     </div>
                   </div>
                 </div>
@@ -574,12 +574,12 @@
                 <form id="contact-form">
                   <div class="card-body">
                     <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
-                      <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="given-name"><span class="form-error" id="error-first-name" role="alert"></span></div>
-                      <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="family-name"><span class="form-error" id="error-surname" role="alert"></span></div>
+                      <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-first-name" role="alert"></span></div>
+                      <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-surname" role="alert"></span></div>
                     </div>
                     <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
-                      <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="email"><span class="form-error" id="error-email" role="alert"></span></div>
-                      <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="tel"><span class="form-error" id="error-mobile" role="alert"></span></div>
+                      <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="off"><span class="form-error" id="error-email" role="alert"></span></div>
+                      <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-error" id="error-mobile" role="alert"></span></div>
                     </div>
                     <div class="form-group">
                       <label class="form-label">Home Country</label>
@@ -589,7 +589,7 @@
                         </button>
                         <div class="searchable-select-dropdown" id="home-country-edit-dropdown">
                           <div class="searchable-select-search">
-                            <input type="text" id="home-country-edit-search" oninput="filterCountryOptions('edit')">
+                            <input type="text" id="home-country-edit-search" oninput="filterCountryOptions('edit')" autocomplete="off">
                           </div>
                           <div class="searchable-select-options" id="home-country-edit-options"></div>
                         </div>
@@ -600,11 +600,11 @@
                     <div class="form-group">
                       <label class="form-label">Destination Details</label>
                       <div class="form-section">
-                        <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200"></div>
-                        <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200"></div>
+                        <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
+                        <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
                         <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
                           <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-dest-phone" role="alert"></span></div>
-                          <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input"><span class="form-error" id="error-dest-email" role="alert"></span></div>
+                          <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input" autocomplete="off"><span class="form-error" id="error-dest-email" role="alert"></span></div>
                         </div>
                       </div>
                     </div>
@@ -695,15 +695,15 @@
         <p class="form-hint mb-2">Enter the 6-digit code sent to your admin email, then set a new password.</p>
         <div class="form-group">
           <label class="form-label">Code</label>
-          <input type="text" id="modal-reset-otp" class="form-input form-input-code font-mono" placeholder="000000" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code">
+          <input type="text" id="modal-reset-otp" class="form-input form-input-code font-mono" placeholder="000000" maxlength="6" pattern="[0-9]{6}" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">New password</label>
-          <input type="password" id="modal-reset-new-password" class="form-input" placeholder="Min 8 characters" minlength="8" autocomplete="new-password">
+          <input type="password" id="modal-reset-new-password" class="form-input" placeholder="Min 8 characters" minlength="8" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">Confirm password</label>
-          <input type="password" id="modal-reset-confirm-password" class="form-input" placeholder="Same as above" minlength="8" autocomplete="new-password">
+          <input type="password" id="modal-reset-confirm-password" class="form-input" placeholder="Same as above" minlength="8" autocomplete="off">
         </div>
         <div id="modal-password-reset-alert" class="alert"></div>
       </div>
@@ -762,17 +762,17 @@
         <div id="modal-profile-form" class="hidden">
           <div class="form-group">
             <label class="form-label">Account Username</label>
-            <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_\u002D]{3,28}" minlength="3" maxlength="28" autocomplete="username" oninput="updateProfileModalState()" onblur="updateProfileModalState()">
+            <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_\u002D]{3,28}" minlength="3" maxlength="28" autocomplete="off" oninput="updateProfileModalState()" onblur="updateProfileModalState()">
             <span class="form-hint">3–32 characters: letters, numbers, hyphens, underscores. Changing this renames the user folder and URL. After rename, they sign in with the same account email (now tied to the new username).</span>
             <span class="form-error" id="error-profile-username" role="alert"></span>
           </div>
           <div class="form-group">
             <label class="form-label">First Name</label>
-            <input type="text" id="profile-first-name" class="form-input" placeholder="First name" maxlength="32" oninput="updateProfileModalState()">
+            <input type="text" id="profile-first-name" class="form-input" placeholder="First name" maxlength="32" oninput="updateProfileModalState()" autocomplete="off">
           </div>
           <div class="form-group">
             <label class="form-label">Last Name</label>
-            <input type="text" id="profile-last-name" class="form-input" placeholder="Last name" maxlength="32" oninput="updateProfileModalState()">
+            <input type="text" id="profile-last-name" class="form-input" placeholder="Last name" maxlength="32" oninput="updateProfileModalState()" autocomplete="off">
           </div>
         </div>
         <div id="modal-profile-error" class="alert alert-error hidden" style="margin-top:0.5rem"></div>
@@ -799,7 +799,7 @@
             <div id="secrets-otp-value-wrap" class="secrets-otp-value-wrap hidden"><span id="secrets-otp-value"></span></div>
             <div class="form-inline-row form-inline-row-compact">
               <div class="password-input-wrap" style="min-width:12ch; flex:1;">
-                <input type="password" id="secrets-password" class="form-input form-input-compact" autocomplete="new-password" placeholder="">
+                <input type="password" id="secrets-password" class="form-input form-input-compact" autocomplete="off" placeholder="">
                 <button type="button" class="password-toggle-btn" id="secrets-toggle-password" aria-label="Show password" title="Show password">
                   <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
                   <svg class="icon-eye-off hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.16 13.16 0 0 0 2 12s3 7 10 7a9.9 9.9 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
@@ -816,7 +816,7 @@
               <label class="form-label form-label-bold">Account Email</label>
               <span id="secrets-email-verified-badge" class="badge hidden"></span>
             </div>
-            <input type="email" id="secrets-account-email" class="form-input form-input-compact" autocomplete="email" placeholder="">
+            <input type="email" id="secrets-account-email" class="form-input form-input-compact" autocomplete="off" placeholder="">
             <span class="form-error" id="error-secrets-account-email" role="alert"></span>
             <div class="form-group form-group-compact">
               <label class="consent-group secrets-checkbox-label" style="cursor:pointer;"><input type="checkbox" id="secrets-email-verified-admin"> <span>Email Verified (Admin Override)</span></label>
@@ -827,7 +827,7 @@
               <label class="form-label form-label-bold">Date of Birth</label>
               <span id="secrets-dob-badge" class="badge"></span>
             </div>
-            <input type="text" id="secrets-dob" class="form-input form-input-compact dob-mask" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="bday">
+            <input type="text" id="secrets-dob" class="form-input form-input-compact dob-mask" placeholder="dd/mm/yyyy" maxlength="10" pattern="\d{1,2}/\d{1,2}/\d{4}" title="Format: dd/mm/yyyy" inputmode="numeric" autocomplete="off">
             <span class="form-error" id="error-secrets-dob" role="alert"></span>
           </div>
           <div class="form-group" id="secrets-sq-group">
@@ -2605,7 +2605,7 @@ function renderList(t) {
                 </button>
                 <div class="searchable-select-dropdown searchable-select-dropdown-contact-pages" id="contact-pages-dropdown-${f}">
                   <div class="searchable-select-search">
-                    <input type="text" id="contact-pages-search-${f}" placeholder="Search pages..." oninput="filterContactPagesOptions('${f}')">
+                    <input type="text" id="contact-pages-search-${f}" placeholder="Search pages..." oninput="filterContactPagesOptions('${f}')" autocomplete="off">
                   </div>
                   <div class="searchable-select-options" id="contact-pages-options-${f}"></div>
                 </div>
