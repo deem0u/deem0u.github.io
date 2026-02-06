@@ -53,10 +53,7 @@
   .home-hero { text-align: center; max-width: 480px; }
   .home-heading { font-size: 1.75rem; margin-bottom: 0.5rem; }
   .home-heading .highlight {
-    background: linear-gradient(135deg, var(--accent-teal, #1ac5b0), var(--accent-cyan, #37ebf3));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--accent-teal, #1ac5b0);
   }
   .home-subheading { font-size: 1.1rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 1.5rem; }
   .home-blurb { font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
@@ -119,6 +116,8 @@
   .signup-step0-card .password-toggle:focus { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
   .signup-step0-card .password-toggle-icon { display: inline-flex; line-height: 0; }
   .signup-step0-card .password-toggle-icon.hidden { display: none; }
+  .signup-step0-card #signup-step0-btn { background: var(--accent-teal, #1ac5b0); color: var(--white, #fff); }
+  .signup-step0-card #signup-step0-btn:hover:not(:disabled) { background: var(--accent-teal-hover, #15a894); }
   /* When Step 1+ is visible: hide hero, show only form; compact spacing to avoid scroll */
   .home-two-col.signup-steps-active .home-left-col { display: none; }
   .home-two-col.signup-steps-active .home-right-col { max-width: 560px; margin: 0 auto; }
@@ -186,7 +185,7 @@
         <div id="home-left-col" class="home-left-col">
           <div class="home-hero">
             <h1 class="home-heading">Your details. <span class="highlight">Your control.</span></h1>
-            <p class="home-subheading">Ditch bulky luggage tags. Go digital, stay private.</p>
+            <p class="home-subheading">Ditch ugly labels and tags. Go digital, stay discreet.</p>
             <div class="home-hero-mascot-wrap" aria-hidden="true">
               <svg class="home-hero-mascot" viewBox="0 0 160 160" focusable="false">
                 <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>

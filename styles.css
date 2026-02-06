@@ -270,7 +270,7 @@ body {
   transform: translateX(-50%);
 }
 .app-header .app-logo-text-suffix {
-  font-family: inherit;
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 1rem;
   color: var(--color-text);

@@ -6,7 +6,7 @@
   <title>Admin Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -2580,17 +2580,17 @@ function renderList(t) {
     const nameDisplay = isIncomplete(f) ? displayName : (namePart || displayName);
     const emailDisplay = u.accountEmail || 'No account email';
     const isNew = hk && !(u.accountDetailsSent === true);
-    const needsSetup = !(u.accountEmail || '').trim();
     const hasAccountEmail = !!(u.accountEmail || '').trim();
-    const profileIncomplete = needsSetup || !(u.firstName || '').trim() || !(u.lastName || '').trim();
+    const profileModalIncomplete = !(u.firstName || '').trim() || !(u.lastName || '').trim();
     const secretsIncomplete = !(u.secretsComplete === true);
+    const profileIncompleteStatus = profileModalIncomplete || secretsIncomplete;
     const ver = u.emailVerification;
     const emailBadge = hasAccountEmail ? (ver === 'admin' ? '<span class="badge badge-cyan">Admin Verified</span>' : ver === 'user' ? '<span class="badge badge-cyan">User Verified</span>' : '<span class="badge badge-pink">Not Verified</span>') : '';
     return `<div class="user-card" id="user-card-${f}" data-username="${f}">
       <div class="user-card-header">
         <div class="user-avatar">${getInitials(u)}</div>
         <div class="user-details">
-          <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}${needsSetup ? ' <span class="badge badge-pink">Account Setup Incomplete</span>' : ''}</div>
+          <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}${profileIncompleteStatus ? ' <span class="badge badge-pink">Account Setup Incomplete</span>' : ''}</div>
           <div class="user-meta">${escapeHtml(emailDisplay)}${emailBadge ? ' ' + emailBadge : ''}</div>
         </div>
       </div>
@@ -2620,7 +2620,7 @@ function renderList(t) {
           <div class="action-combo-group action-combo-group-access">
             <span class="action-row-label">Account &amp; Access Recovery</span>
             <div class="action-row-buttons action-row-buttons-access" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
-              <button class="btn btn-black btn-sm ${profileIncomplete ? 'btn-incomplete' : ''}" onclick="showProfileModal('${f}')">Edit Profile</button>
+              <button class="btn btn-black btn-sm ${profileModalIncomplete ? 'btn-incomplete' : ''}" onclick="showProfileModal('${f}')">Edit Profile</button>
               <button class="btn btn-black btn-sm ${secretsIncomplete ? 'btn-incomplete' : ''}" onclick="showSecretsModal('${f}')">Set Secrets</button>
               <span class="max-pages-wrap">
                 <span class="max-pages-label">Max Pages</span>
