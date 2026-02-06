@@ -803,6 +803,12 @@ async function handleSignup(request, env) {
     return jsonResponse({ error: 'This username is reserved' }, 400);
   }
 
+  // Username uniqueness: KV (account may exist without a GitHub folder if they skipped contact page)
+  const existingAccount = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
+  if (existingAccount) {
+    return jsonResponse({ error: 'This username is already taken' }, 409);
+  }
+  // If a user folder already exists on GitHub (e.g. leftover from a deleted account), reject
   const checkRes = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
     {
@@ -817,10 +823,12 @@ async function handleSignup(request, env) {
     return jsonResponse({ error: 'A page with this username already exists' }, 409);
   }
 
-  const content = generateContactPageHTML(firstName, surname, contactPageEmail || '', '', '', '', '', '', '', '', '');
-  const filePath = pagePath(username, 'index');
-  const createRes = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+  // Create only the user folder in the repo (no HTML = no contact page, no page card in My Account).
+  // Contact pages are added when the user creates one from My Account or Step 2, or when Admin creates one from the Admin Dashboard.
+  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/.gitkeep`;
+  const folderPlaceholderContent = encodeBase64('# User folder – contact pages (e.g. index.html) are added when the user or admin creates them.\n');
+  const createFolderRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${folderPlaceholderPath}`,
     {
       method: 'PUT',
       headers: {
@@ -830,15 +838,15 @@ async function handleSignup(request, env) {
         'User-Agent': 'ContactPageEditor/1.0'
       },
       body: JSON.stringify({
-        message: `Create contact page: ${username} (signup)`,
-        content: encodeBase64(content),
+        message: `Create user folder: ${username} (signup)`,
+        content: folderPlaceholderContent,
         branch: CONFIG.branch
       })
     }
   );
-  if (!createRes.ok) {
-    const err = await createRes.json();
-    return jsonResponse({ error: err.message || 'Failed to create page' }, createRes.status);
+  if (!createFolderRes.ok) {
+    const err = await createFolderRes.json();
+    return jsonResponse({ error: err.message || 'Failed to create user folder' }, createFolderRes.status);
   }
 
   const password = (body.password || '').trim();
@@ -861,7 +869,6 @@ async function handleSignup(request, env) {
   return jsonResponse({
     success: true,
     username,
-    contactpagename: 'index',
     token,
     viewLink: pageUrl(username, 'index')
   });

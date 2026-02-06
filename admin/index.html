@@ -662,12 +662,12 @@
 
   <div id="modal-delete-user" class="modal-overlay hidden">
     <div class="modal" style="max-width: 420px;">
-      <div class="modal-header"><h3 class="modal-title">Delete User?</h3></div>
+      <div class="modal-header"><h3 class="modal-title" id="modal-delete-user-title">Delete User?</h3></div>
       <div class="modal-body">
         <p id="modal-delete-user-message">This will permanently delete this user's contact page. This cannot be undone.</p>
         <label class="toggle-label delete-user-confirm-label" style="display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-top: 1rem;">
           <input type="checkbox" id="modal-delete-user-checkbox" onchange="toggleDeleteUserConfirmBtn()">
-          <span>I confirm I want to permanently delete this user (4-eye check)</span>
+          <span>I confirm I want to permanently delete this user and all their data.</span>
         </label>
       </div>
       <div class="modal-footer">
@@ -2677,8 +2677,11 @@ var deleteUserModalFolder = null;
 function confirmDeleteUser(f) {
   deleteUserModalFolder = f;
   var u = userInfo[f] || {};
-  var displayName = getDisplayName(u, f);
-  document.getElementById('modal-delete-user-message').textContent = 'This will permanently delete ' + displayName + "'s contact page. This cannot be undone.";
+  var firstName = (u.firstName || '').trim();
+  var lastName = (u.lastName || '').trim();
+  var namePart = (firstName || lastName) ? (firstName + ' ' + lastName).trim() + ' (' + f + ')' : f;
+  document.getElementById('modal-delete-user-title').textContent = 'Delete ' + f + ' ?';
+  document.getElementById('modal-delete-user-message').textContent = 'This will permanently delete the ' + namePart + ' Account, Contact Pages and all their stored data - This cannot be undone. Are you sure you want to proceed?';
   document.getElementById('modal-delete-user-checkbox').checked = false;
   document.getElementById('modal-delete-user-confirm-btn').disabled = true;
   document.getElementById('modal-delete-user').classList.remove('hidden');
