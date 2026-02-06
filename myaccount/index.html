@@ -157,10 +157,17 @@
   .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
   .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
-  /* View mode: tight teal border + teal text (username); tight purple border + purple text (slug); slug hidden when empty */
-  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; margin: 0; vertical-align: baseline; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; margin: 0; vertical-align: baseline; }
+  /* View mode: teal text (username); purple text (slug); slug hidden when empty; on hover show boxes + labels */
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: border-color 0.15s, padding 0.15s, border-radius 0.15s; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: border-color 0.15s, padding 0.15s, border-radius 0.15s; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
+  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: baseline; }
+  .editor-view-url-line .url-anatomy-label { display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin-top: 0.15rem; text-align: right; }
+  #view-contact-page-url-anatomy:hover .editor-view-url-line .url-username-view { border: 2px solid var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; }
+  #view-contact-page-url-anatomy:hover .editor-view-url-line .url-slug-view { border: 2px solid var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding: 0.1rem 0.25rem; }
+  #view-contact-page-url-anatomy:hover .editor-view-url-line .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
+  #view-contact-page-url-anatomy:hover .editor-view-url-line .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
+  #view-contact-page-url-anatomy:hover .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none; }
   /* Edit mode: tight teal border (username); purple field box (slug); same height for both; scale to fit one line */
   #edit-contact-page-url-anatomy { overflow: hidden; min-height: 1.5em; }
   .editor-edit-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0; min-height: 2.25rem; }
@@ -469,7 +476,7 @@
               <div class="editor-view-url-block editor-view-header">
                 <div class="form-label">Page URL</div>
                 <div class="editor-view-url-anatomy" id="view-contact-page-url-anatomy">
-                  <div class="editor-view-url-line" id="view-contact-page-url-line"><span class="url-part url-base" id="view-contact-page-url-base">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-view" id="view-contact-page-url-username-part"></span><span class="url-part url-slash" id="view-contact-page-url-slash">/</span><span class="url-part url-slug url-slug-view" id="view-contact-page-url-slug-part"></span></div>
+                  <div class="editor-view-url-line" id="view-contact-page-url-line"><span class="url-part url-base" id="view-contact-page-url-base">https://deem0u.github.io/user/</span><span class="url-segment-wrap url-username-wrap"><span class="url-part url-username url-username-view" id="view-contact-page-url-username-part"></span><span class="url-anatomy-label url-username-label" aria-hidden="true">YOUR USER NAME</span></span><span class="url-part url-slash" id="view-contact-page-url-slash">/</span><span class="url-segment-wrap url-slug-wrap"><span class="url-part url-slug url-slug-view" id="view-contact-page-url-slug-part"></span><span class="url-anatomy-label url-slug-label" aria-hidden="true">PAGE URL SLUG</span></span></div>
                 </div>
               </div>
               <div class="form-row">
