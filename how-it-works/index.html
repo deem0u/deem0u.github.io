@@ -188,12 +188,16 @@
       transform: translateY(-4px);
       border-color: var(--accent-teal);
     }
-    .how-who-card .emoji { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .how-who-card .emoji { font-size: 1.5rem; margin-bottom: 0.35rem; }
     .how-who-card span {
       font-family: 'Nunito', sans-serif;
       font-weight: 700;
       color: var(--accent-cyan);
-      font-size: 0.95rem;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
     }
     .how-cta {
       padding: 4rem 1.5rem;
@@ -273,7 +277,7 @@
       <section class="how-section how-section-dark" aria-labelledby="problem-heading">
         <div class="how-section-inner">
         <div class="how-label how-label-hero how-label-problem">The Problem</div>
-        <h2 id="problem-heading" class="how-section-heading">Traditional tags are a privacy nightmare 😬</h2>
+        <h2 id="problem-heading" class="how-section-heading">Traditional tags are a privacy nightmare</h2>
         <div class="how-cards">
           <div class="how-card">
             <div class="how-card-icon" aria-hidden="true">👀</div>
@@ -459,7 +463,7 @@
 
       <section class="how-section how-section-dark" aria-labelledby="who-heading">
         <div class="how-section-inner">
-        <div class="how-label" style="color: var(--accent-purple);">Perfect For</div>
+        <div class="how-label how-label-hero" style="color: var(--accent-purple);">Perfect For</div>
         <h2 id="who-heading" class="how-section-heading">Who's using DigiCon iD?</h2>
         <div class="how-who-cards">
           <div class="how-who-card"><span class="emoji" aria-hidden="true">✈️</span><span>Travellers</span></div>
@@ -474,11 +478,10 @@
 
       <section class="how-cta" aria-labelledby="cta-heading">
         <div class="how-section-inner">
-        <h2 id="cta-heading">Ready to go digital?</h2>
-        <p>Free to start. Takes 2 minutes.</p>
+        <h2 id="cta-heading">Ready?</h2>
+        <p>It's Free and takes only 3 minutes.</p>
         <div class="how-cta-btns">
-          <a href="/home/" class="btn-prime">Get Started →</a>
-          <a href="/contact/" class="btn-second">See Demo</a>
+          <a href="/home/#signup" class="btn-prime">Get Started</a>
         </div>
         </div>
       </section>
