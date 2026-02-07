@@ -2499,6 +2499,15 @@ async function toggleContactPagesSelect(username) {
       optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
         opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.label));
       });
+      var currentSelection = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
+      var hasIndex = raw.some(function(item) { var s = typeof item === 'string' ? item : (item.slug || 'index'); return s === 'index'; });
+      if (currentSelection === 'index' && !hasIndex && raw.length > 0) {
+        var first = raw[0];
+        var firstSlug = typeof first === 'string' ? first : (first.slug || 'index');
+        var firstName = typeof first === 'string' ? (first === 'index' ? 'Main' : first) : (first.name || (firstSlug === 'index' ? 'Main' : firstSlug));
+        var firstDisplayLabel = firstName + ' (' + firstSlug + ')';
+        selectContactPage(username, firstSlug, firstDisplayLabel);
+      }
     } catch (e) {
       optionsEl.innerHTML = '<div class="searchable-select-empty">Failed to load</div>';
     }
@@ -4836,6 +4845,18 @@ async function showQrModal(folder) {
   qrModalData = { url: '', vcard: '', text: '' };
 
   try {
+    if (contactPage === 'index' || !contactPage) {
+      var listR = await fetch(API + '/api/contact-pages/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
+      if (listR.ok) {
+        var listD = await listR.json();
+        var pages = (listD.contactPages && Array.isArray(listD.contactPages)) ? listD.contactPages : [];
+        var hasIndex = pages.some(function(p) { var s = typeof p === 'object' && p.slug != null ? p.slug : p; return s === 'index'; });
+        if (!hasIndex && pages.length > 0) {
+          var first = pages[0];
+          contactPage = typeof first === 'object' && first.slug != null ? first.slug : first;
+        }
+      }
+    }
     var pagePath = (contactPage === 'index' || !contactPage) ? folder : (folder + '/' + contactPage);
     var r = await fetch(API + '/api/page/' + encodeURIComponent(pagePath), { headers: { 'X-Admin-Key': adminKey } });
     if (!r.ok) {
