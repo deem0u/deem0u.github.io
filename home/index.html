@@ -139,19 +139,27 @@
   .signup-step1-card .form-actions .btn { padding: 0.5rem 1rem; }
   .signup-step1-card #signup-step1-alert { margin-top: 0.5rem; margin-bottom: 0; }
   .signup-step1-card .consent-text { font-size: 0.85rem; line-height: 1.5; }
-  .signup-step2-card .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; font-size: 0.8125rem; line-height: 1.4; }
-  .signup-step2-card .form-hint-row { display: block; margin-top: 0.25rem; margin-bottom: 0.5rem; }
+  .signup-step2-card .form-hint { margin-top: 0.25rem; margin-bottom: 0; font-size: 0.8125rem; line-height: 1.4; }
+  .signup-step2-card .form-group .form-hint { margin-bottom: 0.75rem; }
+  .signup-step2-card .form-group .form-hint:last-child { margin-bottom: 0; }
+  .signup-step2-card .form-hint-row { display: block; margin-top: 0.25rem; margin-bottom: 0.75rem; }
   .signup-step2-card .form-hint-above { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
   .signup-step2-card .form-hint-full-width { display: block; width: 100%; }
+  .signup-step2-card .form-row.form-row-with-hint + .form-hint-row { margin-bottom: 0.75rem; }
   .signup-step2-card.step2-hints-hidden .step2-hint { display: none !important; }
-  .signup-step2-card .step2-card-header { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
+  .signup-step2-card.step2-hints-hidden .form-group .form-hint { margin-bottom: 0; }
+  .signup-step2-card.step2-hints-hidden .form-hint-row { margin-bottom: 0; }
+  .signup-step2-card .step2-card-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border, #eee); flex-wrap: wrap; }
   .signup-step2-card .step2-card-title { font-size: 1.25rem; font-weight: 700; }
+  .signup-step2-card .step2-header-hints-wrap { display: flex; justify-content: flex-end; align-items: center; flex-shrink: 0; }
+  .signup-step2-card .step2-header-hints-wrap .form-hints-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex-shrink: 0; }
   .signup-step2-card .step2-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
   .signup-step2-card .step2-header-fields { flex: 1; min-width: 0; }
   .signup-step2-card .step2-header-fields .form-group { margin-bottom: 0.5rem; }
   .signup-step2-card .step2-header-fields .form-group:last-child { margin-bottom: 0; }
-  .signup-step2-card .step2-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; }
-  .signup-step2-card .step2-header-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
+  .signup-step2-card .step2-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0; }
+  .signup-step2-card .step2-header-fields .form-group + .form-group .form-label { margin-top: 0; }
+  .signup-step2-card .step2-intro { margin-bottom: 2rem; margin-top: 0; }
   .signup-step2-card .form-hints-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex-shrink: 0; }
   .signup-step2-card .form-hints-toggle-label { font-size: 0.8125rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
   .signup-step2-card .form-hints-toggle-btn { font-size: 0.8125rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-bg, #fff); color: var(--color-text, #333); cursor: pointer; white-space: nowrap; }
@@ -390,9 +398,15 @@
           <div id="signup-step2-card" class="card signup-step2-card hidden">
             <div class="card-header step2-card-header">
               <span class="card-title step2-card-title">Add Contact Page</span>
+              <div class="step2-header-hints-wrap">
+                <div class="form-hints-toggle-wrap">
+                  <span class="form-hints-toggle-label">Form Hints:</span>
+                  <button type="button" id="step2-form-hints-btn" class="form-hints-toggle-btn" aria-pressed="true" aria-label="Form hints visible. Click to hide." onclick="step2ToggleFormHints()">Hide</button>
+                </div>
+              </div>
             </div>
             <div class="card-body">
-              <p class="text-secondary mb-3">Create your Contact Page by filling out the form and generating your QR codes. You can choose to do this later from your MyAccount page by selecting &quot;Skip&quot;.</p>
+              <p class="step2-intro text-secondary">Create your Contact Page by filling out the form and generating your QR codes. You can choose to do this later from your MyAccount page by selecting &quot;Skip&quot;.</p>
               <div id="step2-contact-form-wrap" class="step2-contact-form-wrap">
                 <div class="step2-header-row">
                   <div class="step2-header-fields card-header-fields">
@@ -413,12 +427,6 @@
                         <span class="form-hint form-hint-full-width step2-hint">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
                       </div>
                       <span class="form-error" id="step2-error-contact-page-url-slug" role="alert"></span>
-                    </div>
-                  </div>
-                  <div class="step2-header-actions editor-edit-mode-actions">
-                    <div class="form-hints-toggle-wrap">
-                      <span class="form-hints-toggle-label">Form Hints:</span>
-                      <button type="button" id="step2-form-hints-btn" class="form-hints-toggle-btn" aria-pressed="true" aria-label="Form hints visible. Click to hide." onclick="step2ToggleFormHints()">Hide</button>
                     </div>
                   </div>
                 </div>
