@@ -157,18 +157,16 @@
   .signup-step2-card .form-hints-toggle-btn { font-size: 0.8125rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-bg, #fff); color: var(--color-text, #333); cursor: pointer; white-space: nowrap; }
   .signup-step2-card .form-hints-toggle-btn:hover { border-color: var(--accent-teal, #1ac5b0); color: var(--accent-teal, #1ac5b0); }
   .signup-step2-card .step2-url-anatomy { display: flex; flex-direction: column; gap: 0.35rem 0; width: 100%; max-width: 100%; }
-  .signup-step2-card .step2-url-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-height: 2.25rem; font-size: 0.875rem; }
+  .signup-step2-card .step2-url-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-height: 2.25rem; font-size: 0.875rem; width: 100%; max-width: 100%; }
   .signup-step2-card .step2-url-anatomy .url-prefix-step2, .signup-step2-card .step2-url-anatomy .url-slash-step2 { color: var(--color-text-secondary, #666); }
   .signup-step2-card .url-username-step2 { font-weight: 700; color: var(--accent-teal, #1ac5b0); }
   .signup-step2-card .url-slug-input { flex: 1 1 0%; min-width: 10ch; max-width: 100%; box-sizing: border-box; font-size: inherit; }
-  .signup-step2-card .step2-url-hint-warning-row { display: flex; align-items: flex-start; gap: 0.75rem; margin-top: 0.35rem; width: 100%; }
-  .signup-step2-card .step2-url-hint-warning-row .step2-slug-hint { flex: 1 1 0%; min-width: 0; margin-top: 0; margin-bottom: 0; }
   .signup-step2-card .step2-slug-warning { margin-top: 0; padding: 0.5rem 0.75rem; background: var(--banner-reminder-bg, #fef9e7); border: 1px solid var(--banner-reminder-border, #d4a017); border-radius: var(--radius-md, 8px); font-size: 0.8125rem; line-height: 1.4; color: var(--color-text, #333); }
   .signup-step2-card .step2-slug-warning.hidden { display: none; }
-  .signup-step2-card .step2-slug-warning-inline { flex: 1 1 0%; min-width: 0; box-sizing: border-box; }
-  @media (max-width: 640px) {
-    .signup-step2-card .step2-url-hint-warning-row { flex-direction: column; }
-  }
+  .signup-step2-card .step2-slug-warning-full-width { width: 100%; margin: 0; box-sizing: border-box; }
+  .signup-step2-card .step2-url-anatomy .form-hint,
+  .signup-step2-card .step2-url-anatomy .step2-slug-warning { width: 100%; max-width: 100%; box-sizing: border-box; }
+  .signup-step2-card .step2-url-anatomy .form-hint { margin-top: 0.25rem; margin-bottom: 0; }
   .signup-step2-card .form-row.form-row-with-hint { margin-bottom: 0; }
   .signup-step2-card.step2-hints-hidden .form-row.form-row-with-hint { margin-bottom: 0.5rem; }
   .signup-step2-card .form-row { gap: 0.5rem; }
@@ -411,10 +409,8 @@
                           <span class="url-prefix-step2" id="step2-url-prefix">https://deem0u.github.io/user/</span><span class="url-username-step2" id="step2-url-username">—</span><span class="url-slash-step2">/</span>
                           <input type="text" id="step2-contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" required>
                         </div>
-                        <div class="step2-url-hint-warning-row">
-                          <span class="form-hint step2-hint step2-slug-hint">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
-                          <div id="step2-contact-page-slug-warning" class="step2-slug-warning step2-slug-warning-inline hidden" role="alert">Once saved, future changes to the slug will affect the URL of this contact page. Any QR codes and NFC tags pointing to the old URL will need to be regenerated, reprinted, or rewritten with the new one.</div>
-                        </div>
+                        <div id="step2-contact-page-slug-warning" class="step2-slug-warning step2-slug-warning-full-width hidden" role="alert">Once saved, future changes to the slug will affect the URL of this contact page. Any QR codes and NFC tags pointing to the old URL will need to be regenerated, reprinted, or rewritten with the new one.</div>
+                        <span class="form-hint form-hint-full-width step2-hint">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
                       </div>
                       <span class="form-error" id="step2-error-contact-page-url-slug" role="alert"></span>
                     </div>

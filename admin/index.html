@@ -562,11 +562,14 @@
                       <span class="form-error" id="error-contact-page-name" role="alert"></span>
                     </div>
                     <div class="form-group">
-                      <label class="form-label">Page URL (slug)</label>
-                      <span class="form-hint" style="display:block;">Letters, numbers, hyphens, underscores. 3–28 characters. Leave blank when creating from admin to use a random slug.</span>
-                      <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.25rem;">
-                        <span class="card-header-url-prefix" style="font-size:0.875rem; color:var(--color-text-secondary,#666);">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
-                        <input type="text" id="contact-page-url-slug" class="form-input" placeholder="e.g. mypage or leave blank for random" pattern="^([a-zA-Z0-9_\u002D]{3,28})?$" maxlength="28" autocomplete="off" style="min-width:10ch;">
+                      <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
+                      <div class="contact-page-url-anatomy" id="admin-contact-page-url-anatomy">
+                        <div class="url-anatomy-row">
+                          <span class="card-header-url-prefix" style="font-size:0.875rem; color:var(--color-text-secondary,#666);">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
+                          <input type="text" id="contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage or leave blank for random" pattern="^([a-zA-Z0-9_\u002D]{3,28})?$" maxlength="28" autocomplete="off">
+                        </div>
+                        <div id="admin-contact-page-slug-warning" class="contact-page-slug-warning hidden" role="alert"></div>
+                        <span class="form-hint">A Slug for this page's URL. 3–28 characters – letters, numbers, hyphens, underscores. Must be unique amongst this user's Contact Pages. Leave blank when creating to use a random slug.</span>
                       </div>
                       <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
                     </div>
@@ -1034,6 +1037,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (modalResetSubmit) modalResetSubmit.addEventListener('click', handlePasswordResetModalSubmit);
     if (contactForm) contactForm.addEventListener('submit', handleSave);
     if (newUserForm) newUserForm.addEventListener('submit', handleCreateUser);
+    var adminSlugInp = document.getElementById('contact-page-url-slug');
+    var adminSlugWarn = document.getElementById('admin-contact-page-slug-warning');
+    if (adminSlugInp && adminSlugWarn) {
+      var adminSlugWarningEditText = 'Changes to the slug will affect the URL of this contact page. Any QR codes and NFC tags pointing to the old URL will need to be regenerated, reprinted, or rewritten with the new one.';
+      var adminSlugWarningCreateText = 'Once saved, future changes to the slug will affect the URL of this contact page. Any QR codes and NFC tags pointing to the old URL will need to be regenerated, reprinted, or rewritten with the new one.';
+      function adminShowSlugWarning() {
+        adminSlugWarn.textContent = adminCreateNewPage ? adminSlugWarningCreateText : adminSlugWarningEditText;
+        adminSlugWarn.classList.remove('hidden');
+      }
+      function adminHideSlugWarning() { adminSlugWarn.classList.add('hidden'); }
+      adminSlugInp.addEventListener('focus', adminShowSlugWarning);
+      adminSlugInp.addEventListener('select', adminShowSlugWarning);
+      adminSlugInp.addEventListener('blur', adminHideSlugWarning);
+    }
   } catch (err) {
     console.error('Error attaching event listeners:', err);
   }
@@ -2306,6 +2323,8 @@ async function adminEnterCreateContactPage() {
   document.getElementById('admin-delete-page-btn').style.display = 'none';
   document.getElementById('editor-card').classList.remove('hidden');
   hideAlert('alert-editor');
+  var adminSlugWarnEl = document.getElementById('admin-contact-page-slug-warning');
+  if (adminSlugWarnEl) adminSlugWarnEl.classList.add('hidden');
 }
 
 function clearAdminContactForm() {
@@ -2380,6 +2399,8 @@ function adminEnterEditMode() {
   document.getElementById('admin-contact-view').classList.add('hidden');
   document.getElementById('admin-contact-edit').classList.remove('hidden');
   document.getElementById('admin-delete-page-btn').style.display = '';
+  var adminSlugWarnEl = document.getElementById('admin-contact-page-slug-warning');
+  if (adminSlugWarnEl) adminSlugWarnEl.classList.add('hidden');
 }
 
 function adminBackToViewMode() {

@@ -2471,3 +2471,51 @@ body {
   justify-content: flex-end;
   gap: var(--space-3);
 }
+
+/* Page URL anatomy: same behaviour for signup Step 2, My Account (new/edit), and admin */
+.contact-page-url-anatomy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem 0;
+  width: 100%;
+  max-width: 100%;
+}
+.contact-page-url-anatomy .url-anatomy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  min-height: 2.25rem;
+  font-size: 0.875rem;
+  width: 100%;
+  max-width: 100%;
+}
+.contact-page-url-anatomy .url-slug-input {
+  flex: 1 1 0%;
+  min-width: 10ch;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.contact-page-slug-warning {
+  margin-top: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--banner-reminder-bg);
+  border: 1px solid var(--banner-reminder-border);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+.contact-page-slug-warning.hidden {
+  display: none;
+}
+.contact-page-url-anatomy .form-hint,
+.contact-page-url-anatomy .contact-page-slug-warning {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.contact-page-url-anatomy .form-hint {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
