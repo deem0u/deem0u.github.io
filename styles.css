@@ -1042,17 +1042,15 @@ body {
   min-width: 100px;
 }
 
-/* Admin card: Contact Page trigger — fixed width, 32 characters per row (row 1 = name, row 2 = URL slug) */
-/* Admin contact page dropdown — match myaccount card selector / dropdown styling */
+/* Admin card: Contact Page selector — same width as dropdown (21ch) */
 .searchable-select-contact-pages-trigger {
-  width: 32ch;
-  min-width: 32ch;
-  max-width: 32ch;
+  width: 21ch;
+  min-width: 21ch;
+  max-width: 21ch;
 }
 
 .searchable-select-contact-pages-trigger .searchable-select-trigger {
-  padding: 0.5rem 0.6rem;
-  padding-right: 2rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.6rem;
   font-size: 0.875rem;
   text-align: left;
   background: var(--white, #fff);
@@ -1062,18 +1060,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 .searchable-select-contact-pages-trigger .searchable-select-trigger:hover {
   border-color: var(--accent-purple, #9370db);
 }
 .contact-page-trigger-chevron {
   flex-shrink: 0;
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   line-height: 1;
   color: var(--color-text-secondary, #666);
   transition: transform 0.2s;
-  margin-left: 0.25rem;
+  margin-left: 0.15rem;
 }
 .searchable-select-contact-pages-trigger:has(.searchable-select-dropdown-contact-pages.show) .contact-page-trigger-chevron {
   transform: rotate(180deg);
@@ -1788,6 +1786,17 @@ body {
 
 .action-row-buttons .btn {
   white-space: nowrap;
+}
+
+/* User card: all buttons and the contact page selector same height */
+.user-card .action-row-buttons .btn,
+.user-card .action-row-buttons .btn-sm,
+.user-card .searchable-select-contact-pages-trigger .searchable-select-trigger {
+  min-height: 2.25rem;
+  box-sizing: border-box;
+}
+.user-card .searchable-select-contact-pages-trigger .searchable-select-trigger {
+  align-items: center;
 }
 
 .action-row-end {
