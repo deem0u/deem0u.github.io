@@ -194,7 +194,13 @@
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input[size] { width: auto; }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input.is-invalid { color: var(--accent-purple, #9370db); }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
+  .editor-edit-url-anatomy .editor-edit-url-hint-warning-row { display: flex; align-items: flex-start; gap: 0.75rem; margin-top: 0.35rem; width: 100%; }
+  .editor-edit-url-anatomy .editor-edit-url-hint-warning-row .form-hint-slug-inline { flex: 1 1 0%; min-width: 0; margin-top: 0; margin-bottom: 0; }
+  .editor-edit-url-anatomy .contact-page-slug-warning-inline { flex: 1 1 0%; min-width: 0; box-sizing: border-box; margin: 0; }
   .editor-edit-url-anatomy .contact-page-slug-warning-full-width { width: 100%; margin: 0; box-sizing: border-box; }
+  @media (max-width: 640px) {
+    .editor-edit-url-anatomy .editor-edit-url-hint-warning-row { flex-direction: column; }
+  }
   .editor-edit-url-anatomy .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); }
   .editor-edit-url-anatomy .editor-view-url-line .url-username-edit { display: inline; font-size: inherit; font-weight: 700; color: var(--accent-teal, #1ac5b0); border: none; background: none; padding: 0; margin: 0; }
   .editor-edit-url-anatomy .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); }
@@ -544,9 +550,11 @@
                     <span class="url-edit-prefix editor-view-url-line"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span>
                     <input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" title="Contact Page URL" required>
                   </div>
-                  <div id="contact-page-slug-warning" class="contact-page-slug-warning contact-page-slug-warning-full-width hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten.</div>
+                  <div class="editor-edit-url-hint-warning-row">
+                    <span class="form-hint form-hint-slug-inline">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
+                    <div id="contact-page-slug-warning" class="contact-page-slug-warning contact-page-slug-warning-inline hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten.</div>
+                  </div>
                 </div>
-                <span class="form-hint form-hint-full-width">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
                 <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
               </div>
             </div>

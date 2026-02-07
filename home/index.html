@@ -144,12 +144,37 @@
   .signup-step2-card .form-hint-above { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
   .signup-step2-card .form-hint-full-width { display: block; width: 100%; }
   .signup-step2-card.step2-hints-hidden .step2-hint { display: none !important; }
-  .signup-step2-card .step2-form-hints-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
-  .signup-step2-card .form-hints-toggle-btn { font-size: 0.8125rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-bg, #fff); color: var(--color-text, #333); cursor: pointer; }
-  .signup-step2-card .step2-url-anatomy { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem; }
-  .signup-step2-card .url-prefix-step2, .signup-step2-card .url-slash-step2 { color: var(--color-text-secondary, #666); font-size: 0.9375rem; }
+  .signup-step2-card .step2-card-header { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
+  .signup-step2-card .step2-card-title { font-size: 1.25rem; font-weight: 700; }
+  .signup-step2-card .step2-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
+  .signup-step2-card .step2-header-fields { flex: 1; min-width: 0; }
+  .signup-step2-card .step2-header-fields .form-group { margin-bottom: 0.5rem; }
+  .signup-step2-card .step2-header-fields .form-group:last-child { margin-bottom: 0; }
+  .signup-step2-card .step2-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; }
+  .signup-step2-card .step2-header-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
+  .signup-step2-card .form-hints-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+  .signup-step2-card .form-hints-toggle-label { font-size: 0.8125rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
+  .signup-step2-card .form-hints-toggle-btn { font-size: 0.8125rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-bg, #fff); color: var(--color-text, #333); cursor: pointer; white-space: nowrap; }
+  .signup-step2-card .form-hints-toggle-btn:hover { border-color: var(--accent-teal, #1ac5b0); color: var(--accent-teal, #1ac5b0); }
+  .signup-step2-card .step2-url-anatomy { display: flex; flex-direction: column; gap: 0.35rem 0; width: 100%; max-width: 100%; }
+  .signup-step2-card .step2-url-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-height: 2.25rem; font-size: 0.875rem; }
+  .signup-step2-card .step2-url-anatomy .url-prefix-step2, .signup-step2-card .step2-url-anatomy .url-slash-step2 { color: var(--color-text-secondary, #666); }
   .signup-step2-card .url-username-step2 { font-weight: 700; color: var(--accent-teal, #1ac5b0); }
-  .signup-step2-card .url-slug-input { min-width: 10ch; max-width: 16rem; }
+  .signup-step2-card .url-slug-input { flex: 1 1 0%; min-width: 10ch; max-width: 100%; box-sizing: border-box; font-size: inherit; }
+  .signup-step2-card .step2-url-hint-warning-row { display: flex; align-items: flex-start; gap: 0.75rem; margin-top: 0.35rem; width: 100%; }
+  .signup-step2-card .step2-url-hint-warning-row .step2-slug-hint { flex: 1 1 0%; min-width: 0; margin-top: 0; margin-bottom: 0; }
+  .signup-step2-card .step2-slug-warning { margin-top: 0; padding: 0.5rem 0.75rem; background: var(--banner-reminder-bg, #fef9e7); border: 1px solid var(--banner-reminder-border, #d4a017); border-radius: var(--radius-md, 8px); font-size: 0.8125rem; line-height: 1.4; color: var(--color-text, #333); }
+  .signup-step2-card .step2-slug-warning.hidden { display: none; }
+  .signup-step2-card .step2-slug-warning-inline { flex: 1 1 0%; min-width: 0; box-sizing: border-box; }
+  @media (max-width: 640px) {
+    .signup-step2-card .step2-url-hint-warning-row { flex-direction: column; }
+  }
+  .signup-step2-card .form-row.form-row-with-hint { margin-bottom: 0; }
+  .signup-step2-card.step2-hints-hidden .form-row.form-row-with-hint { margin-bottom: 0.5rem; }
+  .signup-step2-card .form-row { gap: 0.5rem; }
+  .signup-step2-card .form-section { padding: 0.4rem 0.5rem; margin-top: 0; }
+  .signup-step2-card .form-section .form-group { margin-bottom: 0.35rem; }
+  .signup-step2-card .form-section .form-group:last-child { margin-bottom: 0; }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -304,7 +329,8 @@
           <div class="signup-progress" id="signup-progress">
             <span class="step-pill" id="progress-step1">1. Create Account</span>
             <span class="step-pill" id="progress-step2">2. Add Contact Page</span>
-            <span class="step-pill" id="progress-step3">3. Finalise</span>
+            <span class="step-pill" id="progress-step3">3. Generate QR</span>
+            <span class="step-pill" id="progress-step4">4. All Set!</span>
           </div>
           <div id="signup-step1-card" class="card signup-step1-card hidden">
             <div class="card-body">
@@ -363,37 +389,44 @@
               </div>
             </div>
           </div>
-          <div id="signup-otp-success-card" class="card hidden">
-            <div class="card-body">
-              <p class="text-secondary mb-3">Your email has been verified and your account is ready.</p>
-              <button type="button" class="btn btn-primary btn-lg" onclick="continueToStep2()">Continue</button>
-            </div>
-          </div>
           <div id="signup-step2-card" class="card signup-step2-card hidden">
-            <div class="card-header"><span class="card-title">Add Contact Page</span></div>
+            <div class="card-header step2-card-header">
+              <span class="card-title step2-card-title">Add Contact Page</span>
+            </div>
             <div class="card-body">
-              <p class="text-secondary mb-3">Add your contact details (name, email, phone, etc.) to your page. You can fill the form below or skip and do it later in My Account.</p>
+              <p class="text-secondary mb-3">Create your Contact Page by filling out the form and generating your QR codes. You can choose to do this later from your MyAccount page by selecting &quot;Skip&quot;.</p>
               <div id="step2-contact-form-wrap" class="step2-contact-form-wrap">
-                <div class="step2-form-hints-row">
-                  <span class="form-hints-toggle-label">Form Hints:</span>
-                  <button type="button" id="step2-form-hints-btn" class="form-hints-toggle-btn" aria-pressed="true" onclick="step2ToggleFormHints()">Hide</button>
+                <div class="step2-header-row">
+                  <div class="step2-header-fields card-header-fields">
+                    <div class="form-group">
+                      <label class="form-label" for="step2-contact-page-name">Page Name <span class="form-required">*</span></label>
+                      <input type="text" id="step2-contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off" required>
+                      <span class="form-hint step2-hint">A name to identify this page on your list of Contact Pages. Must be unique amongst the list.</span>
+                      <span class="form-error" id="step2-error-contact-page-name" role="alert"></span>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="step2-contact-page-url-slug">Page URL <span class="form-required">*</span></label>
+                      <div class="step2-url-anatomy" id="step2-url-anatomy">
+                        <div class="step2-url-row">
+                          <span class="url-prefix-step2" id="step2-url-prefix">https://deem0u.github.io/user/</span><span class="url-username-step2" id="step2-url-username">—</span><span class="url-slash-step2">/</span>
+                          <input type="text" id="step2-contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" required>
+                        </div>
+                        <div class="step2-url-hint-warning-row">
+                          <span class="form-hint step2-hint step2-slug-hint">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
+                          <div id="step2-contact-page-slug-warning" class="step2-slug-warning step2-slug-warning-inline hidden" role="alert">Once saved, future changes to the slug will affect the URL of this contact page. Any QR codes and NFC tags pointing to the old URL will need to be regenerated, reprinted, or rewritten with the new one.</div>
+                        </div>
+                      </div>
+                      <span class="form-error" id="step2-error-contact-page-url-slug" role="alert"></span>
+                    </div>
+                  </div>
+                  <div class="step2-header-actions editor-edit-mode-actions">
+                    <div class="form-hints-toggle-wrap">
+                      <span class="form-hints-toggle-label">Form Hints:</span>
+                      <button type="button" id="step2-form-hints-btn" class="form-hints-toggle-btn" aria-pressed="true" aria-label="Form hints visible. Click to hide." onclick="step2ToggleFormHints()">Hide</button>
+                    </div>
+                  </div>
                 </div>
                 <form id="step2-contact-form">
-                  <div class="form-group">
-                    <label class="form-label" for="step2-contact-page-name">Page Name <span class="form-required">*</span></label>
-                    <input type="text" id="step2-contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off" required>
-                    <span class="form-hint step2-hint">A name to identify this page on your list of Contact Pages. Must be unique amongst the list.</span>
-                    <span class="form-error" id="step2-error-contact-page-name" role="alert"></span>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="step2-contact-page-url-slug">Page URL <span class="form-required">*</span></label>
-                    <div class="step2-url-anatomy">
-                      <span class="url-prefix-step2" id="step2-url-prefix">https://deem0u.github.io/user/</span><span class="url-username-step2" id="step2-url-username">—</span><span class="url-slash-step2">/</span>
-                      <input type="text" id="step2-contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" required>
-                    </div>
-                    <span class="form-hint form-hint-full-width step2-hint">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
-                    <span class="form-error" id="step2-error-contact-page-url-slug" role="alert"></span>
-                  </div>
                   <div class="form-row form-row-with-hint">
                     <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="step2-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="step2-error-first-name" role="alert"></span></div>
                     <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="step2-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="step2-error-surname" role="alert"></span></div>
@@ -413,7 +446,6 @@
                   </div>
                   <div class="form-group">
                     <label class="form-label">Destination Details</label>
-                    <span class="form-hint step2-hint" id="step2-hint-destination-details">The name, street address, contact number and email of the place where you will mostly be staying (e.g. hotel name/address and front-office phone/email).</span>
                     <div class="form-section">
                       <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="step2-dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
                       <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="step2-dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
@@ -422,6 +454,7 @@
                         <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="step2-dest-email" class="form-input" autocomplete="off"></div>
                       </div>
                     </div>
+                    <span class="form-hint step2-hint" id="step2-hint-destination-details">The name, street address, contact number and email of the place where you will mostly be staying (e.g. hotel name/address and front-office phone/email).</span>
                   </div>
                   <div class="form-group">
                     <label class="form-label">Additional Information</label>
@@ -437,7 +470,7 @@
               </div>
               <div id="step2-after-save" class="hidden mt-3">
                 <p class="text-secondary">Contact page saved. Click below to continue.</p>
-                <button type="button" class="btn btn-primary mt-2" onclick="continueToStep3()">Continue</button>
+                <button type="button" class="btn btn-primary mt-2" onclick="continueToStep3()">Continue to Step 3</button>
               </div>
               <div id="step2-skip-msg" class="hidden mt-3">
                 <p class="text-secondary">You can add a contact page later via My Account.</p>
@@ -446,12 +479,21 @@
             </div>
           </div>
           <div id="signup-step3-card" class="card hidden">
-            <div class="card-header"><span class="card-title">Step 3 — Finalise</span></div>
+            <div class="card-header"><span class="card-title">Generate QR</span></div>
             <div class="card-body">
-              <div id="step3-summary" class="home-success-details"></div>
+              <p class="text-secondary mb-3">Generate a QR code for your contact page so you can share it easily from your phone or print it.</p>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary btn-lg" onclick="continueToStep4()">Continue</button>
+              </div>
+            </div>
+          </div>
+          <div id="signup-step4-card" class="card hidden">
+            <div class="card-header"><span class="card-title">All Set!</span></div>
+            <div class="card-body">
+              <div id="step4-summary" class="home-success-details"></div>
               <p class="text-secondary mt-3">A copy of this information has been sent to your email.</p>
               <div class="form-actions mt-3">
-                <a id="step3-editor-link" href="#" class="btn btn-primary">Go to My Account</a>
+                <a id="step4-editor-link" href="#" class="btn btn-primary">Go to My Account</a>
                 <a href="/home/" class="btn btn-ghost">Back to Home</a>
               </div>
             </div>
@@ -623,9 +665,9 @@
     document.getElementById('signup-steps-section').classList.add('hidden');
     document.getElementById('signup-step1-card').classList.add('hidden');
     document.getElementById('signup-otp-card').classList.add('hidden');
-    document.getElementById('signup-otp-success-card').classList.add('hidden');
     document.getElementById('signup-step2-card').classList.add('hidden');
     document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.add('hidden');
     var twoCol = document.querySelector('.home-two-col');
     if (twoCol) twoCol.classList.remove('signup-steps-active');
     var mascotCol = document.getElementById('home-mascot-col');
@@ -659,7 +701,7 @@
       var d = await res.json();
       if (res.ok && d.success) {
         document.getElementById('signup-otp-card').classList.add('hidden');
-        document.getElementById('signup-otp-success-card').classList.remove('hidden');
+        continueToStep2();
       } else {
         showAlert('otp-alert', (d && d.error) || 'Invalid or expired code. Try resending.', 'error');
       }
@@ -683,7 +725,6 @@
   }
 
   function continueToStep2() {
-    document.getElementById('signup-otp-success-card').classList.add('hidden');
     document.getElementById('signup-step2-card').classList.remove('hidden');
     updateProgressBar(2);
     var username = sessionStorage.getItem('signup_username') || '';
@@ -703,7 +744,24 @@
     document.getElementById('step2-skip-msg').classList.add('hidden');
     var hintsBtn = document.getElementById('step2-form-hints-btn');
     if (hintsBtn) hintsBtn.textContent = 'Hide';
+    var slugWarn = document.getElementById('step2-contact-page-slug-warning');
+    if (slugWarn) slugWarn.classList.add('hidden');
   }
+
+  (function step2SlugWarningInit() {
+    var slugInp = document.getElementById('step2-contact-page-url-slug');
+    var slugWarn = document.getElementById('step2-contact-page-slug-warning');
+    if (!slugInp || !slugWarn) return;
+    function showStep2SlugWarning() {
+      if (slugWarn.textContent) slugWarn.classList.remove('hidden');
+    }
+    function hideStep2SlugWarning() {
+      slugWarn.classList.add('hidden');
+    }
+    slugInp.addEventListener('focus', showStep2SlugWarning);
+    slugInp.addEventListener('select', showStep2SlugWarning);
+    slugInp.addEventListener('blur', hideStep2SlugWarning);
+  })();
 
   function step2ToggleFormHints() {
     var card = document.getElementById('signup-step2-card');
@@ -827,10 +885,16 @@
     if (btn) { btn.disabled = false; btn.textContent = 'Save contact page'; }
   }
 
-  async function continueToStep3() {
+  function continueToStep3() {
     document.getElementById('signup-step2-card').classList.add('hidden');
     document.getElementById('signup-step3-card').classList.remove('hidden');
     updateProgressBar(3);
+  }
+
+  async function continueToStep4() {
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.remove('hidden');
+    updateProgressBar(4);
     var username = sessionStorage.getItem('signup_username');
     var firstName = sessionStorage.getItem('signup_first_name') || '';
     var lastName = sessionStorage.getItem('signup_last_name') || '';
@@ -838,7 +902,7 @@
     var dob = sessionStorage.getItem('signup_dob') || '';
     var viewUrl = PAGES_URL + username + '/';
     var editUrl = EDITOR_URL;
-    document.getElementById('step3-summary').innerHTML =
+    document.getElementById('step4-summary').innerHTML =
       '<p class="home-success-banner">Welcome! Your account is ready.</p>' +
       '<p class="success-heading">Summary</p>' +
       '<ul><li><strong>User Name:</strong> ' + (username || '') + '</li>' +
@@ -851,7 +915,7 @@
       '<p class="success-heading">How to edit your contact page</p>' +
       '<ol><li>Visit My Account and sign in with your Account Email and Password</li>' +
       '<li>Make your changes</li><li>Click Save Changes</li></ol>';
-    document.getElementById('step3-editor-link').href = editUrl;
+    document.getElementById('step4-editor-link').href = editUrl;
     try {
       await fetch(API + '/api/signup-success-email', {
         method: 'POST',
@@ -862,7 +926,7 @@
   }
 
   function updateProgressBar(step) {
-    ['progress-step1','progress-step2','progress-step3'].forEach(function(id, i) {
+    ['progress-step1','progress-step2','progress-step3','progress-step4'].forEach(function(id, i) {
       var el = document.getElementById(id);
       if (!el) return;
       el.classList.remove('active','done');
