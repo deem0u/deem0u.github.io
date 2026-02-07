@@ -906,10 +906,10 @@ async function handleSignup(request, env) {
     return jsonResponse({ error: 'A page with this username already exists' }, 409);
   }
 
-  // Create only the user folder in the repo (no HTML = no contact page, no page card in My Account).
-  // Contact pages (index.html etc.) are added only when the user or admin saves a contact page.
-  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/.gitkeep`;
-  const folderPlaceholderContent = encodeBase64('# User folder – contact pages (e.g. index.html) are added when the user or admin creates them.\n');
+  // Create only the user folder in the repo (no .html file = no contact page, no card in My Account).
+  // Placeholder is ignored.gitignore so the directory exists; only *.html files are listed as contact pages.
+  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/ignored.gitignore`;
+  const folderPlaceholderContent = encodeBase64('# Directory placeholder – only .html files in this folder are contact pages. This file is not a contact page.\n');
   const createFolderRes = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${folderPlaceholderPath}`,
     {
@@ -1489,7 +1489,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
     }
   );
 
-  // Delete every file in the user folder (including .gitkeep) so the folder is removed from the repo
+  // Delete every file in the user folder (including ignored.gitignore) so the folder is removed from the repo
   let allFiles = [];
   if (listResponse.ok) {
     const files = await listResponse.json();
@@ -1532,7 +1532,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
 
 /**
  * POST /api/admin/create-user (admin only). Body: { username }.
- * Creates only the user folder (with .gitkeep). No index.html, no account KV.
+ * Creates only the user folder (with ignored.gitignore). No .html file, no account KV.
  * Profile and secrets are set later via Edit Profile / Set Secrets (admin or user via My Account).
  */
 async function handleAdminCreateUser(request, env) {
@@ -1572,8 +1572,8 @@ async function handleAdminCreateUser(request, env) {
   if (checkRes.ok) {
     return jsonResponse({ error: 'A user folder with this username already exists' }, 409);
   }
-  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/.gitkeep`;
-  const folderPlaceholderContent = encodeBase64('# User folder – contact pages (e.g. index.html) are added when the user or admin creates them.\n');
+  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/ignored.gitignore`;
+  const folderPlaceholderContent = encodeBase64('# Directory placeholder – only .html files in this folder are contact pages. This file is not a contact page.\n');
   const createRes = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${folderPlaceholderPath}`,
     {
@@ -2515,7 +2515,9 @@ async function handleListPages(request, env) {
   );
 
   if (!response.ok) {
-    return jsonResponse({ error: 'GitHub error' }, 500);
+    const errBody = await response.json().catch(() => ({}));
+    const msg = errBody.message || errBody.error || response.statusText || 'GitHub error';
+    return jsonResponse({ error: `GitHub (${response.status}): ${msg}` }, 500);
   }
 
   const contents = await response.json();
@@ -2523,7 +2525,7 @@ async function handleListPages(request, env) {
     .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
     .map(item => item.name);
 
-  // Include all user folders (even with only .gitkeep, no contact pages yet)
+  // Include all user folders (even with only ignored.gitignore, no contact pages yet)
   return jsonResponse({ pages: usernames });
 }
 
@@ -2543,7 +2545,9 @@ async function handlePageSummaries(request, env) {
     }
   );
   if (!listRes.ok) {
-    return jsonResponse({ error: 'GitHub error' }, 500);
+    const errBody = await listRes.json().catch(() => ({}));
+    const msg = errBody.message || errBody.error || listRes.statusText || 'GitHub error';
+    return jsonResponse({ error: `GitHub (${listRes.status}): ${msg}` }, 500);
   }
   const contents = await listRes.json();
   const usernames = (Array.isArray(contents) ? contents : [])
@@ -2576,7 +2580,10 @@ async function handlePageSummaries(request, env) {
       const contactPageCount = htmlFiles.length;
       contactPageCountByUser[username] = contactPageCount;
       if (contactPageCount === 0) return { username, summary: null, contactPageCount: 0 };
-      const filePath = pagePath(username, 'index');
+      // Prefer index.html for summary; if missing, use first .html file so admin works without index
+      const preferIndex = htmlFiles.find(f => f.name === 'index.html');
+      const fileToFetch = preferIndex || htmlFiles[0];
+      const filePath = `${USER_PAGES_PREFIX}/${username}/${fileToFetch.name}`;
       const fileRes = await fetch(
         `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
         { headers: authHeaders }
@@ -2631,7 +2638,9 @@ async function handleListContactPages(username, request, env) {
     if (response.status === 404) {
       return jsonResponse({ contactPages: [], maxContactPages, currentCount: 0, canCreate: maxContactPages === 0 });
     }
-    return jsonResponse({ error: 'GitHub error' }, 500);
+    const errBody = await response.json().catch(() => ({}));
+    const msg = errBody.message || errBody.error || response.statusText || 'GitHub error';
+    return jsonResponse({ error: `GitHub (${response.status}): ${msg}` }, 500);
   }
   const contents = await response.json();
   const files = Array.isArray(contents) ? contents : [];

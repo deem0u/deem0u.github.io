@@ -666,6 +666,7 @@
     sessionStorage.removeItem('signup_last_name');
     sessionStorage.removeItem('signup_password');
     sessionStorage.removeItem('signup_dob');
+    sessionStorage.removeItem('signup_contact_slug');
     document.getElementById('signup-steps-section').classList.add('hidden');
     document.getElementById('signup-step1-card').classList.add('hidden');
     document.getElementById('signup-otp-card').classList.add('hidden');
@@ -783,6 +784,7 @@
   }
 
   function step2ContinueAfterSkip() {
+    sessionStorage.removeItem('signup_contact_slug');
     continueToStep3();
   }
 
@@ -878,6 +880,7 @@
     if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
     hideAlert('step2-form-alert');
     try {
+      // Single create: one contact page at user/<username>/<slug>.html; public link deem0u.github.io/user/<username>/<slug>.html
       var res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
@@ -885,6 +888,7 @@
       });
       var data = await res.json();
       if (res.ok) {
+        sessionStorage.setItem('signup_contact_slug', slug);
         document.getElementById('step2-contact-form-wrap').classList.add('hidden');
         document.getElementById('step2-after-save').classList.remove('hidden');
       } else {
@@ -911,7 +915,13 @@
     var lastName = sessionStorage.getItem('signup_last_name') || '';
     var email = sessionStorage.getItem('signup_email') || '';
     var dob = sessionStorage.getItem('signup_dob') || '';
-    var viewUrl = PAGES_URL + username + '/';
+    var contactSlug = sessionStorage.getItem('signup_contact_slug') || '';
+    var viewUrl = contactSlug
+      ? (PAGES_URL + username + '/' + contactSlug + '.html')
+      : (PAGES_URL + username + '/');
+    var contactPageLine = contactSlug
+      ? '<li><strong>Contact Page URL:</strong> <a href="' + viewUrl + '" target="_blank" rel="noopener">' + viewUrl + '</a></li>'
+      : '<li><strong>Contact Page:</strong> You skipped creating a page. You can create one anytime from <a href="' + EDITOR_URL + '" target="_blank" rel="noopener">My Account</a>.</li>';
     var editUrl = EDITOR_URL;
     document.getElementById('step4-summary').innerHTML =
       '<p class="home-success-banner">Welcome! Your account is ready.</p>' +
@@ -921,7 +931,7 @@
       '<li><strong>Last Name:</strong> ' + (lastName || '') + '</li>' +
       '<li><strong>Email:</strong> ' + (email || '') + '</li>' +
       '<li><strong>Date of Birth:</strong> ' + (dob ? '**/**/****' : '') + '</li>' +
-      '<li><strong>Contact Page URL:</strong> <a href="' + viewUrl + '" target="_blank" rel="noopener">' + viewUrl + '</a></li>' +
+      contactPageLine +
       '<li><strong>My Account:</strong> <a href="' + editUrl + '" target="_blank" rel="noopener">Sign in</a></li></ul>' +
       '<p class="success-heading">How to edit your contact page</p>' +
       '<ol><li>Visit My Account and sign in with your Account Email and Password</li>' +

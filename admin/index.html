@@ -276,7 +276,7 @@
                 <div id="kv-orphans-error" class="alert hidden mt-2"></div>
 
                 <div class="form-group mt-4" style="padding-top: 1rem; border-top: 1px solid var(--color-border);">
-                  <label class="form-label">Purge all KV for a username</label>
+                  <label class="form-label">Purge orphaned user data (KV only)</label>
                   <p class="form-hint mb-2">Use when the user folder was already deleted (e.g. on GitHub) but KV was not cleaned, so the username still appears as active or login says &quot;account does not have a password&quot;. This removes all KV data for that username only; it does not touch GitHub.</p>
                   <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
                     <input type="text" id="purge-user-kv-username" class="form-input" placeholder="e.g. deemou" style="width: 12rem;" autocomplete="off">
@@ -446,20 +446,6 @@
           </div>
           <div id="alert-manage" class="alert"></div>
           <div id="list-manage" class="user-list"></div>
-          <div class="card" style="margin-top: 1.5rem;">
-            <div class="card-header"><span class="card-title">Purge orphaned user data (KV only)</span></div>
-            <div class="card-body">
-              <p class="form-hint mb-2">Use when a user folder was deleted (e.g. from GitHub) but the system still treats the username as an account (e.g. login says &quot;account does not have a password&quot;). This removes all KV data for the username so it is no longer an account. It does not touch GitHub.</p>
-              <div class="form-row-inline" style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
-                <div class="form-group form-group-inline">
-                  <label class="form-label" for="purge-kv-username">Username</label>
-                  <input type="text" id="purge-kv-username" class="form-input" placeholder="e.g. deemou" minlength="3" maxlength="28" style="min-width: 12rem;">
-                </div>
-                <button type="button" class="btn btn-danger" id="purge-kv-btn" onclick="purgeUserKv()">Purge KV for this user</button>
-              </div>
-              <span class="form-error" id="purge-kv-error" role="alert"></span>
-            </div>
-          </div>
         </div>
 
         <div id="tab-edit" class="tab-content">
@@ -2965,42 +2951,6 @@ async function deleteUser(f) {
       showAlert('alert-manage', d.error || 'Failed to delete', 'error');
     }
   } catch { showAlert('alert-manage', 'Error', 'error'); }
-}
-
-async function purgeUserKv() {
-  var inp = document.getElementById('purge-kv-username');
-  var errEl = document.getElementById('purge-kv-error');
-  var btn = document.getElementById('purge-kv-btn');
-  if (errEl) errEl.textContent = '';
-  var username = (inp && inp.value) ? inp.value.trim() : '';
-  if (!username || username.length < 3 || username.length > 28) {
-    if (errEl) errEl.textContent = 'Enter a username (3–28 characters).';
-    return;
-  }
-  if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-    if (errEl) errEl.textContent = 'Username can only contain letters, numbers, hyphens, underscores.';
-    return;
-  }
-  if (!confirm('Permanently remove all KV data for "' + username + '"? This username will no longer be an account. This cannot be undone.')) return;
-  if (btn) btn.disabled = true;
-  try {
-    var r = await fetch(API + '/api/admin/purge-user-kv', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({ username: username })
-    });
-    var d = await r.json();
-    if (r.ok && d.success) {
-      showAlert('alert-manage', (d.message || 'User KV data purged.') + ' You can refresh the page.', 'success');
-      if (inp) inp.value = '';
-      if (errEl) errEl.textContent = '';
-    } else {
-      showAlert('alert-manage', (d && d.error) || 'Failed to purge', 'error');
-    }
-  } catch (e) {
-    showAlert('alert-manage', 'Connection error', 'error');
-  }
-  if (btn) btn.disabled = false;
 }
 
 function showNewUserForm() {
