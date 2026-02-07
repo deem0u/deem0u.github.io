@@ -342,6 +342,9 @@ export default {
       if (request.method === 'GET' && path === '/api/site-status') {
         return await handleGetSiteStatus(request, env);
       }
+      if (request.method === 'GET' && path === '/api/admin/session') {
+        return await handleGetAdminSession(request, env);
+      }
       if (request.method === 'GET' && path === '/api/admin/site-settings') {
         return await handleGetSiteSettings(request, env);
       }
@@ -368,6 +371,16 @@ export default {
       }
       if (request.method === 'POST' && path === '/api/admin/delete-otp') {
         return await handleAdminDeleteOtp(request, env);
+      }
+      if (request.method === 'POST' && path === '/api/admin/secondary-keys') {
+        return await handlePostSecondaryKey(request, env);
+      }
+      if (request.method === 'GET' && path === '/api/admin/secondary-keys') {
+        return await handleGetSecondaryKeys(request, env);
+      }
+      if (request.method === 'DELETE' && path.startsWith('/api/admin/secondary-keys/')) {
+        const id = path.replace('/api/admin/secondary-keys/', '').replace(/\/$/, '').trim();
+        return await handleDeleteSecondaryKey(id, request, env);
       }
       if (request.method === 'PUT' && path.startsWith('/api/push-message/')) {
         const raw = path.replace('/api/push-message/', '').replace(/\/$/, '');
@@ -1003,11 +1016,43 @@ function generateContactPageHTML(givenName, familyName, contactEmail, mobile, mo
 
 // ============ Auth Helpers ============
 
-async function isAdmin(request, env) {
-  const adminKey = request.headers.get('X-Admin-Key');
-  if (!adminKey || !env.EDIT_KEYS_KV) return false;
+const ADMIN_SECONDARY_PREFIX = 'admin_secondary:';
+
+async function sha256Hex(str) {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Returns { isAdmin, isPrimaryAdmin }. Secondary keys have isAdmin true but isPrimaryAdmin false. */
+async function getAdminAuth(request, env) {
+  const adminKey = (request.headers.get('X-Admin-Key') || '').trim();
+  if (!adminKey || !env.EDIT_KEYS_KV) return { isAdmin: false, isPrimaryAdmin: false };
   const storedKey = await env.EDIT_KEYS_KV.get('admin:key');
-  return storedKey && adminKey === storedKey;
+  if (storedKey && adminKey === storedKey) return { isAdmin: true, isPrimaryAdmin: true };
+  const hash = await sha256Hex(adminKey);
+  const kvKey = ADMIN_SECONDARY_PREFIX + hash;
+  const raw = await env.EDIT_KEYS_KV.get(kvKey);
+  if (!raw) return { isAdmin: false, isPrimaryAdmin: false };
+  let meta;
+  try { meta = JSON.parse(raw); } catch (_) { await env.EDIT_KEYS_KV.delete(kvKey); return { isAdmin: false, isPrimaryAdmin: false }; }
+  const expiresAt = meta.expiresAt ? new Date(meta.expiresAt).getTime() : null;
+  if (expiresAt !== null && Date.now() > expiresAt) {
+    await env.EDIT_KEYS_KV.delete(kvKey);
+    return { isAdmin: false, isPrimaryAdmin: false };
+  }
+  return { isAdmin: true, isPrimaryAdmin: false };
+}
+
+async function isAdmin(request, env) {
+  const auth = await getAdminAuth(request, env);
+  return auth.isAdmin;
+}
+
+/** True only when X-Admin-Key is the primary admin key (not a secondary key). */
+async function isPrimaryAdmin(request, env) {
+  const auth = await getAdminAuth(request, env);
+  return auth.isPrimaryAdmin;
 }
 
 /** Returns true if user has verified their email (or admin bypass). Used to gate add/edit/delete contact pages. */
@@ -1551,17 +1596,18 @@ async function handleAdminRenameUser(request, env) {
   return jsonResponse({ success: true, oldUsername, newUsername, message: `User renamed to ${newUsername}` });
 }
 
-/** GET /api/site-status - Public. Returns maintenance and lockdown. If X-Admin-Key is valid, returns isAdmin: true and no blocking. */
+/** GET /api/site-status - Public. Returns maintenance and lockdown. If X-Admin-Key is valid, returns isAdmin: true and isSecondaryAdmin when applicable. */
 async function handleGetSiteStatus(request, env) {
-  if (await isAdmin(request, env)) {
-    return jsonResponse({ maintenanceMode: false, lockdownMode: false, isAdmin: true });
+  const auth = await getAdminAuth(request, env);
+  if (auth.isAdmin) {
+    return jsonResponse({ maintenanceMode: false, lockdownMode: false, isAdmin: true, isSecondaryAdmin: !auth.isPrimaryAdmin });
   }
   if (!env.EDIT_KEYS_KV) {
-    return jsonResponse({ maintenanceMode: false, lockdownMode: false, isAdmin: false });
+    return jsonResponse({ maintenanceMode: false, lockdownMode: false, isAdmin: false, isSecondaryAdmin: false });
   }
   const maintenance = (await env.EDIT_KEYS_KV.get('site:maintenance')) === '1';
   const lockdown = (await env.EDIT_KEYS_KV.get('site:lockdown')) === '1';
-  return jsonResponse({ maintenanceMode: maintenance, lockdownMode: lockdown, isAdmin: false });
+  return jsonResponse({ maintenanceMode: maintenance, lockdownMode: lockdown, isAdmin: false, isSecondaryAdmin: false });
 }
 
 /** GET /api/admin/site-settings - Admin only. Returns divert, maintenance, lockdown, per-user divert. */
@@ -1872,9 +1918,16 @@ async function handleKvUserPurge(request, env) {
   return jsonResponse({ deleted: toDelete.length, deletedKeys: toDelete, dryRun });
 }
 
-/** GET /api/admin/admin-email - Admin only. Returns { email, passwordSet }. */
+/** GET /api/admin/session - Admin only. Returns { isSecondaryAdmin } so dashboard can hide Administrator area for secondary keys. */
+async function handleGetAdminSession(request, env) {
+  const auth = await getAdminAuth(request, env);
+  if (!auth.isAdmin) return jsonResponse({ error: 'Admin access required' }, 401);
+  return jsonResponse({ isSecondaryAdmin: !auth.isPrimaryAdmin });
+}
+
+/** GET /api/admin/admin-email - Primary admin only. Returns { email, passwordSet }. */
 async function handleGetAdminEmail(request, env) {
-  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ email: null, passwordSet: false });
   const email = await env.EDIT_KEYS_KV.get('admin:email');
   const hash = await env.EDIT_KEYS_KV.get('admin:password_hash');
@@ -1913,9 +1966,9 @@ async function handleInternalSetAdminCredentials(request, env) {
   return jsonResponse({ success: true, updated: [ email && 'email', password && 'password', newAdminKey && 'adminKey' ].filter(Boolean) });
 }
 
-/** PUT /api/admin/admin-email - Admin only. Body: { email }. Sets or updates admin email. Dashboard may only set when empty; once set, change via this API (e.g. curl) only. */
+/** PUT /api/admin/admin-email - Primary admin only. Body: { email }. Sets or updates admin email. */
 async function handlePutAdminEmail(request, env) {
-  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const email = (body.email || '').trim().toLowerCase();
@@ -1924,9 +1977,9 @@ async function handlePutAdminEmail(request, env) {
   return jsonResponse({ success: true, email });
 }
 
-/** PUT /api/admin/admin-key - Admin only. Body: { newAdminKey }. */
+/** PUT /api/admin/admin-key - Primary admin only. Body: { newAdminKey }. */
 async function handlePutAdminKey(request, env) {
-  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const newKey = (body.newAdminKey || '').trim();
@@ -1935,9 +1988,62 @@ async function handlePutAdminKey(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** POST /api/admin/verify-otp-set-password - Admin only. Body: { otp, newPassword }. Verifies admin:recovery_code then sets password. */
+/** Generate a random key string (64 hex chars). */
+function generateSecondaryKey() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** POST /api/admin/secondary-keys - Primary admin only. Body: { expiresInDays?: number }. Creates a secondary admin key (returned once); stored as hash in KV. */
+async function handlePostSecondaryKey(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { body = {}; }
+  const expiresInDays = typeof body.expiresInDays === 'number' && body.expiresInDays > 0 ? Math.floor(body.expiresInDays) : null;
+  const key = generateSecondaryKey();
+  const hash = await sha256Hex(key);
+  const createdAt = new Date().toISOString();
+  const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString() : null;
+  await env.EDIT_KEYS_KV.put(ADMIN_SECONDARY_PREFIX + hash, JSON.stringify({ createdAt, expiresAt }));
+  return jsonResponse({ key, id: hash, createdAt, expiresAt });
+}
+
+/** GET /api/admin/secondary-keys - Primary admin only. Returns list of secondary keys (id, createdAt, expiresAt; no actual key). Expired entries are removed. */
+async function handleGetSecondaryKeys(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ keys: [] });
+  const list = await env.EDIT_KEYS_KV.list({ prefix: ADMIN_SECONDARY_PREFIX });
+  const keys = [];
+  const now = Date.now();
+  for (const k of list.keys) {
+    const id = k.name.replace(ADMIN_SECONDARY_PREFIX, '');
+    const raw = await env.EDIT_KEYS_KV.get(k.name);
+    if (!raw) continue;
+    let meta;
+    try { meta = JSON.parse(raw); } catch (_) { await env.EDIT_KEYS_KV.delete(k.name); continue; }
+    const expiresAt = meta.expiresAt ? new Date(meta.expiresAt).getTime() : null;
+    if (expiresAt !== null && now > expiresAt) {
+      await env.EDIT_KEYS_KV.delete(k.name);
+      continue;
+    }
+    keys.push({ id, createdAt: meta.createdAt || null, expiresAt: meta.expiresAt || null });
+  }
+  return jsonResponse({ keys });
+}
+
+/** DELETE /api/admin/secondary-keys/:id - Primary admin only. Revokes the secondary key. */
+async function handleDeleteSecondaryKey(id, request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  if (!id || !/^[a-f0-9]{64}$/.test(id)) return jsonResponse({ error: 'Invalid key id' }, 400);
+  await env.EDIT_KEYS_KV.delete(ADMIN_SECONDARY_PREFIX + id);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/admin/verify-otp-set-password - Primary admin only. Body: { otp, newPassword }. Verifies admin:recovery_code then sets password. */
 async function handleVerifyOtpSetPassword(request, env) {
-  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const otp = (body.otp || '').trim();
@@ -1962,9 +2068,9 @@ async function handleVerifyOtpSetPassword(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** PUT /api/admin/set-password - Admin only. Body: { password }. */
+/** PUT /api/admin/set-password - Primary admin only. Body: { password }. */
 async function handlePutAdminPassword(request, env) {
-  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const password = body.password;

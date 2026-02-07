@@ -208,6 +208,7 @@
         <nav class="dashboard-nav" aria-label="Dashboard sections">
           <div class="dashboard-nav-tabs">
             <button type="button" class="dashboard-tab tab" data-tab="admin-access">Admin Access &amp; Site Management</button>
+            <button type="button" class="dashboard-tab tab" id="dashboard-tab-administrator" data-tab="administrator">Administrator</button>
             <button type="button" class="dashboard-tab tab active" data-tab="manage">Manage Users</button>
             <button type="button" class="dashboard-tab tab" data-tab="edit">Add Users / Edit Contact Information</button>
           </div>
@@ -321,8 +322,11 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="card mt-4">
+        <div id="tab-administrator" class="tab-content">
+          <div id="alert-administrator" class="alert mb-4" role="status" aria-live="polite"></div>
+          <div class="card">
             <div class="card-header"><span class="card-title">Administrator Account</span></div>
             <div class="card-body">
               <div class="form-group mb-4">
@@ -366,6 +370,33 @@
                   <button type="button" class="btn btn-ghost btn-sm hidden" id="reset-admin-key-btn">Reset</button>
                 </div>
                 <span class="form-hint">Field is read-only. Generate a key, then save to server and this device.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-header"><span class="card-title">Secondary Admin Key</span></div>
+            <div class="card-body">
+              <p class="form-hint mb-3">Generate a key that someone else can use to sign in to the dashboard. They will not see this Administrator area. The key is saved only on the server and shown once—copy it securely.</p>
+              <div class="form-group mb-4">
+                <label class="form-label" for="secondary-key-expires-days">Valid for (days)</label>
+                <input type="number" id="secondary-key-expires-days" class="form-input" placeholder="Leave empty for no expiry" min="1" max="3650" style="max-width:10rem;" autocomplete="off">
+                <span class="form-hint">Optional. After this many days the key stops working and is removed.</span>
+              </div>
+              <div class="form-group mb-4">
+                <button type="button" class="btn btn-primary" id="generate-secondary-key-btn" onclick="handleGenerateSecondaryKey()">Generate Secondary Key</button>
+              </div>
+              <div id="secondary-key-generated-block" class="hidden mb-4">
+                <label class="form-label">Copy this key now; it will not be shown again.</label>
+                <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                  <input type="text" id="secondary-key-new-value" class="form-input font-mono" readonly style="max-width:32rem; background:var(--color-bg-muted);" autocomplete="off">
+                  <button type="button" class="btn btn-secondary" onclick="copySecondaryKeyToClipboard()">Copy</button>
+                </div>
+              </div>
+              <div class="form-group mb-0">
+                <label class="form-label">Active secondary keys</label>
+                <div id="secondary-keys-list" class="mb-0" style="min-height:2rem;"></div>
+                <span id="secondary-keys-empty" class="form-hint hidden">No secondary keys.</span>
               </div>
             </div>
           </div>
@@ -929,6 +960,7 @@ let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = n
 var siteSettings = { divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {}, maxContactPagesByUser: {} };
 var loginMode = 'key'; // 'key' | 'email'
 var adminEmail = null, adminPasswordSet = false;
+var isSecondaryAdmin = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Check for password reset link (?reset=TOKEN)
@@ -1499,13 +1531,13 @@ function loadAdminAccountSection() {
 async function handleSaveAdminEmail() {
   var inp = document.getElementById('admin-email-input');
   var email = (inp && inp.value) ? inp.value.trim() : '';
-  if (!email || email.indexOf('@') === -1) { showAlert('alert-admin-access', 'Enter a valid email.', 'error'); return; }
+  if (!email || email.indexOf('@') === -1) { showAlert('alert-administrator', 'Enter a valid email.', 'error'); return; }
   try {
     var r = await fetch(API + '/api/admin/admin-email', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ email: email }) });
     var d = await r.json();
-    if (r.ok) { adminEmail = (d.email || email).toLowerCase(); loadAdminAccountSection(); showAlert('alert-admin-access', 'Admin email set. To change it later, use the Worker API.', 'success'); }
-    else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
-  } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
+    if (r.ok) { adminEmail = (d.email || email).toLowerCase(); loadAdminAccountSection(); showAlert('alert-administrator', 'Admin email set. To change it later, use the Worker API.', 'success'); }
+    else { showAlert('alert-administrator', (d && d.error) || 'Failed to save.', 'error'); }
+  } catch (e) { showAlert('alert-administrator', 'Connection error.', 'error'); }
 }
 
 var kvOrphansReportData = null;
@@ -1707,7 +1739,7 @@ function handleResetAdminKey() {
 async function handleSaveAdminKey() {
   var inp = document.getElementById('dashboard-admin-key');
   var key = (inp && inp.value) ? inp.value.trim() : '';
-  if (key.length < 8) { showAlert('alert-admin-access', 'Admin key must be at least 8 characters.', 'error'); return; }
+  if (key.length < 8) { showAlert('alert-administrator', 'Admin key must be at least 8 characters.', 'error'); return; }
   try {
     var r = await fetch(API + '/api/admin/admin-key', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ newAdminKey: key }) });
     var d = await r.json();
@@ -1718,9 +1750,9 @@ async function handleSaveAdminKey() {
       document.getElementById('generate-admin-key-btn').classList.remove('hidden');
       document.getElementById('save-admin-key-btn').classList.add('hidden');
       document.getElementById('reset-admin-key-btn').classList.add('hidden');
-      showAlert('alert-admin-access', 'Admin key saved. You stay signed in on this device.', 'success');
-    } else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
-  } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
+      showAlert('alert-administrator', 'Admin key saved. You stay signed in on this device.', 'success');
+    } else { showAlert('alert-administrator', (d && d.error) || 'Failed to save.', 'error'); }
+  } catch (e) { showAlert('alert-administrator', 'Connection error.', 'error'); }
 }
 
 function updateSetPasswordButton() {
@@ -1740,8 +1772,8 @@ async function handleSetPassword() {
   var newPw = document.getElementById('dashboard-password-new');
   var confirmPw = document.getElementById('dashboard-password-confirm');
   var pw = (newPw && newPw.value) ? newPw.value.trim() : '';
-  if (pw.length < 8) { showAlert('alert-admin-access', 'Password must be at least 8 characters.', 'error'); return; }
-  if (pw !== (confirmPw && confirmPw.value ? confirmPw.value.trim() : '')) { showAlert('alert-admin-access', 'Passwords do not match.', 'error'); return; }
+  if (pw.length < 8) { showAlert('alert-administrator', 'Password must be at least 8 characters.', 'error'); return; }
+  if (pw !== (confirmPw && confirmPw.value ? confirmPw.value.trim() : '')) { showAlert('alert-administrator', 'Passwords do not match.', 'error'); return; }
   try {
     var r = await fetch(API + '/api/admin/set-password', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ password: pw }) });
     var d = await r.json();
@@ -1750,13 +1782,13 @@ async function handleSetPassword() {
       if (newPw) newPw.value = '';
       if (confirmPw) confirmPw.value = '';
       loadAdminAccountSection();
-      showAlert('alert-admin-access', 'Password saved. You can sign in with your recovery email and this password.', 'success');
-    } else { showAlert('alert-admin-access', (d && d.error) || 'Failed to save.', 'error'); }
-  } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
+      showAlert('alert-administrator', 'Password saved. You can sign in with your recovery email and this password.', 'success');
+    } else { showAlert('alert-administrator', (d && d.error) || 'Failed to save.', 'error'); }
+  } catch (e) { showAlert('alert-administrator', 'Connection error.', 'error'); }
 }
 
 async function handleResetPasswordTrigger() {
-  if (!adminEmail) { showAlert('alert-admin-access', 'No admin email configured.', 'error'); return; }
+  if (!adminEmail) { showAlert('alert-administrator', 'No admin email configured.', 'error'); return; }
   try {
     var r = await fetch(API + '/api/recover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: adminEmail }) });
     var d = await r.json();
@@ -1768,8 +1800,8 @@ async function handleResetPasswordTrigger() {
       document.getElementById('modal-password-reset-alert').innerHTML = '';
       document.getElementById('modal-password-reset').classList.remove('hidden');
       document.getElementById('modal-password-reset').classList.add('show');
-    } else { showAlert('alert-admin-access', (d && d.error) || 'Failed to send code.', 'error'); }
-  } catch (e) { showAlert('alert-admin-access', 'Connection error.', 'error'); }
+    } else { showAlert('alert-administrator', (d && d.error) || 'Failed to send code.', 'error'); }
+  } catch (e) { showAlert('alert-administrator', 'Connection error.', 'error'); }
 }
 
 function closePasswordResetModal() {
@@ -1794,7 +1826,7 @@ async function handlePasswordResetModalSubmit() {
       adminPasswordSet = true;
       loadAdminAccountSection();
       closePasswordResetModal();
-      showAlert('alert-admin-access', 'Password reset successfully.', 'success');
+      showAlert('alert-administrator', 'Password reset successfully.', 'success');
     } else { showAlert('modal-password-reset-alert', (d && d.error) || 'Failed to set password.', 'error'); }
   } catch (e) { showAlert('modal-password-reset-alert', 'Connection error.', 'error'); }
   btn.disabled = false;
@@ -1901,6 +1933,13 @@ async function fetchAccountEmailsAndRefresh(skipPopulateUI) {
 }
 async function loadDashboard() {
   var headers = { 'X-Admin-Key': adminKey };
+  var statusRes = await fetch(API + '/api/site-status', { headers: headers });
+  if (statusRes.ok) {
+    var statusData = await statusRes.json().catch(function() { return {}; });
+    isSecondaryAdmin = !!statusData.isSecondaryAdmin;
+  } else isSecondaryAdmin = false;
+  var tabAdmin = document.getElementById('dashboard-tab-administrator');
+  if (tabAdmin) tabAdmin.style.display = isSecondaryAdmin ? 'none' : '';
   var summariesRes = await fetch(API + '/api/pages/summaries', { headers: headers });
   var kRes = await fetch(API + '/api/keys', { headers: headers });
   if (!kRes.ok) throw new Error('Failed to load keys: ' + kRes.status);
@@ -1938,7 +1977,7 @@ async function loadDashboard() {
         .catch(function() { return null; });
     });
     var settingsPromise = fetch(API + '/api/admin/site-settings', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
-    var adminEmailPromise = fetch(API + '/api/admin/admin-email', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
+    var adminEmailPromise = isSecondaryAdmin ? Promise.resolve(null) : fetch(API + '/api/admin/admin-email', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
     var allResults = await Promise.all(pagePromises.concat([settingsPromise, adminEmailPromise]));
     var pageResults = allResults.slice(0, pages.length);
     var settingsData = allResults[pages.length];
@@ -1967,7 +2006,7 @@ async function loadDashboard() {
 
   if (useSummaries) {
     var settingsPromise = fetch(API + '/api/admin/site-settings', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
-    var adminEmailPromise = fetch(API + '/api/admin/admin-email', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
+    var adminEmailPromise = isSecondaryAdmin ? Promise.resolve(null) : fetch(API + '/api/admin/admin-email', { headers: headers }).then(function(r) { return r.ok ? r.json() : null; });
     var settingsData = await settingsPromise;
     var adminEmailData = await adminEmailPromise;
     if (settingsData) {
@@ -3977,7 +4016,69 @@ async function setMaxContactPagesForUser(username, value) {
   } catch (e) { delete siteSettings.maxContactPagesByUser[uLower]; var inp = document.getElementById('max-pages-' + username); if (inp) inp.value = ''; showAlert('alert-manage', 'Connection error.', 'error'); }
 }
 
-function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); if (n === 'admin-access') populateSitePushUserList(); }
+function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === n)); document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${n}`)); if (n === 'admin-access') populateSitePushUserList(); if (n === 'administrator') loadSecondaryKeys(); }
+
+async function loadSecondaryKeys() {
+  var listEl = document.getElementById('secondary-keys-list');
+  var emptyEl = document.getElementById('secondary-keys-empty');
+  if (!listEl || isSecondaryAdmin) return;
+  listEl.innerHTML = '';
+  if (emptyEl) emptyEl.classList.add('hidden');
+  try {
+    var r = await fetch(API + '/api/admin/secondary-keys', { headers: { 'X-Admin-Key': adminKey } });
+    if (!r.ok) return;
+    var d = await r.json();
+    var keys = (d.keys && Array.isArray(d.keys)) ? d.keys : [];
+    if (keys.length === 0) { if (emptyEl) emptyEl.classList.remove('hidden'); return; }
+    keys.forEach(function(k) {
+      var row = document.createElement('div');
+      row.className = 'secondary-key-row';
+      row.style.cssText = 'display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; padding:0.35rem 0; border-bottom:1px solid var(--color-border);';
+      var created = k.createdAt ? new Date(k.createdAt).toLocaleString() : '—';
+      var expires = k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : 'Never';
+      var idShort = (k.id || '').slice(-8);
+      row.innerHTML = '<span class="font-mono" style="font-size:0.8125rem;">…' + escapeHtml(idShort) + '</span><span style="font-size:0.8125rem;">Created: ' + escapeHtml(created) + '</span><span style="font-size:0.8125rem;">Expires: ' + escapeHtml(expires) + '</span><button type="button" class="btn btn-ghost btn-sm" onclick="handleRevokeSecondaryKey(\'' + (k.id || '').replace(/'/g, "\\'") + '\')">Revoke</button>';
+      listEl.appendChild(row);
+    });
+  } catch (e) {}
+}
+
+async function handleGenerateSecondaryKey() {
+  var btn = document.getElementById('generate-secondary-key-btn');
+  var block = document.getElementById('secondary-key-generated-block');
+  var inputEl = document.getElementById('secondary-key-new-value');
+  var daysInp = document.getElementById('secondary-key-expires-days');
+  if (!btn || !block || !inputEl) return;
+  btn.disabled = true;
+  var expiresInDays = (daysInp && daysInp.value) ? parseInt(daysInp.value, 10) : null;
+  if (expiresInDays !== null && (isNaN(expiresInDays) || expiresInDays < 1)) expiresInDays = null;
+  try {
+    var r = await fetch(API + '/api/admin/secondary-keys', { method: 'POST', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify(expiresInDays !== null ? { expiresInDays: expiresInDays } : {}) });
+    var d = await r.json();
+    if (r.ok && d.key) {
+      inputEl.value = d.key;
+      block.classList.remove('hidden');
+      showAlert('alert-administrator', 'Secondary key created. Copy it now; it will not be shown again.', 'success');
+      loadSecondaryKeys();
+    } else { showAlert('alert-administrator', (d && d.error) || 'Failed to create key.', 'error'); }
+  } catch (e) { showAlert('alert-administrator', 'Connection error.', 'error'); }
+  btn.disabled = false;
+}
+
+function copySecondaryKeyToClipboard() {
+  var inputEl = document.getElementById('secondary-key-new-value');
+  if (!inputEl || !inputEl.value) return;
+  navigator.clipboard.writeText(inputEl.value).then(function() { showAlert('alert-administrator', 'Copied to clipboard.', 'success'); }).catch(function() {});
+}
+
+async function handleRevokeSecondaryKey(id) {
+  if (!id || !confirm('Revoke this key? The person using it will no longer be able to sign in.')) return;
+  try {
+    var r = await fetch(API + '/api/admin/secondary-keys/' + encodeURIComponent(id), { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } });
+    if (r.ok) { showAlert('alert-administrator', 'Key revoked.', 'success'); loadSecondaryKeys(); }
+    else { var d = await r.json().catch(function() { return {}; }); showAlert('alert-administrator', (d && d.error) || 'Failed to revoke.', 'error'); }
+  } catch (e) { showAlert('alert-administrator', 'Connection error.', 'error'); }
+}
 
 function showModal(t, m, bc, bt, cb, useHtml) { document.getElementById('modal-title').textContent = t; var msgEl = document.getElementById('modal-message'); if (useHtml) msgEl.innerHTML = m; else msgEl.textContent = m; const b = document.getElementById('modal-confirm'); b.className = 'btn ' + bc; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
 function closeModal() { document.getElementById('modal').classList.remove('show'); modalCallback = null; }
