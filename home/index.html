@@ -822,7 +822,9 @@
     var additionalHtml = additionalInfo ? '<span class="value">' + formatMultiline(additionalInfo) + '</span>' : '<span class="value">—</span>';
     var hasMobile = (mobile || '').trim() !== '';
     var mobileHtml = hasMobile ? '<a href="tel:' + escapeHtml((mobile || '').replace(/\s/g, '')) + '">' + escapeHtml((mobile || '').trim()) + '</a>' : '—';
-    var homeCountryHtml = (homeCountry || '').trim() ? escapeHtml((homeCountry || '').trim()) : '—';
+    var homeCountryVal = (homeCountry || '').trim();
+    if (homeCountryVal.length > 80 || /[\r\n]/.test(homeCountryVal)) homeCountryVal = '';
+    var homeCountryHtml = homeCountryVal ? escapeHtml(homeCountryVal) : '—';
     var lockdownOverlay = '<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:sans-serif;"><h1 style="font-size:1.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>';
     var apiEsc = (API || '').replace(/"/g, '&quot;');
     var scriptTag = '<script>(function(){var h={"X-Admin-Key":(typeof localStorage!=="undefined"&&localStorage.getItem("admin_key"))||""};fetch("' + apiEsc + '/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';

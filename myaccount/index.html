@@ -2916,6 +2916,7 @@ function fillForm(h) {
   if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '—' || !plain) mv = ''; }
   document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
   var hc = resolveCountryDisplayEdit(g('Home Country'));
+  if (hc && (hc.length > 80 || /[\r\n]/.test(hc))) hc = '';
   setCountryDropdownEdit(hc || null);
   
   // Destination details: 4-span (name, address, phone, email) or 3-span legacy (name, phone, email)

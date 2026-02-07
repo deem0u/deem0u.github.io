@@ -102,7 +102,11 @@ async function getContactPageCountForUser(username, env) {
   if (!response.ok) return 0;
   const contents = await response.json();
   const files = Array.isArray(contents) ? contents : [];
-  return files.filter(item => item.type === 'file' && item.name && item.name.endsWith('.html')).length;
+  const indexHtml = files.find(item => item.type === 'file' && item.name === 'index.html');
+  if (indexHtml && indexHtml.sha) {
+    await migrateUserFolderIndexToGitkeep(username, indexHtml.sha, env);
+  }
+  return files.filter(item => item.type === 'file' && item.name && item.name.endsWith('.html') && item.name !== 'index.html').length;
 }
 
 /** Returns true if the user folder exists on GitHub. */
@@ -119,6 +123,50 @@ async function userFolderExistsOnGitHub(username, env) {
     }
   );
   return response.ok;
+}
+
+/** If user folder contains index.html (old placeholder), rename it to index.gitkeep. Returns true if migration was performed. */
+async function migrateUserFolderIndexToGitkeep(username, indexHtmlSha, env) {
+  if (!env.GITHUB_TOKEN || !username || !indexHtmlSha) return false;
+  const placeholderContent = encodeBase64('# Directory placeholder – contact pages are .html files in this folder (user/username/urlslug). This file is not a contact page.\n');
+  const gitkeepPath = `${USER_PAGES_PREFIX}/${username}/index.gitkeep`;
+  const htmlPath = `${USER_PAGES_PREFIX}/${username}/index.html`;
+  const putRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${gitkeepPath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Rename index.html to index.gitkeep (placeholder convention): ${username}`,
+        content: placeholderContent,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!putRes.ok) return false;
+  const delRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${htmlPath}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Remove index.html (replaced by index.gitkeep): ${username}`,
+        sha: indexHtmlSha,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  return delRes.ok;
 }
 
 /** Delete all KV data for a user (used by delete-user and when cleaning orphaned accounts). */
@@ -957,11 +1005,12 @@ async function handleSignup(request, env) {
 
   const secret = env.JWT_SECRET || env.SESSION_SECRET;
   const token = secret ? await signJwt({ username, exp: Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400) }, secret) : null;
+  const base = `https://${CONFIG.owner}.github.io`;
   return jsonResponse({
     success: true,
     username,
     token,
-    viewLink: pageUrl(username, 'index')
+    viewLink: `${base}/user/${username}/`
   });
 }
 
@@ -1003,7 +1052,7 @@ async function handleSignupSuccessEmail(request, env) {
   const lastName = (body.lastName || body.surname || '').trim();
   if (!username || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
   const baseUrl = `https://${CONFIG.owner}.github.io`;
-  const viewLink = pageUrl(username, 'index');
+  const viewLink = `${baseUrl}/user/${username}/`;
   const editUrl = `${baseUrl}/myaccount/`;
   const subject = `Your Digital Contact Page - ${username} - Account Details`;
   const text = `Below are details related to your account you should keep handy.\n\n\t• User Name: ${username}\n\t• Your Digital Contact Page URL: ${viewLink}\n\nHOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n\t1. Visit My Account (${editUrl}) and sign in with your Account Email and Password\n\t2. Make your changes\n\t3. Click "Save Changes"\n\nIf you wish to have your account deleted, contact deem0u.github.io@gmail.com`;
@@ -1221,10 +1270,13 @@ async function handleCreatePage(request, env) {
   }
 
   const contactpagename = (body.contactpagename || 'index').trim() || 'index';
+  if (contactpagename.toLowerCase() === 'index') {
+    return jsonResponse({ error: 'Slug "index" is reserved. Use a different URL slug (e.g. main, contact).' }, 400);
+  }
   if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
     return jsonResponse({ error: 'Invalid contact page name' }, 400);
   }
-  if (contactpagename !== 'index' && (contactpagename.length < 3 || contactpagename.length > 28)) {
+  if (contactpagename.length < 3 || contactpagename.length > 28) {
     return jsonResponse({ error: 'Contact page URL must be 3–28 characters' }, 400);
   }
 
@@ -1341,6 +1393,9 @@ async function handleUserCreatePage(username, request, env) {
   const contactpagename = (body.contactpagename || '').trim();
   if (!contactpagename) {
     return jsonResponse({ error: 'Contact page URL (slug) is required' }, 400);
+  }
+  if (contactpagename.toLowerCase() === 'index') {
+    return jsonResponse({ error: 'Slug "index" is reserved. Use a different URL slug (e.g. main, contact).' }, 400);
   }
   if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
     return jsonResponse({ error: 'Contact page URL can only use letters, numbers, hyphens, and underscores' }, 400);
@@ -2584,13 +2639,15 @@ async function handlePageSummaries(request, env) {
       }
       const dirContents = await dirRes.json();
       const files = Array.isArray(dirContents) ? dirContents : [];
-      const htmlFiles = files.filter(f => f.name && f.name.endsWith('.html'));
+      const indexHtml = files.find(f => f.type === 'file' && f.name === 'index.html');
+      if (indexHtml && indexHtml.sha) {
+        await migrateUserFolderIndexToGitkeep(username, indexHtml.sha, env);
+      }
+      const htmlFiles = files.filter(f => f.name && f.name.endsWith('.html') && f.name !== 'index.html');
       const contactPageCount = htmlFiles.length;
       contactPageCountByUser[username] = contactPageCount;
       if (contactPageCount === 0) return { username, summary: null, contactPageCount: 0 };
-      // Prefer index.html for summary; if missing, use first .html file so admin works without index
-      const preferIndex = htmlFiles.find(f => f.name === 'index.html');
-      const fileToFetch = preferIndex || htmlFiles[0];
+      const fileToFetch = htmlFiles[0];
       const filePath = `${USER_PAGES_PREFIX}/${username}/${fileToFetch.name}`;
       const fileRes = await fetch(
         `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
@@ -2652,8 +2709,12 @@ async function handleListContactPages(username, request, env) {
   }
   const contents = await response.json();
   const files = Array.isArray(contents) ? contents : [];
+  const indexHtml = files.find(item => item.type === 'file' && item.name === 'index.html');
+  if (indexHtml && indexHtml.sha) {
+    await migrateUserFolderIndexToGitkeep(u, indexHtml.sha, env);
+  }
   const slugs = files
-    .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html'))
+    .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html') && item.name !== 'index.html')
     .map(item => item.name.replace(/\.html$/i, ''));
   const contactPages = [];
   for (const slug of slugs) {
