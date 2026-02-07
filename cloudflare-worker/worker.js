@@ -1378,13 +1378,14 @@ async function handleDeletePage(username, contactpagename, request, env) {
     }
   );
 
-  let htmlFiles = [];
+  // Delete every file in the user folder (including .gitkeep) so the folder is removed from the repo
+  let allFiles = [];
   if (listResponse.ok) {
     const files = await listResponse.json();
-    htmlFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name && f.name.endsWith('.html')) : [];
+    allFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name) : [];
   }
 
-  for (const file of htmlFiles) {
+  for (const file of allFiles) {
     const filePath = `${USER_PAGES_PREFIX}/${username}/${file.name}`;
     const deleteResponse = await fetch(
       `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
@@ -1397,7 +1398,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
           'User-Agent': 'ContactPageEditor/1.0'
         },
         body: JSON.stringify({
-          message: `Delete contact page: ${username}/${file.name}`,
+          message: `Delete user: ${username}/${file.name}`,
           sha: file.sha,
           branch: CONFIG.branch
         })
@@ -1405,7 +1406,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
     );
     if (!deleteResponse.ok) {
       const error = await deleteResponse.json();
-      return jsonResponse({ error: error.message || 'Failed to delete page' }, deleteResponse.status);
+      return jsonResponse({ error: error.message || 'Failed to delete user folder' }, deleteResponse.status);
     }
   }
 

@@ -139,6 +139,17 @@
   .signup-step1-card .form-actions .btn { padding: 0.5rem 1rem; }
   .signup-step1-card #signup-step1-alert { margin-top: 0.5rem; margin-bottom: 0; }
   .signup-step1-card .consent-text { font-size: 0.85rem; line-height: 1.5; }
+  .signup-step2-card .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; font-size: 0.8125rem; line-height: 1.4; }
+  .signup-step2-card .form-hint-row { display: block; margin-top: 0.25rem; margin-bottom: 0.5rem; }
+  .signup-step2-card .form-hint-above { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
+  .signup-step2-card .form-hint-full-width { display: block; width: 100%; }
+  .signup-step2-card.step2-hints-hidden .step2-hint { display: none !important; }
+  .signup-step2-card .step2-form-hints-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+  .signup-step2-card .form-hints-toggle-btn { font-size: 0.8125rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-bg, #fff); color: var(--color-text, #333); cursor: pointer; }
+  .signup-step2-card .step2-url-anatomy { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem; }
+  .signup-step2-card .url-prefix-step2, .signup-step2-card .url-slash-step2 { color: var(--color-text-secondary, #666); font-size: 0.9375rem; }
+  .signup-step2-card .url-username-step2 { font-weight: 700; color: var(--accent-teal, #1ac5b0); }
+  .signup-step2-card .url-slug-input { min-width: 10ch; max-width: 16rem; }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -146,6 +157,8 @@
   }
   </style>
   <script src="/account-details-content.js"></script>
+  <script src="/form-descriptions.js"></script>
+  <script src="/countries-data.js"></script>
 </head>
 <body>
   <div class="app">
@@ -290,7 +303,7 @@
         <div id="signup-steps-section" class="home-right-col hidden" style="max-width: 560px;">
           <div class="signup-progress" id="signup-progress">
             <span class="step-pill" id="progress-step1">1. Create Account</span>
-            <span class="step-pill" id="progress-step2">2. Contact Page</span>
+            <span class="step-pill" id="progress-step2">2. Add Contact Page</span>
             <span class="step-pill" id="progress-step3">3. Finalise</span>
           </div>
           <div id="signup-step1-card" class="card signup-step1-card hidden">
@@ -356,21 +369,79 @@
               <button type="button" class="btn btn-primary btn-lg" onclick="continueToStep2()">Continue</button>
             </div>
           </div>
-          <div id="signup-step2-card" class="card hidden">
-            <div class="card-header"><span class="card-title">Step 2 — Complete Your Contact Page</span></div>
+          <div id="signup-step2-card" class="card signup-step2-card hidden">
+            <div class="card-header"><span class="card-title">Add Contact Page</span></div>
             <div class="card-body">
-              <p class="text-secondary mb-3">Add your contact details (name, email, phone, etc.) to your page. You can do this now or later.</p>
-              <div id="step2-actions">
-                <a id="step2-editor-link" href="#" target="_blank" class="btn btn-primary" onclick="step2OpenEditor()">Save</a>
-                <button type="button" class="btn btn-outline" onclick="step2Skip()">Skip</button>
-              </div>
-              <div id="step2-skip-msg" class="hidden mt-3">
-                <p class="text-secondary">You can come back to this later via My Account.</p>
-                <button type="button" class="btn btn-primary mt-2" onclick="step2ContinueAfterSkip()">Continue to Step 3</button>
+              <p class="text-secondary mb-3">Add your contact details (name, email, phone, etc.) to your page. You can fill the form below or skip and do it later in My Account.</p>
+              <div id="step2-contact-form-wrap" class="step2-contact-form-wrap">
+                <div class="step2-form-hints-row">
+                  <span class="form-hints-toggle-label">Form Hints:</span>
+                  <button type="button" id="step2-form-hints-btn" class="form-hints-toggle-btn" aria-pressed="true" onclick="step2ToggleFormHints()">Hide</button>
+                </div>
+                <form id="step2-contact-form">
+                  <div class="form-group">
+                    <label class="form-label" for="step2-contact-page-name">Page Name <span class="form-required">*</span></label>
+                    <input type="text" id="step2-contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off" required>
+                    <span class="form-hint step2-hint">A name to identify this page on your list of Contact Pages. Must be unique amongst the list.</span>
+                    <span class="form-error" id="step2-error-contact-page-name" role="alert"></span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="step2-contact-page-url-slug">Page URL <span class="form-required">*</span></label>
+                    <div class="step2-url-anatomy">
+                      <span class="url-prefix-step2" id="step2-url-prefix">https://deem0u.github.io/user/</span><span class="url-username-step2" id="step2-url-username">—</span><span class="url-slash-step2">/</span>
+                      <input type="text" id="step2-contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" required>
+                    </div>
+                    <span class="form-hint form-hint-full-width step2-hint">A Slug for this page's URL. 3-28 characters - Letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
+                    <span class="form-error" id="step2-error-contact-page-url-slug" role="alert"></span>
+                  </div>
+                  <div class="form-row form-row-with-hint">
+                    <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="step2-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="step2-error-first-name" role="alert"></span></div>
+                    <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="step2-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="step2-error-surname" role="alert"></span></div>
+                  </div>
+                  <span class="form-hint form-hint-row step2-hint">Usually First and Last Name. Consider whether this needs to exactly match any formal ID.</span>
+                  <div class="form-row form-row-with-hint">
+                    <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="step2-email" class="form-input" required autocomplete="off"><span class="form-error" id="step2-error-email" role="alert"></span></div>
+                    <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="step2-mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-error" id="step2-error-mobile" role="alert"></span></div>
+                  </div>
+                  <span class="form-hint form-hint-row step2-hint">A suitable email and contact number you have access to so that you can be reached.</span>
+                  <div class="form-group">
+                    <label class="form-label">Home Country</label>
+                    <span class="form-hint form-hint-above step2-hint">Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.</span>
+                    <select id="step2-home-country" class="form-input" autocomplete="off">
+                      <option value="">Select country</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Destination Details</label>
+                    <span class="form-hint step2-hint" id="step2-hint-destination-details">The name, street address, contact number and email of the place where you will mostly be staying (e.g. hotel name/address and front-office phone/email).</span>
+                    <div class="form-section">
+                      <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="step2-dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
+                      <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="step2-dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
+                      <div class="form-row">
+                        <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="step2-dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"></div>
+                        <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="step2-dest-email" class="form-input" autocomplete="off"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Additional Information</label>
+                    <textarea id="step2-additional-info" class="form-textarea" rows="4" maxlength="500"></textarea>
+                    <span class="form-hint step2-hint">Optional. e.g. emergency contact, special instructions.</span>
+                  </div>
+                  <div id="step2-form-alert" class="alert"></div>
+                  <div class="form-actions">
+                    <button type="submit" id="step2-save-btn" class="btn btn-primary">Save contact page</button>
+                    <button type="button" class="btn btn-outline" onclick="step2Skip()">Skip</button>
+                  </div>
+                </form>
               </div>
               <div id="step2-after-save" class="hidden mt-3">
-                <p class="text-secondary">When you have finished in My Account, click below to continue.</p>
+                <p class="text-secondary">Contact page saved. Click below to continue.</p>
                 <button type="button" class="btn btn-primary mt-2" onclick="continueToStep3()">Continue</button>
+              </div>
+              <div id="step2-skip-msg" class="hidden mt-3">
+                <p class="text-secondary">You can add a contact page later via My Account.</p>
+                <button type="button" class="btn btn-primary mt-2" onclick="step2ContinueAfterSkip()">Continue to Step 3</button>
               </div>
             </div>
           </div>
@@ -615,25 +686,145 @@
     document.getElementById('signup-otp-success-card').classList.add('hidden');
     document.getElementById('signup-step2-card').classList.remove('hidden');
     updateProgressBar(2);
-    var username = sessionStorage.getItem('signup_username');
-    document.getElementById('step2-editor-link').href = EDITOR_URL;
-    document.getElementById('step2-actions').classList.remove('hidden');
-    document.getElementById('step2-skip-msg').classList.add('hidden');
+    var username = sessionStorage.getItem('signup_username') || '';
+    var card = document.getElementById('signup-step2-card');
+    card.classList.remove('step2-hints-hidden');
+    var usernameEl = document.getElementById('step2-url-username');
+    if (usernameEl) usernameEl.textContent = username || '—';
+    var countrySel = document.getElementById('step2-home-country');
+    if (countrySel && typeof window.COUNTRIES !== 'undefined') {
+      countrySel.innerHTML = '<option value="">Select country</option>' + window.COUNTRIES.map(function(c) { return '<option value="' + (c[0] || '').replace(/"/g, '&quot;') + '">' + (c[0] || '').replace(/</g, '&lt;') + '</option>'; }).join('');
+    }
+    var dd = (window.FORM_DESCRIPTIONS && window.FORM_DESCRIPTIONS['destination-details']) ? window.FORM_DESCRIPTIONS['destination-details'].hint : '';
+    var hintDest = document.getElementById('step2-hint-destination-details');
+    if (hintDest && dd) hintDest.textContent = dd;
+    document.getElementById('step2-contact-form-wrap').classList.remove('hidden');
     document.getElementById('step2-after-save').classList.add('hidden');
+    document.getElementById('step2-skip-msg').classList.add('hidden');
+    var hintsBtn = document.getElementById('step2-form-hints-btn');
+    if (hintsBtn) hintsBtn.textContent = 'Hide';
   }
 
-  function step2OpenEditor() {
-    document.getElementById('step2-actions').classList.add('hidden');
-    document.getElementById('step2-after-save').classList.remove('hidden');
+  function step2ToggleFormHints() {
+    var card = document.getElementById('signup-step2-card');
+    var btn = document.getElementById('step2-form-hints-btn');
+    if (!card || !btn) return;
+    var hidden = card.classList.toggle('step2-hints-hidden');
+    btn.textContent = hidden ? 'Show' : 'Hide';
+    btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
   }
 
   function step2Skip() {
-    document.getElementById('step2-actions').classList.add('hidden');
+    document.getElementById('step2-contact-form-wrap').classList.add('hidden');
     document.getElementById('step2-skip-msg').classList.remove('hidden');
   }
 
   function step2ContinueAfterSkip() {
     continueToStep3();
+  }
+
+  function step2V(id) {
+    var e = document.getElementById(id);
+    return e ? (e.value || e.textContent || '').trim() : '';
+  }
+
+  function step2BuildContent() {
+    var firstName = step2V('step2-first-name');
+    var surname = step2V('step2-surname');
+    var email = step2V('step2-email');
+    var mobile = step2V('step2-mobile');
+    var homeCountry = step2V('step2-home-country');
+    var destName = step2V('step2-dest-name');
+    var destAddress = step2V('step2-dest-address');
+    var destPhone = step2V('step2-dest-phone');
+    var destEmail = step2V('step2-dest-email');
+    var additionalInfo = step2V('step2-additional-info');
+    var escapeHtml = function(s) { return (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
+    var formatMultiline = function(s) { var t = (s ?? '').toString().trim(); if (!t) return ''; return escapeHtml(t).replace(/\r?\n/g, '<br>'); };
+    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px}body{font-family:\'Quicksand\',-apple-system,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px}.last-updated-block{font-size:0.95rem;color:#6b7280;text-align:right;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.label{font-weight:600;color:#374151}.value{color:#1a1a1a}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details span:empty{display:none}';
+    var now = new Date().toISOString();
+    var lastUpdatedBlockHtml = '<div class="last-updated-block"><span>Last updated</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">—</span></div>';
+    var D = window.FORM_DESCRIPTIONS || {};
+    var lbl = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
+    var fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
+    var zh = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
+    var titleEn = 'Contact Information';
+    var lblBoth = function(k) { var e = k === 'section-title' ? titleEn : lbl(k); return e + ' \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
+    var dName = destName.trim(), dAddr = destAddress.trim(), dPhone = destPhone.trim(), dEm = destEmail.trim();
+    var hasDest = !!(dName || dAddr || dPhone || dEm);
+    var destParts = [dName, dAddr, dPhone, dEm].map(function(t) { return '<span>' + (t ? escapeHtml(t) : '') + '</span>'; });
+    var destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
+    var additionalHtml = additionalInfo ? '<span class="value">' + formatMultiline(additionalInfo) + '</span>' : '<span class="value">—</span>';
+    var hasMobile = (mobile || '').trim() !== '';
+    var mobileHtml = hasMobile ? '<a href="tel:' + escapeHtml((mobile || '').replace(/\s/g, '')) + '">' + escapeHtml((mobile || '').trim()) + '</a>' : '—';
+    var homeCountryHtml = (homeCountry || '').trim() ? escapeHtml((homeCountry || '').trim()) : '—';
+    var lockdownOverlay = '<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:sans-serif;"><h1 style="font-size:1.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>';
+    var apiEsc = (API || '').replace(/"/g, '&quot;');
+    var scriptTag = '<script>(function(){var h={"X-Admin-Key":(typeof localStorage!=="undefined"&&localStorage.getItem("admin_key"))||""};fetch("' + apiEsc + '/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + escapeHtml(firstName) + ' ' + escapeHtml(surname) + '</title><style>' + css + '</style></head><body>' + lockdownOverlay + '<div class="container">' + lastUpdatedBlockHtml + '<h1>' + lblBoth('section-title') + '</h1><div class="info"><span class="label">' + lblBoth('first-name') + '</span><span class="value">' + escapeHtml(firstName) + '</span></div><div class="info"><span class="label">' + lblBoth('surname') + '</span><span class="value">' + escapeHtml(surname) + '</span></div><div class="info"><span class="label">' + lblBoth('email') + '</span><span class="value"><a href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a></span></div><div class="info"><span class="label">' + lblBoth('mobile') + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblBoth('home-country') + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblBoth('destination-details') + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblBoth('additional-info') + '</span>' + additionalHtml + '</div></div>' + scriptTag + '</body></html>';
+  }
+
+  function step2ClearErrors() {
+    ['step2-error-contact-page-name','step2-error-contact-page-url-slug','step2-error-first-name','step2-error-surname','step2-error-email','step2-error-mobile'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.textContent = ''; el.removeAttribute('aria-live'); }
+    });
+    document.querySelectorAll('#step2-contact-form-wrap .is-invalid').forEach(function(el) { el.classList.remove('is-invalid'); });
+  }
+
+  async function step2SubmitContactForm(ev) {
+    ev.preventDefault();
+    step2ClearErrors();
+    var nameInp = document.getElementById('step2-contact-page-name');
+    var slugInp = document.getElementById('step2-contact-page-url-slug');
+    var name = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
+    var rawSlug = (slugInp && slugInp.value) ? slugInp.value.trim() : '';
+    var slug = (rawSlug === '' || rawSlug.toLowerCase() === 'index') ? 'index' : rawSlug;
+    if (!name) {
+      var err = document.getElementById('step2-error-contact-page-name');
+      if (err) err.textContent = 'Page Name is required.';
+      if (nameInp) nameInp.classList.add('is-invalid');
+      return;
+    }
+    if (!rawSlug) {
+      var slugErr = document.getElementById('step2-error-contact-page-url-slug');
+      if (slugErr) slugErr.textContent = 'Page URL is required.';
+      if (slugInp) slugInp.classList.add('is-invalid');
+      return;
+    }
+    if (slug.length < 3 || slug.length > 28 || !/^[a-zA-Z0-9_-]+$/.test(slug)) {
+      var slugErr = document.getElementById('step2-error-contact-page-url-slug');
+      if (slugErr) slugErr.textContent = 'Page URL must be 3–28 characters (letters, numbers, hyphens, underscores).';
+      if (slugInp) slugInp.classList.add('is-invalid');
+      return;
+    }
+    var username = sessionStorage.getItem('signup_username');
+    var token = sessionStorage.getItem('signup_token');
+    if (!username || !token) {
+      showAlert('step2-form-alert', 'Session expired. Please sign in at My Account.', 'error');
+      return;
+    }
+    var content = step2BuildContent();
+    var btn = document.getElementById('step2-save-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+    hideAlert('step2-form-alert');
+    try {
+      var res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ contactpagename: slug, contactPageName: name, content: content })
+      });
+      var data = await res.json();
+      if (res.ok) {
+        document.getElementById('step2-contact-form-wrap').classList.add('hidden');
+        document.getElementById('step2-after-save').classList.remove('hidden');
+      } else {
+        showAlert('step2-form-alert', (data && data.error) || 'Failed to save contact page.', 'error');
+      }
+    } catch (e) {
+      showAlert('step2-form-alert', 'Connection error. Please try again.', 'error');
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Save contact page'; }
   }
 
   async function continueToStep3() {
@@ -956,6 +1147,9 @@
       btn.textContent = 'Create My Account';
     }
   });
+
+  var step2Form = document.getElementById('step2-contact-form');
+  if (step2Form) step2Form.addEventListener('submit', step2SubmitContactForm);
 
   if (window.location.hash === '#signup') showSignupForm();
   </script>
