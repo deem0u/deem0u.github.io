@@ -1052,7 +1052,11 @@ body {
   width: 32ch;
   min-width: 32ch;
   max-width: 32ch;
-  border: 2px solid #6b21a8 !important;
+}
+
+/* Purple border on the dropdown field (trigger) only, not the open menu */
+.searchable-select-contact-pages-trigger .searchable-select-trigger {
+  border: 2px solid #6b21a8;
 }
 
 /* Two-line trigger: name on first row, slug on second */

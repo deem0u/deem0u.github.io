@@ -315,7 +315,7 @@
                 </div>
                 <div id="site-push-message-error" class="alert alert-error hidden mt-2"></div>
                 <div class="modal-footer" style="margin-top:1rem; padding:0;">
-                  <button type="button" class="btn btn-primary" id="site-push-message-btn" disabled onclick="handleSitePushMessagePrimaryClick()">Push</button>
+                  <button type="button" class="btn btn-primary" id="site-push-message-btn" disabled onclick="handleSitePushMessagePrimaryClick(event)">Push</button>
                   <button type="button" class="btn btn-secondary" id="site-push-message-cancel-btn" onclick="handleSitePushMessageCancelClick()">Cancel</button>
                 </div>
               </div>
@@ -879,7 +879,7 @@
         <div id="modal-push-message-error" class="alert alert-error hidden"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="push-message-save-btn" disabled onclick="handlePushMessagePrimaryClick()">Push</button>
+        <button type="button" class="btn btn-primary" id="push-message-save-btn" disabled onclick="handlePushMessagePrimaryClick(event)">Push</button>
         <button type="button" class="btn btn-secondary" id="push-message-cancel-btn" onclick="handlePushMessageCancelClick()">Cancel</button>
       </div>
     </div>
@@ -3611,7 +3611,8 @@ function updatePushMessageButtonState() {
   }
 }
 
-function handlePushMessagePrimaryClick() {
+function handlePushMessagePrimaryClick(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
   if (pushMessageConfirmStep) {
     savePushMessage();
     return;
@@ -3816,7 +3817,8 @@ function handleSitePushMessageCancelClick() {
   }
 }
 
-function handleSitePushMessagePrimaryClick() {
+function handleSitePushMessagePrimaryClick(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
   if (sitePushConfirmStep) {
     executeSitePushMessage();
     return;
@@ -3980,6 +3982,21 @@ function switchTab(n) { document.querySelectorAll('.tab').forEach(t => t.classLi
 function showModal(t, m, bc, bt, cb, useHtml) { document.getElementById('modal-title').textContent = t; var msgEl = document.getElementById('modal-message'); if (useHtml) msgEl.innerHTML = m; else msgEl.textContent = m; const b = document.getElementById('modal-confirm'); b.className = 'btn ' + bc; b.textContent = bt; modalCallback = cb; document.getElementById('modal').classList.add('show'); }
 function closeModal() { document.getElementById('modal').classList.remove('show'); modalCallback = null; }
 document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
+
+(function() {
+  var pushModal = document.getElementById('modal-push-message');
+  var sitePushSection = document.getElementById('site-push-message-section');
+  if (pushModal) {
+    pushModal.addEventListener('click', function(e) {
+      if (e.target && e.target.id === 'push-message-save-btn') { handlePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
+    }, true);
+  }
+  if (sitePushSection) {
+    sitePushSection.addEventListener('click', function(e) {
+      if (e.target && e.target.id === 'site-push-message-btn') { handleSitePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
+    }, true);
+  }
+})();
 
 var qrModalData = { url: '', vcard: '', text: '' };
 
