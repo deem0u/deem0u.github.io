@@ -2490,7 +2490,8 @@ async function toggleContactPagesSelect(username) {
       const r = await fetch(`${API}/api/contact-pages/${encodeURIComponent(username)}`, { headers: { 'X-Admin-Key': adminKey } });
       const d = await r.json();
       const raw = (d.contactPages && d.contactPages.length) ? d.contactPages : [{ slug: 'index', name: 'Main (index)' }];
-      optionsEl.innerHTML = raw.map(item => {
+      const filtered = raw.filter(function(item) { var s = typeof item === 'string' ? item : (item.slug || 'index'); return s !== 'index'; });
+      optionsEl.innerHTML = filtered.map(item => {
         const slug = typeof item === 'string' ? item : (item.slug || 'index');
         const name = typeof item === 'string' ? (item === 'index' ? 'Main' : item) : (item.name || (slug === 'index' ? 'Main' : slug));
         const displayLabel = name + ' (' + slug + ')';
@@ -2501,8 +2502,8 @@ async function toggleContactPagesSelect(username) {
       });
       var currentSelection = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
       var hasIndex = raw.some(function(item) { var s = typeof item === 'string' ? item : (item.slug || 'index'); return s === 'index'; });
-      if (currentSelection === 'index' && !hasIndex && raw.length > 0) {
-        var first = raw[0];
+      if (currentSelection === 'index' && !hasIndex && filtered.length > 0) {
+        var first = filtered[0];
         var firstSlug = typeof first === 'string' ? first : (first.slug || 'index');
         var firstName = typeof first === 'string' ? (first === 'index' ? 'Main' : first) : (first.name || (firstSlug === 'index' ? 'Main' : firstSlug));
         selectContactPage(username, firstSlug, firstName);
@@ -2515,8 +2516,6 @@ async function toggleContactPagesSelect(username) {
     const rect = trigger.getBoundingClientRect();
     dropdown.style.top = (rect.bottom + 4) + 'px';
     dropdown.style.left = rect.left + 'px';
-    dropdown.style.minWidth = rect.width + 'px';
-    dropdown.style.maxWidth = (rect.width + 40) + 'px';
     dropdown.classList.add('show');
   }
   const searchEl = document.getElementById('contact-pages-search-' + username);

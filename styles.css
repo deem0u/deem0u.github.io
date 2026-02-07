@@ -1043,9 +1043,16 @@ body {
 }
 
 /* Admin card: Contact Page trigger ~2x width */
+/* Fixed width across all user cards; enough for 32 characters */
 .searchable-select-contact-pages-trigger {
-  min-width: 120px;
-  max-width: 180px;
+  width: 32ch;
+  min-width: 32ch;
+  max-width: 32ch;
+}
+.searchable-select-dropdown-contact-pages {
+  width: 32ch;
+  min-width: 32ch;
+  max-width: 32ch;
 }
 
 /* Two-line trigger: name on first row, slug on second */
@@ -1055,14 +1062,22 @@ body {
   align-items: flex-start;
   gap: 0.1rem;
   text-align: left;
+  min-width: 0;
+  overflow: hidden;
+}
+.contact-page-trigger-name,
+.contact-page-trigger-slug {
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 .contact-page-trigger-name {
   font-size: inherit;
-  line-height: 1.2;
 }
 .contact-page-trigger-slug {
   font-size: 0.75rem;
-  line-height: 1.2;
   color: var(--color-text-muted, #666);
 }
 
