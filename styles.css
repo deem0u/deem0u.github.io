@@ -1042,8 +1042,7 @@ body {
   min-width: 100px;
 }
 
-/* Admin card: Contact Page trigger ~2x width */
-/* Fixed width across all user cards; enough for 32 characters */
+/* Admin card: Contact Page trigger — fixed width, 32 characters per row (row 1 = name, row 2 = URL slug) */
 .searchable-select-contact-pages-trigger {
   width: 32ch;
   min-width: 32ch;
@@ -1053,6 +1052,7 @@ body {
   width: 32ch;
   min-width: 32ch;
   max-width: 32ch;
+  border: 2px solid #6b21a8 !important;
 }
 
 /* Two-line trigger: name on first row, slug on second */

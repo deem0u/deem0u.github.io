@@ -4863,8 +4863,9 @@ async function showQrModal(folder) {
         }
       }
     }
-    var pagePath = (contactPage === 'index' || !contactPage) ? folder : (folder + '/' + contactPage);
-    var r = await fetch(API + '/api/page/' + encodeURIComponent(pagePath), { headers: { 'X-Admin-Key': adminKey } });
+    var pageUrl = API + '/api/page/' + encodeURIComponent(folder);
+    if (contactPage && contactPage !== 'index') pageUrl += '/' + encodeURIComponent(contactPage);
+    var r = await fetch(pageUrl, { headers: { 'X-Admin-Key': adminKey } });
     if (!r.ok) {
       var errBody = await r.text();
       var errMsg = 'Could not load page';
