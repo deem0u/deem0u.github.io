@@ -917,21 +917,21 @@
   </div>
 
   <div id="modal-kv-purge" class="modal-overlay">
-    <div class="modal" style="max-width: 560px;">
+    <div class="modal modal-kv-purge" style="max-width: 560px;">
       <div class="modal-header"><h3 class="modal-title" id="modal-kv-purge-title">KV Purge</h3></div>
       <div class="modal-body">
         <div id="kv-purge-loading" class="modal-qr-loading"><span class="spinner"></span> Loading keys…</div>
-        <div id="kv-purge-content" class="hidden">
-          <p class="form-hint mb-3">Keys for this user. Orphaned = user folder no longer in GitHub. Select keys to purge, then dry run, then confirm and delete.</p>
-          <div class="kv-report-summary mb-3" style="padding:0.75rem; background:var(--color-bg-muted); border-radius:var(--radius-md); font-size:0.875rem;"></div>
-          <div id="kv-purge-keys-list" class="mb-3" style="max-height:14rem; overflow:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:0.5rem;"></div>
-          <div id="kv-purge-actions" class="hidden">
-            <div class="form-group mb-2">
+        <div id="kv-purge-content" class="hidden kv-purge-content">
+          <p class="kv-purge-intro">Keys for this user. Orphaned = user folder no longer in GitHub. Select keys to purge, then dry run, then confirm and delete.</p>
+          <div class="kv-report-summary kv-purge-summary"></div>
+          <div id="kv-purge-keys-list" class="kv-purge-keys-list"></div>
+          <div id="kv-purge-actions" class="hidden kv-purge-actions">
+            <div class="kv-purge-dry-run-row">
               <button type="button" class="btn btn-secondary btn-sm" id="kv-purge-dry-run-btn">Dry run (preview delete)</button>
-              <span class="form-hint" style="margin-left:0.5rem;" id="kv-purge-dry-run-result"></span>
+              <span class="form-hint kv-purge-dry-run-result" id="kv-purge-dry-run-result"></span>
             </div>
-            <div id="kv-purge-confirm-block" class="hidden" style="padding:0.75rem; background:var(--color-bg-muted); border-radius:var(--radius-md);">
-              <label class="toggle-label" style="display:inline-flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.5rem;">
+            <div id="kv-purge-confirm-block" class="hidden kv-purge-confirm-block">
+              <label class="toggle-label kv-purge-confirm-label">
                 <input type="checkbox" id="kv-purge-confirm-checkbox">
                 <span>I have reviewed and want to permanently delete the selected keys (4-eye check)</span>
               </label>
@@ -940,7 +940,7 @@
           </div>
         </div>
         <div id="kv-purge-empty" class="hidden form-hint">No KV keys found for this user.</div>
-        <div id="kv-purge-error" class="alert alert-error hidden mt-2"></div>
+        <div id="kv-purge-error" class="alert alert-error hidden"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeKvPurgeModal()">Close</button>
@@ -2742,12 +2742,6 @@ async function generateKey(f) {
   catch { showAlert('alert-manage', 'Error', 'error'); }
 }
 
-function confirmRegenerate(f) { showModal('Reset Access?', 'This will allow the user to sign in again if they were revoked.', 'btn-pink', 'Reset', () => regenerateKey(f)); }
-async function regenerateKey(f) { try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'PUT', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { fetchAccountEmailsAndRefresh(); showAlert('alert-manage', 'Access reset', 'success'); } } catch {} }
-
-function confirmRemove(f) { showModal('Remove access?', 'They will no longer be able to edit.', 'btn-pink', 'Revoke', () => removeKey(f)); }
-async function removeKey(f) { try { await fetch(`${API}/api/keys/${f}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } }); fetchAccountEmailsAndRefresh(); showAlert('alert-manage', 'Access revoked', 'success'); } catch {} }
-
 var deleteUserModalFolder = null;
 
 function confirmDeleteUser(f) {
@@ -2821,7 +2815,6 @@ async function showAccountReportModal(folder) {
       'Password set: ' + (d.passwordSet ? 'Yes' : 'No'),
       'OTP set: ' + (d.otpSet ? 'Yes' : 'No'),
       'Email verified: ' + (d.emailVerified ? 'Yes' : 'No') + (d.emailVerifiedAdmin ? ' (admin)' : ''),
-      'Access revoked: ' + (d.accessRevoked ? 'Yes' : 'No'),
       'DOB set: ' + (d.dobSet ? 'Yes' : 'No'),
       'Recovery SQs: ' + (d.recoverySqCount || 0) + '/3',
       '',
@@ -4280,7 +4273,6 @@ async function debugUserApi(folder) {
     var otpSet = d.otpSet;
     var emailVer = d.emailVerified;
     var emailVerAdmin = d.emailVerifiedAdmin;
-    var revoked = d.accessRevoked;
     var maxPages = d.maxContactPages != null ? String(d.maxContactPages) : '(unset)';
     var divert = d.divertEmail;
     var detailsSent = d.accountDetailsSent;
@@ -4296,7 +4288,6 @@ async function debugUserApi(folder) {
       debugLine('Password set', pwdSet ? 'Yes' : 'No', !pwdSet) +
       debugLine('OTP set', otpSet ? 'Yes' : 'No', false) +
       debugLine('Email verified', (emailVer ? 'Yes' : 'No') + (emailVerAdmin ? ' (admin)' : ''), !emailVer && !emailVerAdmin) +
-      debugLine('Access revoked', revoked ? 'Yes' : 'No', revoked) +
       debugLine('Max contact pages', maxPages, false) +
       debugLine('Divert Emails', divert ? 'Yes' : 'No', false) +
       debugLine('Account details sent', detailsSent ? 'Yes' : 'No', false) +

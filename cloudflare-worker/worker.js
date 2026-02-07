@@ -286,14 +286,6 @@ export default {
       if (request.method === 'GET' && path === '/api/keys') {
         return await handleGetKeys(request, env);
       }
-      if (request.method === 'PUT' && path.startsWith('/api/keys/')) {
-        const username = normalizeUsername(path.replace('/api/keys/', '').replace(/\/$/, ''));
-        return await handleResetAccess(username, request, env);
-      }
-      if (request.method === 'DELETE' && path.startsWith('/api/keys/')) {
-        const username = normalizeUsername(path.replace('/api/keys/', '').replace(/\/$/, ''));
-        return await handleRevokeAccess(username, request, env);
-      }
       if (request.method === 'GET' && path.startsWith('/api/profile/')) {
         let raw = path.replace('/api/profile/', '').replace(/\/$/, '');
         try { if (raw) raw = decodeURIComponent(raw); } catch (_) {}
@@ -1086,10 +1078,6 @@ async function validateAuth(username, request, env) {
       if (payload.otpLogin) {
         return { authorized: false, isAdmin: false };
       }
-      const normUser = pathUser.toLowerCase();
-      if (env.EDIT_KEYS_KV && (await env.EDIT_KEYS_KV.get(`access_revoked:${normUser}`)) === '1') {
-        return { authorized: false, isAdmin: false };
-      }
       return { authorized: true, isAdmin: false };
     }
   }
@@ -1459,7 +1447,6 @@ async function handleDeletePage(username, contactpagename, request, env) {
   if (env.EDIT_KEYS_KV) {
     const accountEmail = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
     const u = username.toLowerCase();
-    await env.EDIT_KEYS_KV.delete(`access_revoked:${username}`);
     await env.EDIT_KEYS_KV.delete(`account_email:${username}`);
     await env.EDIT_KEYS_KV.delete(`user_password_hash:${username}`);
     await env.EDIT_KEYS_KV.delete(`user_first_name:${username}`);
@@ -1568,7 +1555,7 @@ async function handleAdminRenameUser(request, env) {
   if (env.EDIT_KEYS_KV) {
     const kvKeys = [
       'account_email', 'user_first_name', 'user_last_name', 'user_dob', 'user_recovery', 'user_password_hash',
-      'email_verified', 'access_revoked', 'account_details_sent'
+      'email_verified', 'account_details_sent'
     ];
     for (const prefix of kvKeys) {
       const val = await env.EDIT_KEYS_KV.get(prefix + ':' + oldUsername);
@@ -1737,7 +1724,6 @@ async function collectKvOrphans(env) {
       'email_verified:',
       'email_verified_admin:',
       'account_details_sent:',
-      'access_revoked:',
       'divert_email:',
       'max_contact_pages:',
       'otp_email_change:',
@@ -1867,7 +1853,7 @@ async function collectKvUserKeys(env, username) {
   };
   const prefixes = [
     'account_email:', 'user_password_hash:', 'user_first_name:', 'user_last_name:', 'user_dob:', 'user_recovery:',
-    'user_otp:', 'email_verified:', 'email_verified_admin:', 'account_details_sent:', 'access_revoked:',
+    'user_otp:', 'email_verified:', 'email_verified_admin:', 'account_details_sent:',
     'divert_email:', 'max_contact_pages:', 'otp_email_change:', 'pending_email_change:'
   ];
   for (const prefix of prefixes) {
@@ -2669,7 +2655,6 @@ async function handleDebugUser(username, request, env) {
   const otpSet = !!(await getKvUser(env, 'user_otp:', uLower, u));
   const emailVerified = (await getKvUser(env, 'email_verified:', uLower, u)) === '1';
   const emailVerifiedAdmin = (await getKvUser(env, 'email_verified_admin:', uLower, u)) === '1';
-  const accessRevoked = (await getKvUser(env, 'access_revoked:', uLower, u)) === '1';
   const maxContactPages = await getKvUser(env, 'max_contact_pages:', uLower, u);
   const divertEmail = (await getKvUser(env, 'divert_email:', uLower, u)) === '1';
   const accountDetailsSent = (await getKvUser(env, 'account_details_sent:', uLower, u)) === '1';
@@ -2695,7 +2680,6 @@ async function handleDebugUser(username, request, env) {
       otpSet,
       emailVerified,
       emailVerifiedAdmin,
-      accessRevoked,
       maxContactPages: maxContactPages != null ? maxContactPages : null,
       divertEmail,
       accountDetailsSent,
@@ -2896,21 +2880,6 @@ async function handleRecoveryVerify(request, env) {
   }
   return jsonResponse({ success: true, username });
 }
-
-async function handleResetAccess(username, request, env) {
-  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
-  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
-  await env.EDIT_KEYS_KV.delete(`access_revoked:${username}`);
-  return jsonResponse({ success: true, username });
-}
-
-async function handleRevokeAccess(username, request, env) {
-  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
-  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
-  await env.EDIT_KEYS_KV.put(`access_revoked:${username}`, '1');
-  return jsonResponse({ success: true, username });
-}
-
 
 async function handleGetProfile(username, request, env) {
   const auth = await validateAuth(username, request, env);
@@ -3238,7 +3207,7 @@ async function handleProfileRename(request, env) {
   }
   const kvKeys = [
     'account_email', 'user_first_name', 'user_last_name', 'user_dob', 'user_recovery', 'user_password_hash',
-    'email_verified', 'email_verified_admin', 'access_revoked', 'account_details_sent'
+    'email_verified', 'email_verified_admin', 'account_details_sent'
   ];
   for (const prefix of kvKeys) {
     const val = await env.EDIT_KEYS_KV.get(prefix + ':' + oldUsername);

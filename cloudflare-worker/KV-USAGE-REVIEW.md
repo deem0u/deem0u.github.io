@@ -6,7 +6,7 @@ This document summarizes KV usage in the worker and optimizations applied or rec
 
 1. **Try lowercase key first (`getKvUser`)**  
    User-scoped keys are written in lowercase (signup and admin flows). The worker now uses a helper `getKvUser(env, prefix, uLower, u)` that does one get with the lowercase key and only does a second get with the original casing if the first returns null. This cuts roughly half the reads in:
-   - **handleDebugUser** – all single-user keys (account_email, user_first_name, user_last_name, user_password_hash, user_otp, email_verified, email_verified_admin, access_revoked, max_contact_pages, divert_email, account_details_sent, user_dob, user_recovery).
+   - **handleDebugUser** – all single-user keys (account_email, user_first_name, user_last_name, user_password_hash, user_otp, email_verified, email_verified_admin, max_contact_pages, divert_email, account_details_sent, user_dob, user_recovery).
    - **handleGetAccountSetupStatuses** – account_email, user_dob, user_recovery per user.
    - **handleGetAccountProfiles** – user_first_name, user_last_name, account_email per user.
    - **handleGetAccountEmails** – email_verified_admin and email_verified in the emailVerification loop.
@@ -25,7 +25,7 @@ This document summarizes KV usage in the worker and optimizations applied or rec
   - **collectKvOrphans / handleGetKvOrphans** – many listAllKvKeys (one per prefix) + gets for account_email_to_folder; run only when admin opens KV tools.
 
 - **Per-user / per-request (moderate)**  
-  - **validateAuth** – 1 get (admin:key) or 1 get (access_revoked:username).  
+  - **validateAuth** – 1 get (admin:key) or JWT verification (no KV for user auth).  
   - **handleListContactPages** – 1 get (max_contact_pages) + 1 get per contact page (contact_page_name).  
   - **handleGetProfile** – 5 gets per request.  
   - **handleGetSecrets** – several gets per request.

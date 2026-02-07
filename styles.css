@@ -410,12 +410,13 @@ body {
   margin-bottom: 0;
 }
 
-/* Centered layout for auth screens */
+/* Centered layout for auth screens (login, recovery, reset, setup) */
 .app-centered {
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 80px);
   padding: var(--space-6);
 }
 
@@ -762,6 +763,63 @@ body {
 .push-message-editor:empty::before { content: attr(data-placeholder); color: var(--color-text-secondary); }
 .modal-push-message .modal-body { padding: var(--space-4) var(--space-5); }
 .modal-push-message .modal-footer .btn + .btn { margin-left: 0.5rem; }
+
+/* KV Purge modal: consistent spacing between elements */
+.modal-kv-purge .kv-purge-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.modal-kv-purge .kv-purge-intro {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+.modal-kv-purge .kv-purge-summary {
+  padding: var(--space-3);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+.modal-kv-purge .kv-purge-keys-list {
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2);
+}
+.modal-kv-purge .kv-purge-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.modal-kv-purge .kv-purge-dry-run-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.modal-kv-purge .kv-purge-dry-run-result {
+  margin: 0;
+}
+.modal-kv-purge .kv-purge-confirm-block {
+  padding: var(--space-3);
+  background: var(--color-bg-muted);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.modal-kv-purge .kv-purge-confirm-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  margin: 0;
+}
+.modal-kv-purge #kv-purge-error {
+  margin-top: var(--space-3);
+}
 
 /* Debug API modal: formatted output, issues in red */
 .debug-output { font-family: var(--font-mono, monospace); font-size: var(--text-sm); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
