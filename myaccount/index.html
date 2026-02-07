@@ -179,9 +179,9 @@
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
   .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.55rem; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; }
-  /* Hover: ring only (no padding to avoid vertical shift); margin for gap to adjacent "/"; label centered, more gap below box */
-  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); margin-right: 0.4rem; }
-  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); margin-left: 0.4rem; }
+  /* Hover: ring, horizontal padding, margin for gap to adjacent "/" on both sides; label centered below */
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding-left: 0.25rem; padding-right: 0.25rem; margin-left: 0.4rem; margin-right: 0.4rem; }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding-left: 0.25rem; padding-right: 0.25rem; margin-left: 0.4rem; margin-right: 0.4rem; }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
