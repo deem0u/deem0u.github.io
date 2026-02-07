@@ -2534,7 +2534,7 @@ async function toggleContactPagesSelect(username) {
         const slug = typeof item === 'string' ? item : (item.slug || 'index');
         const name = typeof item === 'string' ? (item === 'index' ? 'Main' : item) : (item.name || (slug === 'index' ? 'Main' : slug));
         const displayLabel = name + ' (' + slug + ')';
-        return `<div class="searchable-select-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(displayLabel).replace(/"/g, '&quot;')}" data-name="${String(name).replace(/"/g, '&quot;')}">${escapeHtml(displayLabel)}</div>`;
+        return `<div class="searchable-select-option contact-page-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(displayLabel).replace(/"/g, '&quot;')}" data-name="${String(name).replace(/"/g, '&quot;')}"><span class="contact-page-option-name">${escapeHtml(name)}</span><span class="contact-page-option-slug">${escapeHtml(slug)}</span></div>`;
       }).join('');
       optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
         opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.name || opt.dataset.value));
@@ -2680,6 +2680,7 @@ function renderList(t) {
                     <span id="contact-pages-text-${f}" class="contact-page-trigger-name">Main</span>
                     <span id="contact-pages-slug-${f}" class="contact-page-trigger-slug">index</span>
                   </span>
+                  <span class="contact-page-trigger-chevron" aria-hidden="true">▼</span>
                 </button>
                 <div class="searchable-select-dropdown searchable-select-dropdown-contact-pages" id="contact-pages-dropdown-${f}">
                   <div class="searchable-select-search">
