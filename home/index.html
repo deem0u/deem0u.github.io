@@ -738,7 +738,8 @@
     if (usernameEl) usernameEl.textContent = username || '—';
     var countrySel = document.getElementById('step2-home-country');
     if (countrySel && typeof window.COUNTRIES !== 'undefined') {
-      countrySel.innerHTML = '<option value="">Select country</option>' + window.COUNTRIES.map(function(c) { return '<option value="' + (c[0] || '').replace(/"/g, '&quot;') + '">' + (c[0] || '').replace(/</g, '&lt;') + '</option>'; }).join('');
+      countrySel.innerHTML = '<option value="" selected>Select country</option>' + window.COUNTRIES.map(function(c) { return '<option value="' + (c[0] || '').replace(/"/g, '&quot;') + '">' + (c[0] || '').replace(/</g, '&lt;') + '</option>'; }).join('');
+      countrySel.selectedIndex = 0;
     }
     var dd = (window.FORM_DESCRIPTIONS && window.FORM_DESCRIPTIONS['destination-details']) ? window.FORM_DESCRIPTIONS['destination-details'].hint : '';
     var hintDest = document.getElementById('step2-hint-destination-details');
@@ -841,7 +842,13 @@
     var slugInp = document.getElementById('step2-contact-page-url-slug');
     var name = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
     var rawSlug = (slugInp && slugInp.value) ? slugInp.value.trim() : '';
-    var slug = (rawSlug === '' || rawSlug.toLowerCase() === 'index') ? 'index' : rawSlug;
+    if (rawSlug && rawSlug.toLowerCase() === 'index') {
+      var slugErr = document.getElementById('step2-error-contact-page-url-slug');
+      if (slugErr) slugErr.textContent = 'Please choose a different Page URL (e.g. mycontact or main). The URL "index" is not used for new pages.';
+      if (slugInp) slugInp.classList.add('is-invalid');
+      return;
+    }
+    var slug = (rawSlug === '') ? 'index' : rawSlug;
     if (!name) {
       var err = document.getElementById('step2-error-contact-page-name');
       if (err) err.textContent = 'Page Name is required.';

@@ -2239,14 +2239,17 @@ async function fetchEditTabContactPages(username, preferredSlug) {
     const r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'X-Admin-Key': adminKey } });
     const d = await r.json();
     const list = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : [];
-    if (list.length === 0) list.push({ slug: 'index', name: 'Main (index)' });
     editTabContactPagesList = list;
-    optionsEl.innerHTML = list.map(function(p) {
-      const slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
-      const label = (typeof p === 'object' && p.name != null) ? p.name : (slug === 'index' ? 'Main (index)' : slug);
-      return '<div class="searchable-select-option" data-value="' + escapeHtml(slug) + '" data-label="' + escapeHtml(label) + '" onclick="selectEditContactPage(this.dataset.value||\'index\', this.dataset.label||\'\')"><div class="searchable-select-option-title">' + escapeHtml(label) + '</div><div class="searchable-select-option-meta">' + escapeHtml(slug === 'index' ? username + '/' : username + '/' + slug) + '</div></div>';
-    }).join('');
-    if (editTabPreferredSlug) {
+    if (list.length === 0) {
+      optionsEl.innerHTML = '<div class="searchable-select-empty">No contact pages. Use Create new page below.</div>';
+    } else {
+      optionsEl.innerHTML = list.map(function(p) {
+        const slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
+        const label = (typeof p === 'object' && p.name != null) ? p.name : (slug === 'index' ? 'Main (index)' : slug);
+        return '<div class="searchable-select-option" data-value="' + escapeHtml(slug) + '" data-label="' + escapeHtml(label) + '" onclick="selectEditContactPage(this.dataset.value||\'index\', this.dataset.label||\'\')"><div class="searchable-select-option-title">' + escapeHtml(label) + '</div><div class="searchable-select-option-meta">' + escapeHtml(slug === 'index' ? username + '/' : username + '/' + slug) + '</div></div>';
+      }).join('');
+    }
+    if (editTabPreferredSlug && list.length > 0) {
       var found = list.find(function(p) {
         var s = (typeof p === 'object' && p.slug != null) ? p.slug : p;
         return s === editTabPreferredSlug;
