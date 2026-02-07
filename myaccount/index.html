@@ -2102,6 +2102,11 @@ async function continueAfterAuth() {
   }
 }
 
+function resetSignInButton() {
+  var btn = document.getElementById('auth-signin-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+}
+
 async function authenticate() {
   var accountEmail = (document.getElementById('auth-account-email').value || '').trim().toLowerCase();
   var usernameInput = (document.getElementById('auth-username').value || '').trim();
@@ -2113,6 +2118,8 @@ async function authenticate() {
   } else {
     if (!accountEmail || !accountEmail.includes('@')) { showAlert('auth-alert', 'Please enter your account email.', 'error'); return; }
   }
+  var btn = document.getElementById('auth-signin-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
   showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
   try {
     var body = { password: password };
@@ -2120,10 +2127,18 @@ async function authenticate() {
     var authRes = await fetch(API + '/api/auth/user', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     var authData;
     try { authData = await authRes.json(); } catch (_) { authData = {}; }
-    if (!authRes.ok || !authData.success) { showAlert('auth-alert', (authData && authData.error) || ('Sign-in failed (' + authRes.status + '). Try again or use recovery.'), 'error'); return; }
+    if (!authRes.ok || !authData.success) {
+      var errMsg = (authData && authData.error) ? authData.error : ('Sign-in failed (' + authRes.status + '). Try again or use recovery.');
+      showAlert('auth-alert', errMsg, 'error');
+      resetSignInButton();
+      var alertEl = document.getElementById('auth-alert');
+      if (alertEl) alertEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return;
+    }
     username = authData.username;
     token = authData.token;
     if (authData.mustSetPassword) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
       document.getElementById('auth-email-mode').classList.add('hidden');
       document.getElementById('auth-signin-btn').classList.add('hidden');
       document.getElementById('auth-set-password-after-otp').classList.remove('hidden');
@@ -2136,6 +2151,9 @@ async function authenticate() {
   } catch (e) {
     console.error('Sign-in request failed:', e);
     showAlert('auth-alert', 'Cannot reach sign-in service. Check your connection, then try again. (Open Console (F12) for details.)', 'error');
+    resetSignInButton();
+    var alertEl = document.getElementById('auth-alert');
+    if (alertEl) alertEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }
 
