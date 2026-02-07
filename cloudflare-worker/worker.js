@@ -947,20 +947,6 @@ async function handleSignup(request, env) {
   if (checkRes.ok) {
     return jsonResponse({ error: 'A page with this username already exists' }, 409);
   }
-  // If a user folder already exists on GitHub (e.g. leftover from a deleted account), reject
-  const checkRes = await fetch(
-    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
-    {
-      headers: {
-        'Authorization': `token ${env.GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'User-Agent': 'ContactPageEditor/1.0'
-      }
-    }
-  );
-  if (checkRes.ok) {
-    return jsonResponse({ error: 'A page with this username already exists' }, 409);
-  }
 
   // Create only the user folder in the repo (no .html file = no contact page, no card in My Account).
   // Placeholder is index.gitkeep so the directory exists; only *.html files are listed as contact pages (public URL: user/username/urlslug).
