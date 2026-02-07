@@ -2455,39 +2455,50 @@ async function handlePageSummaries(request, env) {
     'User-Agent': 'ContactPageEditor/1.0'
   };
 
+  const contactPageCountByUser = {};
+
   const fetchSummary = async (username) => {
     try {
       const dirRes = await fetch(
         `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
         { headers: authHeaders }
       );
-      if (!dirRes.ok) return null;
+      if (!dirRes.ok) {
+        contactPageCountByUser[username] = 0;
+        return { username, summary: null, contactPageCount: 0 };
+      }
       const dirContents = await dirRes.json();
       const files = Array.isArray(dirContents) ? dirContents : [];
-      if (!files.some(f => f.name && f.name.endsWith('.html'))) return null;
+      const htmlFiles = files.filter(f => f.name && f.name.endsWith('.html'));
+      const contactPageCount = htmlFiles.length;
+      contactPageCountByUser[username] = contactPageCount;
+      if (contactPageCount === 0) return { username, summary: null, contactPageCount: 0 };
       const filePath = pagePath(username, 'index');
       const fileRes = await fetch(
         `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
         { headers: authHeaders }
       );
-      if (!fileRes.ok) return { username, summary: null };
+      if (!fileRes.ok) return { username, summary: null, contactPageCount };
       const fileData = await fileRes.json();
       const html = decodeBase64(fileData.content);
       const summary = extractSummaryFromHtml(html);
-      return { username, summary };
+      return { username, summary, contactPageCount };
     } catch (e) {
-      return { username, summary: null };
+      contactPageCountByUser[username] = 0;
+      return { username, summary: null, contactPageCount: 0 };
     }
   };
 
   const results = await Promise.all(usernames.map(fetchSummary));
   for (const r of results) {
     if (!r) continue;
-    pages.push(r.username);
-    summaries[r.username] = r.summary || { givenName: '', familyName: '', contactEmail: '', lastUpdated: null, updatedBy: null };
+    if ((r.contactPageCount || 0) > 0) {
+      pages.push(r.username);
+      summaries[r.username] = r.summary || { givenName: '', familyName: '', contactEmail: '', lastUpdated: null, updatedBy: null };
+    }
   }
 
-  return jsonResponse({ pages, summaries });
+  return jsonResponse({ pages, summaries, contactPageCountByUser });
 }
 
 /** GET /api/contact-pages/:username - List contact page names for a user (admin or same user via Bearer). Username normalized to lowercase. */

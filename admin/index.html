@@ -954,6 +954,7 @@ const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
 const PAGES_URL = 'https://deem0u.github.io/user/';
 
 let adminKey = null, pages = [], editKeys = {}, userInfo = {}, currentFolder = null, currentContactPageName = 'index', currentSha = null, modalCallback = null;
+var contactPageCountByUser = {};
 var siteSettings = { divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {}, maxContactPagesByUser: {} };
 var loginMode = 'key'; // 'key' | 'email'
 var adminEmail = null, adminPasswordSet = false;
@@ -1952,6 +1953,7 @@ async function loadDashboard() {
 
   if (useSummaries) {
     pages = summariesData.pages;
+    contactPageCountByUser = summariesData.contactPageCountByUser || {};
     for (var si = 0; si < pages.length; si++) {
       var folder = pages[si];
       var s = (summariesData.summaries && summariesData.summaries[folder]) || {};
@@ -2084,14 +2086,6 @@ function isIncomplete(f) {
   return profileIncomplete || secretsIncomplete;
 }
 
-/** Empty account = no contact page content set (given name, family name, contact email all empty on their page). */
-function isEmptyAccount(f) {
-  const u = userInfo[f] || {};
-  const given = String(u.pageGivenName || '').trim();
-  const family = String(u.pageFamilyName || '').trim();
-  const em = String(u.pageEmail || '').trim();
-  return !given && !family && !em;
-}
 
 
 function updateStatsChart(total, incomplete) {
@@ -2126,7 +2120,7 @@ function updateStatsChart(total, incomplete) {
 
 function populateUI() {
   const incomplete = pages.filter(isIncomplete).length;
-  const emptyAccounts = pages.filter(isEmptyAccount).length;
+  const emptyAccounts = Object.keys(contactPageCountByUser).filter(function(u) { return (contactPageCountByUser[u] || 0) === 0; }).length;
   document.getElementById('stat-total').textContent = pages.length;
   document.getElementById('stat-incomplete').textContent = incomplete;
   var statEmptyEl = document.getElementById('stat-empty-accounts');
