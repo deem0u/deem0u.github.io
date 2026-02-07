@@ -1044,16 +1044,35 @@ body {
 
 /* Admin card: Contact Page trigger ~2x width */
 .searchable-select-contact-pages-trigger {
-  min-width: 200px;
+  min-width: 120px;
+  max-width: 180px;
 }
 
-/* Admin: Contact Page dropdown — 2x width set in JS; more compact list */
+/* Two-line trigger: name on first row, slug on second */
+.contact-page-trigger-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  text-align: left;
+}
+.contact-page-trigger-name {
+  font-size: inherit;
+  line-height: 1.2;
+}
+.contact-page-trigger-slug {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--color-text-muted, #666);
+}
+
+/* Admin: Contact Page dropdown — compact, don't expand (width set in JS) */
 .searchable-select-dropdown-contact-pages .searchable-select-options {
-  max-height: 200px;
+  max-height: 120px;
   padding: 0.15rem 0;
 }
 .searchable-select-dropdown-contact-pages .searchable-select-option {
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.5rem;
   font-size: 0.8125rem;
   line-height: 1.25;
 }

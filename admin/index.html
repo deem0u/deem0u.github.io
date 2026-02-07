@@ -2494,10 +2494,10 @@ async function toggleContactPagesSelect(username) {
         const slug = typeof item === 'string' ? item : (item.slug || 'index');
         const name = typeof item === 'string' ? (item === 'index' ? 'Main' : item) : (item.name || (slug === 'index' ? 'Main' : slug));
         const displayLabel = name + ' (' + slug + ')';
-        return `<div class="searchable-select-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(displayLabel).replace(/"/g, '&quot;')}">${escapeHtml(displayLabel)}</div>`;
+        return `<div class="searchable-select-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(displayLabel).replace(/"/g, '&quot;')}" data-name="${String(name).replace(/"/g, '&quot;')}">${escapeHtml(displayLabel)}</div>`;
       }).join('');
       optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
-        opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.label));
+        opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.name || opt.dataset.value));
       });
       var currentSelection = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
       var hasIndex = raw.some(function(item) { var s = typeof item === 'string' ? item : (item.slug || 'index'); return s === 'index'; });
@@ -2505,8 +2505,7 @@ async function toggleContactPagesSelect(username) {
         var first = raw[0];
         var firstSlug = typeof first === 'string' ? first : (first.slug || 'index');
         var firstName = typeof first === 'string' ? (first === 'index' ? 'Main' : first) : (first.name || (firstSlug === 'index' ? 'Main' : firstSlug));
-        var firstDisplayLabel = firstName + ' (' + firstSlug + ')';
-        selectContactPage(username, firstSlug, firstDisplayLabel);
+        selectContactPage(username, firstSlug, firstName);
       }
     } catch (e) {
       optionsEl.innerHTML = '<div class="searchable-select-empty">Failed to load</div>';
@@ -2516,7 +2515,8 @@ async function toggleContactPagesSelect(username) {
     const rect = trigger.getBoundingClientRect();
     dropdown.style.top = (rect.bottom + 4) + 'px';
     dropdown.style.left = rect.left + 'px';
-    dropdown.style.minWidth = (rect.width * 2) + 'px';
+    dropdown.style.minWidth = rect.width + 'px';
+    dropdown.style.maxWidth = (rect.width + 40) + 'px';
     dropdown.classList.add('show');
   }
   const searchEl = document.getElementById('contact-pages-search-' + username);
@@ -2542,16 +2542,20 @@ function filterContactPagesOptions(username) {
   } else if (hasVisible && emptyEl) emptyEl.remove();
 }
 
-function selectContactPage(username, contactpagename, displayLabel) {
+function selectContactPage(username, contactpagename, displayName) {
   const trigger = document.getElementById('contact-pages-trigger-' + username);
-  const textEl = document.getElementById('contact-pages-text-' + username);
+  const nameEl = document.getElementById('contact-pages-text-' + username);
+  const slugEl = document.getElementById('contact-pages-slug-' + username);
   const viewLink = document.getElementById('view-live-' + username);
-  if (trigger) { trigger.setAttribute('data-selected-contact', contactpagename || 'index'); }
-  if (textEl) textEl.textContent = (displayLabel && String(displayLabel).trim()) ? displayLabel : (contactpagename === 'index' ? 'index' : (contactpagename || 'index'));
-  if (viewLink) viewLink.href = (contactpagename === 'index' || !contactpagename) ? `${PAGES_URL}${username}/` : `${PAGES_URL}${username}/${contactpagename}.html`;
+  var slug = contactpagename || 'index';
+  var name = (displayName && String(displayName).trim()) ? displayName : (slug === 'index' ? 'Main' : slug);
+  if (trigger) trigger.setAttribute('data-selected-contact', slug);
+  if (nameEl) nameEl.textContent = name;
+  if (slugEl) slugEl.textContent = slug;
+  if (viewLink) viewLink.href = (slug === 'index') ? `${PAGES_URL}${username}/` : `${PAGES_URL}${username}/${slug}.html`;
   document.getElementById('contact-pages-dropdown-' + username).classList.remove('show');
   document.querySelectorAll('#contact-pages-options-' + username + ' .searchable-select-option').forEach(opt => {
-    opt.classList.toggle('selected', (opt.dataset.value || '') === (contactpagename || 'index'));
+    opt.classList.toggle('selected', (opt.dataset.value || '') === slug);
   });
 }
 
@@ -2633,8 +2637,11 @@ function renderList(t) {
             <span class="action-row-label">Contact Page</span>
             <div class="action-row-buttons action-row-with-select">
               <div class="searchable-select searchable-select-inline searchable-select-contact-pages-trigger" id="contact-pages-container-${f}">
-                <button type="button" class="searchable-select-trigger searchable-select-trigger-sm" id="contact-pages-trigger-${f}" data-selected-contact="index" onclick="toggleContactPagesSelect('${f}')">
-                  <span id="contact-pages-text-${f}" class="searchable-select-value">index</span>
+                <button type="button" class="searchable-select-trigger searchable-select-trigger-sm contact-page-trigger-btn" id="contact-pages-trigger-${f}" data-selected-contact="index" onclick="toggleContactPagesSelect('${f}')">
+                  <span class="contact-page-trigger-content">
+                    <span id="contact-pages-text-${f}" class="contact-page-trigger-name">Main</span>
+                    <span id="contact-pages-slug-${f}" class="contact-page-trigger-slug">index</span>
+                  </span>
                 </button>
                 <div class="searchable-select-dropdown searchable-select-dropdown-contact-pages" id="contact-pages-dropdown-${f}">
                   <div class="searchable-select-search">
