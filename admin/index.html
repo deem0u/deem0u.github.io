@@ -4810,14 +4810,24 @@ function parseContactFromHtml(html, folder) {
 }
 
 async function showQrModal(folder) {
-  var card = document.getElementById('user-card-' + folder);
-  var trigger = card && document.getElementById('contact-pages-trigger-' + folder);
-  var contactPage = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
   var overlay = document.getElementById('modal-qr');
   var loading = document.getElementById('modal-qr-loading');
   var content = document.getElementById('modal-qr-content');
   var errEl = document.getElementById('modal-qr-error');
   var downloadA = document.getElementById('modal-qr-download-vcard');
+  if (!overlay || !loading || !content || !errEl || !downloadA) return;
+  if (!adminKey) {
+    overlay.classList.add('show');
+    loading.classList.add('hidden');
+    content.classList.add('hidden');
+    errEl.textContent = 'Please sign in again to generate QR codes.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  var card = document.getElementById('user-card-' + folder);
+  var trigger = card && document.getElementById('contact-pages-trigger-' + folder);
+  var contactPage = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
+
   loading.classList.remove('hidden');
   content.classList.add('hidden');
   errEl.classList.add('hidden');
@@ -4828,18 +4838,35 @@ async function showQrModal(folder) {
   try {
     var pagePath = (contactPage === 'index' || !contactPage) ? folder : (folder + '/' + contactPage);
     var r = await fetch(API + '/api/page/' + encodeURIComponent(pagePath), { headers: { 'X-Admin-Key': adminKey } });
-    if (!r.ok) throw new Error('Could not load page');
+    if (!r.ok) {
+      var errBody = await r.text();
+      var errMsg = 'Could not load page';
+      try {
+        var errJson = JSON.parse(errBody);
+        if (errJson && errJson.error) errMsg = errJson.error;
+      } catch (_) {}
+      if (r.status === 401) errMsg = 'Sign in again to use QR codes. Your session may have expired.';
+      else if (r.status === 404) errMsg = 'Contact page not found. It may not exist yet for this user.';
+      else if (r.status >= 500) errMsg = 'Server error. Try again later.';
+      throw new Error(errMsg + ' (' + r.status + ')');
+    }
     var d = await r.json();
-    var data = parseContactFromHtml(d.content || '', folder, contactPage);
-    qrModalData = { url: data.url, vcard: data.vcard, text: data.text };
+    var data;
+    try {
+      data = parseContactFromHtml(d.content || '', folder, contactPage);
+    } catch (parseErr) {
+      throw new Error('Could not read contact page content. The page format may have changed.');
+    }
+    if (!data || typeof data.url !== 'string') throw new Error('Invalid contact data');
+    qrModalData = { url: data.url, vcard: data.vcard || '', text: data.text || '' };
 
     var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';
-    document.getElementById('modal-qr-img-url').src = base + encodeURIComponent(data.url);
-    document.getElementById('modal-qr-img-vcard').src = base + encodeURIComponent(data.vcard);
-    document.getElementById('modal-qr-img-text').src = base + encodeURIComponent(data.text);
+    document.getElementById('modal-qr-img-url').setAttribute('src', base + encodeURIComponent(data.url));
+    document.getElementById('modal-qr-img-vcard').setAttribute('src', base + encodeURIComponent(data.vcard || ''));
+    document.getElementById('modal-qr-img-text').setAttribute('src', base + encodeURIComponent(data.text || ''));
 
-    downloadA.href = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard);
-    downloadA.download = (data.fn || folder).replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf';
+    downloadA.setAttribute('href', 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard || ''));
+    downloadA.setAttribute('download', (data.fn || folder).replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf');
 
     switchQrTab('url');
     loading.classList.add('hidden');
