@@ -1124,16 +1124,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!data.setup_complete) { 
       showScreen('setup'); 
     } else {
-      const saved = localStorage.getItem('admin_key');
-      if (saved && await verifyKey(saved)) { 
-        adminKey = saved; 
+      const saved = (localStorage.getItem('admin_key') || '').trim();
+      if (saved && await verifyKey(saved)) {
+        adminKey = saved;
         try {
-          await loadDashboard(); 
+          await loadDashboard();
           showScreen('dashboard');
         } catch (e) {
           console.error('Dashboard load error:', e);
           showScreen('login');
-          showAlert('login-alert', 'Could not load dashboard. <button type="button" class="btn btn-ghost btn-sm mt-2" onclick="location.reload()">Retry</button>', 'error');
+          var errMsg = (e && e.message) ? e.message : 'Could not load dashboard.';
+          showAlert('login-alert', errMsg + ' <button type="button" class="btn btn-ghost btn-sm mt-2" onclick="location.reload()">Retry</button>', 'error');
         }
       } else { 
         localStorage.removeItem('admin_key'); 
@@ -1400,7 +1401,7 @@ async function doLogin() {
     } catch (e) { showAlert('login-alert', 'Connection error. Try again.', 'error'); }
     if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
   } else {
-    var key = (document.getElementById('login-key') && document.getElementById('login-key').value) || '';
+    var key = (document.getElementById('login-key') && document.getElementById('login-key').value) ? document.getElementById('login-key').value.trim() : '';
     if (!key) { showAlert('login-alert', 'Please enter your admin key.', 'error'); return; }
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in...'; }
     try {
@@ -1411,9 +1412,15 @@ async function doLogin() {
     if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
   }
   if (ok && returnedKey) {
-    adminKey = returnedKey;
-    localStorage.setItem('admin_key', returnedKey);
-    try { await loadDashboard(); showScreen('dashboard'); } catch (e) { showAlert('login-alert', 'Could not load dashboard.', 'error'); }
+    adminKey = returnedKey.trim();
+    localStorage.setItem('admin_key', adminKey);
+    try {
+      await loadDashboard();
+      showScreen('dashboard');
+    } catch (e) {
+      var msg = (e && e.message) ? e.message : 'Could not load dashboard.';
+      showAlert('login-alert', msg + ' <button type="button" class="btn btn-ghost btn-sm mt-2" onclick="location.reload()">Retry</button>', 'error');
+    }
   }
 }
 
@@ -2034,7 +2041,11 @@ async function loadDashboard() {
   if (tabAdmin) tabAdmin.style.display = isSecondaryAdmin ? 'none' : '';
   var summariesRes = await fetch(API + '/api/pages/summaries', { headers: headers });
   var kRes = await fetch(API + '/api/keys', { headers: headers });
-  if (!kRes.ok) throw new Error('Failed to load keys: ' + kRes.status);
+  if (!kRes.ok) {
+    var kErr = await kRes.json().catch(function() { return {}; });
+    var kMsg = (kErr && kErr.error) ? kErr.error : ('HTTP ' + kRes.status);
+    throw new Error('Keys: ' + kMsg + (kRes.status === 401 ? ' Check that your admin key is correct and try again.' : ''));
+  }
   var kData = await kRes.json();
   editKeys = kData.editKeys || {};
   userInfo = {};
@@ -2061,7 +2072,11 @@ async function loadDashboard() {
     }
   } else {
     var pRes = await fetch(API + '/api/pages', { headers: headers });
-    if (!pRes.ok) throw new Error('Failed to load pages: ' + pRes.status);
+    if (!pRes.ok) {
+      var pErr = await pRes.json().catch(function() { return {}; });
+      var pMsg = (pErr && pErr.error) ? pErr.error : ('HTTP ' + pRes.status);
+      throw new Error('Pages: ' + pMsg);
+    }
     var pData = await pRes.json();
     pages = pData.pages || [];
     var pagePromises = pages.map(function(f) {
