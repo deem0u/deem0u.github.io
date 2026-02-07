@@ -772,6 +772,14 @@ async function handleAuthUser(request, env) {
   }
   const pwHash = await env.EDIT_KEYS_KV.get(`user_password_hash:${username}`);
   if (!pwHash) {
+    // No password: if folder is gone, treat as deleted account (e.g. GITHUB_TOKEN was missing at top, or API flake)
+    if (env.GITHUB_TOKEN) {
+      const folderExists = await userFolderExistsOnGitHub(username, env);
+      if (!folderExists) {
+        await purgeKvForUser(username, env);
+        return jsonResponse({ error: 'Account no longer exists. It may have been deleted.' }, 401);
+      }
+    }
     return jsonResponse({ error: 'Account does not have a password. Set one via Set Secrets or sign up.' }, 401);
   }
   const valid = await verifyPassword(password, pwHash);
@@ -907,9 +915,9 @@ async function handleSignup(request, env) {
   }
 
   // Create only the user folder in the repo (no .html file = no contact page, no card in My Account).
-  // Placeholder is ignored.gitignore so the directory exists; only *.html files are listed as contact pages.
-  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/ignored.gitignore`;
-  const folderPlaceholderContent = encodeBase64('# Directory placeholder – only .html files in this folder are contact pages. This file is not a contact page.\n');
+  // Placeholder is index.gitkeep so the directory exists; only *.html files are listed as contact pages (public URL: user/username/urlslug).
+  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/index.gitkeep`;
+  const folderPlaceholderContent = encodeBase64('# Directory placeholder – contact pages are .html files in this folder (user/username/urlslug). This file is not a contact page.\n');
   const createFolderRes = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${folderPlaceholderPath}`,
     {
@@ -1489,7 +1497,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
     }
   );
 
-  // Delete every file in the user folder (including ignored.gitignore) so the folder is removed from the repo
+  // Delete every file in the user folder (including index.gitkeep) so the folder is removed from the repo
   let allFiles = [];
   if (listResponse.ok) {
     const files = await listResponse.json();
@@ -1532,7 +1540,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
 
 /**
  * POST /api/admin/create-user (admin only). Body: { username }.
- * Creates only the user folder (with ignored.gitignore). No .html file, no account KV.
+ * Creates only the user folder (with index.gitkeep). No .html file, no account KV.
  * Profile and secrets are set later via Edit Profile / Set Secrets (admin or user via My Account).
  */
 async function handleAdminCreateUser(request, env) {
@@ -1572,8 +1580,8 @@ async function handleAdminCreateUser(request, env) {
   if (checkRes.ok) {
     return jsonResponse({ error: 'A user folder with this username already exists' }, 409);
   }
-  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/ignored.gitignore`;
-  const folderPlaceholderContent = encodeBase64('# Directory placeholder – only .html files in this folder are contact pages. This file is not a contact page.\n');
+  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/index.gitkeep`;
+  const folderPlaceholderContent = encodeBase64('# Directory placeholder – contact pages are .html files in this folder (user/username/urlslug). This file is not a contact page.\n');
   const createRes = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${folderPlaceholderPath}`,
     {
@@ -2525,7 +2533,7 @@ async function handleListPages(request, env) {
     .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
     .map(item => item.name);
 
-  // Include all user folders (even with only ignored.gitignore, no contact pages yet)
+  // Include all user folders (even with only index.gitkeep, no contact pages yet)
   return jsonResponse({ pages: usernames });
 }
 
