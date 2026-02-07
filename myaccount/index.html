@@ -1795,6 +1795,7 @@ async function fetchContactPagesList() {
   if (!section || !list || !username || !token) return;
   try {
     var r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (r.status === 401 && (await handle401AccountDeleted(r))) return;
     var d = await r.json();
     if (!r.ok) {
       contactPagesListData = [];
@@ -1979,6 +1980,8 @@ async function authenticateWithStoredSession() {
       currentContactpagename = 'index';
       fillForm('');
       setContactPageMeta('index', null, true);
+    } else if (res.status === 401 && (await handle401AccountDeleted(res))) {
+      return;
     } else {
       throw new Error('Session expired');
     }
@@ -2040,6 +2043,7 @@ async function continueAfterAuth() {
   try {
     const res = await fetch(pageApiPath(), { headers: { 'Authorization': 'Bearer ' + token } });
     if (res.status === 401) {
+      if (await handle401AccountDeleted(res)) return;
       showAlert('auth-alert', 'Sign in failed. Please check your email and password.', 'error');
       return;
     }
@@ -2217,6 +2221,7 @@ async function loadProfile() {
   if (!username || !token) return;
   try {
     var r = await fetch(API + "/api/profile/" + encodeURIComponent(username), { headers: { "Authorization": "Bearer " + token } });
+    if (r.status === 401 && (await handle401AccountDeleted(r))) return;
     if (!r.ok) return;
     profileData = await r.json();
     document.getElementById("profile-username").textContent = profileData.username || username || "—";
@@ -2413,6 +2418,7 @@ async function confirmDeletePage() {
   try {
     var path = API + '/api/page/' + encodeURIComponent(username) + '/' + encodeURIComponent(slug);
     var r = await fetch(path, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+    if (r.status === 401 && (await handle401AccountDeleted(r))) return;
     var d = await r.json();
     closeDeletePageModal();
     if (r.ok && d.success) {
@@ -2530,6 +2536,7 @@ async function saveProfileFromStrip() {
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
       body: JSON.stringify({ firstName: cur.firstName, lastName: cur.lastName, accountEmail: email })
     });
+    if (r.status === 401 && (await handle401AccountDeleted(r))) return;
     var d = await r.json();
     if (r.ok && d.success) {
       if (d.otpSent) {
@@ -2855,7 +2862,7 @@ async function saveChangePasswordSq() {
   if (btn) btn.disabled = false;
 }
 
-function signOut() {
+function signOut(optionalMessage) {
   sessionStorage.removeItem('edit_session');
   username = null;
   token = null;
@@ -2864,13 +2871,25 @@ function signOut() {
   document.getElementById('signout-btn').classList.add('hidden');
   document.getElementById('screen-editor').classList.add('hidden');
   document.getElementById('screen-auth').classList.remove('hidden');
-  
   var authEmail = document.getElementById('auth-account-email');
   var authPw = document.getElementById('auth-password');
   if (authEmail) authEmail.value = '';
   if (authPw) authPw.value = '';
   hideAlert('auth-alert');
+  if (optionalMessage) showAlert('auth-alert', optionalMessage, 'error');
   window.history.replaceState({}, '', window.location.origin + '/myaccount/');
+}
+
+/** If response is 401 with code ACCOUNT_DELETED, clears session and forces sign-in with message. Returns true if handled. */
+async function handle401AccountDeleted(res) {
+  if (res.status !== 401) return false;
+  var data;
+  try { data = await res.json(); } catch (_) { return false; }
+  if (data && data.code === 'ACCOUNT_DELETED') {
+    signOut(data.error || 'Your account has been deleted. You have been signed out.');
+    return true;
+  }
+  return false;
 }
 
 function fillForm(h) {
@@ -3056,6 +3075,7 @@ async function handleSave(e) {
         headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ contactpagename: contactpagename, contactPageName: contactPageNameTrim || undefined, content: content })
       });
+      if (res.status === 401 && (await handle401AccountDeleted(res))) return;
       var data = await res.json();
       if (res.ok && data.success) {
         isCreateMode = false;
@@ -3171,6 +3191,7 @@ async function handleSave(e) {
           sha: currentSha
         })
       });
+      if (renameRes.status === 401 && (await handle401AccountDeleted(renameRes))) return;
       var renameData = await renameRes.json();
       if (renameRes.ok && renameData.success) {
         currentContactpagename = renameData.contactpagename || newSlug;
@@ -3201,6 +3222,7 @@ async function handleSave(e) {
         headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ content, sha: currentSha, contactPageName: contactPageName })
       });
+      if (res.status === 401 && (await handle401AccountDeleted(res))) return;
       const data = await res.json();
 
       if (res.ok) {

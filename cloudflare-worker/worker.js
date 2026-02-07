@@ -1199,11 +1199,21 @@ async function validateAuth(username, request, env) {
       if (payload.otpLogin) {
         return { authorized: false, isAdmin: false };
       }
+      // User was deleted from Admin Dashboard (folder removed); invalidate session
+      const pathUsername = pathUser.toLowerCase();
+      if (!await userFolderExistsOnGitHub(pathUsername, env)) {
+        return { authorized: false, isAdmin: false, accountDeleted: true };
+      }
       return { authorized: true, isAdmin: false };
     }
   }
 
   return { authorized: false, isAdmin: false };
+}
+
+/** 401 response when user was deleted (folder no longer exists). Frontend should clear session and show sign-in. */
+function accountDeletedResponse() {
+  return jsonResponse({ error: 'Your account has been deleted. You have been signed out.', code: 'ACCOUNT_DELETED' }, 401);
 }
 
 // ============ Page Routes ============
@@ -1353,6 +1363,7 @@ async function handleCreatePage(request, env) {
 async function handleUserCreatePage(username, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
@@ -1474,6 +1485,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
     const slug = segments[1];
     const auth = await validateAuth(username, request, env);
     if (!auth.authorized) {
+      if (auth.accountDeleted) return accountDeletedResponse();
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
     const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
@@ -2313,6 +2325,7 @@ async function handleResetPasswordWithToken(request, env) {
 async function handleGetPage(username, contactpagename, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
@@ -2346,6 +2359,7 @@ async function handleGetPage(username, contactpagename, request, env) {
 async function handleUpdatePage(username, contactpagename, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
   const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
@@ -2419,6 +2433,7 @@ async function handleUpdatePage(username, contactpagename, request, env) {
 async function handleRenamePage(username, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
   const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
@@ -2665,6 +2680,7 @@ async function handleListContactPages(username, request, env) {
   const u = normalizeUsername(username);
   const auth = await validateAuth(u, request, env);
   if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
     return jsonResponse({ error: auth.isAdmin ? 'Admin access required' : 'Unauthorized' }, 401);
   }
   if (!u || !/^[a-z0-9_-]+$/.test(u)) {
@@ -3104,7 +3120,10 @@ async function handleRecoveryVerify(request, env) {
 
 async function handleGetProfile(username, request, env) {
   const auth = await validateAuth(username, request, env);
-  if (!auth.authorized) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
   const u = (username || '').trim();
   const uLower = u.toLowerCase();
@@ -3127,7 +3146,10 @@ async function handleGetProfile(username, request, env) {
 
 async function handlePutProfile(username, request, env) {
   const auth = await validateAuth(username, request, env);
-  if (!auth.authorized) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const firstName = (body.firstName || '').trim();
@@ -3179,6 +3201,7 @@ async function handleVerifyEmailChange(request, env) {
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
   const username = (payload.username || '').trim().toLowerCase();
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const code = (body.code || '').trim().replace(/\D/g, '');
   if (code.length !== 6) return jsonResponse({ error: 'Invalid code' }, 400);
@@ -3209,6 +3232,7 @@ async function handleCancelEmailChange(request, env) {
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
   const username = (payload.username || '').trim().toLowerCase();
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
   await env.EDIT_KEYS_KV.delete('otp_email_change:' + username);
   await env.EDIT_KEYS_KV.delete('pending_email_change:' + username);
   // Account email was never changed (only handleVerifyEmailChange updates it), so keep user Verified.
@@ -3240,6 +3264,7 @@ async function handleGetPushMessage(request, env) {
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
   const username = (payload.username || '').trim().toLowerCase();
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ html: null });
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
   const html = await env.EDIT_KEYS_KV.get('push_message:' + username);
   return jsonResponse(html ? { html } : { html: null });
 }
@@ -3254,6 +3279,7 @@ async function handleDismissPushMessage(request, env) {
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
   const username = (payload.username || '').trim().toLowerCase();
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ success: true });
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
   await env.EDIT_KEYS_KV.delete('push_message:' + username);
   return jsonResponse({ success: true });
 }
@@ -3268,6 +3294,7 @@ async function handleSetPasswordAfterOtp(request, env) {
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
   const username = (payload.username || '').trim().toLowerCase();
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
   const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
   if (!storedOtp) return jsonResponse({ error: 'No one-time password in use. Sign in with your password or request a new OTP.' }, 400);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
@@ -3291,6 +3318,7 @@ async function handleVerifyPassword(request, env) {
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
   const username = (payload.username || '').trim().toLowerCase();
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const currentPassword = (body.currentPassword || '').trim();
   if (!currentPassword) return jsonResponse({ error: 'Current password required' }, 400);
@@ -3311,6 +3339,7 @@ async function handleChangePasswordAndSq(request, env) {
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
   const username = (payload.username || '').trim().toLowerCase();
   if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const currentPassword = (body.currentPassword || '').trim();
   if (!currentPassword) return jsonResponse({ error: 'Current password required' }, 400);
@@ -3368,6 +3397,7 @@ async function handleProfileRename(request, env) {
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
   const oldUsername = (payload.username || '').trim().toLowerCase();
   if (!oldUsername || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(oldUsername, env)) return accountDeletedResponse();
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const newUsername = (body.newUsername || '').trim().toLowerCase();
   if (!newUsername || newUsername.length < 3) return jsonResponse({ error: 'New username required (3-28 characters)' }, 400);
@@ -3459,6 +3489,7 @@ async function handleProfileRename(request, env) {
 async function handleGetSecrets(username, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
   if (!username || !env.EDIT_KEYS_KV) {
@@ -3488,6 +3519,7 @@ async function handleGetSecrets(username, request, env) {
 async function handlePutSecrets(username, request, env) {
   const auth = await validateAuth(username, request, env);
   if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
   if (!username || !env.EDIT_KEYS_KV) {
