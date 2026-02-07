@@ -105,6 +105,52 @@ async function getContactPageCountForUser(username, env) {
   return files.filter(item => item.type === 'file' && item.name && item.name.endsWith('.html')).length;
 }
 
+/** Returns true if the user folder exists on GitHub. */
+async function userFolderExistsOnGitHub(username, env) {
+  if (!env.GITHUB_TOKEN || !username) return false;
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  return response.ok;
+}
+
+/** Delete all KV data for a user (used by delete-user and when cleaning orphaned accounts). */
+async function purgeKvForUser(username, env) {
+  if (!env.EDIT_KEYS_KV) return;
+  const accountEmail = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
+  const u = username.toLowerCase();
+  await env.EDIT_KEYS_KV.delete(`account_email:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_password_hash:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_first_name:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_last_name:${username}`);
+  await env.EDIT_KEYS_KV.delete(`email_verified:${username}`);
+  await env.EDIT_KEYS_KV.delete(`email_verified_admin:${username}`);
+  if (accountEmail && accountEmail.includes('@')) {
+    await env.EDIT_KEYS_KV.delete(`account_email_to_folder:${accountEmail.toLowerCase().trim()}`);
+  }
+  await env.EDIT_KEYS_KV.delete(`user_dob:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_recovery:${username}`);
+  await env.EDIT_KEYS_KV.delete(`account_details_sent:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_otp:${username}`);
+  await env.EDIT_KEYS_KV.delete(`otp:${username}`);
+  await env.EDIT_KEYS_KV.delete(`push_message:${u}`);
+  await env.EDIT_KEYS_KV.delete(`divert_email:${username}`);
+  await env.EDIT_KEYS_KV.delete(`max_contact_pages:${username}`);
+  await env.EDIT_KEYS_KV.delete(`otp_email_change:${username}`);
+  await env.EDIT_KEYS_KV.delete(`pending_email_change:${username}`);
+  const nameKeys = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+  for (const key of nameKeys.keys) {
+    await env.EDIT_KEYS_KV.delete(key.name);
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -421,6 +467,9 @@ export default {
         const username = raw ? decodeURIComponent(raw).trim() : '';
         return await handleDebugUser(username, request, env);
       }
+      if (request.method === 'POST' && path === '/api/admin/purge-user-kv') {
+        return await handlePurgeUserKv(request, env);
+      }
 
       return jsonResponse({ error: 'Not found' }, 404);
     } catch (error) {
@@ -705,6 +754,16 @@ async function handleAuthUser(request, env) {
     username = await env.EDIT_KEYS_KV.get(`account_email_to_folder:${accountEmail}`);
   }
   if (!username) return jsonResponse({ error: 'Invalid email or password' }, 401);
+
+  // If the user's GitHub folder no longer exists (e.g. account was deleted), purge orphaned KV and reject login
+  if (env.GITHUB_TOKEN) {
+    const folderExists = await userFolderExistsOnGitHub(username, env);
+    if (!folderExists) {
+      await purgeKvForUser(username, env);
+      return jsonResponse({ error: 'Account no longer exists. It may have been deleted.' }, 401);
+    }
+  }
+
   const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
   if (storedOtp && storedOtp === password) {
     const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
@@ -712,7 +771,9 @@ async function handleAuthUser(request, env) {
     return jsonResponse({ success: true, username, token, mustSetPassword: true });
   }
   const pwHash = await env.EDIT_KEYS_KV.get(`user_password_hash:${username}`);
-  if (!pwHash) return jsonResponse({ error: 'Account does not have a password. Set one via Set Secrets or sign up.' }, 401);
+  if (!pwHash) {
+    return jsonResponse({ error: 'Account does not have a password. Set one via Set Secrets or sign up.' }, 401);
+  }
   const valid = await verifyPassword(password, pwHash);
   if (!valid) return jsonResponse({ error: 'Invalid email or password' }, 401);
   const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
@@ -1460,34 +1521,7 @@ async function handleDeletePage(username, contactpagename, request, env) {
     }
   }
 
-  // Delete all KV data for this user (same set as KV orphan cleanup)
-  if (env.EDIT_KEYS_KV) {
-    const accountEmail = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
-    const u = username.toLowerCase();
-    await env.EDIT_KEYS_KV.delete(`account_email:${username}`);
-    await env.EDIT_KEYS_KV.delete(`user_password_hash:${username}`);
-    await env.EDIT_KEYS_KV.delete(`user_first_name:${username}`);
-    await env.EDIT_KEYS_KV.delete(`user_last_name:${username}`);
-    await env.EDIT_KEYS_KV.delete(`email_verified:${username}`);
-    await env.EDIT_KEYS_KV.delete(`email_verified_admin:${username}`);
-    if (accountEmail && accountEmail.includes('@')) {
-      await env.EDIT_KEYS_KV.delete(`account_email_to_folder:${accountEmail.toLowerCase().trim()}`);
-    }
-    await env.EDIT_KEYS_KV.delete(`user_dob:${username}`);
-    await env.EDIT_KEYS_KV.delete(`user_recovery:${username}`);
-    await env.EDIT_KEYS_KV.delete(`account_details_sent:${username}`);
-    await env.EDIT_KEYS_KV.delete(`user_otp:${username}`);
-    await env.EDIT_KEYS_KV.delete(`otp:${username}`);
-    await env.EDIT_KEYS_KV.delete(`push_message:${u}`);
-    await env.EDIT_KEYS_KV.delete(`divert_email:${username}`);
-    await env.EDIT_KEYS_KV.delete(`max_contact_pages:${username}`);
-    await env.EDIT_KEYS_KV.delete(`otp_email_change:${username}`);
-    await env.EDIT_KEYS_KV.delete(`pending_email_change:${username}`);
-    const nameKeys = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
-    for (const key of nameKeys.keys) {
-      await env.EDIT_KEYS_KV.delete(key.name);
-    }
-  }
+  await purgeKvForUser(username, env);
 
   return jsonResponse({
     success: true,
@@ -2767,6 +2801,51 @@ async function handleDebugUser(username, request, env) {
       toFolderEntries,
       matchingAccountEmailKeys
     }
+  });
+}
+
+/**
+ * POST /api/admin/purge-user-kv (admin only). Body: { username, dryRun?: boolean }.
+ * Deletes all KV data for the given username. Use when the user folder was deleted (e.g. on GitHub)
+ * but KV was not cleaned, so the username still appears as an account (e.g. login says "no password").
+ * Does not touch GitHub. dryRun: true returns wouldDeleteCount and keys without deleting.
+ */
+async function handlePurgeUserKv(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid request body' }, 400);
+  }
+  const usernameRaw = (body.username || '').trim();
+  const username = normalizeUsername(usernameRaw);
+  if (!username || username.length < 2) {
+    return jsonResponse({ error: 'Username required (2+ characters)' }, 400);
+  }
+  if (usernameRaw && !/^[a-zA-Z0-9_-]+$/.test(usernameRaw)) {
+    return jsonResponse({ error: 'Username: letters, numbers, hyphens, underscores only' }, 400);
+  }
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ error: 'KV not configured' }, 500);
+  }
+  const dryRun = body.dryRun === true;
+  if (dryRun) {
+    const { keys } = await collectKvUserKeys(env, username);
+    return jsonResponse({
+      dryRun: true,
+      username,
+      wouldDeleteCount: keys.length,
+      keys: keys.map(k => k.name)
+    });
+  }
+  await purgeKvForUser(username, env);
+  return jsonResponse({
+    success: true,
+    username,
+    message: 'User KV data purged. This username is no longer an account.'
   });
 }
 
