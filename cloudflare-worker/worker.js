@@ -328,6 +328,9 @@ export default {
         try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
         return await handlePutSecrets(username, request, env);
       }
+      if (request.method === 'POST' && path === '/api/admin/create-user') {
+        return await handleAdminCreateUser(request, env);
+      }
       if (request.method === 'POST' && path === '/api/admin/rename-user') {
         return await handleAdminRenameUser(request, env);
       }
@@ -813,6 +816,20 @@ async function handleSignup(request, env) {
   if (existingAccount) {
     return jsonResponse({ error: 'This username is already taken' }, 409);
   }
+  // If a user folder already exists on GitHub (e.g. from admin create-user or leftover), reject
+  const checkRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (checkRes.ok) {
+    return jsonResponse({ error: 'A page with this username already exists' }, 409);
+  }
   // If a user folder already exists on GitHub (e.g. leftover from a deleted account), reject
   const checkRes = await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
@@ -829,7 +846,7 @@ async function handleSignup(request, env) {
   }
 
   // Create only the user folder in the repo (no HTML = no contact page, no page card in My Account).
-  // Contact pages are added when the user creates one from My Account or Step 2, or when Admin creates one from the Admin Dashboard.
+  // Contact pages (index.html etc.) are added only when the user or admin saves a contact page.
   const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/.gitkeep`;
   const folderPlaceholderContent = encodeBase64('# User folder – contact pages (e.g. index.html) are added when the user or admin creates them.\n');
   const createFolderRes = await fetch(
@@ -1476,6 +1493,78 @@ async function handleDeletePage(username, contactpagename, request, env) {
     success: true,
     username,
     message: `Page ${username} deleted`
+  });
+}
+
+/**
+ * POST /api/admin/create-user (admin only). Body: { username }.
+ * Creates only the user folder (with .gitkeep). No index.html, no account KV.
+ * Profile and secrets are set later via Edit Profile / Set Secrets (admin or user via My Account).
+ */
+async function handleAdminCreateUser(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  let body;
+  try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const usernameRaw = (body.username || body.folder || '').trim();
+  const username = normalizeUsername(usernameRaw);
+  if (!username || username.length < 3 || username.length > 28) {
+    return jsonResponse({ error: 'Username must be 3–28 characters' }, 400);
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(usernameRaw)) {
+    return jsonResponse({ error: 'Username: letters, numbers, hyphens, underscores only' }, 400);
+  }
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user', 'styles.css', 'countries-data.js', 'form-descriptions.js'];
+  if (reserved.includes(username)) {
+    return jsonResponse({ error: 'This username is reserved' }, 400);
+  }
+  if (env.EDIT_KEYS_KV) {
+    const existing = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
+    if (existing) {
+      return jsonResponse({ error: 'This username is already taken (account exists)' }, 409);
+    }
+  }
+  const checkRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (checkRes.ok) {
+    return jsonResponse({ error: 'A user folder with this username already exists' }, 409);
+  }
+  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/.gitkeep`;
+  const folderPlaceholderContent = encodeBase64('# User folder – contact pages (e.g. index.html) are added when the user or admin creates them.\n');
+  const createRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${folderPlaceholderPath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Create user folder: ${username} (admin)`,
+        content: folderPlaceholderContent,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!createRes.ok) {
+    const err = await createRes.json();
+    return jsonResponse({ error: err.message || 'Failed to create user folder' }, createRes.status);
+  }
+  return jsonResponse({
+    success: true,
+    username,
+    message: `User folder created. Use Edit Profile and Set Secrets to complete the account, or the user can sign in via My Account once they set a password.`
   });
 }
 
@@ -2400,28 +2489,8 @@ async function handleListPages(request, env) {
     .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
     .map(item => item.name);
 
-  const pages = [];
-  for (const username of usernames) {
-    try {
-      const usernameResponse = await fetch(
-        `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
-        {
-          headers: {
-            'Authorization': `token ${env.GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'ContactPageEditor/1.0'
-          }
-        }
-      );
-      const usernameContents = await usernameResponse.json();
-      const files = Array.isArray(usernameContents) ? usernameContents : [];
-      if (files.some(f => f.name && f.name.endsWith('.html'))) {
-        pages.push(username);
-      }
-    } catch (e) {}
-  }
-
-  return jsonResponse({ pages });
+  // Include all user folders (even with only .gitkeep, no contact pages yet)
+  return jsonResponse({ pages: usernames });
 }
 
 /** GET /api/pages/summaries - List pages plus minimal summary per page (givenName, familyName, contactEmail, lastUpdated, updatedBy). Admin only. */
@@ -2492,10 +2561,8 @@ async function handlePageSummaries(request, env) {
   const results = await Promise.all(usernames.map(fetchSummary));
   for (const r of results) {
     if (!r) continue;
-    if ((r.contactPageCount || 0) > 0) {
-      pages.push(r.username);
-      summaries[r.username] = r.summary || { givenName: '', familyName: '', contactEmail: '', lastUpdated: null, updatedBy: null };
-    }
+    pages.push(r.username);
+    summaries[r.username] = r.summary || { givenName: '', familyName: '', contactEmail: '', lastUpdated: null, updatedBy: null };
   }
 
   return jsonResponse({ pages, summaries, contactPageCountByUser });

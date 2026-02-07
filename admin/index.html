@@ -479,8 +479,9 @@
           
           <!-- New User Form -->
           <div id="new-user-card" class="card hidden">
-            <div class="card-header"><span class="card-title">Add New User/Contact Information Page</span></div>
+            <div class="card-header"><span class="card-title">Add New User</span></div>
             <div class="card-body">
+              <p class="form-hint mb-3">Creates only the user folder (no contact page, no account KV). Complete the account with <strong>Edit Profile</strong> and <strong>Set Secrets</strong> on the user card, or the user can sign in via My Account and set secrets there. Add a contact page from the user card when ready.</p>
               <form id="new-user-form">
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
@@ -3104,39 +3105,19 @@ async function handleCreateUser(e) {
   usernameInput.classList.remove('is-invalid');
 
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
-  
   try {
-    const content = generateNewUserHTML();
-    const r = await fetch(`${API}/api/page`, {
+    const res = await fetch(`${API}/api/admin/create-user`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({
-        username,
-        content,
-        accountEmail: document.getElementById("new-account-email").value.trim(),
-        firstName: document.getElementById("new-first-name").value.trim(),
-        lastName: document.getElementById("new-surname").value.trim()
-      })
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+      body: JSON.stringify({ username })
     });
-    const d = await r.json();
-    
-    if (r.ok) {
+    const d = await res.json();
+    if (res.ok) {
       pages.push(username);
-      const now = new Date().toISOString();
-      userInfo[username] = {
-        accountEmail: document.getElementById('new-account-email').value.trim() || null,
-        firstName: '',
-        lastName: '',
-        pageGivenName: document.getElementById('new-first-name').value.trim(),
-        pageFamilyName: document.getElementById('new-surname').value.trim(),
-        pageEmail: document.getElementById('new-email').value.trim(),
-        folder: username,
-        lastUpdated: now,
-        updatedBy: 'admin'
-      };
+      if (!userInfo[username]) userInfo[username] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', folder: username };
       fetchAccountEmailsAndRefresh();
       hideNewUserForm();
-      showAlert('alert-manage', `Created ${username}. <a href="${d.url}" target="_blank">View page ?</a>`, 'success');
+      showAlert('alert-manage', 'User folder created for ' + username + '. Use Edit Profile and Set Secrets on their card to complete the account; add a contact page when ready.', 'success');
       switchTab('manage');
     } else {
       showAlert('alert-new-user', d.error || 'Failed to create', 'error');
