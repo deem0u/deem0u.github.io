@@ -25,6 +25,7 @@ The workspace root **is** the GitHub Pages repo (deem0u.github.io). Live at http
   - Self-service: Edit form (`myaccount/index.html`)
   - Live contact page: New row after "Destination Details" (EN: "Additional Information", ZH: "补充信息"). Uses `.form-textarea`, `.form-label-optional`, existing CSS.
 - **Admin Dashboard** — Recovery cluster on its own row; Contact Page cluster has a searchable dropdown for contact cards per user; Worker `GET /api/contact-pages/:username` lists pages for a user.
+- **Secrets / Account Setup Incomplete** — “Secrets” are only complete when account email, DOB, and 3 security questions are all set. They can be set from **Set Secrets in MyAccount** or the **Set Secrets modal in the Admin Dashboard**.
 - **SETUP-GUIDE.md** — Updated with Additional Information feature, editing notes, and deploy file list.
 - **Artifacts** — `release/digital-luggage-tags-artifacts.zip` includes SETUP-GUIDE, worker, wrangler, styles, admin and edit HTML.
 

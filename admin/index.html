@@ -412,9 +412,7 @@
               <select id="filter-manage" class="filter-select" onchange="filterUsers('manage')">
                 <option value="all">All users</option>
                 <option value="access">With edit access</option>
-                <option value="no-access">Without edit access</option>
                 <option value="incomplete">Incomplete</option>
-                <option value="secrets-not-set">Secrets not set</option>
                 <option value="new">New</option>
               </select>
               <select id="sort-manage" class="filter-select" onchange="filterUsers('manage')">
@@ -430,9 +428,7 @@
               </div>
               <div class="user-list-stats">
                 <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Users</span></div>
-                <div class="stat"><span class="stat-value" id="stat-without-access">0</span><span class="stat-label">Cannot sign in</span></div>
                 <div class="stat"><span class="stat-value" id="stat-incomplete">0</span><span class="stat-label">Incomplete</span></div>
-                <div class="stat"><span class="stat-value" id="stat-secrets-not-set">0</span><span class="stat-label">Secrets not set</span></div>
               </div>
             </div>
           </div>
@@ -1920,7 +1916,11 @@ async function fetchAccountEmailsAndRefresh(skipPopulateUI) {
       var statuses = sd.statuses;
       for (var f in userInfo) {
         var fLower = (f || '').toLowerCase();
-        userInfo[f].secretsComplete = !!(statuses[f] && statuses[f].secretsComplete) || !!(statuses[fLower] && statuses[fLower].secretsComplete);
+        var st = statuses[f] || statuses[fLower];
+        if (!st) {
+          for (var sk in statuses) { if ((sk || '').toLowerCase() === fLower) { st = statuses[sk]; break; } }
+        }
+        userInfo[f].secretsComplete = !!(st && st.secretsComplete);
       }
     }
     if (!skipPopulateUI) populateUI();
@@ -2075,37 +2075,33 @@ function extractInfo(h) {
   };
 }
 
+/** Incomplete = account setup incomplete: profile (first/last name) or secrets (email, DOB, 3 SQs) missing. Used for badge, stat, filter and chart. */
 function isIncomplete(f) {
   const u = userInfo[f] || {};
-  const given = String(u.pageGivenName || '').trim();
-  const family = String(u.pageFamilyName || '').trim();
-  const em = String(u.pageEmail || '').trim();
-  return !given || !family || !em;
+  const profileIncomplete = !(u.firstName || '').trim() || !(u.lastName || '').trim();
+  const secretsIncomplete = !(u.secretsComplete === true);
+  return profileIncomplete || secretsIncomplete;
 }
 
 
-function updateStatsChart(total, withoutAccess, incomplete, secretsNotSet) {
+function updateStatsChart(total, incomplete) {
   var svg = document.getElementById('stats-chart');
   if (!svg) return;
-  var withAccess = total - withoutAccess;
-  var incompleteOnly = 0, secretsOnly = 0, ok = 0;
+  var incompleteOnly = 0, ok = 0;
   pages.forEach(function(f){
-    var hk = !!editKeys[f], u = userInfo[f] || {};
-    if (!hk) return;
-    var inc = isIncomplete(f), sec = !(u.secretsComplete === true);
-    if (inc) incompleteOnly++; else if (sec) secretsOnly++; else ok++;
+    if (!editKeys[f]) return;
+    if (isIncomplete(f)) incompleteOnly++; else ok++;
   });
   var segs = [
-    { v: withoutAccess, c: 'var(--grey-500)' },
     { v: incompleteOnly, c: 'var(--accent-yellow)' },
-    { v: secretsOnly, c: 'var(--accent-red)' },
     { v: ok, c: 'var(--accent-teal)' }
   ].filter(function(s){ return s.v > 0; });
-  if (total === 0) { svg.innerHTML = '<circle cx="50" cy="50" r="45" fill="var(--grey-200)"/><circle cx="50" cy="50" r="35" fill="var(--white)"/>'; return; }
+  var chartTotal = incompleteOnly + ok;
+  if (chartTotal === 0) { svg.innerHTML = '<circle cx="50" cy="50" r="45" fill="var(--grey-200)"/><circle cx="50" cy="50" r="35" fill="var(--white)"/>'; return; }
   var acc = 0;
   var parts = [];
   segs.forEach(function(s){
-    var pct = (s.v/total)*360;
+    var pct = (s.v/chartTotal)*360;
     var x1 = 50 + 45*Math.cos((acc-90)*Math.PI/180);
     var y1 = 50 + 45*Math.sin((acc-90)*Math.PI/180);
     var x2 = 50 + 45*Math.cos((acc+pct-90)*Math.PI/180);
@@ -2119,16 +2115,10 @@ function updateStatsChart(total, withoutAccess, incomplete, secretsNotSet) {
 }
 
 function populateUI() {
-  const withAccess = Object.keys(editKeys).filter(k => pages.includes(k)).length;
-  const withoutAccess = pages.length - withAccess;
   const incomplete = pages.filter(isIncomplete).length;
-  const secretsNotSetCount = pages.filter(f => !(userInfo[f] && userInfo[f].secretsComplete === true)).length;
   document.getElementById('stat-total').textContent = pages.length;
-  document.getElementById('stat-without-access').textContent = withoutAccess;
   document.getElementById('stat-incomplete').textContent = incomplete;
-  var statSecretsEl = document.getElementById('stat-secrets-not-set');
-  if (statSecretsEl) statSecretsEl.textContent = secretsNotSetCount;
-  updateStatsChart(pages.length, withoutAccess, incomplete, secretsNotSetCount);
+  updateStatsChart(pages.length, incomplete);
   populatePageSelect();
   renderList('manage');
 }
@@ -2628,9 +2618,7 @@ function renderList(t) {
     const searchMatch = !s.trim() || `${f} ${u.firstName||''} ${u.lastName||''} ${u.accountEmail||''}`.toLowerCase().includes(s.toLowerCase());
     if (!searchMatch) return false;
     if (filterVal === 'access') return !!editKeys[f];
-    if (filterVal === 'no-access') return !editKeys[f];
     if (filterVal === 'incomplete') return isIncomplete(f);
-    if (filterVal === 'secrets-not-set') return !(u.secretsComplete === true);
     if (filterVal === 'new') return !!editKeys[f] && !(u.accountDetailsSent === true);
     return true;
   });

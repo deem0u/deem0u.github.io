@@ -398,6 +398,7 @@ The Worker includes a `sendEmail()` helper. Workflow integrations (signup, recov
 ## Daily Usage Summary
 
 - **Manage users** — Admin → Manage Users: Add, Set Secrets, Grant/Revoke, Delete, Send via Email
+- **Account Setup Incomplete** — A user is tagged incomplete if profile (first/last name) or secrets are missing. **Secrets** are only complete when all of these are set: account email, DOB, and 3 security questions. They can be set from **Set Secrets in MyAccount** or the **Set Secrets modal in the Admin Dashboard**.
 - **New badge** — Users with a new Edit Key who haven’t had “Send via Email” yet
 - **Edit pages** — Admin → Edit Pages, or users via My Account
 - **Access Recovery** — Edit page → “I need help Signing In” for users who forgot Edit Key
