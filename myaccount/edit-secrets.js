@@ -128,6 +128,7 @@ async function saveEditSecrets() {
   }
   document.getElementById('edit-secrets-save-btn').disabled = true;
   document.getElementById('edit-secrets-error').classList.add('hidden');
+  if (typeof showStatusBanner === 'function') showStatusBanner('Saving secrets…', 'saving');
   try {
     var r = await fetch(API + '/api/secrets/' + encodeURIComponent(username), {
       method: 'PUT',
@@ -140,10 +141,12 @@ async function saveEditSecrets() {
       checkSecretsStatus();
       if (typeof showStatusBanner === 'function') showStatusBanner('Secrets updated successfully.', 'success');
     } else {
+      if (typeof showStatusBanner === 'function') showStatusBanner('');
       document.getElementById('edit-secrets-error').textContent = d.error || 'Failed to save';
       document.getElementById('edit-secrets-error').classList.remove('hidden');
     }
   } catch (e) {
+    if (typeof showStatusBanner === 'function') showStatusBanner('Connection error. Please try again.', 'error');
     document.getElementById('edit-secrets-error').textContent = 'Connection error. Please try again.';
     document.getElementById('edit-secrets-error').classList.remove('hidden');
   }
