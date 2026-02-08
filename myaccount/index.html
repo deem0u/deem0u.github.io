@@ -1348,9 +1348,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
   } catch (e) {}
-  const params = new URLSearchParams(window.location.search);
-  username = params.get('username') || params.get('folder');
-  
+  if (!hasStoredSession) {
+    const params = new URLSearchParams(window.location.search);
+    username = params.get('username') || params.get('folder');
+  }
   attachContactNumberMask();
   attachDobMask();
   initCountryDropdownEdit();
