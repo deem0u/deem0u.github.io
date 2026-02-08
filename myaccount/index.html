@@ -1528,6 +1528,12 @@ function setContactPageMeta(slug, displayName, createMode) {
   refreshViewModeDisplay();
 }
 
+function updateEditorPageUrlForCurrentUsername() {
+  var uEl = document.getElementById('contact-page-url-username');
+  if (uEl) uEl.textContent = username || '—';
+  refreshViewModeDisplay();
+}
+
 function refreshViewModeDisplay() {
   function el(id) { var e = document.getElementById(id); return e ? e.value || e.textContent || '' : ''; }
   function setView(id, text) { var e = document.getElementById(id); if (e) e.textContent = (text != null && String(text).trim() !== '') ? String(text).trim() : ''; }
@@ -2509,6 +2515,7 @@ async function saveProfileFromStrip() {
         try { sessionStorage.setItem("edit_session", JSON.stringify({ username: username, token: token })); } catch (_) {}
         var nameOrEmailChanged = cur.firstName !== (profileSnapshot && profileSnapshot.firstName) || cur.lastName !== (profileSnapshot && profileSnapshot.lastName) || cur.accountEmail !== (profileSnapshot && profileSnapshot.accountEmail);
         if (nameOrEmailChanged) {
+          showStatusBanner('Updating profile...', 'saving');
           var rPut = await fetch(API + "/api/profile/" + encodeURIComponent(username), {
             method: "PUT",
             headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
@@ -2520,18 +2527,21 @@ async function saveProfileFromStrip() {
             verifyEmailContext = "emailChange";
             applyUnverifiedRestriction();
             exitProfileEditMode();
-            showStatusBanner("User name updated. Verification code sent to your new email.", "success");
+            updateEditorPageUrlForCurrentUsername();
+            showStatusBanner("User name updated. Verification code sent to your new email. Enter the code below to finish.", "success", true);
             openVerifyEmailModal("emailChange");
           } else if (rPut.ok && dPut.success) {
             await loadProfile();
             await fetchContactPagesList();
             applyUnverifiedRestriction();
             exitProfileEditMode();
+            updateEditorPageUrlForCurrentUsername();
             showStatusBanner("Profile updated. Your sign-in user name is now: " + username, "success");
           } else {
             await loadProfile();
             await fetchContactPagesList();
             exitProfileEditMode();
+            updateEditorPageUrlForCurrentUsername();
             showStatusBanner(dPut.error || "User name updated but profile save failed.", "error");
           }
         } else {
@@ -2539,6 +2549,7 @@ async function saveProfileFromStrip() {
           await fetchContactPagesList();
           applyUnverifiedRestriction();
           exitProfileEditMode();
+          updateEditorPageUrlForCurrentUsername();
           showStatusBanner("User name updated. Your sign-in user name is now: " + username, "success");
         }
       } else {
@@ -2569,13 +2580,14 @@ async function saveProfileFromStrip() {
         verifyEmailContext = "emailChange";
         applyUnverifiedRestriction();
         exitProfileEditMode();
-        showStatusBanner("Verification code sent to your new email. Enter it below.", "success");
+        showStatusBanner("Verification code sent to your new email. Enter the code below to finish.", "success", true);
         openVerifyEmailModal("emailChange");
       } else {
         profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email };
         await loadProfile();
         applyUnverifiedRestriction();
         exitProfileEditMode();
+        showStatusBanner('Profile updated.', 'success');
       }
     } else {
       showStatusBanner(d.error || "Could not save", "error");
@@ -2593,7 +2605,7 @@ async function verifyEmailFromEditor() {
     var r = await fetch(API + "/api/otp/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username }) });
     var d = await r.json();
     if (d.sent) {
-      showStatusBanner('Code sent. Enter the 6-digit code below.', 'success');
+      showStatusBanner('Code sent. Enter the 6-digit code below to verify.', 'success', true);
       openVerifyEmailModal();
     } else {
       showStatusBanner(d.error || 'Could not send code', 'error');
@@ -2676,7 +2688,7 @@ async function submitVerifyEmailCode() {
       closeVerifyEmailModal();
       showStatusBanner(isEmailChange ? 'Email updated. Next time, sign in with your new email.' : 'Email verified!', 'success');
     } else {
-      showStatusBanner('', null);
+      showStatusBanner('Verification failed. ' + (vd.error || 'Invalid or expired code. Try again.'), 'error');
       if (alertEl) {
         alertEl.className = 'alert alert-error show';
         alertEl.innerHTML = '<div class="alert-content">' + (vd.error || 'Invalid code') + '</div>';
@@ -2685,7 +2697,7 @@ async function submitVerifyEmailCode() {
       if (input) input.focus();
     }
   } catch (e) {
-    showStatusBanner('', null);
+    showStatusBanner('Connection error. Please try again.', 'error');
     if (alertEl) {
       alertEl.className = 'alert alert-error show';
       alertEl.innerHTML = '<div class="alert-content">Connection error.</div>';
@@ -3442,7 +3454,7 @@ function showAlert(id, msg, type) { const e = document.getElementById(id); e.cla
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 
 var statusBannerAutoHideTimer = null;
-function showStatusBanner(msg, type) {
+function showStatusBanner(msg, type, noAutoHide) {
   var el = document.getElementById('status-banner');
   if (!el) return;
   if (statusBannerAutoHideTimer) { clearTimeout(statusBannerAutoHideTimer); statusBannerAutoHideTimer = null; }
@@ -3458,6 +3470,7 @@ function showStatusBanner(msg, type) {
   el.className = 'status-banner alert alert-' + alertType + ' show';
   el.innerHTML = content;
   el.classList.remove('hidden');
+  if (noAutoHide) return;
   if (alertType === 'success' || alertType === 'info') {
     statusBannerAutoHideTimer = setTimeout(function() { hideStatusBanner(); statusBannerAutoHideTimer = null; }, 7000);
   }
