@@ -470,7 +470,7 @@
         <div id="push-message-banner" class="banner-push-message hidden">
           <div class="banner-push-message-content" id="push-message-banner-content"></div>
           <div class="banner-push-message-actions">
-            <button type="button" class="btn btn-primary btn-sm" id="push-message-ok-btn" onclick="dismissPushMessage()">OK</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="push-message-ok-btn" onclick="dismissPushMessage()">OK</button>
           </div>
         </div>
         <div id="secrets-banner" class="banner-reminder hidden">
@@ -497,7 +497,7 @@
             <p class="banner-reminder-message">You have no Contact Pages. Use <strong>Add new contact page</strong> in the sidebar to create one.</p>
           </div>
           <div class="banner-reminder-actions">
-            <button type="button" class="btn btn-primary btn-sm" id="no-contact-pages-dismiss-btn" onclick="dismissNoContactPagesBanner()">OK</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="no-contact-pages-dismiss-btn" onclick="dismissNoContactPagesBanner()">OK</button>
           </div>
         </div>
         <div id="no-contact-pages-placeholder" class="no-contact-pages-placeholder hidden" role="status">No Contact Pages</div>
@@ -1941,7 +1941,7 @@ function updateMainContentVisibility() {
   var empty = contactPagesListData.length === 0;
   if (!empty) noContactPagesBannerDismissed = false;
   var showBanner = empty && !isCreateMode && !noContactPagesBannerDismissed;
-  var showPlaceholder = empty && !isCreateMode;
+  var showPlaceholder = empty && !isCreateMode && noContactPagesBannerDismissed;
   if (noBanner) noBanner.classList.toggle('hidden', !showBanner);
   if (placeholder) placeholder.classList.toggle('hidden', !showPlaceholder);
   if (welcomeCard) welcomeCard.classList.remove('hidden');
