@@ -1679,6 +1679,7 @@ function backToViewMode() {
 
 var contactPagesLimit = { canCreate: true, maxContactPages: 0, currentCount: 0 };
 var contactPagesListData = [];
+var sessionCheckIntervalId = null;
 
 function normalizePageItem(p) {
   var slug = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
@@ -2019,6 +2020,7 @@ async function authenticateWithStoredSession() {
       enterCreateMode();
     }
     // When contactPagesListData.length === 0, main area already shows "You have no Contact Pages" via updateMainContentVisibility()
+    if (typeof startSessionCheckInterval === 'function') startSessionCheckInterval();
   } catch (e) {
     sessionStorage.removeItem('edit_session');
     username = null;
@@ -2100,6 +2102,7 @@ async function continueAfterAuth() {
       enterCreateMode();
     }
     // When contactPagesListData.length === 0, main area shows "You have no Contact Pages" only
+    if (typeof startSessionCheckInterval === 'function') startSessionCheckInterval();
   } catch (e) {
     console.error('Auth error:', e);
     showAlert('auth-alert', 'Error after sign-in. Open Console (F12) for details.', 'error');
@@ -2863,6 +2866,7 @@ async function saveChangePasswordSq() {
 }
 
 function signOut(optionalMessage) {
+  if (sessionCheckIntervalId) { clearInterval(sessionCheckIntervalId); sessionCheckIntervalId = null; }
   sessionStorage.removeItem('edit_session');
   username = null;
   token = null;
@@ -2890,6 +2894,18 @@ async function handle401AccountDeleted(res) {
     return true;
   }
   return false;
+}
+
+/** Start periodic session check so deleted users are signed out within ~1 min. */
+function startSessionCheckInterval() {
+  if (sessionCheckIntervalId) clearInterval(sessionCheckIntervalId);
+  sessionCheckIntervalId = setInterval(async function() {
+    if (!username || !token) return;
+    try {
+      var r = await fetch(API + '/api/session-check', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (r.status === 401 && (await handle401AccountDeleted(r))) return;
+    } catch (_) {}
+  }, 600000);
 }
 
 function fillForm(h) {

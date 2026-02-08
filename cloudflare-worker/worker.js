@@ -360,6 +360,9 @@ export default {
       if (request.method === 'GET' && path === '/api/pages') {
         return await handleListPages(request, env);
       }
+      if (request.method === 'GET' && path === '/api/session-check') {
+        return await handleSessionCheck(request, env);
+      }
       if (request.method === 'GET' && path.startsWith('/api/contact-pages/')) {
         const username = normalizeUsername(path.replace('/api/contact-pages/', '').replace(/\/$/, ''));
         return await handleListContactPages(username, request, env);
@@ -1214,6 +1217,20 @@ async function validateAuth(username, request, env) {
 /** 401 response when user was deleted (folder no longer exists). Frontend should clear session and show sign-in. */
 function accountDeletedResponse() {
   return jsonResponse({ error: 'Your account has been deleted. You have been signed out.', code: 'ACCOUNT_DELETED' }, 401);
+}
+
+/** GET /api/session-check - Bearer required. Returns 200 { ok: true } or 401 ACCOUNT_DELETED if user was deleted. Used by frontend to invalidate session when account is deleted while user is logged in. */
+async function handleSessionCheck(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  return jsonResponse({ ok: true });
 }
 
 // ============ Page Routes ============
