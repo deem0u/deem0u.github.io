@@ -60,6 +60,45 @@ async function verifyAdminPassword(password, saltHex, hashHex) {
 /** All user accounts and contact pages live under this folder. */
 const USER_PAGES_PREFIX = 'user';
 
+/**
+ * KV key purpose descriptions (for admin UI and reports). Purpose and lastUsed are stored in Cloudflare KV key
+ * metadata (on the key itself). Metadata is only set when we put the key (same write, no extra ops). We read it
+ * from list() responses (no extra get per key).
+ */
+const KV_KEY_PURPOSES = {
+  'account_email:': 'Account email (login & recovery)',
+  'account_email_to_folder:': 'Email → username lookup',
+  'user_password_hash:': 'Login password hash',
+  'user_first_name:': 'Profile first name',
+  'user_last_name:': 'Profile last name',
+  'user_dob:': 'Date of birth (recovery)',
+  'user_recovery:': 'Security questions (recovery)',
+  'user_otp:': 'One-time password (recovery/2FA)',
+  'email_verified:': 'Email verified by user',
+  'email_verified_admin:': 'Email verified by admin',
+  'account_details_sent:': 'Account details email sent flag',
+  'divert_email:': 'Divert form emails for this user',
+  'max_contact_pages:': 'Max contact pages allowed',
+  'push_message:': 'Push notification message',
+  'otp:': 'Email verification OTP (short-lived)',
+  'otp_email_change:': 'OTP for email change (short-lived)',
+  'pending_email_change:': 'Pending email change (short-lived)',
+  'contact_page_name:': 'Contact page display name'
+};
+
+function getKvKeyPurpose(keyName) {
+  if (!keyName || typeof keyName !== 'string') return '';
+  for (const [prefix, purpose] of Object.entries(KV_KEY_PURPOSES)) {
+    if (keyName.startsWith(prefix)) return purpose;
+  }
+  return '';
+}
+
+/** Builds KV metadata object for a key (purpose, lastUsed). Use with put(..., { metadata: buildKvKeyMetadata(keyName) }). */
+function buildKvKeyMetadata(keyName) {
+  return { purpose: getKvKeyPurpose(keyName), lastUsed: new Date().toISOString() };
+}
+
 /** GitHub repo path for a contact page: user/<username>/<contactpagename>.html */
 function pagePath(username, contactpagename) {
   const name = (contactpagename || 'index').trim() || 'index';
@@ -980,17 +1019,17 @@ async function handleSignup(request, env) {
   const password = (body.password || '').trim();
   if (password.length >= 8) {
     const pwHash = await hashPassword(password);
-    await env.EDIT_KEYS_KV.put(`user_password_hash:${username}`, pwHash);
+    await env.EDIT_KEYS_KV.put(`user_password_hash:${username}`, pwHash, { metadata: buildKvKeyMetadata(`user_password_hash:${username}`) });
   }
-  await env.EDIT_KEYS_KV.put(`account_email_to_folder:${accountEmailLower}`, username);
-  await env.EDIT_KEYS_KV.put(`account_email:${username}`, accountEmail);
-  await env.EDIT_KEYS_KV.put(`user_first_name:${username}`, firstName);
-  await env.EDIT_KEYS_KV.put(`user_last_name:${username}`, surname);
-  await env.EDIT_KEYS_KV.put(`user_dob:${username}`, dobNorm);
+  await env.EDIT_KEYS_KV.put(`account_email_to_folder:${accountEmailLower}`, username, { metadata: buildKvKeyMetadata(`account_email_to_folder:${accountEmailLower}`) });
+  await env.EDIT_KEYS_KV.put(`account_email:${username}`, accountEmail, { metadata: buildKvKeyMetadata(`account_email:${username}`) });
+  await env.EDIT_KEYS_KV.put(`user_first_name:${username}`, firstName, { metadata: buildKvKeyMetadata(`user_first_name:${username}`) });
+  await env.EDIT_KEYS_KV.put(`user_last_name:${username}`, surname, { metadata: buildKvKeyMetadata(`user_last_name:${username}`) });
+  await env.EDIT_KEYS_KV.put(`user_dob:${username}`, dobNorm, { metadata: buildKvKeyMetadata(`user_dob:${username}`) });
   await env.EDIT_KEYS_KV.put(`user_recovery:${username}`, JSON.stringify({
     dob: dobNorm,
     secretQuestions: secretQuestions.map(q => ({ questionId: q.questionId, answer: (q.answer || '').trim() }))
-  }));
+  }), { metadata: buildKvKeyMetadata(`user_recovery:${username}`) });
 
   const secret = env.JWT_SECRET || env.SESSION_SECRET;
   const token = secret ? await signJwt({ username, exp: Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400) }, secret) : null;
@@ -1906,6 +1945,20 @@ async function listAllKvKeys(env, prefix) {
   return out;
 }
 
+/** List KV keys by prefix with metadata; handles pagination. Returns array of { name, metadata }. */
+async function listAllKvKeysWithMetadata(env, prefix) {
+  const out = [];
+  let cursor = undefined;
+  do {
+    const opts = { prefix };
+    if (cursor) opts.cursor = cursor;
+    const list = await env.EDIT_KEYS_KV.list(opts);
+    for (const k of list.keys) out.push({ name: k.name, metadata: k.metadata || null });
+    cursor = list.list_complete ? undefined : list.cursor;
+  } while (cursor);
+  return out;
+}
+
 /** Collects orphaned KV keys (user no longer in GitHub) and expired admin temp keys. Returns { orphanedKeys, expiredTemp, validUsernamesCount, githubUnavailable? }. */
 async function collectKvOrphans(env) {
   const validUsernames = await getValidUsernamesFromGitHub(env);
@@ -2031,7 +2084,7 @@ async function handleKvCleanup(request, env) {
   });
 }
 
-/** Collects all KV key names that belong to the given username or any "old" username (same account email, e.g. pre-rename). Returns { keys: [ { name, orphaned, username } ], validUsernamesCount }. Orphaned = folder not in GitHub. */
+/** Collects all KV key names that belong to the given username or any "old" username (same account email, e.g. pre-rename). Returns { keys: [ { name, orphaned, username, purpose, status, lastUsed } ], validUsernamesCount }. purpose/lastUsed come from key metadata (Cloudflare KV metadata on the key) or fallback to getKvKeyPurpose; status = 'active' | 'orphaned'. */
 async function collectKvUserKeys(env, username) {
   const u = username.trim().toLowerCase();
   const validUsernames = await getValidUsernamesFromGitHub(env);
@@ -2050,10 +2103,10 @@ async function collectKvUserKeys(env, username) {
   }
   const keyEntries = [];
   const seen = new Set();
-  const add = (name, suffixLower) => {
+  const add = (name, suffixLower, keyMeta) => {
     if (seen.has(name)) return;
     seen.add(name);
-    keyEntries.push({ name, orphaned: !validSet.has(suffixLower), username: suffixLower });
+    keyEntries.push({ name, orphaned: !validSet.has(suffixLower), username: suffixLower, metadata: keyMeta || null });
   };
   const prefixes = [
     'account_email:', 'user_password_hash:', 'user_first_name:', 'user_last_name:', 'user_dob:', 'user_recovery:',
@@ -2061,22 +2114,30 @@ async function collectKvUserKeys(env, username) {
     'divert_email:', 'max_contact_pages:', 'otp_email_change:', 'pending_email_change:'
   ];
   for (const prefix of prefixes) {
-    const keys = await listAllKvKeys(env, prefix);
-    for (const name of keys) {
-      const suffix = (name.slice(prefix.length).split(':')[0] || '').toLowerCase();
-      if (sameEmailUsernames.has(suffix)) add(name, suffix);
+    const keysWithMeta = await listAllKvKeysWithMetadata(env, prefix);
+    for (const { name, metadata } of keysWithMeta) {
+      const suffix = (name.slice(prefix.length).split(':')[0] || '').trim().toLowerCase();
+      if (sameEmailUsernames.has(suffix)) add(name, suffix, metadata);
     }
   }
   for (const sameU of sameEmailUsernames) {
-    const contactKeys = await listAllKvKeys(env, 'contact_page_name:' + sameU + ':');
-    for (const name of contactKeys) add(name, sameU);
+    const contactKeysWithMeta = await listAllKvKeysWithMetadata(env, 'contact_page_name:' + sameU + ':');
+    for (const { name, metadata } of contactKeysWithMeta) add(name, sameU, metadata);
   }
-  const toFolderKeys = await listAllKvKeys(env, 'account_email_to_folder:');
-  for (const name of toFolderKeys) {
+  const toFolderKeysWithMeta = await listAllKvKeysWithMetadata(env, 'account_email_to_folder:');
+  for (const { name, metadata } of toFolderKeysWithMeta) {
     const folder = (await env.EDIT_KEYS_KV.get(name) || '').trim().toLowerCase();
-    if (sameEmailUsernames.has(folder)) add(name, folder);
+    if (sameEmailUsernames.has(folder)) add(name, folder, metadata);
   }
-  return { keys: keyEntries, validUsernamesCount: validUsernames.length };
+  const enriched = [];
+  for (const k of keyEntries) {
+    const meta = k.metadata && typeof k.metadata === 'object' ? k.metadata : null;
+    const purpose = (meta && meta.purpose) || getKvKeyPurpose(k.name);
+    const status = k.orphaned ? 'orphaned' : 'active';
+    const lastUsed = (meta && meta.lastUsed) || null;
+    enriched.push({ name: k.name, orphaned: k.orphaned, username: k.username, purpose, status, lastUsed });
+  }
+  return { keys: enriched, validUsernamesCount: validUsernames.length };
 }
 
 /** GET /api/admin/kv-user-keys?username=X - Admin only. Returns { keys: [ { name, orphaned, username } ], validUsernamesCount }. */
@@ -2101,9 +2162,7 @@ async function handleKvUserPurge(request, env) {
   const allowedSet = new Set(keyList.map(k => k.name));
   const toDelete = keysToDelete.filter(k => allowedSet.has(k));
   if (!dryRun && toDelete.length > 0) {
-    for (const key of toDelete) {
-      await env.EDIT_KEYS_KV.delete(key);
-    }
+    for (const key of toDelete) await env.EDIT_KEYS_KV.delete(key);
   }
   return jsonResponse({ deleted: toDelete.length, deletedKeys: toDelete, dryRun });
 }

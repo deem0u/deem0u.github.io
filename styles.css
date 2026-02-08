@@ -1172,25 +1172,29 @@ body {
 }
 
 .searchable-select-dropdown-contact-pages .searchable-select-options {
-  max-height: 120px;
+  max-height: 200px;
   padding: 0.35rem 0;
 }
 .searchable-select-dropdown-contact-pages .searchable-select-option {
   padding: 0.4rem 0.6rem;
   font-size: 0.8125rem;
   line-height: 1.25;
+  min-height: 2.75rem;
+  box-sizing: border-box;
   transition: background 0.15s, color 0.15s;
 }
-/* Two-line option: name on first line, slug on second */
+/* Two-line option: name on first line, slug on second — consistent row height */
 .searchable-select-dropdown-contact-pages .contact-page-option {
   display: block;
   white-space: normal;
+  width: 100%;
 }
 .searchable-select-dropdown-contact-pages .contact-page-option-name {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.25;
 }
 .searchable-select-dropdown-contact-pages .contact-page-option-slug {
   display: block;

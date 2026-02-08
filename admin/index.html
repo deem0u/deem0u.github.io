@@ -4433,33 +4433,65 @@ async function openKvPurgeModal(folder) {
     var currentUserLower = (kvPurgeUsername || '').trim().toLowerCase();
     keys.forEach(function(k) {
       var label = document.createElement('label');
-      label.className = 'toggle-label';
-      label.style.cssText = 'display:flex; align-items:center; gap:0.5rem; cursor:pointer; padding:0.25rem 0;';
+      label.className = 'toggle-label kv-purge-key-row';
+      label.style.cssText = 'display:flex; align-items:flex-start; gap:0.5rem; cursor:pointer; padding:0.35rem 0;';
       var cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.className = 'kv-purge-key-cb';
       cb.dataset.key = k.name;
       cb.checked = true;
-      var span = document.createElement('span');
-      span.className = 'font-mono';
-      span.style.fontSize = '0.8rem';
-      span.textContent = k.name;
+      var wrap = document.createElement('span');
+      wrap.style.flex = '1';
+      wrap.style.minWidth = '0';
+      var nameLine = document.createElement('span');
+      nameLine.style.display = 'block';
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'font-mono';
+      nameSpan.style.fontSize = '0.8rem';
+      nameSpan.textContent = k.name;
+      nameLine.appendChild(nameSpan);
       if (k.orphaned) {
         var badge = document.createElement('span');
         badge.className = 'badge badge-pink';
         badge.style.marginLeft = '0.35rem';
         badge.textContent = 'Orphaned';
-        span.appendChild(badge);
+        nameLine.appendChild(badge);
       }
       if (k.username && k.username !== currentUserLower) {
         var oldBadge = document.createElement('span');
         oldBadge.className = 'badge badge-secondary';
         oldBadge.style.marginLeft = '0.35rem';
         oldBadge.textContent = 'Old username';
-        span.appendChild(oldBadge);
+        nameLine.appendChild(oldBadge);
       }
+      wrap.appendChild(nameLine);
+      if (k.purpose) {
+        var purposeSpan = document.createElement('span');
+        purposeSpan.className = 'kv-purge-key-purpose';
+        purposeSpan.style.display = 'block';
+        purposeSpan.style.fontSize = '0.75rem';
+        purposeSpan.style.color = 'var(--color-text-muted, #666)';
+        purposeSpan.style.marginTop = '0.15rem';
+        purposeSpan.textContent = k.purpose;
+        wrap.appendChild(purposeSpan);
+      }
+      var metaSpan = document.createElement('span');
+      metaSpan.style.display = 'block';
+      metaSpan.style.fontSize = '0.7rem';
+      metaSpan.style.color = 'var(--color-text-muted, #888)';
+      metaSpan.style.marginTop = '0.1rem';
+      var metaParts = [];
+      if (k.status) metaParts.push('Status: ' + (k.status === 'orphaned' ? 'Orphaned' : 'Active'));
+      if (k.lastUsed) {
+        try {
+          var d = new Date(k.lastUsed);
+          if (!isNaN(d.getTime())) metaParts.push('Last used: ' + d.toLocaleString());
+        } catch (e) {}
+      }
+      metaSpan.textContent = metaParts.join(' · ');
+      wrap.appendChild(metaSpan);
       label.appendChild(cb);
-      label.appendChild(span);
+      label.appendChild(wrap);
       listEl.appendChild(label);
     });
     document.getElementById('kv-purge-content').classList.remove('hidden');
