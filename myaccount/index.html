@@ -2479,7 +2479,7 @@ async function saveProfileFromStrip() {
       var rRename = await fetch(API + "/api/profile/rename", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify({ newUsername: newUn })
+        body: JSON.stringify({ newUsername: newUn, firstName: cur.firstName, lastName: cur.lastName })
       });
       var dRename = await rRename.json();
       if (rRename.ok && dRename.success && dRename.token && dRename.username) {

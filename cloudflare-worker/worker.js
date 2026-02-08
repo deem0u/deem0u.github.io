@@ -1720,10 +1720,10 @@ async function handleAdminCreateUser(request, env) {
 }
 
 /**
- * POST /api/admin/rename-user (admin only). Body: { oldUsername, newUsername }.
- * Moves account under new username: creates new GitHub folder, copies all files (including index.gitkeep),
- * migrates all user KV (profile, secrets, divert, max_pages, push_message, otp, etc.), updates
- * account_email_to_folder, then removes old folder. GitHub remains source of truth for contact page URLs.
+ * POST /api/admin/rename-user (admin only). Body: { oldUsername, newUsername [, firstName, lastName, accountEmail ] }.
+ * Moves account under new username: new GitHub folder, copies all files, migrates all user KV, updates
+ * account_email_to_folder, removes old folder. If firstName, lastName, or accountEmail are provided, they are
+ * applied to the new username so profile changes apply in one request.
  */
 async function handleAdminRenameUser(request, env) {
   if (!await isAdmin(request, env)) {
@@ -1819,6 +1819,18 @@ async function handleAdminRenameUser(request, env) {
       if (val != null) {
         await env.EDIT_KEYS_KV.put(`contact_page_name:${newUsername}:${slug}`, val);
         await env.EDIT_KEYS_KV.delete(key.name);
+      }
+    }
+    // Optional: apply first name, last name, account email to new username in same request
+    if (body.firstName !== undefined) await env.EDIT_KEYS_KV.put('user_first_name:' + newUsername, (body.firstName || '').trim());
+    if (body.lastName !== undefined) await env.EDIT_KEYS_KV.put('user_last_name:' + newUsername, (body.lastName || '').trim());
+    if (body.accountEmail !== undefined && typeof body.accountEmail === 'string') {
+      const newEmail = body.accountEmail.trim();
+      if (newEmail.includes('@')) {
+        const oldEmail = await env.EDIT_KEYS_KV.get('account_email:' + newUsername);
+        if (oldEmail) await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldEmail.toLowerCase().trim());
+        await env.EDIT_KEYS_KV.put('account_email:' + newUsername, newEmail);
+        await env.EDIT_KEYS_KV.put('account_email_to_folder:' + newEmail.toLowerCase(), newUsername);
       }
     }
   }
@@ -3466,7 +3478,7 @@ async function handleChangePasswordAndSq(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** POST /api/profile/rename - Bearer required. Body: { newUsername }. Moves account under new username: new GitHub folder with all files (incl. index.gitkeep), all user KV migrated (profile, secrets, divert, max_pages, push_message, otp, etc.), account_email_to_folder updated, old folder removed. Returns new JWT. */
+/** POST /api/profile/rename - Bearer required. Body: { newUsername [, firstName, lastName ] }. Moves account under new username; all KV migrated. If firstName/lastName provided, applied to new username so profile changes apply in one request. Returns new JWT. */
 async function handleProfileRename(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
@@ -3561,6 +3573,9 @@ async function handleProfileRename(request, env) {
       await env.EDIT_KEYS_KV.delete(key.name);
     }
   }
+  // Optional: apply first name, last name to new username in same request (account email stays in PUT profile for OTP flow)
+  if (body.firstName !== undefined) await env.EDIT_KEYS_KV.put('user_first_name:' + newUsername, (body.firstName || '').trim());
+  if (body.lastName !== undefined) await env.EDIT_KEYS_KV.put('user_last_name:' + newUsername, (body.lastName || '').trim());
   const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
   const newToken = await signJwt({ username: newUsername, exp }, secret);
   return jsonResponse({ success: true, token: newToken, username: newUsername });

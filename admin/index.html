@@ -4676,7 +4676,7 @@ async function saveProfile() {
       var renameRes = await fetch(API + '/api/admin/rename-user', {
         method: 'POST',
         headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ oldUsername: currentUsername, newUsername: newUsername })
+        body: JSON.stringify({ oldUsername: currentUsername, newUsername: newUsername, firstName: firstName, lastName: lastName })
       });
       var renameData = await renameRes.json();
       if (!renameRes.ok) {
