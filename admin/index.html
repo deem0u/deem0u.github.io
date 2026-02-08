@@ -2619,24 +2619,36 @@ async function toggleContactPagesSelect(username) {
     try {
       const r = await fetch(`${API}/api/contact-pages/${encodeURIComponent(username)}`, { headers: { 'X-Admin-Key': adminKey } });
       const d = await r.json();
-      const raw = (d.contactPages && d.contactPages.length) ? d.contactPages : [{ slug: 'index', name: 'Main (index)' }];
+      const raw = (d.contactPages && Array.isArray(d.contactPages)) ? d.contactPages : [];
       const filtered = raw.filter(function(item) { var s = typeof item === 'string' ? item : (item.slug || 'index'); return s !== 'index'; });
-      optionsEl.innerHTML = filtered.map(item => {
-        const slug = typeof item === 'string' ? item : (item.slug || 'index');
-        const name = typeof item === 'string' ? (item === 'index' ? 'Main' : item) : (item.name || (slug === 'index' ? 'Main' : slug));
-        const displayLabel = name + ' (' + slug + ')';
-        return `<div class="searchable-select-option contact-page-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(displayLabel).replace(/"/g, '&quot;')}" data-name="${String(name).replace(/"/g, '&quot;')}"><span class="contact-page-option-name">${escapeHtml(name)}</span><span class="contact-page-option-slug">${escapeHtml(slug)}</span></div>`;
-      }).join('');
-      optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
-        opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.name || opt.dataset.value));
-      });
-      var currentSelection = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
-      var hasIndex = raw.some(function(item) { var s = typeof item === 'string' ? item : (item.slug || 'index'); return s === 'index'; });
-      if (currentSelection === 'index' && !hasIndex && filtered.length > 0) {
-        var first = filtered[0];
-        var firstSlug = typeof first === 'string' ? first : (first.slug || 'index');
-        var firstName = typeof first === 'string' ? (first === 'index' ? 'Main' : first) : (first.name || (firstSlug === 'index' ? 'Main' : firstSlug));
-        selectContactPage(username, firstSlug, firstName);
+      const hasIndex = raw.some(function(item) { var s = typeof item === 'string' ? item : (item.slug || 'index'); return s === 'index'; });
+      if (raw.length === 0) {
+        optionsEl.innerHTML = '<div class="searchable-select-empty">No contact pages</div>';
+        const nameEl = document.getElementById('contact-pages-text-' + username);
+        const slugEl = document.getElementById('contact-pages-slug-' + username);
+        if (trigger) trigger.setAttribute('data-selected-contact', '');
+        if (nameEl) nameEl.textContent = 'No Contact Pages';
+        if (slugEl) slugEl.textContent = '';
+      } else {
+        optionsEl.innerHTML = filtered.map(item => {
+          const slug = typeof item === 'string' ? item : (item.slug || 'index');
+          const name = typeof item === 'string' ? (item === 'index' ? 'Main' : item) : (item.name || (slug === 'index' ? 'Main' : slug));
+          const displayLabel = name + ' (' + slug + ')';
+          return `<div class="searchable-select-option contact-page-option" data-value="${String(slug).replace(/"/g, '&quot;')}" data-label="${String(displayLabel).replace(/"/g, '&quot;')}" data-name="${String(name).replace(/"/g, '&quot;')}"><span class="contact-page-option-name">${escapeHtml(name)}</span><span class="contact-page-option-slug">${escapeHtml(slug)}</span></div>`;
+        }).join('');
+        if (hasIndex) {
+          optionsEl.innerHTML = '<div class="searchable-select-option contact-page-option" data-value="index" data-label="Main (index)" data-name="Main"><span class="contact-page-option-name">Main</span><span class="contact-page-option-slug">index</span></div>' + optionsEl.innerHTML;
+        }
+        optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
+          opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.name || opt.dataset.value));
+        });
+        var currentSelection = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
+        if (currentSelection === 'index' && !hasIndex && filtered.length > 0) {
+          var first = filtered[0];
+          var firstSlug = typeof first === 'string' ? first : (first.slug || 'index');
+          var firstName = typeof first === 'string' ? (first === 'index' ? 'Main' : first) : (first.name || (firstSlug === 'index' ? 'Main' : firstSlug));
+          selectContactPage(username, firstSlug, firstName);
+        }
       }
     } catch (e) {
       optionsEl.innerHTML = '<div class="searchable-select-empty">Failed to load</div>';
