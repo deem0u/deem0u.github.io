@@ -473,7 +473,6 @@
         </div>
         <div id="secrets-banner" class="banner-reminder hidden">
           <div class="banner-reminder-content">
-            <p class="banner-reminder-title">There are some items that need your attention</p>
             <p class="banner-reminder-message">To enable Access Recovery for your account, please set the following:</p>
             <ul id="secrets-missing-list"></ul>
           </div>
@@ -2274,8 +2273,10 @@ async function loadProfile() {
     document.getElementById("profile-dob").textContent = profileData.dob || profileData.dobMasked || "—";
     var badge = document.getElementById("profile-verified-badge");
     if (badge) {
-      badge.textContent = profileData.emailVerified ? "Verified" : "Not Verified";
-      badge.className = "badge " + (profileData.emailVerified ? "badge-cyan" : "badge-pink");
+      var hasEmail = !!(profileData.accountEmail && profileData.accountEmail.trim());
+      var verified = hasEmail && profileData.emailVerified;
+      badge.textContent = verified ? "Verified" : "Not Verified";
+      badge.className = "badge " + (verified ? "badge-cyan" : "badge-pink");
       badge.classList.remove("hidden");
     }
     updateWelcomeUserName();
@@ -2299,6 +2300,12 @@ function applyUnverifiedRestriction() {
     if (banner) banner.classList.remove("hidden");
     if (editBtn) { editBtn.disabled = true; editBtn.setAttribute('title', unverifiedTooltip); }
     if (newPageBtn) { newPageBtn.disabled = true; newPageBtn.setAttribute('title', unverifiedTooltip); }
+    var verifyEmailBtn = document.getElementById('verify-email-btn');
+    var hasAccountEmail = !!(profileData.accountEmail && profileData.accountEmail.trim());
+    if (verifyEmailBtn) {
+      verifyEmailBtn.disabled = !hasAccountEmail;
+      verifyEmailBtn.setAttribute('title', hasAccountEmail ? unverifiedTooltip : 'Set your Account Email in Edit Profile first.');
+    }
     if (bannerText) {
       bannerText.textContent = (verifyEmailContext === 'emailChange' && pendingNewEmail)
         ? 'Verify your new email to edit your Contact Page and add new contact pages.'
