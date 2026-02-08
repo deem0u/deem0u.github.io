@@ -1682,7 +1682,9 @@ async function handleAdminCreateUser(request, env) {
 
 /**
  * POST /api/admin/rename-user (admin only). Body: { oldUsername, newUsername }.
- * Renames user folder on GitHub and migrates all KV keys to new username.
+ * Moves account under new username: creates new GitHub folder, copies all files (including index.gitkeep),
+ * migrates all user KV (profile, secrets, divert, max_pages, push_message, otp, etc.), updates
+ * account_email_to_folder, then removes old folder. GitHub remains source of truth for contact page URLs.
  */
 async function handleAdminRenameUser(request, env) {
   if (!await isAdmin(request, env)) {
@@ -1715,9 +1717,9 @@ async function handleAdminRenameUser(request, env) {
   );
   if (!listRes.ok) return jsonResponse({ error: 'User folder not found' }, 404);
   const files = await listRes.json();
-  const htmlFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name && f.name.endsWith('.html')) : [];
+  const allFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name) : [];
 
-  for (const file of htmlFiles) {
+  for (const file of allFiles) {
     const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
     const getRes = await fetch(
       `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}?ref=${CONFIG.branch}`,
@@ -1740,7 +1742,7 @@ async function handleAdminRenameUser(request, env) {
       return jsonResponse({ error: err.message || 'Failed to create file: ' + file.name }, putRes.status);
     }
   }
-  for (const file of htmlFiles) {
+  for (const file of allFiles) {
     const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
     const delRes = await fetch(
       `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}`,
@@ -1756,7 +1758,8 @@ async function handleAdminRenameUser(request, env) {
   if (env.EDIT_KEYS_KV) {
     const kvKeys = [
       'account_email', 'user_first_name', 'user_last_name', 'user_dob', 'user_recovery', 'user_password_hash',
-      'email_verified', 'account_details_sent'
+      'email_verified', 'email_verified_admin', 'account_details_sent',
+      'divert_email', 'max_contact_pages', 'push_message', 'user_otp', 'otp', 'otp_email_change', 'pending_email_change'
     ];
     for (const prefix of kvKeys) {
       const val = await env.EDIT_KEYS_KV.get(prefix + ':' + oldUsername);
@@ -3404,7 +3407,7 @@ async function handleChangePasswordAndSq(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** POST /api/profile/rename - Bearer required. Body: { newUsername } (currentPassword optional). Renames user folder and KV to newUsername. Validates format, reserved, uniqueness. Returns new JWT. */
+/** POST /api/profile/rename - Bearer required. Body: { newUsername }. Moves account under new username: new GitHub folder with all files (incl. index.gitkeep), all user KV migrated (profile, secrets, divert, max_pages, push_message, otp, etc.), account_email_to_folder updated, old folder removed. Returns new JWT. */
 async function handleProfileRename(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
@@ -3437,8 +3440,8 @@ async function handleProfileRename(request, env) {
   );
   if (!listRes.ok) return jsonResponse({ error: 'User folder not found' }, 404);
   const files = await listRes.json();
-  const htmlFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name && f.name.endsWith('.html')) : [];
-  for (const file of htmlFiles) {
+  const allFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name) : [];
+  for (const file of allFiles) {
     const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
     const getRes = await fetch(
       `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}?ref=${CONFIG.branch}`,
@@ -3461,7 +3464,7 @@ async function handleProfileRename(request, env) {
       return jsonResponse({ error: err.message || 'Failed to create file: ' + file.name }, putRes.status);
     }
   }
-  for (const file of htmlFiles) {
+  for (const file of allFiles) {
     const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
     const delRes = await fetch(
       `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}`,
@@ -3475,7 +3478,8 @@ async function handleProfileRename(request, env) {
   }
   const kvKeys = [
     'account_email', 'user_first_name', 'user_last_name', 'user_dob', 'user_recovery', 'user_password_hash',
-    'email_verified', 'email_verified_admin', 'account_details_sent'
+    'email_verified', 'email_verified_admin', 'account_details_sent',
+    'divert_email', 'max_contact_pages', 'push_message', 'user_otp', 'otp', 'otp_email_change', 'pending_email_change'
   ];
   for (const prefix of kvKeys) {
     const val = await env.EDIT_KEYS_KV.get(prefix + ':' + oldUsername);

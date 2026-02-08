@@ -2642,12 +2642,17 @@ async function toggleContactPagesSelect(username) {
         optionsEl.querySelectorAll('.searchable-select-option').forEach(opt => {
           opt.addEventListener('click', () => selectContactPage(username, opt.dataset.value, opt.dataset.name || opt.dataset.value));
         });
-        var currentSelection = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
-        if (currentSelection === 'index' && !hasIndex && filtered.length > 0) {
-          var first = filtered[0];
-          var firstSlug = typeof first === 'string' ? first : (first.slug || 'index');
-          var firstName = typeof first === 'string' ? (first === 'index' ? 'Main' : first) : (first.name || (firstSlug === 'index' ? 'Main' : firstSlug));
-          selectContactPage(username, firstSlug, firstName);
+        var currentSelection = (trigger && trigger.getAttribute('data-selected-contact')) || '';
+        var needDefault = !currentSelection || (currentSelection === 'index' && !hasIndex);
+        if (needDefault && (hasIndex || filtered.length > 0)) {
+          if (hasIndex) {
+            selectContactPage(username, 'index', 'Main');
+          } else {
+            var first = filtered[0];
+            var firstSlug = typeof first === 'string' ? first : (first.slug || 'index');
+            var firstName = typeof first === 'string' ? (first === 'index' ? 'Main' : first) : (first.name || (firstSlug === 'index' ? 'Main' : firstSlug));
+            selectContactPage(username, firstSlug, firstName);
+          }
         }
       }
     } catch (e) {
@@ -2776,10 +2781,10 @@ function renderList(t) {
             <span class="action-row-label">Contact Page</span>
             <div class="action-row-buttons action-row-with-select">
               <div class="searchable-select searchable-select-inline searchable-select-contact-pages-trigger" id="contact-pages-container-${f}">
-                <button type="button" class="searchable-select-trigger searchable-select-trigger-sm contact-page-trigger-btn" id="contact-pages-trigger-${f}" data-selected-contact="index" onclick="toggleContactPagesSelect('${f}')">
+                <button type="button" class="searchable-select-trigger searchable-select-trigger-sm contact-page-trigger-btn" id="contact-pages-trigger-${f}" data-selected-contact="" onclick="toggleContactPagesSelect('${f}')">
                   <span class="contact-page-trigger-content">
-                    <span id="contact-pages-text-${f}" class="contact-page-trigger-name">Main</span>
-                    <span id="contact-pages-slug-${f}" class="contact-page-trigger-slug">index</span>
+                    <span id="contact-pages-text-${f}" class="contact-page-trigger-name">Select…</span>
+                    <span id="contact-pages-slug-${f}" class="contact-page-trigger-slug"></span>
                   </span>
                   <span class="contact-page-trigger-chevron" aria-hidden="true">▼</span>
                 </button>
