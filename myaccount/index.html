@@ -471,9 +471,6 @@
             <button type="button" class="btn btn-primary btn-sm" id="push-message-ok-btn" onclick="dismissPushMessage()">OK</button>
           </div>
         </div>
-        <div id="unverified-banner" class="banner-reminder hidden">
-          <span id="unverified-banner-text"><strong>Verify your email</strong> to edit your Contact Page and add new contact pages.</span> <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
-        </div>
         <div id="secrets-banner" class="banner-reminder hidden">
           <div class="banner-reminder-content">
             <p class="banner-reminder-title">There are some items that need your attention</p>
@@ -484,9 +481,20 @@
             <button type="button" class="btn btn-primary btn-sm" onclick="showEditSecretsModal()">Set Secrets</button>
           </div>
         </div>
+        <div id="unverified-banner" class="banner-reminder hidden">
+          <div class="banner-reminder-content">
+            <p class="banner-reminder-title">Verify your email</p>
+            <p class="banner-reminder-message" id="unverified-banner-text">Verify your email to edit your Contact Page and add new contact pages.</p>
+          </div>
+          <div class="banner-reminder-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
+          </div>
+        </div>
         <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
-        <div id="no-contact-pages-banner" class="no-contact-pages-banner hidden" role="status">
-          You have no Contact Pages
+        <div id="no-contact-pages-banner" class="banner-reminder hidden" role="status">
+          <div class="banner-reminder-content">
+            <p class="banner-reminder-message">You have no Contact Pages. Use <strong>Add new contact page</strong> in the sidebar to create one.</p>
+          </div>
         </div>
         <div class="card" id="editor-contact-card">
           <div id="editor-contact-view" class="editor-contact-view">
@@ -2289,9 +2297,9 @@ function applyUnverifiedRestriction() {
     if (editBtn) { editBtn.disabled = true; editBtn.setAttribute('title', unverifiedTooltip); }
     if (newPageBtn) { newPageBtn.disabled = true; newPageBtn.setAttribute('title', unverifiedTooltip); }
     if (bannerText) {
-      bannerText.innerHTML = (verifyEmailContext === 'emailChange' && pendingNewEmail)
-        ? 'Verify your new email to edit your Contact Page and add new contact pages. '
-        : '<strong>Verify your email</strong> to edit your Contact Page and add new contact pages. ';
+      bannerText.textContent = (verifyEmailContext === 'emailChange' && pendingNewEmail)
+        ? 'Verify your new email to edit your Contact Page and add new contact pages.'
+        : 'To edit your Contact Page and add new contact pages, verify your email.';
     }
     var editPanel = document.getElementById("editor-contact-edit");
     if (editPanel && editPanel.classList.contains("show")) enterViewMode();
