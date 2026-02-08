@@ -61,7 +61,8 @@
   .banner-push-message .banner-push-message-actions button { background: rgba(26, 197, 176, 0.2); border: 1px solid var(--status-success-border); color: var(--accent-teal); padding: 0.35rem 0.75rem; font-size: 0.875rem; border-radius: 6px; cursor: pointer; }
   .banner-push-message .banner-push-message-actions button:hover { background: rgba(26, 197, 176, 0.35); border-color: var(--status-success-border); }
   .banner-reminder,
-  .banner-push-message { font-size: var(--text-sm, 0.875rem); }
+  .banner-push-message { font-size: var(--text-sm, 0.875rem); align-items: center; }
+  .banner-push-message .banner-push-message-actions { margin-top: 0; }
   .banner-reminder .banner-reminder-message,
   .banner-reminder .banner-reminder-title,
   .banner-reminder .banner-reminder-content ul,
@@ -280,7 +281,10 @@
       </div>
     </header>
 
-    <main id="screen-auth" class="app-centered">
+    <main id="screen-loading" class="app-centered hidden" aria-live="polite" style="padding:2rem;text-align:center;color:var(--color-text-secondary);">
+      <span class="spinner"></span> Loading…
+    </main>
+    <main id="screen-auth" class="app-centered hidden">
       <div class="auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Sign In</h1>
@@ -1306,6 +1310,22 @@ function selectCountryEdit(value) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  var hasStoredSession = false;
+  try {
+    var s = JSON.parse(sessionStorage.getItem('edit_session') || '{}');
+    if ((s.username || s.folder) && s.token) {
+      username = s.username || s.folder;
+      token = s.token;
+      hasStoredSession = true;
+      setHeaderAndTitleForUser(username);
+      document.getElementById('screen-loading').classList.remove('hidden');
+      authenticateWithStoredSession();
+    } else {
+      document.getElementById('screen-auth').classList.remove('hidden');
+    }
+  } catch (e) {
+    document.getElementById('screen-auth').classList.remove('hidden');
+  }
   try {
     var adminKey = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_key') : null;
     var headers = {};
@@ -1521,15 +1541,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
     }
   });
-  try {
-    var s = JSON.parse(sessionStorage.getItem('edit_session') || '{}');
-    if ((s.username || s.folder) && s.token) {
-      username = s.username || s.folder;
-      token = s.token;
-      setHeaderAndTitleForUser(username);
-      authenticateWithStoredSession();
-    }
-  } catch (e) {}
 });
 
 
@@ -2061,6 +2072,7 @@ async function authenticateWithStoredSession() {
     } else {
       throw new Error('Session expired');
     }
+    document.getElementById('screen-loading').classList.add('hidden');
     document.getElementById('screen-auth').classList.add('hidden');
     document.getElementById('signout-btn').classList.remove('hidden');
     document.getElementById('screen-editor').classList.remove('hidden');
@@ -2100,6 +2112,9 @@ async function authenticateWithStoredSession() {
     sessionStorage.removeItem('edit_session');
     username = null;
     token = null;
+    document.getElementById('screen-loading').classList.add('hidden');
+    document.getElementById('screen-auth').classList.remove('hidden');
+    document.getElementById('screen-editor').classList.add('hidden');
   }
 }
 
@@ -2979,6 +2994,7 @@ function signOut(optionalMessage) {
   currentSha = null;
   clearHeaderAndTitleToDefault();
   document.getElementById('signout-btn').classList.add('hidden');
+  document.getElementById('screen-loading').classList.add('hidden');
   document.getElementById('screen-editor').classList.add('hidden');
   document.getElementById('screen-auth').classList.remove('hidden');
   var authEmail = document.getElementById('auth-account-email');

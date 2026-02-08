@@ -41,6 +41,9 @@
       </div>
     </header>
 
+    <main id="screen-loading" class="app-centered" aria-live="polite" style="padding:2rem;text-align:center;color:var(--color-text-secondary);">
+      <span class="spinner"></span> Loading…
+    </main>
     <main id="screen-setup" class="app-centered hidden">
       <div class="auth-card">
         <div class="auth-header">
@@ -69,7 +72,7 @@
       </div>
     </main>
 
-    <main id="screen-login" class="app-centered">
+    <main id="screen-login" class="app-centered hidden">
       <div class="auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Sign In</h1>
@@ -1319,9 +1322,11 @@ function attachContactNumberMask() {
 }
 
 function showScreen(s) {
-  document.querySelectorAll('main').forEach(el => el.classList.add('hidden'));
-  document.getElementById(`screen-${s}`).classList.remove('hidden');
-  document.getElementById('logout-btn').classList.toggle('hidden', s !== 'dashboard');
+  document.querySelectorAll('main').forEach(function(el) { el.classList.add('hidden'); });
+  var target = document.getElementById('screen-' + s);
+  if (target) target.classList.remove('hidden');
+  var logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) logoutBtn.classList.toggle('hidden', s !== 'dashboard');
 }
 
 function logout() { localStorage.removeItem('admin_key'); adminKey = null; showScreen('login'); }
