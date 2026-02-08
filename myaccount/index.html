@@ -1654,7 +1654,9 @@ function updateFormDirtyState() {
 }
 
 function enterEditMode() {
-  if (!profileData || !profileData.emailVerified) return;
+  if (!profileData) return;
+  var hasAccountEmail = !!(profileData.accountEmail && profileData.accountEmail.trim());
+  if (!hasAccountEmail || !profileData.emailVerified) return;
   document.getElementById('editor-contact-view').classList.add('hidden');
   document.getElementById('editor-contact-edit').classList.add('show');
   var delBtn = document.getElementById('form-delete-page-btn');
@@ -1843,9 +1845,10 @@ async function fetchContactPagesList() {
       if (list) list.classList.remove('hidden');
       if (dropdownWrap) dropdownWrap.classList.remove('show');
       list.innerHTML = '';
-      if (newBtn) { newBtn.classList.remove('hidden'); newBtn.disabled = false; }
+      if (newBtn) newBtn.classList.remove('hidden');
       if (limitMsg) { limitMsg.classList.add('hidden'); limitMsg.textContent = ''; }
       section.classList.remove('hidden');
+      if (typeof applyUnverifiedRestriction === 'function') applyUnverifiedRestriction();
       updateMainContentVisibility();
       return;
     }
@@ -1887,6 +1890,7 @@ async function fetchContactPagesList() {
         newBtn.disabled = true;
       }
     }
+    if (typeof applyUnverifiedRestriction === 'function') applyUnverifiedRestriction();
     if (limitMsg) {
       if (!contactPagesLimit.canCreate && contactPagesLimit.maxContactPages > 0) {
         var msg = 'Maximum of ' + contactPagesLimit.maxContactPages + ' contact pages. Delete one to add another.';
@@ -1909,9 +1913,10 @@ async function fetchContactPagesList() {
     if (dropdownWrap) dropdownWrap.classList.remove('show');
     list.classList.remove('hidden');
     list.innerHTML = '';
-    if (newBtn) { newBtn.classList.remove('hidden'); newBtn.disabled = false; }
+    if (newBtn) newBtn.classList.remove('hidden');
     if (limitMsg) { limitMsg.classList.add('hidden'); limitMsg.textContent = ''; }
     section.classList.remove('hidden');
+    if (typeof applyUnverifiedRestriction === 'function') applyUnverifiedRestriction();
   }
   updateMainContentVisibility();
 }
@@ -1928,7 +1933,9 @@ function updateMainContentVisibility() {
 }
 
 function enterCreateMode() {
-  if (!profileData || !profileData.emailVerified) return;
+  if (!profileData) return;
+  var hasAccountEmail = !!(profileData.accountEmail && profileData.accountEmail.trim());
+  if (!hasAccountEmail || !profileData.emailVerified) return;
   if (!contactPagesLimit.canCreate) return;
   isCreateMode = true;
   currentContactpagename = '';
@@ -2284,13 +2291,21 @@ async function loadProfile() {
 }
 function applyUnverifiedRestriction() {
   if (!profileData) return;
+  var hasAccountEmail = !!(profileData.accountEmail && profileData.accountEmail.trim());
+  var isVerified = hasAccountEmail && profileData.emailVerified;
+  var badge = document.getElementById("profile-verified-badge");
+  if (badge) {
+    badge.textContent = isVerified ? "Verified" : "Not Verified";
+    badge.className = "badge " + (isVerified ? "badge-cyan" : "badge-pink");
+    badge.classList.remove("hidden");
+  }
   var wrap = document.getElementById("editor-contact-form-wrap");
   var banner = document.getElementById("unverified-banner");
   var bannerText = document.getElementById("unverified-banner-text");
   var editBtn = document.getElementById("edit-contact-page-btn");
   var newPageBtn = document.getElementById("new-contact-page-btn");
   var unverifiedTooltip = 'Verify your email to edit your Contact Page and add new contact pages.';
-  if (profileData.emailVerified) {
+  if (isVerified) {
     if (wrap) wrap.classList.remove("editor-form-disabled");
     if (banner) banner.classList.add("hidden");
     if (editBtn) { editBtn.disabled = false; editBtn.removeAttribute('title'); }
@@ -2301,7 +2316,6 @@ function applyUnverifiedRestriction() {
     if (editBtn) { editBtn.disabled = true; editBtn.setAttribute('title', unverifiedTooltip); }
     if (newPageBtn) { newPageBtn.disabled = true; newPageBtn.setAttribute('title', unverifiedTooltip); }
     var verifyEmailBtn = document.getElementById('verify-email-btn');
-    var hasAccountEmail = !!(profileData.accountEmail && profileData.accountEmail.trim());
     if (verifyEmailBtn) {
       verifyEmailBtn.disabled = !hasAccountEmail;
       verifyEmailBtn.setAttribute('title', hasAccountEmail ? unverifiedTooltip : 'Set your Account Email in Edit Profile first.');
