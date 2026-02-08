@@ -411,8 +411,10 @@
               <div class="profile-row"><span class="profile-label">Last Name</span><span class="profile-value" id="profile-last-name">—</span></div>
               <div class="profile-row profile-email-row"><span class="profile-label">Account Email</span><span class="profile-value-wrap"><span class="profile-value" id="profile-email">—</span><span id="profile-verified-badge" class="badge hidden"></span></span></div>
               <div class="profile-row"><span class="profile-label">Date Of Birth</span><span class="profile-value" id="profile-dob">—</span></div>
-              <button type="button" class="btn btn-primary btn-sm mt-2" id="edit-profile-btn" onclick="enterProfileEditMode()">Edit Profile</button>
-              <button type="button" class="btn btn-primary btn-sm mt-2 hidden" id="change-password-sq-btn" onclick="openChangePasswordSqModal()">Change Password &amp; Security Questions</button>
+              <div class="profile-actions-row" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem;">
+                <button type="button" class="btn btn-primary btn-sm" id="edit-profile-btn" onclick="enterProfileEditMode()">Edit Profile</button>
+                <button type="button" class="btn btn-primary btn-sm hidden" id="change-password-sq-btn" onclick="openChangePasswordSqModal()">Change Security</button>
+              </div>
             </div>
             <div id="profile-edit" class="profile-edit hidden">
               <div class="form-group"><label class="form-label">User Name <span class="form-required">*</span></label><input type="text" id="profile-edit-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" placeholder="e.g. john-smith" autocomplete="off"><span class="form-hint">3–28 characters. Letters, numbers, hyphens, underscores. Stored as lowercase (e.g. John-Smith → john-smith). Must be unique.</span><div id="profile-username-warning" class="profile-username-warning hidden" role="alert">Changes to your User Name affect the URL of any Contact Pages already created. Any QR codes and NFC tags pointing to the old URL will need to be regenerated, reprinted, or rewritten with the new one.</div><span class="form-error" id="error-profile-username" role="alert"></span></div>
