@@ -41,6 +41,10 @@
   .editor-profile-strip .badge { font-size: 0.7rem; padding: 0.2em 0.5em; }
   .editor-main { flex: 1; min-width: 0; max-width: 640px; }
   .editor-form-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.3); }
+  #change-pwd-fields-wrap[disabled] { opacity: 0.6; pointer-events: none; }
+  #change-pwd-fields-wrap[disabled] .form-input,
+  #change-pwd-fields-wrap[disabled] select.form-input,
+  #change-pwd-fields-wrap[disabled] .form-label { color: var(--color-text-secondary, #6b7280); }
   .status-banner { margin-bottom: 1rem; }
   .status-banner.hidden { display: none; }
   .status-banner.show { display: block; }
@@ -432,7 +436,7 @@
             <div class="contact-pages-section">
               <div class="profile-title">Contact Pages</div>
               <div id="new-contact-page-row" class="mb-3">
-                <button type="button" class="btn btn-primary btn-sm btn-block" id="new-contact-page-btn" onclick="enterCreateMode()">+ New contact page</button>
+                <button type="button" class="btn btn-primary btn-sm btn-block" id="new-contact-page-btn" onclick="enterCreateMode()">Add new contact page</button>
                 <p id="contact-pages-limit-msg" class="form-hint mt-2 hidden" style="margin-top:0.35rem; font-size:0.85rem;"></p>
               </div>
               <div id="contact-pages-list" class="contact-pages-list"></div>
@@ -454,15 +458,6 @@
           </div>
         </div>
         <div class="editor-main">
-        <div id="unverified-banner" class="banner-reminder hidden">
-          <span id="unverified-banner-text"><strong>Verify your email</strong> to edit your Contact Page and add new contact pages.</span> <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
-        </div>
-        <div id="push-message-banner" class="banner-push-message hidden">
-          <div class="banner-push-message-content" id="push-message-banner-content"></div>
-          <div class="banner-push-message-actions">
-            <button type="button" class="btn btn-primary btn-sm" id="push-message-ok-btn" onclick="dismissPushMessage()">OK</button>
-          </div>
-        </div>
         <div class="card card-welcome" id="welcome-card">
           <div class="card-body">
             <p class="card-welcome-text">
@@ -470,13 +465,15 @@
             </p>
           </div>
         </div>
-
-        <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
-
-        <div id="no-contact-pages-banner" class="no-contact-pages-banner hidden" role="status">
-          You have no Contact Pages
+        <div id="push-message-banner" class="banner-push-message hidden">
+          <div class="banner-push-message-content" id="push-message-banner-content"></div>
+          <div class="banner-push-message-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="push-message-ok-btn" onclick="dismissPushMessage()">OK</button>
+          </div>
         </div>
-
+        <div id="unverified-banner" class="banner-reminder hidden">
+          <span id="unverified-banner-text"><strong>Verify your email</strong> to edit your Contact Page and add new contact pages.</span> <button type="button" class="btn btn-primary btn-sm" id="verify-email-btn">Verify Email</button>
+        </div>
         <div id="secrets-banner" class="banner-reminder hidden">
           <div class="banner-reminder-content">
             <p class="banner-reminder-title">There are some items that need your attention</p>
@@ -487,7 +484,10 @@
             <button type="button" class="btn btn-primary btn-sm" onclick="showEditSecretsModal()">Set Secrets</button>
           </div>
         </div>
-
+        <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
+        <div id="no-contact-pages-banner" class="no-contact-pages-banner hidden" role="status">
+          You have no Contact Pages
+        </div>
         <div class="card" id="editor-contact-card">
           <div id="editor-contact-view" class="editor-contact-view">
             <div class="editor-contact-view-content card-body" id="editor-contact-view-content">
@@ -706,7 +706,7 @@
         <div class="form-group">
           <label class="form-label">Date of Birth</label>
           <input type="text" id="change-pwd-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
-          <span class="form-hint">Format: dd/mm/yyyy. Leave blank to keep current.</span>
+          <span class="form-hint">Format: dd/mm/yyyy. Leave blank to keep your current DOB unchanged.</span>
           <span class="form-error" id="error-change-pwd-dob" role="alert"></span>
         </div>
         <div class="form-group">
@@ -2277,16 +2277,17 @@ function applyUnverifiedRestriction() {
   var bannerText = document.getElementById("unverified-banner-text");
   var editBtn = document.getElementById("edit-contact-page-btn");
   var newPageBtn = document.getElementById("new-contact-page-btn");
+  var unverifiedTooltip = 'Verify your email to edit your Contact Page and add new contact pages.';
   if (profileData.emailVerified) {
     if (wrap) wrap.classList.remove("editor-form-disabled");
     if (banner) banner.classList.add("hidden");
-    if (editBtn) editBtn.disabled = false;
-    if (newPageBtn) newPageBtn.disabled = !contactPagesLimit.canCreate;
+    if (editBtn) { editBtn.disabled = false; editBtn.removeAttribute('title'); }
+    if (newPageBtn) { newPageBtn.disabled = !contactPagesLimit.canCreate; newPageBtn.removeAttribute('title'); }
   } else {
     if (wrap) wrap.classList.add("editor-form-disabled");
     if (banner) banner.classList.remove("hidden");
-    if (editBtn) editBtn.disabled = true;
-    if (newPageBtn) newPageBtn.disabled = true;
+    if (editBtn) { editBtn.disabled = true; editBtn.setAttribute('title', unverifiedTooltip); }
+    if (newPageBtn) { newPageBtn.disabled = true; newPageBtn.setAttribute('title', unverifiedTooltip); }
     if (bannerText) {
       bannerText.innerHTML = (verifyEmailContext === 'emailChange' && pendingNewEmail)
         ? 'Verify your new email to edit your Contact Page and add new contact pages. '
@@ -2492,18 +2493,23 @@ async function saveProfileFromStrip() {
     if (!/^[a-zA-Z0-9_-]{3,28}$/.test(newUn)) { document.getElementById("error-profile-username").textContent = "User name: letters, numbers, hyphens, underscores only."; return; }
     if (PROFILE_RESERVED_USERNAMES.indexOf(newUn) !== -1) { document.getElementById("error-profile-username").textContent = "This username is reserved."; return; }
     var currentUn = (profileSnapshot && profileSnapshot.username) ? profileSnapshot.username.trim().toLowerCase() : (username || "").trim().toLowerCase();
+    var saveBtn = document.getElementById("profile-save-btn");
     if (newUn !== currentUn) {
+      if (saveBtn) saveBtn.disabled = true;
+      showStatusBanner('Checking username...', 'saving');
       var checkRes = await fetch(API + "/api/check-username/" + encodeURIComponent(newUn));
       var checkData = await checkRes.json();
       if (!checkData.available) {
         document.getElementById("error-profile-username").textContent = checkData.error || "Username is taken or reserved.";
+        showStatusBanner(checkData.error || "Username is taken or reserved.", "error");
+        if (saveBtn) saveBtn.disabled = false;
         return;
       }
+      showStatusBanner('Saving...', 'saving');
     }
     document.getElementById("error-profile-username").textContent = "";
-    var saveBtn = document.getElementById("profile-save-btn");
     if (saveBtn) saveBtn.disabled = true;
-    showStatusBanner('Saving...', 'saving');
+    if (newUn === currentUn) showStatusBanner('Saving...', 'saving');
     try {
       var rRename = await fetch(API + "/api/profile/rename", {
         method: "POST",
@@ -2776,7 +2782,7 @@ function openChangePasswordSqModal() {
   document.getElementById('change-pwd-new').value = '';
   document.getElementById('change-pwd-confirm').value = '';
   var dobEl = document.getElementById('change-pwd-dob');
-  if (dobEl) dobEl.value = (typeof profileData !== 'undefined' && profileData && profileData.dob) ? profileData.dob : '';
+  if (dobEl) dobEl.value = '';
   var confirmWrap = document.getElementById('change-pwd-confirm-wrap');
   if (confirmWrap) confirmWrap.classList.add('hidden');
   ['change-sq1','change-sq2','change-sq3'].forEach(function(id) {
