@@ -1370,6 +1370,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       var r = await fetch(API + '/api/profile/set-password-after-otp', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ newPassword: newPw }) });
       var d = await r.json();
       if (!r.ok) { showAlert('auth-alert', (d && d.error) || 'Failed to set password.', 'error'); return; }
+      if (d && d.token) {
+        token = d.token;
+        try { sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: token })); } catch (_) {}
+      }
       document.getElementById('auth-set-password-after-otp').classList.add('hidden');
       document.getElementById('auth-email-mode').classList.remove('hidden');
       document.getElementById('auth-signin-btn').classList.remove('hidden');
@@ -2188,7 +2192,6 @@ async function authenticate() {
       document.getElementById('auth-set-password-after-otp').classList.remove('hidden');
       document.getElementById('auth-new-password').value = '';
       document.getElementById('auth-confirm-password').value = '';
-      showAlert('auth-alert', 'Set a new password to continue.', 'info');
       return;
     }
     await continueAfterAuth();
