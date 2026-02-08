@@ -687,7 +687,13 @@
         <fieldset id="change-pwd-fields-wrap" disabled style="border:none;margin:0;padding:0;">
         <div class="form-group">
           <label class="form-label" for="change-pwd-new">New password</label>
-          <input type="password" id="change-pwd-new" class="form-input" autocomplete="off" placeholder="Leave blank to keep the same password or enter a new password" minlength="8">
+          <div class="password-input-wrap">
+            <input type="password" id="change-pwd-new" class="form-input" autocomplete="off" placeholder="Leave blank to keep the same password or enter a new password" minlength="8">
+            <button type="button" class="password-toggle-btn" id="change-pwd-new-toggle" aria-label="Show password" title="Show password">
+              <svg class="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="icon-eye-off hidden" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.16 13.16 0 0 0 2 12s3 7 10 7a9.9 9.9 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </button>
+          </div>
           <span class="form-error" id="error-change-pwd-new" role="alert"></span>
         </div>
         <div class="form-group hidden" id="change-pwd-confirm-wrap">
@@ -1326,6 +1332,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       authTogglePw.setAttribute('title', hidden ? 'Hide password' : 'Show password');
       if (authIconEye) authIconEye.classList.toggle('hidden', !hidden);
       if (authIconEyeOff) authIconEyeOff.classList.toggle('hidden', hidden);
+    });
+  }
+  var changePwdNewToggle = document.getElementById('change-pwd-new-toggle');
+  if (changePwdNewToggle) {
+    var changePwdNewEye = changePwdNewToggle.querySelector('.icon-eye');
+    var changePwdNewEyeOff = changePwdNewToggle.querySelector('.icon-eye-off');
+    changePwdNewToggle.addEventListener('click', function() {
+      var inp = document.getElementById('change-pwd-new');
+      if (!inp) return;
+      var hidden = inp.type === 'password';
+      inp.type = hidden ? 'text' : 'password';
+      changePwdNewToggle.setAttribute('aria-label', hidden ? 'Hide password' : 'Show password');
+      changePwdNewToggle.setAttribute('title', hidden ? 'Hide password' : 'Show password');
+      if (changePwdNewEye) changePwdNewEye.classList.toggle('hidden', !hidden);
+      if (changePwdNewEyeOff) changePwdNewEyeOff.classList.toggle('hidden', hidden);
     });
   }
   var setPwBtn = document.getElementById('auth-set-password-btn');
