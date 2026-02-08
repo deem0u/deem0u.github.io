@@ -2525,8 +2525,11 @@ async function saveProfileFromStrip() {
           });
           var dPut = await rPut.json();
           if (rPut.ok && dPut.success && dPut.otpSent) {
+            profileData = profileData ? { ...profileData, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email } : { username: username, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email, emailVerified: false };
             pendingNewEmail = email;
             verifyEmailContext = "emailChange";
+            var profileEmailEl = document.getElementById("profile-email");
+            if (profileEmailEl) profileEmailEl.textContent = email || "—";
             applyUnverifiedRestriction();
             exitProfileEditMode();
             updateEditorPageUrlForCurrentUsername();
@@ -2577,9 +2580,11 @@ async function saveProfileFromStrip() {
     var d = await r.json();
     if (r.ok && d.success) {
       if (d.otpSent) {
-        profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName };
+        profileData = { ...profileData, firstName: cur.firstName, lastName: cur.lastName, accountEmail: email };
         pendingNewEmail = email;
         verifyEmailContext = "emailChange";
+        var profileEmailEl = document.getElementById("profile-email");
+        if (profileEmailEl) profileEmailEl.textContent = email || "—";
         applyUnverifiedRestriction();
         exitProfileEditMode();
         showStatusBanner("Verification code sent to your new email. Enter the code below to finish.", "success", true);

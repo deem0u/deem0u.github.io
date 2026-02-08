@@ -3260,14 +3260,15 @@ async function handlePutProfile(username, request, env) {
   const newEmailNorm = accountEmail ? accountEmail.trim().toLowerCase() : '';
 
   if (accountEmail && newEmailNorm !== oldEmailNorm) {
-    const code = generateOtpCode();
-    await env.EDIT_KEYS_KV.put('otp_email_change:' + username, code, { expirationTtl: 600 });
-    await env.EDIT_KEYS_KV.put('pending_email_change:' + username, JSON.stringify({ newEmail: accountEmail.trim() }), { expirationTtl: 600 });
-    // Save new email immediately so sign-in and profile show it; mark unverified until OTP is completed. If user abandons verification, cancel-email-change leaves it unverified.
+    // Persist new email and unverified state first (before sending OTP). If user abandons verification,
+    // cancel-email-change only clears OTP/pending; GET profile and sign-in must already see the new email.
     if (oldAccountEmail) await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldAccountEmail.toLowerCase());
     await env.EDIT_KEYS_KV.put('account_email:' + username, accountEmail);
     await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmail.toLowerCase(), username);
     await env.EDIT_KEYS_KV.delete('email_verified:' + username);
+    const code = generateOtpCode();
+    await env.EDIT_KEYS_KV.put('otp_email_change:' + username, code, { expirationTtl: 600 });
+    await env.EDIT_KEYS_KV.put('pending_email_change:' + username, JSON.stringify({ newEmail: accountEmail.trim() }), { expirationTtl: 600 });
     const subject = 'Verify your new email - Digital Contact Page';
     const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. Use it in My Account to complete your email change.\n\nIf you did not request this, please sign in and change your password.`;
     const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. Use it in My Account to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>`;
@@ -3317,7 +3318,9 @@ async function handleVerifyEmailChange(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** POST /api/profile/cancel-email-change - Bearer required. Clears pending email change and OTP. The new account email is already stored (from the profile save that sent the OTP); we leave it as unverified so the user can verify later or change email again. */
+/** POST /api/profile/cancel-email-change - Bearer required. Clears pending email change and OTP only.
+ * Do NOT modify account_email or account_email_to_folder - the new email was already stored in PUT profile
+ * before the OTP was sent; leaving it unverified so the user can sign in with the new email and verify later. */
 async function handleCancelEmailChange(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
