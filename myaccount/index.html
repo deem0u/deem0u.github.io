@@ -40,7 +40,7 @@
   .editor-profile-strip .profile-value { font-weight: 500; }
   .editor-profile-strip .badge { font-size: 0.7rem; padding: 0.2em 0.5em; }
   .editor-main { flex: 1; min-width: 0; max-width: 640px; }
-  .no-contact-pages-placeholder { padding: 1.5rem; color: var(--color-text-secondary, #6b7280); font-size: 1rem; }
+  .no-contact-pages-placeholder { padding: 1.5rem; color: var(--color-text-secondary, #6b7280); font-size: 1rem; background: var(--color-bg, #fff); border: 1px solid var(--color-border, #eee); border-radius: var(--radius-md, 8px); }
   .no-contact-pages-placeholder.hidden { display: none; }
   .editor-form-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.3); }
   #change-pwd-fields-wrap[disabled] { opacity: 0.6; pointer-events: none; }
@@ -516,7 +516,7 @@
             <button type="button" class="btn btn-ghost btn-sm" id="no-contact-pages-dismiss-btn" onclick="dismissNoContactPagesBanner()">OK</button>
           </div>
         </div>
-        <div id="no-contact-pages-placeholder" class="no-contact-pages-placeholder hidden" role="status">No Contact Pages</div>
+        <div id="no-contact-pages-placeholder" class="no-contact-pages-placeholder card hidden" role="status">No Contact Pages</div>
         <div class="card" id="editor-contact-card">
           <div id="editor-contact-view" class="editor-contact-view">
             <div class="editor-contact-view-content card-body" id="editor-contact-view-content">
@@ -1956,6 +1956,7 @@ function dismissNoContactPagesBanner() {
   noContactPagesBannerDismissed = true;
   var noBanner = document.getElementById('no-contact-pages-banner');
   if (noBanner) noBanner.classList.add('hidden');
+  updateMainContentVisibility();
 }
 function updateMainContentVisibility() {
   var noBanner = document.getElementById('no-contact-pages-banner');
