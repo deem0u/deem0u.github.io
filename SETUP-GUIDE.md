@@ -516,6 +516,16 @@ This works because the admin key is stored in KV; only you (with Cloudflare acco
 
 ---
 
+## Restore points
+
+Known-good commits you can revert to if something breaks:
+
+| When (local note) | Git tag | To restore: `git checkout TAG` or `git reset --hard TAG` |
+|-------------------|---------|------------------------------------------------------------|
+| 12:55am 9 Feb 2026 — everything working | `restore-2026-02-09` | `git checkout restore-2026-02-09` |
+
+---
+
 ## Quick Reference
 
 | What | URL (replace YOUR_GITHUB_USERNAME) |
