@@ -1897,6 +1897,8 @@ body {
   border: 1px solid rgba(180, 60, 130, 0.85);
 }
 
+.user-card-action-link.disabled { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
+
 .user-card-actions {
   display: flex;
   flex-direction: column;

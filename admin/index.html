@@ -2454,7 +2454,7 @@ async function adminEnterCreateContactPage() {
   clearAdminContactForm();
   ['first-name', 'surname', 'email'].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.setAttribute('required', '');
+    if (el) el.removeAttribute('required');
   });
   adminRefreshViewFromForm();
   var viewHeader = document.getElementById('admin-editor-view-header');
@@ -2465,7 +2465,7 @@ async function adminEnterCreateContactPage() {
   if (backWrap) backWrap.classList.add('hidden');
   var introEl = document.getElementById('admin-create-contact-page-intro');
   if (introEl) {
-    introEl.textContent = 'Adding a new contact page for ' + username + '. Fill the form below (Page Name is required) and click Save when ready.';
+    introEl.textContent = 'Adding a new contact page for ' + username + '. Fill the form below (Page Name is required; Given Names, Family Name and Email are optional) and click Save when ready.';
     introEl.classList.remove('hidden');
   }
   document.getElementById('admin-delete-page-btn').style.display = 'none';
@@ -2615,6 +2615,10 @@ function adminEnterEditMode() {
   var backWrap = document.getElementById('admin-back-to-view-wrap');
   if (backWrap) backWrap.classList.remove('hidden');
   document.getElementById('admin-delete-page-btn').style.display = '';
+  ['first-name', 'surname', 'email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.removeAttribute('required');
+  });
   var adminSlugWarnEl = document.getElementById('admin-contact-page-slug-warning');
   if (adminSlugWarnEl) adminSlugWarnEl.classList.remove('hidden');
   adminCaptureContactFormSnapshot();
@@ -2644,8 +2648,18 @@ function adminShowViewHeader() {
 function adminCancelForm() {
   if (adminCreateNewPage) {
     adminCreateNewPage = false;
-    document.getElementById('edit-contact-page-value').value = currentContactPageName || 'index';
-    setEditContactPageTriggerLabel(document.getElementById('contact-page-name').value || (currentContactPageName === 'index' ? 'Main (index)' : currentContactPageName), currentFolder, currentContactPageName || 'index');
+    var first = editTabContactPagesList[0];
+    var slug = first && (typeof first === 'object' && first.slug != null ? first.slug : (typeof first === 'string' ? first : null));
+    var label = first && (typeof first === 'object' && first.name != null ? first.name : (typeof first === 'string' ? first : null));
+    if (slug) {
+      currentContactPageName = slug;
+      document.getElementById('edit-contact-page-value').value = slug;
+      setEditContactPageTriggerLabel(label || slug, currentFolder, slug);
+    } else {
+      currentContactPageName = '';
+      document.getElementById('edit-contact-page-value').value = '';
+      setEditContactPageTriggerLabel(null, null, null);
+    }
     document.getElementById('admin-contact-edit').classList.add('hidden');
     document.getElementById('admin-contact-view').classList.remove('hidden');
     document.getElementById('admin-delete-page-btn').style.display = 'none';
@@ -2724,6 +2738,7 @@ async function toggleContactPagesSelect(username) {
         if (trigger) trigger.setAttribute('data-selected-contact', '');
         if (nameEl) nameEl.textContent = 'No Contact Pages';
         if (slugEl) slugEl.textContent = '';
+        setUserCardActionButtonsState(username, false);
       } else {
         optionsEl.innerHTML = filtered.map(item => {
           const slug = typeof item === 'string' ? item : (item.slug || 'index');
@@ -2783,17 +2798,31 @@ function filterContactPagesOptions(username) {
   } else if (hasVisible && emptyEl) emptyEl.remove();
 }
 
+function setUserCardActionButtonsState(username, enabled) {
+  const viewLink = document.getElementById('view-live-' + username);
+  const editBtn = document.getElementById('edit-page-' + username);
+  const qrBtn = document.getElementById('qr-codes-' + username);
+  const trigger = document.getElementById('contact-pages-trigger-' + username);
+  const slug = (trigger && trigger.getAttribute('data-selected-contact')) || '';
+  if (viewLink) {
+    viewLink.classList.toggle('disabled', !enabled);
+    viewLink.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+    viewLink.href = enabled && slug ? ((slug === 'index') ? `${PAGES_URL}${username}/` : `${PAGES_URL}${username}/${slug}.html`) : '#';
+  }
+  if (editBtn) editBtn.disabled = !enabled;
+  if (qrBtn) qrBtn.disabled = !enabled;
+}
+
 function selectContactPage(username, contactpagename, displayName) {
   const trigger = document.getElementById('contact-pages-trigger-' + username);
   const nameEl = document.getElementById('contact-pages-text-' + username);
   const slugEl = document.getElementById('contact-pages-slug-' + username);
-  const viewLink = document.getElementById('view-live-' + username);
   var slug = contactpagename || 'index';
   var name = (displayName && String(displayName).trim()) ? displayName : (slug === 'index' ? 'Main' : slug);
   if (trigger) trigger.setAttribute('data-selected-contact', slug);
   if (nameEl) nameEl.textContent = name;
   if (slugEl) slugEl.textContent = slug;
-  if (viewLink) viewLink.href = (slug === 'index') ? `${PAGES_URL}${username}/` : `${PAGES_URL}${username}/${slug}.html`;
+  setUserCardActionButtonsState(username, true);
   document.getElementById('contact-pages-dropdown-' + username).classList.remove('show');
   document.querySelectorAll('#contact-pages-options-' + username + ' .searchable-select-option').forEach(opt => {
     opt.classList.toggle('selected', (opt.dataset.value || '') === slug);
@@ -2890,9 +2919,9 @@ function renderList(t) {
                   <div class="searchable-select-options" id="contact-pages-options-${f}"></div>
                 </div>
               </div>
-              <a href="${PAGES_URL}${f}/" target="_blank" class="btn btn-primary btn-sm" id="view-live-${f}">View Live Page</a>
-              <button class="btn btn-primary btn-sm" onclick="editUser('${f}')">Edit Page</button>
-              <button class="btn btn-primary btn-sm" onclick="showQrModal('${f}')">QR Codes</button>
+              <a href="#" target="_blank" class="btn btn-primary btn-sm user-card-action-link" id="view-live-${f}" aria-disabled="true">View Live Page</a>
+              <button type="button" class="btn btn-primary btn-sm user-card-action-btn" id="edit-page-${f}" disabled onclick="editUser('${f}')">Edit Page</button>
+              <button type="button" class="btn btn-primary btn-sm user-card-action-btn" id="qr-codes-${f}" disabled onclick="showQrModal('${f}')">QR Codes</button>
             </div>
           </div>
         </div>
@@ -2932,6 +2961,10 @@ function renderList(t) {
       </div>
     </div>`;
   }).join('');
+  fl.forEach(function(f) {
+    var trigger = document.getElementById('contact-pages-trigger-' + f);
+    setUserCardActionButtonsState(f, !!(trigger && trigger.getAttribute('data-selected-contact')));
+  });
 }
 
 function filterUsers(t) { renderList(t); }
