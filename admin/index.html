@@ -2839,7 +2839,7 @@ function renderList(t) {
 function filterUsers(t) { renderList(t); }
 
 async function generateKey(f) {
-  showAlert('alert-manage', '<span class="spinner"></span> Generating...', 'info');
+  showAlert('alert-manage', '<span class="spinner"></span> Generating...', 'info', undefined, true);
   try { const r = await fetch(`${API}/api/keys/${f}`, { method: 'POST', headers: { 'X-Admin-Key': adminKey } }); const d = await r.json(); if (r.ok) { fetchAccountEmailsAndRefresh(); showAlert('alert-manage', `Access granted`, 'success'); } else showAlert('alert-manage', d.error, 'error'); }
   catch { showAlert('alert-manage', 'Error', 'error'); }
 }
@@ -2879,7 +2879,7 @@ function confirmDeleteUserExecute() {
 }
 
 async function deleteUser(f) {
-  showAlert('alert-manage', '<span class="spinner"></span> Deleting...', 'info');
+  showAlert('alert-manage', '<span class="spinner"></span> Deleting...', 'info', undefined, true);
   try {
     const r = await fetch(`${API}/api/page/${encodeURIComponent(f)}`, { method: 'DELETE', headers: { 'X-Admin-Key': adminKey } });
     if (r.ok) {
@@ -5136,7 +5136,7 @@ document.getElementById('modal-qr-copy-text').addEventListener('click', function
 });
 
 function escapeHtml(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
-function showAlert(id, msg, type, appendSafeHtml) { const e = document.getElementById(id); e.className = 'alert alert-' + type + ' show'; var content = escapeHtml(msg); if (appendSafeHtml) content += appendSafeHtml; e.innerHTML = '<div class="alert-content">' + content + '</div>'; }
+function showAlert(id, msg, type, appendSafeHtml, allowHtml) { const e = document.getElementById(id); e.className = 'alert alert-' + type + ' show'; var content = (allowHtml ? msg : escapeHtml(msg)); if (appendSafeHtml) content += appendSafeHtml; e.innerHTML = '<div class="alert-content">' + content + '</div>'; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 </script>
 </body>
