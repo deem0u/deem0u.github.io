@@ -1970,7 +1970,7 @@ async function fetchContactPagesList() {
         limitMsg.classList.add('form-hint');
         limitMsg.classList.remove('form-error');
         var bannerMsg = "You've reached the maximum number of contact pages (" + contactPagesLimit.maxContactPages + ") allowed. Delete an existing page to create a new one.";
-        if (typeof showStatusBanner === 'function') showStatusBanner(bannerMsg, 'error');
+        if (typeof showStatusBanner === 'function' && (typeof sessionStorage === 'undefined' || !sessionStorage.getItem('contactPagesLimitBannerDismissed'))) showStatusBanner(bannerMsg, 'error', undefined, 'contactPagesLimit');
       } else {
         limitMsg.textContent = '';
         limitMsg.classList.remove('form-error');
@@ -3583,11 +3583,13 @@ function showAlert(id, msg, type) {
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 
 var statusBannerAutoHideTimer = null;
-function showStatusBanner(msg, type, noAutoHide) {
+var currentStatusBannerId = null;
+function showStatusBanner(msg, type, noAutoHide, bannerId) {
   var el = document.getElementById('status-banner');
   if (!el) return;
   if (statusBannerAutoHideTimer) { clearTimeout(statusBannerAutoHideTimer); statusBannerAutoHideTimer = null; }
-  if (!msg) { el.classList.add('hidden'); el.className = 'status-banner hidden'; el.innerHTML = ''; return; }
+  if (!msg) { currentStatusBannerId = null; el.classList.add('hidden'); el.className = 'status-banner hidden'; el.innerHTML = ''; return; }
+  currentStatusBannerId = bannerId || null;
   var alertType = (type === 'loading' || type === 'saving' || type === 'refreshing') ? 'info' : (type === 'success' || type === 'saved') ? 'success' : (type === 'neutral') ? 'neutral' : 'error';
   var content = escapeHtml(msg);
   if (type === 'loading' || type === 'saving' || type === 'refreshing') content = '<span class="spinner"></span> ' + content;
@@ -3607,7 +3609,10 @@ function showStatusBanner(msg, type, noAutoHide) {
     statusBannerAutoHideTimer = setTimeout(function() { hideStatusBanner(); statusBannerAutoHideTimer = null; }, 6000);
   }
 }
-function hideStatusBanner() { showStatusBanner('', null); }
+function hideStatusBanner() {
+  if (currentStatusBannerId === 'contactPagesLimit' && typeof sessionStorage !== 'undefined') sessionStorage.setItem('contactPagesLimitBannerDismissed', '1');
+  showStatusBanner('', null);
+}
 </script>
 </body>
 </html>
