@@ -11,7 +11,12 @@ EMAIL_RELAY_URL = "https://deem0u-github-io.vercel.app/api/send"
 
 # Required secrets (set via Cloudflare dashboard):
 # GITHUB_TOKEN - Your GitHub Personal Access Token with 'repo' scope
+# JWT_SECRET - Long random string (32+ chars) for signing user JWTs. Use this name; SESSION_SECRET is a fallback for backwards compatibility.
 # Optional (for automated email):
 # EMAIL_RELAY_URL - Vercel relay URL, e.g. https://your-project.vercel.app/api/send
 # EMAIL_RELAY_SECRET - Same value as RELAY_SECRET in Vercel
 # EMAIL_SEND_RESTRICTED - When not 'false', all emails go to deem0u.github.io@gmail.com (set to 'false' when live)
+# Optional (security remediations):
+# ALLOWED_ORIGINS - Comma-separated CORS origins. Default includes production + localhost (3000, 8080, 5173). Set to override the full list.
+# RATE_LIMIT_DISABLED - Set to '1' to disable rate limiting (e.g. for local testing).
+# DEBUG - Set to '1' to expose real error.message in 500 responses (do not use in production).

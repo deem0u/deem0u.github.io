@@ -13,7 +13,7 @@
  * - admin:setup_complete = "true" if setup is done
  * - admin:password_salt = hex salt for PBKDF2
  * - admin:password_hash = hex PBKDF2-SHA256 hash
- * - admin:recovery_otp = JSON { recoveryCode, expiresAt }
+ * - admin:recovery_code = JSON { recoveryCode, expiresAt }
  * - admin:reset_token = JSON { token, expiresAt }
  */
 
@@ -239,11 +239,50 @@ async function purgeKvForUser(username, env) {
 }
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Edit-Key, X-Admin-Key, Authorization',
   'Access-Control-Max-Age': '86400',
 };
+
+/** Allowed CORS origins. Default: production GitHub Pages + common localhost ports for local testing. Override with env.ALLOWED_ORIGINS (comma-separated). */
+function getAllowedOrigin(request, env) {
+  const defaultOrigins = 'https://deem0u.github.io,http://localhost:3000,http://localhost:8080,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:8080,http://127.0.0.1:5173';
+  const list = (env.ALLOWED_ORIGINS || defaultOrigins).split(',').map(s => s.trim()).filter(Boolean);
+  const origin = request.headers.get('Origin');
+  if (origin && list.includes(origin)) return origin;
+  return list[0] || 'https://deem0u.github.io';
+}
+
+/** Override response CORS origin with the allowed origin (restricts to allowlist instead of *). */
+function patchCors(response, allowedOrigin) {
+  if (!response || !allowedOrigin) return response;
+  const h = new Headers(response.headers);
+  h.set('Access-Control-Allow-Origin', allowedOrigin);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: h });
+}
+
+/** Rate limit: keyPrefix e.g. 'login', 'otp'; limit = max requests; windowSec = window in seconds. Returns 429 response if over limit, else null. */
+async function checkRateLimit(request, env, keyPrefix, limit, windowSec) {
+  if (env.RATE_LIMIT_DISABLED === '1') return null;
+  if (!env.EDIT_KEYS_KV) return null;
+  const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() || 'unknown';
+  const key = `ratelimit:${keyPrefix}:${ip}`;
+  const now = Date.now();
+  const raw = await env.EDIT_KEYS_KV.get(key);
+  let data = { count: 0, windowStart: now };
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+      if (now - data.windowStart > windowSec * 1000) data = { count: 0, windowStart: now };
+    } catch (_) {}
+  }
+  data.count += 1;
+  if (data.count > limit) {
+    return jsonResponse({ error: 'Too many attempts. Please try again later.' }, 429);
+  }
+  await env.EDIT_KEYS_KV.put(key, JSON.stringify(data), { expirationTtl: windowSec + 60 });
+  return null;
+}
 
 const JWT_EXPIRY_DAYS = 7;
 
@@ -286,284 +325,370 @@ async function verifyJwt(token, secret) {
 
 export default {
   async fetch(request, env, ctx) {
+    const allowedOrigin = getAllowedOrigin(request, env);
+
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return patchCors(new Response(null, { headers: corsHeaders }), allowedOrigin);
     }
 
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/$/, '') || '/';
 
+    let resp;
     try {
       // Setup routes
       if (path === '/api/setup/status') {
-        return await handleSetupStatus(env);
+        resp = await handleSetupStatus(env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/setup') {
-        return await handleSetup(request, env);
+        resp = await handleSetup(request, env);
+        return patchCors(resp, allowedOrigin);
       }
 
-      // Recovery route
+      // Recovery route (admin) — rate limited
       if (request.method === 'POST' && path === '/api/recover') {
-        return await handleRecover(request, env);
+        const rl = await checkRateLimit(request, env, 'recover', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleRecover(request, env);
+        return patchCors(resp, allowedOrigin);
       }
 
-      // Auth check (admin)
+      // Auth check (admin) — rate limited
       if (request.method === 'POST' && path === '/api/auth') {
-        return await handleAuth(request, env);
+        const rl = await checkRateLimit(request, env, 'login', 10, 60);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleAuth(request, env);
+        return patchCors(resp, allowedOrigin);
       }
-      // User auth (Account Email + Password)
+      // User auth (Account Email + Password) — rate limited
       if (request.method === 'POST' && path === '/api/auth/user') {
-        return await handleAuthUser(request, env);
+        const rl = await checkRateLimit(request, env, 'login', 10, 60);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleAuthUser(request, env);
+        return patchCors(resp, allowedOrigin);
       }
-
 
       // Check username availability (no auth)
       if (request.method === 'GET' && path.startsWith('/api/check-username/')) {
         const username = path.replace('/api/check-username/', '').replace(/\/$/, '').trim();
-        return await handleCheckUsername(username, env);
+        resp = await handleCheckUsername(username, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path.startsWith('/api/check-account-email/')) {
-        const url = new URL(request.url);
+        const url2 = new URL(request.url);
         const email = decodeURIComponent(path.replace('/api/check-account-email/', '').split('?')[0].replace(/\/$/, ''));
-        const exclude = url.searchParams.get('exclude') || '';
-        return await handleCheckAccountEmail(email, exclude, env);
+        const exclude = url2.searchParams.get('exclude') || '';
+        resp = await handleCheckAccountEmail(email, exclude, env);
+        return patchCors(resp, allowedOrigin);
       }
-      // Signup route (user-driven page creation)
+      // Signup route — rate limited
       if (request.method === 'POST' && path === '/api/signup') {
-        return await handleSignup(request, env);
+        const rl = await checkRateLimit(request, env, 'signup', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleSignup(request, env);
+        return patchCors(resp, allowedOrigin);
       }
-      // OTP for email verification
+      // OTP for email verification — rate limited
       if (request.method === 'POST' && path === '/api/otp/send') {
-        return await handleOtpSend(request, env);
+        const rl = await checkRateLimit(request, env, 'otp', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleOtpSend(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/otp/verify') {
-        return await handleOtpVerify(request, env);
+        const rl = await checkRateLimit(request, env, 'otp', 10, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleOtpVerify(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/signup-success-email') {
-        return await handleSignupSuccessEmail(request, env);
+        resp = await handleSignupSuccessEmail(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/contact') {
-        return await handleContactForm(request, env);
+        resp = await handleContactForm(request, env);
+        return patchCors(resp, allowedOrigin);
       }
 
-      // User recovery (no auth)
+      // User recovery (no auth) — rate limited
       if (request.method === 'POST' && path === '/api/recovery/check') {
-        return await handleRecoveryCheck(request, env);
+        const rl = await checkRateLimit(request, env, 'recovery', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleRecoveryCheck(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/recovery/check-by-email') {
-        return await handleRecoveryCheckByEmail(request, env);
+        const rl = await checkRateLimit(request, env, 'recovery', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleRecoveryCheckByEmail(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/recovery/verify') {
-        return await handleRecoveryVerify(request, env);
+        const rl = await checkRateLimit(request, env, 'recovery', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleRecoveryVerify(request, env);
+        return patchCors(resp, allowedOrigin);
       }
 
       // Route: POST /api/page - Create new page (admin only)
       if (request.method === 'POST' && path === '/api/page') {
-        return await handleCreatePage(request, env);
+        resp = await handleCreatePage(request, env);
+        return patchCors(resp, allowedOrigin);
       }
-
-      // Route: DELETE /api/page/{username} or /api/page/{username}/{contactpagename} - Delete page (admin only)
       if (request.method === 'DELETE' && path.startsWith('/api/page/')) {
         const { username, contactpagename } = parsePagePath(path);
-        return await handleDeletePage(username, contactpagename, request, env);
+        resp = await handleDeletePage(username, contactpagename, request, env);
+        return patchCors(resp, allowedOrigin);
       }
-
-      // Route: POST /api/page/{username}/create - User creates a new contact page (Bearer, same user)
       if (request.method === 'POST' && path.match(/^\/api\/page\/[^/]+\/create$/)) {
         const username = normalizeUsername(path.replace(/^\/api\/page\//, '').replace(/\/create$/, ''));
-        return await handleUserCreatePage(username, request, env);
+        resp = await handleUserCreatePage(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
-
-      // Page routes: GET/POST /api/page/{username} or /api/page/{username}/{contactpagename}
       if (request.method === 'GET' && path.startsWith('/api/page/')) {
         const { username, contactpagename } = parsePagePath(path);
-        return await handleGetPage(username, contactpagename, request, env);
+        resp = await handleGetPage(username, contactpagename, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path.match(/^\/api\/page\/[^/]+\/rename$/)) {
         const username = normalizeUsername(path.replace(/^\/api\/page\//, '').replace(/\/rename$/, ''));
-        return await handleRenamePage(username, request, env);
+        resp = await handleRenamePage(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path.startsWith('/api/page/')) {
         const { username, contactpagename } = parsePagePath(path);
-        // Fallback: path /api/page/{username}/create can be parsed as contactpagename "create"; treat as create.
         if (contactpagename === 'create') {
-          return await handleUserCreatePage(username, request, env);
+          resp = await handleUserCreatePage(username, request, env);
+        } else {
+          resp = await handleUpdatePage(username, contactpagename, request, env);
         }
-        return await handleUpdatePage(username, contactpagename, request, env);
+        return patchCors(resp, allowedOrigin);
       }
 
       // Admin routes
       if (request.method === 'GET' && path === '/api/pages/summaries') {
-        return await handlePageSummaries(request, env);
+        resp = await handlePageSummaries(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/pages') {
-        return await handleListPages(request, env);
+        resp = await handleListPages(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/session-check') {
-        return await handleSessionCheck(request, env);
+        resp = await handleSessionCheck(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path.startsWith('/api/contact-pages/')) {
         const username = normalizeUsername(path.replace('/api/contact-pages/', '').replace(/\/$/, ''));
-        return await handleListContactPages(username, request, env);
+        resp = await handleListContactPages(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/account-emails') {
-        return await handleGetAccountEmails(request, env);
+        resp = await handleGetAccountEmails(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/account-profiles') {
-        return await handleGetAccountProfiles(request, env);
+        resp = await handleGetAccountProfiles(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path.startsWith('/api/account-details-sent/')) {
         const username = normalizeUsername(path.replace('/api/account-details-sent/', '').replace(/\/$/, ''));
-        return await handleAccountDetailsSent(username, request, env);
+        resp = await handleAccountDetailsSent(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/secrets-status') {
-        return await handleSecretsStatus(request, env);
+        resp = await handleSecretsStatus(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/keys') {
-        return await handleGetKeys(request, env);
+        resp = await handleGetKeys(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path.startsWith('/api/profile/')) {
         let raw = path.replace('/api/profile/', '').replace(/\/$/, '');
         try { if (raw) raw = decodeURIComponent(raw); } catch (_) {}
         const username = normalizeUsername(raw);
-        return await handleGetProfile(username, request, env);
+        resp = await handleGetProfile(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'PUT' && path.startsWith('/api/profile/')) {
         let raw = path.replace('/api/profile/', '').replace(/\/$/, '');
         try { if (raw) raw = decodeURIComponent(raw); } catch (_) {}
         const username = normalizeUsername(raw);
-        return await handlePutProfile(username, request, env);
+        resp = await handlePutProfile(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/profile/verify-email-change') {
-        return await handleVerifyEmailChange(request, env);
+        resp = await handleVerifyEmailChange(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/profile/cancel-email-change') {
-        return await handleCancelEmailChange(request, env);
+        resp = await handleCancelEmailChange(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/profile/set-password-after-otp') {
-        return await handleSetPasswordAfterOtp(request, env);
+        resp = await handleSetPasswordAfterOtp(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/profile/verify-password') {
-        return await handleVerifyPassword(request, env);
+        resp = await handleVerifyPassword(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/profile/change-password-and-sq') {
-        return await handleChangePasswordAndSq(request, env);
+        resp = await handleChangePasswordAndSq(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/profile/rename') {
-        return await handleProfileRename(request, env);
+        resp = await handleProfileRename(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path.startsWith('/api/secrets/')) {
         const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
         let username = raw || '';
         try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
-        return await handleGetSecrets(username, request, env);
+        resp = await handleGetSecrets(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'PUT' && path.startsWith('/api/secrets/')) {
         const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
         let username = raw || '';
         try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
-        return await handlePutSecrets(username, request, env);
+        resp = await handlePutSecrets(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/create-user') {
-        return await handleAdminCreateUser(request, env);
+        resp = await handleAdminCreateUser(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/rename-user') {
-        return await handleAdminRenameUser(request, env);
+        resp = await handleAdminRenameUser(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/site-status') {
-        return await handleGetSiteStatus(request, env);
+        resp = await handleGetSiteStatus(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/admin/session') {
-        return await handleGetAdminSession(request, env);
+        resp = await handleGetAdminSession(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/admin/site-settings') {
-        return await handleGetSiteSettings(request, env);
+        resp = await handleGetSiteSettings(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/admin/admin-email') {
-        return await handleGetAdminEmail(request, env);
+        resp = await handleGetAdminEmail(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'PUT' && path === '/api/admin/admin-email') {
-        return await handlePutAdminEmail(request, env);
+        resp = await handlePutAdminEmail(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'PUT' && path === '/api/admin/site-settings') {
-        return await handlePutSiteSettings(request, env);
+        resp = await handlePutSiteSettings(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'PUT' && path === '/api/admin/admin-key') {
-        return await handlePutAdminKey(request, env);
+        resp = await handlePutAdminKey(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'PUT' && path === '/api/admin/set-password') {
-        return await handlePutAdminPassword(request, env);
+        resp = await handlePutAdminPassword(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/verify-otp-set-password') {
-        return await handleVerifyOtpSetPassword(request, env);
+        resp = await handleVerifyOtpSetPassword(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/generate-otp') {
-        return await handleAdminGenerateOtp(request, env);
+        resp = await handleAdminGenerateOtp(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/delete-otp') {
-        return await handleAdminDeleteOtp(request, env);
+        resp = await handleAdminDeleteOtp(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/secondary-keys') {
-        return await handlePostSecondaryKey(request, env);
+        resp = await handlePostSecondaryKey(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/admin/secondary-keys') {
-        return await handleGetSecondaryKeys(request, env);
+        resp = await handleGetSecondaryKeys(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'DELETE' && path.startsWith('/api/admin/secondary-keys/')) {
         const id = path.replace('/api/admin/secondary-keys/', '').replace(/\/$/, '').trim();
-        return await handleDeleteSecondaryKey(id, request, env);
+        resp = await handleDeleteSecondaryKey(id, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'PUT' && path.startsWith('/api/push-message/')) {
         const raw = path.replace('/api/push-message/', '').replace(/\/$/, '');
         let username = raw || '';
         try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
-        return await handlePutPushMessage(username, request, env);
+        resp = await handlePutPushMessage(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path === '/api/push-message') {
-        return await handleGetPushMessage(request, env);
+        resp = await handleGetPushMessage(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'DELETE' && path === '/api/push-message') {
-        return await handleDismissPushMessage(request, env);
+        resp = await handleDismissPushMessage(request, env);
+        return patchCors(resp, allowedOrigin);
       }
-
       if (request.method === 'POST' && path === '/api/recover/verify-reset-token') {
-        return await handleVerifyResetToken(request, env);
+        const rl = await checkRateLimit(request, env, 'recover-reset', 10, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleVerifyResetToken(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/recover/reset-password') {
-        return await handleResetPasswordWithToken(request, env);
+        const rl = await checkRateLimit(request, env, 'recover-reset', 10, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleResetPasswordWithToken(request, env);
+        return patchCors(resp, allowedOrigin);
       }
-
-      // Backend-only: set admin email/password/key with secret (not public-facing, no UI)
       if (request.method === 'POST' && path === '/api/internal/set-admin-credentials') {
-        return await handleInternalSetAdminCredentials(request, env);
+        resp = await handleInternalSetAdminCredentials(request, env);
+        return patchCors(resp, allowedOrigin);
       }
-
       if (request.method === 'GET' && path === '/api/admin/kv-orphans') {
-        return await handleGetKvOrphans(request, env);
+        resp = await handleGetKvOrphans(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/kv-cleanup') {
-        return await handleKvCleanup(request, env);
+        resp = await handleKvCleanup(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path.startsWith('/api/admin/kv-user-keys')) {
-        const url = new URL(request.url);
-        const username = (url.searchParams.get('username') || '').trim();
-        return await handleGetKvUserKeys(username, request, env);
+        const url2 = new URL(request.url);
+        const username = (url2.searchParams.get('username') || '').trim();
+        resp = await handleGetKvUserKeys(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/kv-user-purge') {
-        return await handleKvUserPurge(request, env);
+        resp = await handleKvUserPurge(request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'GET' && path.startsWith('/api/admin/debug-user/')) {
         const raw = path.replace('/api/admin/debug-user/', '').replace(/\/$/, '');
         const username = raw ? decodeURIComponent(raw).trim() : '';
-        return await handleDebugUser(username, request, env);
+        resp = await handleDebugUser(username, request, env);
+        return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/admin/purge-user-kv') {
-        return await handlePurgeUserKv(request, env);
+        resp = await handlePurgeUserKv(request, env);
+        return patchCors(resp, allowedOrigin);
       }
 
-      return jsonResponse({ error: 'Not found' }, 404);
+      resp = jsonResponse({ error: 'Not found' }, 404);
+      return patchCors(resp, allowedOrigin);
     } catch (error) {
-      return jsonResponse({ error: error.message }, 500);
+      const message = env.DEBUG ? error.message : 'An error occurred. Please try again later.';
+      if (!env.DEBUG) console.error(error);
+      resp = jsonResponse({ error: message }, 500);
+      return patchCors(resp, allowedOrigin);
     }
   }
 };
@@ -781,7 +906,7 @@ async function handleRecover(request, env) {
   await env.EDIT_KEYS_KV.put('admin:recovery_code', JSON.stringify({ recoveryCode, expiresAt }));
 
   const subject = 'Admin Dashboard - Recovery Code';
-  const text = `Your recovery code is: ${recoveryCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
+  const text = `Your 8-digit recovery code is: ${recoveryCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
   const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
   if (!emailResult.ok) {
     await env.EDIT_KEYS_KV.delete('admin:recovery_code');
@@ -790,11 +915,12 @@ async function handleRecover(request, env) {
   return jsonResponse({ success: true, step: 'code_sent', message: 'Check your email for the verification code.' });
 }
 
+/** 8-digit recovery code (higher entropy than 6-digit; rate limiting further limits brute force). */
 function generateRecoveryCode() {
-  const array = new Uint8Array(3);
+  const array = new Uint8Array(4);
   crypto.getRandomValues(array);
-  const code = ((array[0] << 16) | (array[1] << 8) | array[2]) % 1000000;
-  return code.toString().padStart(6, '0');
+  const code = ((array[0] << 24) | (array[1] << 16) | (array[2] << 8) | array[3]) % 100000000;
+  return code.toString().padStart(8, '0');
 }
 
 async function handleAuth(request, env) {
@@ -1165,7 +1291,7 @@ function generateContactPageHTML(givenName, familyName, contactEmail, mobile, mo
   const lblAdditional = 'Additional Information \u00b7 Informations suppl\u00e9mentaires \u00b7 \u9644\u52a0\u4fe1\u606f';
   const script = '<script>(function(){function f(i,u){if(!i)return"";var d=new Date(i);return d.toLocaleString()+(u?" by "+u:"")}document.querySelectorAll(".last-updated-display").forEach(function(e){var i=e.getAttribute("data-timestamp"),u=e.getAttribute("data-updated-by");if(i)e.textContent=f(i,u)})})();<\/script>';
   const lockdownOverlay = '<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>';
-  const lockdownScript = '<script>(function(){var api="' + PUBLIC_API_BASE.replace(/"/g, '&quot;') + '";var h={"X-Admin-Key":(typeof localStorage!="undefined"&&localStorage.getItem("admin_key"))||""};fetch(api+"/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';
+  const lockdownScript = '<script>(function(){var api="' + PUBLIC_API_BASE.replace(/"/g, '&quot;') + '";var storage=typeof sessionStorage!=="undefined"?sessionStorage:typeof localStorage!=="undefined"?localStorage:null;var h={"X-Admin-Key":(storage&&storage.getItem("admin_key"))||""};fetch(api+"/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';
   return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(givenName) + ' ' + esc(familyName) + '</title><style>' + css + '</style></head><body>' + lockdownOverlay + '<div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(givenName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(familyName) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(contactEmail) + '">' + esc(contactEmail) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + lockdownScript + '</body></html>';
 }
 
@@ -2195,10 +2321,11 @@ async function handleGetAdminEmail(request, env) {
   return jsonResponse({ email: email || null, passwordSet: !!hash });
 }
 
-/** POST /api/internal/set-admin-credentials - Secret auth only (X-Setup-Secret or Authorization: Bearer). Not public-facing. Body: { email?, password?, adminKey? }. Sets/updates admin email, password, and/or key without needing the current admin key. Requires env.ADMIN_SETUP_SECRET. */
+/** POST /api/internal/set-admin-credentials - Secret auth only (X-Setup-Secret or Authorization: Bearer). Not public-facing. Body: { email?, password?, adminKey? }. Requires env.ADMIN_SETUP_SECRET (min 32 chars for security). */
 async function handleInternalSetAdminCredentials(request, env) {
   const secret = env.ADMIN_SETUP_SECRET;
   if (!secret) return jsonResponse({ error: 'Not configured' }, 501);
+  if (secret.length < 32) return jsonResponse({ error: 'ADMIN_SETUP_SECRET must be at least 32 characters. Set it in Cloudflare Workers → Secrets to a long random value.' }, 501);
   const headerSecret = request.headers.get('X-Setup-Secret');
   const bearer = request.headers.get('Authorization');
   const token = (bearer && bearer.startsWith('Bearer ')) ? bearer.slice(7) : null;
@@ -3612,7 +3739,10 @@ async function handleGetSecrets(username, request, env) {
     } catch (_) {}
   }
   const payload = { accountEmail: accountEmail || '', dob: dob || '', secretQuestions, emailVerified: byUser || byAdmin, emailVerification, passwordSet, otpSet };
-  if (auth.isAdmin && storedOtp) payload.otp = storedOtp;
+  if (auth.isAdmin && storedOtp) {
+    payload.otp = storedOtp;
+    console.log('Admin OTP read', username);
+  }
   return jsonResponse(payload);
 }
 

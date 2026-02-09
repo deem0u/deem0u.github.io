@@ -1320,7 +1320,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('screen-auth').classList.remove('hidden');
   }
   try {
-    var adminKey = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_key') : null;
+    var adminKey = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('admin_key') : null;
     var headers = {};
     if (adminKey) headers['X-Admin-Key'] = adminKey;
     var statusRes = await fetch(API + '/api/site-status', { headers: headers });
@@ -1396,7 +1396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     var confirmPw = (document.getElementById('auth-confirm-password').value || '').trim();
     if (newPw.length < 8) { showAlert('auth-alert', 'Password must be at least 8 characters.', 'error'); return; }
     if (newPw !== confirmPw) { showAlert('auth-alert', 'Passwords do not match.', 'error'); return; }
-    showAlert('auth-alert', '<span class="spinner"></span> Setting password...', 'info');
+    showAlert('auth-alert', 'Setting password...', 'info');
     try {
       var r = await fetch(API + '/api/profile/set-password-after-otp', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ newPassword: newPw }) });
       var d = await r.json();
@@ -1819,6 +1819,30 @@ function setupContactPagesDropdown() {
   });
 }
 
+/** Sanitize admin push message HTML before rendering (XSS protection). Allowlist: b, i, u, strong, em, ul, ol, li, a, p, br, span; links http(s) only. */
+function sanitizePushMessageHtml(html) {
+  var allowedTags = { b:1, i:1, u:1, strong:1, em:1, ul:1, ol:1, li:1, a:1, p:1, br:1, span:1 };
+  var div = document.createElement('div');
+  div.innerHTML = (html || '').toString();
+  function walk(node) {
+    if (node.nodeType === 1) {
+      var tag = node.tagName.toLowerCase();
+      if (!allowedTags[tag]) {
+        while (node.firstChild) node.parentNode.insertBefore(node.firstChild, node);
+        node.parentNode.removeChild(node);
+        return;
+      }
+      if (tag === 'a') {
+        var href = node.getAttribute('href') || '';
+        if (!/^https?:\/\//i.test(href)) node.removeAttribute('href');
+      }
+      for (var i = node.childNodes.length - 1; i >= 0; i--) walk(node.childNodes[i]);
+    }
+  }
+  walk(div);
+  return div.innerHTML;
+}
+
 async function fetchAndShowPushMessage() {
   if (!token) return;
   var banner = document.getElementById('push-message-banner');
@@ -1828,7 +1852,7 @@ async function fetchAndShowPushMessage() {
     var r = await fetch(API + '/api/push-message', { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json().catch(function() { return {}; });
     if (r.ok && d && d.html) {
-      contentEl.innerHTML = d.html;
+      contentEl.innerHTML = sanitizePushMessageHtml(d.html);
       banner.classList.remove('hidden');
     } else {
       banner.classList.add('hidden');
@@ -2203,7 +2227,7 @@ async function authenticate() {
   }
   var btn = document.getElementById('auth-signin-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Verifying...'; }
-  showAlert('auth-alert', '<span class="spinner"></span> Verifying...', 'info');
+  showAlert('auth-alert', 'Verifying...', 'info');
   try {
     var body = { password: password };
     if (authUseUsername) body.username = usernameInput; else body.accountEmail = accountEmail;
@@ -3520,12 +3544,18 @@ ${lastUpdatedBlockHtml}
 <div class="info additional-info"><span class="label">${lblBoth('additional-info')}</span>${additionalHtml}</div>
 </div>
 ${formatTimestampScript}
-<script>(function(){var h={"X-Admin-Key":(typeof localStorage!=="undefined"&&localStorage.getItem("admin_key"))||""};fetch("${API}/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
+<script>(function(){var h={"X-Admin-Key":(typeof sessionStorage!=="undefined"&&sessionStorage.getItem("admin_key"))||""};fetch("${API}/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
 </body>
 </html>`;
 }
 
-function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
+function escapeHtml(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function showAlert(id, msg, type) {
+  var e = document.getElementById(id); e.className = 'alert alert-' + type + ' show';
+  var safe = escapeHtml(msg);
+  if (type === 'info') safe = '<span class="spinner"></span> ' + safe;
+  e.innerHTML = '<div class="alert-content">' + safe + '</div>';
+}
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 
 var statusBannerAutoHideTimer = null;
@@ -3535,8 +3565,8 @@ function showStatusBanner(msg, type, noAutoHide) {
   if (statusBannerAutoHideTimer) { clearTimeout(statusBannerAutoHideTimer); statusBannerAutoHideTimer = null; }
   if (!msg) { el.classList.add('hidden'); el.className = 'status-banner hidden'; el.innerHTML = ''; return; }
   var alertType = (type === 'loading' || type === 'saving' || type === 'refreshing') ? 'info' : (type === 'success' || type === 'saved') ? 'success' : (type === 'neutral') ? 'neutral' : 'error';
-  var content = msg;
-  if (type === 'loading' || type === 'saving' || type === 'refreshing') content = '<span class="spinner"></span> ' + msg;
+  var content = escapeHtml(msg);
+  if (type === 'loading' || type === 'saving' || type === 'refreshing') content = '<span class="spinner"></span> ' + content;
   if (alertType === 'error') {
     content = '<div class="status-banner-error-row"><div class="alert-content">' + content + '</div><button type="button" class="status-banner-dismiss" onclick="hideStatusBanner()">OK</button></div>';
   } else {

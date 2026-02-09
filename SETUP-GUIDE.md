@@ -228,7 +228,8 @@ Use this section to find where to obtain each value, what it looks like, and eve
 3. Name: `GITHUB_TOKEN`
 4. Value: your GitHub Personal Access Token (with `repo` scope)
 5. **Encrypt** → **Save**
-6. *(Optional, for automated email)* Add `EMAIL_RELAY_URL` and `EMAIL_RELAY_SECRET` — see [Part F](#part-f--email-relay-setup-optional)
+6. Add **JWT_SECRET**: a long, random string (32+ characters) used to sign and verify user login tokens. See **JWT-SECRET-EXPLAINED.md** for what it is and why it matters.
+7. *(Optional, for automated email)* Add `EMAIL_RELAY_URL` and `EMAIL_RELAY_SECRET` — see [Part F](#part-f--email-relay-setup-optional)
 
 ### A5. Note Your Worker URL
 After deploy, your worker URL is shown, e.g.:

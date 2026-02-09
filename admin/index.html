@@ -136,7 +136,7 @@
           <form id="recovery-form-step2" onsubmit="return false;">
             <div class="form-group">
               <label class="form-label">Enter 6-Digit Code</label>
-              <input type="text" id="recovery-code" class="form-input form-input-code font-mono text-center" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
+              <input type="text" id="recovery-code" class="form-input form-input-code font-mono text-center" placeholder="00000000" maxlength="8" pattern="[0-9]{8}" required autocomplete="off">
               <span class="form-hint">Code expires in 10 minutes</span>
             </div>
             <div id="recovery-alert-2" class="alert"></div>
@@ -741,10 +741,10 @@
     <div class="modal" style="max-width:400px;">
       <div class="modal-header"><h3 class="modal-title">Reset password</h3></div>
       <div class="modal-body">
-        <p class="form-hint mb-2">Enter the 6-digit code sent to your admin email, then set a new password.</p>
+        <p class="form-hint mb-2">Enter the 8-digit code sent to your admin email, then set a new password.</p>
         <div class="form-group">
           <label class="form-label">Code</label>
-          <input type="text" id="modal-reset-otp" class="form-input form-input-code font-mono" placeholder="000000" maxlength="6" pattern="[0-9]{6}" autocomplete="off">
+          <input type="text" id="modal-reset-otp" class="form-input form-input-code font-mono" placeholder="00000000" maxlength="8" pattern="[0-9]{8}" autocomplete="off">
         </div>
         <div class="form-group">
           <label class="form-label">New password</label>
@@ -1117,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!data.setup_complete) { 
       showScreen('setup'); 
     } else {
-      const saved = (localStorage.getItem('admin_key') || '').trim();
+      const saved = (sessionStorage.getItem('admin_key') || '').trim();
       if (saved && await verifyKey(saved)) {
         adminKey = saved;
         try {
@@ -1127,10 +1127,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           console.error('Dashboard load error:', e);
           showScreen('login');
           var errMsg = (e && e.message) ? e.message : 'Could not load dashboard.';
-          showAlert('login-alert', errMsg + ' <button type="button" class="btn btn-ghost btn-sm mt-2" onclick="location.reload()">Retry</button>', 'error');
+          showAlert('login-alert', errMsg, 'error', ' <button type="button" class="btn btn-ghost btn-sm mt-2" onclick="location.reload()">Retry</button>');
         }
       } else { 
-        localStorage.removeItem('admin_key'); 
+        sessionStorage.removeItem('admin_key'); 
         showScreen('login'); 
       }
     }
@@ -1333,7 +1333,7 @@ function showScreen(s) {
   if (logoutBtn) logoutBtn.classList.toggle('hidden', s !== 'dashboard');
 }
 
-function logout() { localStorage.removeItem('admin_key'); adminKey = null; showScreen('login'); }
+function logout() { sessionStorage.removeItem('admin_key'); adminKey = null; showScreen('login'); }
 
 async function verifyKey(k) {
   try { const r = await fetch(`${API}/api/auth`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: k }) }); return r.ok; }
@@ -1372,7 +1372,7 @@ async function handleSetup(e) {
     if (password.length >= 8) body.password = password;
     const r = await fetch(`${API}/api/setup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const d = await r.json();
-    if (r.ok) { adminKey = key; localStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
+    if (r.ok) { adminKey = key; sessionStorage.setItem('admin_key', key); await loadDashboard(); showScreen('dashboard'); }
     else { showAlert('setup-alert', d.error, 'error'); }
   } catch (e) { showAlert('setup-alert', 'Connection error', 'error'); }
   finally { btn.disabled = false; btn.textContent = 'Complete Setup'; }
@@ -1408,13 +1408,13 @@ async function doLogin() {
   }
   if (ok && returnedKey) {
     adminKey = returnedKey.trim();
-    localStorage.setItem('admin_key', adminKey);
+    sessionStorage.setItem('admin_key', adminKey);
     try {
       await loadDashboard();
       showScreen('dashboard');
     } catch (e) {
       var msg = (e && e.message) ? e.message : 'Could not load dashboard.';
-      showAlert('login-alert', msg + ' <button type="button" class="btn btn-ghost btn-sm mt-2" onclick="location.reload()">Retry</button>', 'error');
+      showAlert('login-alert', msg, 'error', ' <button type="button" class="btn btn-ghost btn-sm mt-2" onclick="location.reload()">Retry</button>');
     }
   }
 }
@@ -1835,7 +1835,7 @@ async function handleSaveAdminKey() {
     var d = await r.json();
     if (r.ok) {
       adminKey = key;
-      localStorage.setItem('admin_key', key);
+      sessionStorage.setItem('admin_key', key);
       inp.value = '';
       document.getElementById('generate-admin-key-btn').classList.remove('hidden');
       document.getElementById('save-admin-key-btn').classList.add('hidden');
@@ -1904,7 +1904,7 @@ async function handlePasswordResetModalSubmit() {
   var newPw = document.getElementById('modal-reset-new-password').value || '';
   var confirmPw = document.getElementById('modal-reset-confirm-password').value || '';
   var alertEl = document.getElementById('modal-password-reset-alert');
-  if (!otp) { showAlert('modal-password-reset-alert', 'Enter the 6-digit code.', 'error'); return; }
+  if (!otp) { showAlert('modal-password-reset-alert', 'Enter the 8-digit code.', 'error'); return; }
   if (newPw.length < 8) { showAlert('modal-password-reset-alert', 'Password must be at least 8 characters.', 'error'); return; }
   if (newPw !== confirmPw) { showAlert('modal-password-reset-alert', 'Passwords do not match.', 'error'); return; }
   var btn = document.getElementById('modal-password-reset-submit');
@@ -3428,7 +3428,7 @@ ${lastUpdatedBlockHtml}
 <div class="info additional-info"><span class="label">${lblBoth('additional-info')}</span>${additionalHtml}</div>
 </div>
 ${formatTimestampScript}
-<script>(function(){var h={"X-Admin-Key":(typeof localStorage!=="undefined"&&localStorage.getItem("admin_key"))||""};fetch("${API}/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
+<script>(function(){var h={"X-Admin-Key":(typeof sessionStorage!=="undefined"&&sessionStorage.getItem("admin_key"))||""};fetch("${API}/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>
 </body>
 </html>`;
 }
@@ -5204,7 +5204,8 @@ document.getElementById('modal-qr-copy-text').addEventListener('click', function
   });
 });
 
-function showAlert(id, msg, type) { const e = document.getElementById(id); e.className = `alert alert-${type} show`; e.innerHTML = `<div class="alert-content">${msg}</div>`; }
+function escapeHtml(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function showAlert(id, msg, type, appendSafeHtml) { const e = document.getElementById(id); e.className = 'alert alert-' + type + ' show'; var content = escapeHtml(msg); if (appendSafeHtml) content += appendSafeHtml; e.innerHTML = '<div class="alert-content">' + content + '</div>'; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 </script>
 </body>
