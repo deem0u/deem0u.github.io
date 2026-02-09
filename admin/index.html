@@ -919,10 +919,14 @@
           <button type="button" class="btn btn-secondary btn-sm" onclick="pushMessageCmd('createLink')" title="Insert link">Link</button>
         </div>
         <div id="push-message-editor" class="form-input push-message-editor" contenteditable="true" data-placeholder="Type your message here…" oninput="updatePushMessageButtonState()" onkeyup="updatePushMessageButtonState()"></div>
+        <label class="toggle-label" style="display:flex; align-items:flex-start; gap:0.5rem; margin-top:1rem; cursor:pointer;">
+          <input type="checkbox" id="push-message-confirm-cb" onchange="updatePushMessageButtonState()">
+          <span id="push-message-confirm-label">I confirm I want to push this message to <strong id="push-message-confirm-username"></strong>'s My Account.</span>
+        </label>
         <div id="modal-push-message-error" class="alert alert-error hidden"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="push-message-save-btn" disabled>Push</button>
+        <button type="button" class="btn btn-primary" id="push-message-save-btn" disabled onclick="handlePushMessagePrimaryClick(event)">Push</button>
         <button type="button" class="btn btn-secondary" id="push-message-cancel-btn" onclick="handlePushMessageCancelClick()">Cancel</button>
       </div>
     </div>
@@ -3684,18 +3688,18 @@ function generateMailto(toEmail, folder) {
 }
 
 var pushMessageModalFolder = null;
-var pushMessageConfirmStep = false;
 
 function showPushMessageModal(folder) {
   pushMessageModalFolder = folder;
-  pushMessageConfirmStep = false;
   document.getElementById('modal-push-message-title').textContent = 'Push Message - ' + folder;
   var editor = document.getElementById('push-message-editor');
   if (editor) { editor.innerHTML = ''; editor.focus(); }
+  var confirmCb = document.getElementById('push-message-confirm-cb');
+  if (confirmCb) confirmCb.checked = false;
+  var confirmUsername = document.getElementById('push-message-confirm-username');
+  if (confirmUsername) confirmUsername.textContent = folder;
   document.getElementById('modal-push-message-error').classList.add('hidden');
   document.getElementById('modal-push-message-error').textContent = '';
-  document.getElementById('push-message-save-btn').textContent = 'Push';
-  document.getElementById('push-message-cancel-btn').textContent = 'Cancel';
   document.getElementById('modal-push-message').classList.remove('hidden');
   document.getElementById('modal-push-message').classList.add('show');
   updatePushMessageButtonState();
@@ -3705,46 +3709,30 @@ function closePushMessageModal() {
   document.getElementById('modal-push-message').classList.remove('show');
   document.getElementById('modal-push-message').classList.add('hidden');
   pushMessageModalFolder = null;
-  pushMessageConfirmStep = false;
-  document.getElementById('push-message-save-btn').textContent = 'Push';
-  document.getElementById('push-message-cancel-btn').textContent = 'Cancel';
-}
-
-function revertPushMessageConfirm() {
-  pushMessageConfirmStep = false;
-  document.getElementById('push-message-save-btn').textContent = 'Push';
-  document.getElementById('push-message-cancel-btn').textContent = 'Cancel';
-  updatePushMessageButtonState();
+  var confirmCb = document.getElementById('push-message-confirm-cb');
+  if (confirmCb) confirmCb.checked = false;
 }
 
 function handlePushMessageCancelClick() {
-  if (pushMessageConfirmStep) revertPushMessageConfirm();
-  else closePushMessageModal();
+  closePushMessageModal();
 }
 
 function updatePushMessageButtonState() {
   var editor = document.getElementById('push-message-editor');
   var btn = document.getElementById('push-message-save-btn');
+  var confirmCb = document.getElementById('push-message-confirm-cb');
   if (!editor || !btn) return;
   var raw = (editor.innerText || editor.textContent || '').trim();
   var hasContent = raw.length > 0;
-  if (pushMessageConfirmStep) {
-    btn.disabled = false;
-  } else {
-    btn.disabled = !hasContent;
-  }
+  var confirmed = confirmCb && confirmCb.checked;
+  btn.disabled = !hasContent || !confirmed;
 }
 
 function handlePushMessagePrimaryClick(e) {
   if (e) { e.preventDefault(); e.stopPropagation(); }
-  if (pushMessageConfirmStep) {
-    savePushMessage();
-    return;
-  }
-  pushMessageConfirmStep = true;
-  document.getElementById('push-message-save-btn').textContent = 'Confirm Push';
-  document.getElementById('push-message-cancel-btn').textContent = 'Abort';
-  document.getElementById('push-message-save-btn').disabled = false;
+  var confirmCb = document.getElementById('push-message-confirm-cb');
+  if (!confirmCb || !confirmCb.checked) return;
+  savePushMessage();
 }
 
 function pushMessageCmd(cmd) {
@@ -3789,6 +3777,12 @@ function sanitizePushMessageHtml(html) {
 
 async function savePushMessage() {
   if (!pushMessageModalFolder) return;
+  var confirmCb = document.getElementById('push-message-confirm-cb');
+  if (!confirmCb || !confirmCb.checked) {
+    var errEl = document.getElementById('modal-push-message-error');
+    if (errEl) { errEl.textContent = 'Please confirm you want to push this message.'; errEl.classList.remove('hidden'); }
+    return;
+  }
   var editor = document.getElementById('push-message-editor');
   var errEl = document.getElementById('modal-push-message-error');
   var raw = (editor && editor.innerHTML) ? editor.innerHTML.trim() : '';
@@ -4181,14 +4175,6 @@ function closeModal() { document.getElementById('modal').classList.remove('show'
 document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
 
 (function() {
-  var pushSaveBtn = document.getElementById('push-message-save-btn');
-  if (pushSaveBtn) {
-    pushSaveBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      handlePushMessagePrimaryClick(e);
-    });
-  }
   var sitePushSection = document.getElementById('site-push-message-section');
   if (sitePushSection) {
     sitePushSection.addEventListener('click', function(e) {
