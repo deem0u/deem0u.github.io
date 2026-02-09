@@ -3978,6 +3978,12 @@ async function executeSitePushMessage() {
   var html = sanitizePushMessageHtml(raw);
   var targets = getSitePushTargetUsers();
   if (targets.length === 0) {
+    sitePushConfirmStep = false;
+    document.getElementById('site-push-message-btn').textContent = 'Push';
+    document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
+    updateSitePushMessageButtonState();
+    errEl.textContent = 'No users selected. Select users below or check "Push to all users".';
+    errEl.classList.remove('hidden');
     showAlert('alert-admin-access', 'No users selected.', 'error');
     return;
   }
@@ -3985,22 +3991,27 @@ async function executeSitePushMessage() {
   if (btn) btn.disabled = true;
   var ok = 0;
   var fail = 0;
-  for (var i = 0; i < targets.length; i++) {
-    try {
-      var r = await fetch(API + '/api/push-message/' + encodeURIComponent(targets[i]), { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ html: html }) });
-      if (r.ok) ok++; else fail++;
-    } catch (e) { fail++; }
+  try {
+    for (var i = 0; i < targets.length; i++) {
+      try {
+        var r = await fetch(API + '/api/push-message/' + encodeURIComponent(targets[i]), { method: 'PUT', headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ html: html }) });
+        if (r.ok) ok++; else { fail++; if (i === 0) { var d = await r.json().catch(function() { return {}; }); errEl.textContent = (d && d.error) ? d.error : 'HTTP ' + r.status; errEl.classList.remove('hidden'); } }
+      } catch (e) { fail++; if (i === 0) { errEl.textContent = 'Connection error. Check API URL and network.'; errEl.classList.remove('hidden'); } }
+    }
+  } finally {
+    sitePushConfirmStep = false;
+    document.getElementById('site-push-message-btn').textContent = 'Push';
+    document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
+    if (btn) btn.disabled = false;
+    updateSitePushMessageButtonState();
   }
-  sitePushConfirmStep = false;
-  document.getElementById('site-push-message-btn').textContent = 'Push';
-  document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
-  if (btn) btn.disabled = false;
-  updateSitePushMessageButtonState();
   if (fail === 0) {
     showAlert('alert-admin-access', 'Push message sent to ' + ok + ' user(s).', 'success');
     editor.innerHTML = '';
     updateSitePushMessageButtonState();
   } else {
+    errEl.textContent = 'Sent to ' + ok + ' user(s); ' + fail + ' failed. Check connection and admin key.';
+    errEl.classList.remove('hidden');
     showAlert('alert-admin-access', 'Sent to ' + ok + ' user(s); ' + fail + ' failed.', 'error');
   }
 }
@@ -4174,12 +4185,12 @@ document.getElementById('modal-confirm').addEventListener('click', () => { if (m
   var sitePushSection = document.getElementById('site-push-message-section');
   if (pushModal) {
     pushModal.addEventListener('click', function(e) {
-      if (e.target && e.target.id === 'push-message-save-btn') { handlePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
+      if (e.target && e.target.closest && e.target.closest('#push-message-save-btn')) { handlePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
     }, true);
   }
   if (sitePushSection) {
     sitePushSection.addEventListener('click', function(e) {
-      if (e.target && e.target.id === 'site-push-message-btn') { handleSitePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
+      if (e.target && e.target.closest && e.target.closest('#site-push-message-btn')) { handleSitePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
     }, true);
   }
 })();
