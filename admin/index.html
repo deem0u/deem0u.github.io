@@ -3722,7 +3722,7 @@ function updatePushMessageButtonState() {
   var btn = document.getElementById('push-message-save-btn');
   var confirmCb = document.getElementById('push-message-confirm-cb');
   if (!editor || !btn) return;
-  var raw = (editor.innerText || editor.textContent || '').trim();
+  var raw = (editor && editor.innerHTML) ? editor.innerHTML.trim() : '';
   var hasContent = raw.length > 0;
   var confirmed = confirmCb && confirmCb.checked;
   btn.disabled = !hasContent || !confirmed;
@@ -3730,8 +3730,6 @@ function updatePushMessageButtonState() {
 
 function handlePushMessagePrimaryClick(e) {
   if (e) { e.preventDefault(); e.stopPropagation(); }
-  var confirmCb = document.getElementById('push-message-confirm-cb');
-  if (!confirmCb || !confirmCb.checked) return;
   savePushMessage();
 }
 
@@ -3775,26 +3773,32 @@ function sanitizePushMessageHtml(html) {
   return div.innerHTML;
 }
 
+var pushMessageSaving = false;
+
 async function savePushMessage() {
   if (!pushMessageModalFolder) return;
+  if (pushMessageSaving) return;
+  var errEl = document.getElementById('modal-push-message-error');
   var confirmCb = document.getElementById('push-message-confirm-cb');
   if (!confirmCb || !confirmCb.checked) {
-    var errEl = document.getElementById('modal-push-message-error');
     if (errEl) { errEl.textContent = 'Please confirm you want to push this message.'; errEl.classList.remove('hidden'); }
     return;
   }
   var editor = document.getElementById('push-message-editor');
-  var errEl = document.getElementById('modal-push-message-error');
   var raw = (editor && editor.innerHTML) ? editor.innerHTML.trim() : '';
   if (!raw) {
-    errEl.textContent = 'Please enter a message.';
-    errEl.classList.remove('hidden');
+    if (errEl) { errEl.textContent = 'Please enter a message.'; errEl.classList.remove('hidden'); }
     return;
   }
   var html = sanitizePushMessageHtml(raw);
-  errEl.classList.add('hidden');
+  if (!html) {
+    if (errEl) { errEl.textContent = 'Please enter a message.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+  if (errEl) errEl.classList.add('hidden');
   var btn = document.getElementById('push-message-save-btn');
   if (btn) btn.disabled = true;
+  pushMessageSaving = true;
   try {
     var r = await fetch(API + '/api/push-message/' + encodeURIComponent(pushMessageModalFolder), {
       method: 'PUT',
@@ -3806,14 +3810,15 @@ async function savePushMessage() {
       showAlert('alert-manage', 'Push message set. The user will see it on their My Account page until they click OK.', 'success');
       closePushMessageModal();
     } else {
-      errEl.textContent = (d && d.error) || 'Failed to save.';
-      errEl.classList.remove('hidden');
+      if (errEl) { errEl.textContent = (d && d.error) || 'Failed to save.'; errEl.classList.remove('hidden'); }
     }
   } catch (e) {
-    errEl.textContent = 'Connection error.';
-    errEl.classList.remove('hidden');
+    if (errEl) { errEl.textContent = 'Connection error.'; errEl.classList.remove('hidden'); }
+  } finally {
+    pushMessageSaving = false;
+    if (btn) btn.disabled = false;
+    updatePushMessageButtonState();
   }
-  if (btn) btn.disabled = false;
 }
 
 var sitePushConfirmStep = false;
@@ -4175,6 +4180,14 @@ function closeModal() { document.getElementById('modal').classList.remove('show'
 document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
 
 (function() {
+  var pushSaveBtn = document.getElementById('push-message-save-btn');
+  if (pushSaveBtn) {
+    pushSaveBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      handlePushMessagePrimaryClick(e);
+    });
+  }
   var sitePushSection = document.getElementById('site-push-message-section');
   if (sitePushSection) {
     sitePushSection.addEventListener('click', function(e) {
