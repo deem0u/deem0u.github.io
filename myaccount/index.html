@@ -67,6 +67,10 @@
   .banner-reminder .banner-reminder-title,
   .banner-reminder .banner-reminder-content ul,
   .banner-push-message .banner-push-message-content { font-size: inherit; }
+  .banner-push-message-item { margin-bottom: 1rem; }
+  .banner-push-message-item:last-child { margin-bottom: 0; }
+  .banner-push-message-time { font-size: 0.8125rem; color: var(--color-text-secondary, #666); margin-bottom: 0.25rem; }
+  .banner-push-message-body { font-size: inherit; }
   .verify-otp-input { font-size: 1.25rem; letter-spacing: 0.2em; text-align: center; }
   .editor-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1rem; }
   .contact-pages-container { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--white, #fff); border-radius: var(--radius-md, 6px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
@@ -1845,6 +1849,12 @@ function sanitizePushMessageHtml(html) {
   return div.innerHTML;
 }
 
+function formatPushMessageTime(at) {
+  if (!at) return '';
+  var d = new Date(at);
+  return isNaN(d.getTime()) ? '' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 async function fetchAndShowPushMessage() {
   if (!token) return;
   var banner = document.getElementById('push-message-banner');
@@ -1853,8 +1863,20 @@ async function fetchAndShowPushMessage() {
   try {
     var r = await fetch(API + '/api/push-message', { headers: { 'Authorization': 'Bearer ' + token } });
     var d = await r.json().catch(function() { return {}; });
-    if (r.ok && d && d.html) {
-      contentEl.innerHTML = sanitizePushMessageHtml(d.html);
+    var messages = (r.ok && d && Array.isArray(d.messages)) ? d.messages : [];
+    if (messages.length > 0) {
+      var html = '';
+      for (var i = 0; i < messages.length; i++) {
+        var msg = messages[i];
+        var at = (msg && typeof msg.at === 'number') ? msg.at : 0;
+        var body = (msg && typeof msg.html === 'string') ? sanitizePushMessageHtml(msg.html) : '';
+        var timeStr = formatPushMessageTime(at);
+        html += '<div class="banner-push-message-item">';
+        if (timeStr) html += '<div class="banner-push-message-time">' + escapeHtml(timeStr) + '</div>';
+        if (body) html += '<div class="banner-push-message-body">' + body + '</div>';
+        html += '</div>';
+      }
+      contentEl.innerHTML = html;
       banner.classList.remove('hidden');
     } else {
       banner.classList.add('hidden');

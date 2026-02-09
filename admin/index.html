@@ -3720,9 +3720,14 @@ function handlePushMessageCancelClick() {
 }
 
 function updatePushMessageButtonState() {
+  var editor = document.getElementById('push-message-editor');
   var btn = document.getElementById('push-message-save-btn');
+  var confirmCb = document.getElementById('push-message-confirm-cb');
   if (!btn) return;
-  btn.disabled = !!pushMessageSaving;
+  var raw = (editor && editor.innerHTML) ? editor.innerHTML.trim() : '';
+  var hasContent = raw.length > 0;
+  var confirmed = confirmCb && confirmCb.checked;
+  btn.disabled = !!pushMessageSaving || !hasContent || !confirmed;
 }
 
 function handlePushMessagePrimaryClick(e) {

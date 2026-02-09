@@ -3463,7 +3463,7 @@ async function handleCancelEmailChange(request, env) {
   return jsonResponse({ success: true });
 }
 
-/** PUT /api/push-message/:username - Admin only. Body: { html }. Stores a banner message for the user; shown on My Account until they click OK. */
+/** PUT /api/push-message/:username - Admin only. Body: { html }. Appends a banner message for the user (with timestamp); shown on My Account until they dismiss all. */
 async function handlePutPushMessage(username, request, env) {
   if (!await isAdmin(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
@@ -3473,26 +3473,47 @@ async function handlePutPushMessage(username, request, env) {
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
   const html = typeof body.html === 'string' ? body.html.trim() : '';
   if (!html) return jsonResponse({ error: 'Message content required' }, 400);
-  await env.EDIT_KEYS_KV.put('push_message:' + uLower, html);
+  const key = 'push_message:' + uLower;
+  let list = [];
+  try {
+    const raw = await env.EDIT_KEYS_KV.get(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) list = parsed;
+      else list = [{ html: raw, at: 0 }];
+    }
+  } catch (_) {}
+  list.push({ html, at: Date.now() });
+  await env.EDIT_KEYS_KV.put(key, JSON.stringify(list));
   return jsonResponse({ success: true });
 }
 
-/** GET /api/push-message - Bearer required. Returns the current user's push message if any. */
+/** GET /api/push-message - Bearer required. Returns the current user's push messages (array of { html, at }) if any. */
 async function handleGetPushMessage(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
   const secret = env.JWT_SECRET || env.SESSION_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
-  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  if (!payload || !payload.username) return jsonResponse({ messages: [] });
   const username = (payload.username || '').trim().toLowerCase();
-  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ html: null });
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ messages: [] });
   if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
-  const html = await env.EDIT_KEYS_KV.get('push_message:' + username);
-  return jsonResponse(html ? { html } : { html: null });
+  const raw = await env.EDIT_KEYS_KV.get('push_message:' + username);
+  let messages = [];
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) messages = parsed;
+      else messages = [{ html: raw, at: 0 }];
+    } catch (_) {
+      messages = [{ html: raw, at: 0 }];
+    }
+  }
+  return jsonResponse({ messages });
 }
 
-/** DELETE /api/push-message - Bearer required. Dismisses the current user's push message (clears from KV). */
+/** DELETE /api/push-message - Bearer required. Dismisses all push messages for the current user (clears from KV). */
 async function handleDismissPushMessage(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
