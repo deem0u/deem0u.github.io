@@ -492,64 +492,37 @@
             </div>
           </div>
           
-          <!-- New User Form -->
+          <!-- New User Form (minimal: admin creates account so user can sign in via OTP and complete profile in My Account) -->
           <div id="new-user-card" class="card hidden">
             <div class="card-header"><span class="card-title">Add New User</span></div>
             <div class="card-body">
-              <p class="form-hint mb-3">Creates only the user folder (no contact page, no account KV). Complete the account with <strong>Edit Profile</strong> and <strong>Set Secrets</strong> on the user card, or the user can sign in via My Account and set secrets there. Add a contact page from the user card when ready.</p>
+              <p class="form-hint mb-3">Create an account with the minimum required information. Only <strong>User Name</strong> is required. The user can sign in via OTP (sent to Account Email if provided) and set a password and other details in My Account. Add contact pages from the user card when ready.</p>
               <form id="new-user-form">
                 <div class="form-group">
                   <label class="form-label">User Name <span class="form-required">*</span></label>
-                  <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" required autocomplete="off">
+                  <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" required autocomplete="off" placeholder="e.g. john-smith">
                   <span class="form-hint" id="hint-new-username">3–28 characters. Letters, numbers, hyphens, underscores. Stored as lowercase (e.g. John-Smith → john-smith).</span>
                   <span class="form-error" id="error-new-username" role="alert"></span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Account Email</label>
-                  <input type="email" id="new-account-email" class="form-input" autocomplete="off">
-                  <span class="form-hint">Must be unique. Used for recovery.</span>
+                  <input type="email" id="new-account-email" class="form-input" autocomplete="off" placeholder="your@email.com">
+                  <span class="form-hint">Must be unique. Used for sign-in and recovery (OTP sent here).</span>
                   <span class="form-error" id="error-new-account-email" role="alert"></span>
                 </div>
                 <div class="form-row">
-                  <div class="form-group"><label class="form-label">Given Names</label><input type="text" id="new-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-new-first-name" role="alert"></span></div>
-                  <div class="form-group"><label class="form-label">Family Name</label><input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-new-surname" role="alert"></span></div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group"><label class="form-label">Contact Page Email</label><input type="email" id="new-email" class="form-input" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-new-email" role="alert"></span></div>
-                  <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="new-mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-hint"></span><span class="form-error" id="error-new-mobile" role="alert"></span></div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Home Country</label>
-                  <div class="searchable-select" id="home-country-new-container">
-                    <button type="button" class="searchable-select-trigger" id="home-country-new-trigger" onclick="toggleCountrySelect('new')">
-                      <span id="home-country-new-text" class="searchable-select-placeholder">Select country</span>
-                    </button>
-                    <div class="searchable-select-dropdown" id="home-country-new-dropdown">
-                      <div class="searchable-select-search">
-                        <input type="text" id="home-country-new-search" oninput="filterCountryOptions('new')" autocomplete="off">
-                      </div>
-                      <div class="searchable-select-options" id="home-country-new-options"></div>
-                    </div>
+                  <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" id="new-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="off" placeholder="Given names">
+                    <span class="form-hint">Letters, spaces, apostrophes, hyphens, periods. Up to 32 characters.</span>
+                    <span class="form-error" id="error-new-first-name" role="alert"></span>
                   </div>
-                  <input type="hidden" id="new-home-country" value="">
-                  <span class="form-hint">Your country of residence. Shown on your contact page for identification.</span>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Destination Details</label>
-                  <span class="form-hint" id="hint-destination-details-new"></span>
-                  <div class="form-section">
-<div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="new-dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
-                   <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="new-dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
-                    <div class="form-row">
-                      <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="new-dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-new-dest-phone" role="alert"></span></div>
-                      <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="new-dest-email" class="form-input" autocomplete="off"><span class="form-error" id="error-new-dest-email" role="alert"></span></div>
-                    </div>
+                  <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="off" placeholder="Family name">
+                    <span class="form-hint">Letters, spaces, apostrophes, hyphens, periods. Up to 32 characters.</span>
+                    <span class="form-error" id="error-new-surname" role="alert"></span>
                   </div>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Additional Information</label>
-                  <textarea id="new-additional-info" class="form-textarea form-textarea-additional" rows="8" maxlength="500"></textarea>
-                  <span class="form-hint">Optional. e.g. emergency contact, special instructions.</span>
                 </div>
                 <div id="alert-new-user" class="alert"></div>
                 <div class="form-actions">
@@ -2913,7 +2886,6 @@ function showNewUserForm() {
 function hideNewUserForm() {
   document.getElementById('new-user-card').classList.add('hidden');
   document.getElementById('new-user-form').reset();
-  setCountryDropdown('new', null);
   hideAlert('alert-new-user');
   function clearErr(id, errId) {
     var e = document.getElementById(errId), i = document.getElementById(id);
@@ -2924,15 +2896,13 @@ function hideNewUserForm() {
   clearErr('new-account-email', 'error-new-account-email');
   clearErr('new-first-name', 'error-new-first-name');
   clearErr('new-surname', 'error-new-surname');
-  clearErr('new-email', 'error-new-email');
-  clearErr('new-mobile', 'error-new-mobile');
 }
 
 function validateFolder(val) {
   var s = (val || '').trim();
-  var msg = 'User name must be 3?32 characters, using only letters, numbers, hyphens and underscores.';
+  var msg = 'User name must be 3–28 characters, using only letters, numbers, hyphens and underscores.';
   if (!s) return { valid: false, message: 'User name is required.' };
-  if (s.length < 3 || s.length > 32) return { valid: false, message: msg };
+  if (s.length < 3 || s.length > 28) return { valid: false, message: msg };
   if (!/^[a-zA-Z0-9_-]+$/.test(s)) return { valid: false, message: msg };
   return { valid: true };
 }
@@ -3139,6 +3109,51 @@ async function handleCreateUser(e) {
   if (errEl) errEl.textContent = '';
   usernameInput.classList.remove('is-invalid');
 
+  var accountEmailInp = document.getElementById('new-account-email');
+  var accountEmail = (accountEmailInp && accountEmailInp.value) ? accountEmailInp.value.trim() : '';
+  if (accountEmail) {
+    r = validateEmailInput(accountEmailInp, false);
+    if (!r.valid) {
+      errEl = document.getElementById('error-new-account-email');
+      if (errEl) { errEl.textContent = r.message; errEl.setAttribute('aria-live', 'polite'); }
+      accountEmailInp.classList.add('is-invalid');
+      accountEmailInp.focus();
+      return;
+    }
+    if (document.getElementById('error-new-account-email')) document.getElementById('error-new-account-email').textContent = '';
+    accountEmailInp.classList.remove('is-invalid');
+  }
+
+  var firstNameInp = document.getElementById('new-first-name');
+  var firstName = (firstNameInp && firstNameInp.value) ? firstNameInp.value.trim() : '';
+  if (firstName) {
+    r = validateGivenNames(firstName, false);
+    if (!r.valid) {
+      errEl = document.getElementById('error-new-first-name');
+      if (errEl) { errEl.textContent = r.message; errEl.setAttribute('aria-live', 'polite'); }
+      firstNameInp.classList.add('is-invalid');
+      firstNameInp.focus();
+      return;
+    }
+    if (document.getElementById('error-new-first-name')) document.getElementById('error-new-first-name').textContent = '';
+    firstNameInp.classList.remove('is-invalid');
+  }
+
+  var surnameInp = document.getElementById('new-surname');
+  var lastName = (surnameInp && surnameInp.value) ? surnameInp.value.trim() : '';
+  if (lastName) {
+    r = validateFamilyName(lastName, false);
+    if (!r.valid) {
+      errEl = document.getElementById('error-new-surname');
+      if (errEl) { errEl.textContent = r.message; errEl.setAttribute('aria-live', 'polite'); }
+      surnameInp.classList.add('is-invalid');
+      surnameInp.focus();
+      return;
+    }
+    if (document.getElementById('error-new-surname')) document.getElementById('error-new-surname').textContent = '';
+    surnameInp.classList.remove('is-invalid');
+  }
+
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
   try {
     const res = await fetch(`${API}/api/admin/create-user`, {
@@ -3147,36 +3162,58 @@ async function handleCreateUser(e) {
       body: JSON.stringify({ username })
     });
     const d = await res.json();
-    if (res.ok) {
-      pages.push(username);
-      if (!userInfo[username]) userInfo[username] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', folder: username };
-      fetchAccountEmailsAndRefresh();
-      hideNewUserForm();
-      showAlert('alert-manage', 'User folder created for ' + username + '. Use Edit Profile and Set Secrets on their card to complete the account; add a contact page when ready.', 'success');
-      switchTab('manage');
-    } else {
+    if (!res.ok) {
       showAlert('alert-new-user', d.error || 'Failed to create', 'error');
+      return;
     }
-  } catch { showAlert('alert-new-user', 'Error', 'error'); }
+    pages.push(username);
+    if (!userInfo[username]) userInfo[username] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', folder: username };
+
+    if (accountEmail || firstName || lastName) {
+      const putRes = await fetch(API + '/api/profile/' + encodeURIComponent(username), {
+        method: 'PUT',
+        headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountEmail: accountEmail || undefined, firstName: firstName || undefined, lastName: lastName || undefined })
+      });
+      const putData = await putRes.json();
+      if (putRes.ok) {
+        if (userInfo[username]) {
+          userInfo[username].accountEmail = accountEmail || null;
+          userInfo[username].firstName = firstName || '';
+          userInfo[username].lastName = lastName || '';
+        }
+      } else {
+        showAlert('alert-manage', 'User created but profile update failed: ' + (putData.error || 'Unknown error') + '. Use Edit Profile on the user card to set details.', 'error');
+      }
+    }
+    fetchAccountEmailsAndRefresh();
+    hideNewUserForm();
+    showAlert('alert-manage', 'User created for ' + username + '. They can sign in via OTP (if Account Email was set) and complete their profile in My Account. Add contact pages from the user card when ready.', 'success');
+    switchTab('manage');
+  } catch (err) { showAlert('alert-new-user', 'Error', 'error'); }
   finally { btn.disabled = false; btn.textContent = 'Create'; }
 }
 
 function generateNewUserHTML() {
-  const f = i => document.getElementById('new-' + i).value.trim();
-  const ml = f('mobile').replace(/\s/g, '');
+  const val = function(id) { var el = document.getElementById(id); return (el && el.value) ? el.value.trim() : ''; };
+  const f = function(key) {
+    var id = (key === 'first-name') ? 'new-first-name' : (key === 'surname') ? 'new-surname' : 'new-' + key;
+    return val(id);
+  };
+  const ml = (f('mobile') || '').replace(/\s/g, '');
   const now = new Date().toISOString();
   return generatePageHTML(
     f('first-name'),
     f('surname'),
-    f('email'),
+    val('new-email') || f('email'),
     f('mobile'),
     ml,
-    f('home-country'),
-    f('dest-name'),
-    f('dest-address'),
-    f('dest-phone'),
-    f('dest-email'),
-    f('additional-info'),
+    val('new-home-country') || f('home-country'),
+    val('new-dest-name') || f('dest-name'),
+    val('new-dest-address') || f('dest-address'),
+    val('new-dest-phone') || f('dest-phone'),
+    val('new-dest-email') || f('dest-email'),
+    val('new-additional-info') || f('additional-info'),
     now,
     'admin'
   );
