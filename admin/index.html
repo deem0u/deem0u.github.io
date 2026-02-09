@@ -211,7 +211,7 @@
         <nav class="dashboard-nav" aria-label="Dashboard sections">
           <div class="dashboard-nav-tabs">
             <button type="button" class="dashboard-tab tab active" data-tab="manage">Manage Users</button>
-            <button type="button" class="dashboard-tab tab" data-tab="edit">Add Users / Edit Contact Pages</button>
+            <button type="button" class="dashboard-tab tab" data-tab="edit">Manage Contact Pages</button>
             <button type="button" class="dashboard-tab tab" data-tab="admin-access">Site Management &amp; Settings</button>
             <button type="button" class="dashboard-tab tab" id="dashboard-tab-administrator" data-tab="administrator">Administrator Access</button>
           </div>
@@ -533,45 +533,45 @@
                 </div>
               </div>
               <div id="admin-contact-edit" class="admin-contact-edit hidden">
-                <p id="admin-create-contact-page-intro" class="form-hint mb-3 hidden" style="margin-bottom:1rem;"></p>
-                <div class="card-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; padding:0.5rem 0.75rem;">
-                  <div style="flex:1; min-width:0;">
+                <p id="admin-create-contact-page-intro" class="form-hint hidden" style="margin-bottom:0.5rem;"></p>
+                <div class="card-header">
+                  <div class="card-header-fields">
                     <div class="form-group">
                       <label class="form-label" for="contact-page-name">Page Name <span class="form-required">*</span></label>
-                      <span class="form-hint" style="display:block;">A name to identify this page on your list of Contact Pages. Must be unique amongst this user's contact pages.</span>
                       <input type="text" id="contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off" title="Page Name">
+                      <span class="form-hint">A name to identify this page on your list of Contact Pages. Must be unique amongst this user's contact pages.</span>
                       <span class="form-error" id="error-contact-page-name" role="alert"></span>
                     </div>
                     <div class="form-group">
-                      <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
-                      <div class="contact-page-url-anatomy" id="admin-contact-page-url-anatomy">
-                        <div class="url-anatomy-row">
-                          <span class="card-header-url-prefix" style="font-size:0.875rem; color:var(--color-text-secondary,#666);">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
-                          <input type="text" id="contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" maxlength="28" autocomplete="off" title="Contact Page URL">
+                      <label class="form-label" for="contact-page-url-slug">Page URL</label>
+                      <div class="editor-edit-url-anatomy admin-contact-page-url-anatomy" id="admin-contact-page-url-anatomy">
+                        <div class="editor-edit-url-row editor-edit-url-row-line">
+                          <span class="url-edit-prefix editor-view-url-line"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span>
+                          <input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage or leave blank for random" pattern="^([a-zA-Z0-9_-]{3,28})?$" maxlength="28" autocomplete="off" title="Contact Page URL">
                         </div>
-                        <div id="admin-contact-page-slug-warning" class="contact-page-slug-warning hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten with the new one.</div>
-                        <span class="form-hint">A Slug for this page's URL. 3–28 characters – letters, numbers, hyphens, underscores. Must be unique amongst this user's Contact Pages.</span>
+                        <div id="admin-contact-page-slug-warning" class="contact-page-slug-warning contact-page-slug-warning-full-width hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten with the new one.</div>
+                        <span class="form-hint form-hint-full-width">A Slug for this page's URL. 3–28 characters – letters, numbers, hyphens, underscores. Leave blank to use a random slug. Must be unique amongst this user's Contact Pages.</span>
                       </div>
                       <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
                     </div>
                   </div>
-                  <div><button type="button" class="btn btn-secondary btn-sm" onclick="adminBackToViewMode()">Back to View Mode</button></div>
+                  <div class="editor-edit-mode-actions" id="admin-back-to-view-wrap"><button type="button" class="btn btn-secondary btn-sm" id="admin-back-to-view-btn" onclick="adminBackToViewMode()">Back to View Mode</button></div>
                 </div>
-                <form id="contact-form">
-                  <div class="card-body">
-                    <div class="form-row form-row-with-hint" style="display:flex; flex-wrap:wrap; gap:1rem;">
+                <div class="card-body" id="admin-editor-contact-form-wrap">
+                  <form id="contact-form">
+                    <div class="form-row form-row-with-hint">
                       <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-first-name" role="alert"></span></div>
                       <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-surname" role="alert"></span></div>
                     </div>
                     <span class="form-hint form-hint-row">Usually First and Last Name. Consider whether this needs to exactly match any formal ID.</span>
-                    <div class="form-row form-row-with-hint" style="display:flex; flex-wrap:wrap; gap:1rem;">
+                    <div class="form-row form-row-with-hint">
                       <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="off"><span class="form-error" id="error-email" role="alert"></span></div>
                       <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-error" id="error-mobile" role="alert"></span></div>
                     </div>
                     <span class="form-hint form-hint-row">A suitable email and contact number you have access to so that you can be reached.</span>
                     <div class="form-group">
                       <label class="form-label">Home Country</label>
-                      <span class="form-hint form-hint-above" style="display:block; margin-bottom:0.35rem;">Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.</span>
+                      <span class="form-hint form-hint-above">Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.</span>
                       <div class="searchable-select" id="home-country-edit-container">
                         <button type="button" class="searchable-select-trigger" id="home-country-edit-trigger" onclick="toggleCountrySelect('edit')">
                           <span id="home-country-edit-text" class="searchable-select-placeholder">Select country</span>
@@ -590,7 +590,7 @@
                       <div class="form-section">
                         <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
                         <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
-                        <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
+                        <div class="form-row">
                           <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-dest-phone" role="alert"></span></div>
                           <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input" autocomplete="off"><span class="form-error" id="error-dest-email" role="alert"></span></div>
                         </div>
@@ -603,13 +603,13 @@
                       <span class="form-hint">Optional. e.g. emergency contact, special instructions.</span>
                     </div>
                     <div id="alert-editor" class="alert"></div>
-                    <div class="form-actions form-actions-editor" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
+                    <div class="form-actions form-actions-editor">
                       <button type="submit" id="save-btn" class="btn btn-primary btn-sm">Save Changes</button>
                       <button type="button" class="btn btn-secondary btn-sm" id="admin-cancel-btn" onclick="adminCancelForm()">Cancel</button>
                       <button type="button" class="btn btn-danger btn-sm" id="admin-delete-page-btn" style="display:none;" onclick="adminOpenDeletePageModal()">Delete</button>
                     </div>
-                  </div>
-                </form>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
@@ -1208,6 +1208,7 @@ function selectCountry(which, value) {
   document.querySelectorAll('#home-country-' + suffix + '-options .searchable-select-option').forEach(function(o) {
     o.classList.toggle('selected', (o.dataset.value || '') === (value || ''));
   });
+  if (which === 'edit') adminCheckContactFormDirty();
 }
 
 function resolveCountryDisplay(parsed) {
@@ -2362,6 +2363,7 @@ function selectEditContactPage(slug, label) {
 }
 
 var adminCreateNewPage = false;
+var adminContactFormSnapshot = null;
 
 async function adminEnterCreateContactPage() {
   const username = document.getElementById('page-select').value;
@@ -2398,9 +2400,9 @@ async function adminEnterCreateContactPage() {
   document.getElementById('contact-page-url-slug').value = '';
   document.getElementById('contact-page-url-slug').removeAttribute('readonly');
   document.getElementById('contact-page-url-slug').disabled = false;
-  document.getElementById('contact-page-url-slug').setAttribute('required', '');
-  document.getElementById('contact-page-url-slug').setAttribute('minlength', '3');
-  document.getElementById('contact-page-url-slug').placeholder = 'e.g. mypage';
+  document.getElementById('contact-page-url-slug').removeAttribute('required');
+  document.getElementById('contact-page-url-slug').removeAttribute('minlength');
+  document.getElementById('contact-page-url-slug').placeholder = 'e.g. mypage or leave blank for random';
   clearAdminContactForm();
   ['first-name', 'surname', 'email'].forEach(function(id) {
     var el = document.getElementById(id);
@@ -2409,9 +2411,11 @@ async function adminEnterCreateContactPage() {
   adminRefreshViewFromForm();
   document.getElementById('admin-contact-view').classList.add('hidden');
   document.getElementById('admin-contact-edit').classList.remove('hidden');
+  var backWrap = document.getElementById('admin-back-to-view-wrap');
+  if (backWrap) backWrap.classList.add('hidden');
   var introEl = document.getElementById('admin-create-contact-page-intro');
   if (introEl) {
-    introEl.textContent = 'Adding a new contact page for ' + username + '. Fill the form below and click Save.';
+    introEl.textContent = 'Adding a new contact page for ' + username + '. Fill the form below (Page Name is required) and click Save when ready.';
     introEl.classList.remove('hidden');
   }
   document.getElementById('admin-delete-page-btn').style.display = 'none';
@@ -2419,6 +2423,9 @@ async function adminEnterCreateContactPage() {
   hideAlert('alert-editor');
   var adminSlugWarnEl = document.getElementById('admin-contact-page-slug-warning');
   if (adminSlugWarnEl) adminSlugWarnEl.classList.add('hidden');
+  adminCaptureContactFormSnapshot();
+  document.getElementById('save-btn').disabled = true;
+  document.getElementById('save-btn').textContent = 'Save Changes';
 }
 
 function clearAdminContactForm() {
@@ -2431,6 +2438,49 @@ function clearAdminContactForm() {
   var hid = document.getElementById('home-country');
   if (hid) hid.value = '';
 }
+
+function adminCaptureContactFormSnapshot() {
+  function val(id) { var e = document.getElementById(id); return e ? (e.value || '').trim() : ''; }
+  function text(id) { var e = document.getElementById(id); return e ? (e.textContent || '').trim() : ''; }
+  adminContactFormSnapshot = {
+    contactPageName: val('contact-page-name'),
+    slug: val('contact-page-url-slug'),
+    firstName: val('first-name'),
+    surname: val('surname'),
+    email: val('email'),
+    mobile: val('mobile'),
+    homeCountry: val('home-country'),
+    homeCountryText: text('home-country-edit-text'),
+    destName: val('dest-name'),
+    destAddress: val('dest-address'),
+    destPhone: val('dest-phone'),
+    destEmail: val('dest-email'),
+    additionalInfo: val('additional-info')
+  };
+}
+
+function adminCheckContactFormDirty() {
+  if (adminContactFormSnapshot == null) return;
+  function val(id) { var e = document.getElementById(id); return e ? (e.value || '').trim() : ''; }
+  function text(id) { var e = document.getElementById(id); return e ? (e.textContent || '').trim() : ''; }
+  var s = adminContactFormSnapshot;
+  var dirty = (val('contact-page-name') !== s.contactPageName) || (val('contact-page-url-slug') !== s.slug) ||
+    (val('first-name') !== s.firstName) || (val('surname') !== s.surname) || (val('email') !== s.email) ||
+    (val('mobile') !== s.mobile) || (val('home-country') !== s.homeCountry) || (text('home-country-edit-text') !== s.homeCountryText) ||
+    (val('dest-name') !== s.destName) || (val('dest-address') !== s.destAddress) || (val('dest-phone') !== s.destPhone) || (val('dest-email') !== s.destEmail) ||
+    (val('additional-info') !== s.additionalInfo);
+  var btn = document.getElementById('save-btn');
+  if (btn) btn.disabled = !dirty;
+}
+
+(function attachAdminContactFormDirtyListeners() {
+  var ids = ['contact-page-name','contact-page-url-slug','first-name','surname','email','mobile','dest-name','dest-address','dest-phone','dest-email','additional-info'];
+  function onChange() { adminCheckContactFormDirty(); }
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.addEventListener('input', onChange); el.addEventListener('change', onChange); }
+  });
+})();
 
 async function loadPageForEditTab() {
   currentFolder = document.getElementById('page-select').value;
@@ -2494,9 +2544,13 @@ function adminRefreshViewFromForm() {
 function adminEnterEditMode() {
   document.getElementById('admin-contact-view').classList.add('hidden');
   document.getElementById('admin-contact-edit').classList.remove('hidden');
+  var backWrap = document.getElementById('admin-back-to-view-wrap');
+  if (backWrap) backWrap.classList.remove('hidden');
   document.getElementById('admin-delete-page-btn').style.display = '';
   var adminSlugWarnEl = document.getElementById('admin-contact-page-slug-warning');
   if (adminSlugWarnEl) adminSlugWarnEl.classList.add('hidden');
+  adminCaptureContactFormSnapshot();
+  document.getElementById('save-btn').disabled = true;
 }
 
 function adminBackToViewMode() {
@@ -3406,11 +3460,7 @@ async function handleSave(e) {
   try {
     if (adminCreateNewPage) {
       var slugRaw = (document.getElementById('contact-page-url-slug') && document.getElementById('contact-page-url-slug').value) ? document.getElementById('contact-page-url-slug').value.trim() : '';
-      if (!slugRaw || !/^[a-zA-Z0-9_-]{3,28}$/.test(slugRaw)) {
-        showAlert('alert-editor', 'Page URL (slug) is required. Use 3–28 characters: letters, numbers, hyphens, underscores.', 'error');
-        return;
-      }
-      var contactpagename = slugRaw;
+      var contactpagename = (slugRaw && /^[a-zA-Z0-9_-]{3,28}$/.test(slugRaw)) ? slugRaw : generateRandomSlug();
       var content = generateHTML();
       var nameTrim = (document.getElementById('contact-page-name') && document.getElementById('contact-page-name').value) ? document.getElementById('contact-page-name').value.trim() : '';
       var body = { username: currentFolder, content: content, contactpagename: contactpagename };
@@ -3448,10 +3498,13 @@ async function handleSave(e) {
           userInfo[currentFolder] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: pgGiven, pageFamilyName: pgFamily, pageEmail: pgEmail, lastUpdated: now, updatedBy: 'admin', folder: currentFolder };
         }
         populateUI();
+        adminCaptureContactFormSnapshot();
+        document.getElementById('save-btn').disabled = true;
+        btn.textContent = 'Save Changes';
         showAlert('alert-editor', 'Contact page created. Page URL uses slug: ' + currentContactPageName + '.', 'success');
-      } else {
-        showAlert('alert-editor', (d && d.error) || 'Failed to create.', 'error');
+        return;
       }
+      showAlert('alert-editor', (d && d.error) || 'Failed to create.', 'error');
     } else {
       var c = generateHTML();
       var pagePath = currentContactPageName && currentContactPageName !== 'index' ? currentFolder + '/' + currentContactPageName : currentFolder;
@@ -3477,10 +3530,13 @@ async function handleSave(e) {
         adminRefreshViewFromForm();
         document.getElementById('admin-contact-edit').classList.add('hidden');
         document.getElementById('admin-contact-view').classList.remove('hidden');
+        adminCaptureContactFormSnapshot();
+        document.getElementById('save-btn').disabled = true;
+        btn.textContent = 'Save Changes';
         showAlert('alert-editor', 'Changes saved successfully. Use "View Page" to see updates.', 'success');
-      } else {
-        showAlert('alert-editor', (d && d.error) || 'Failed to update.', 'error');
+        return;
       }
+      showAlert('alert-editor', (d && d.error) || 'Failed to update.', 'error');
     }
   } catch (e) {
     showAlert('alert-editor', 'Connection error.', 'error');

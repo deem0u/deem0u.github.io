@@ -2463,17 +2463,23 @@ body {
   pointer-events: none;
 }
 
-/* Admin dashboard: contact form matches Contact Editor (compact layout, same sections) */
+/* Admin dashboard: contact form matches MyAccount Contact Editor (compact layout, same sections and sizing) */
 #admin-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; }
-#admin-contact-edit .card-header > div:first-child { flex: 1; min-width: 0; }
+#admin-contact-edit .card-header-fields { flex: 1; min-width: 0; }
 #admin-contact-edit .card-body { padding: 0.5rem 0.75rem; }
-#admin-contact-edit .form-group { margin-bottom: 0.4rem; }
+#admin-contact-edit .form-group { margin-bottom: 0.5rem; }
 #admin-contact-edit .form-group:last-child { margin-bottom: 0; }
 #admin-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
-#admin-contact-edit .form-hint { margin-top: 0.15rem; }
+#admin-contact-edit .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; min-height: 0; line-height: 1.4; font-size: 0.8125rem; }
+#admin-contact-edit .card-header-fields .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; }
+#admin-contact-edit .form-hint-row { display: block; margin-top: 0.25rem; margin-bottom: 0.5rem; }
+#admin-contact-edit .form-hint-above { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
+#admin-contact-edit .form-hint-full-width { display: block; width: 100%; }
+#admin-contact-edit .form-row.form-row-with-hint { margin-bottom: 0; }
 #admin-contact-edit .form-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-#admin-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0.35rem; }
+#admin-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0; }
 #admin-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
+#admin-contact-edit .form-section .form-group:last-child { margin-bottom: 0; }
 #admin-contact-edit .form-actions { margin-top: 0.5rem; padding-top: 0.5rem; }
 #admin-contact-edit .form-input,
 #admin-contact-edit .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
@@ -2483,6 +2489,17 @@ body {
 #admin-contact-edit #home-country-edit-container .searchable-select-search input { padding: 0.25rem 0.35rem; font-size: 0.8125rem; min-height: 1.75rem; }
 #admin-contact-edit #home-country-edit-container .searchable-select-options { max-height: 160px; }
 #admin-contact-edit #home-country-edit-container .searchable-select-option { padding: 0.25rem 0.35rem; font-size: 0.8125rem; }
+#admin-contact-edit .editor-edit-mode-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
+/* URL anatomy: same as MyAccount edit (prefix + slug input flex) */
+#admin-contact-edit .form-group:has(#admin-contact-page-url-anatomy) { width: 100%; }
+#admin-contact-edit #admin-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; display: flex; flex-direction: column; gap: 0.35rem 0; width: 100%; max-width: 100%; }
+#admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-height: 2.25rem; font-size: var(--text-sm, 0.875rem); width: 100%; max-width: 100%; }
+#admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-edit-prefix { flex: none; white-space: nowrap; display: inline-flex; align-items: center; font-size: inherit; color: var(--color-text-secondary, #666); }
+#admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-username-edit { display: inline; font-size: inherit; font-weight: 700; color: var(--accent-teal, #1ac5b0); border: none; background: none; padding: 0; margin: 0; }
+#admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input { flex: 1 1 0%; min-width: 10ch; max-width: 100%; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
+#admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
+#admin-contact-edit .editor-edit-url-anatomy .contact-page-slug-warning-full-width { width: 100%; margin: 0; box-sizing: border-box; }
+#admin-contact-edit .editor-edit-url-anatomy .form-hint { width: 100%; max-width: 100%; box-sizing: border-box; margin-top: 0.25rem; margin-bottom: 0; }
 #admin-contact-view .editor-view-header-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.35rem; }
 #admin-contact-view .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
 #admin-contact-view .editor-view-value.editor-view-title { font-size: 1.25rem; font-weight: 600; text-transform: uppercase; color: var(--accent-purple, #9370db); }
