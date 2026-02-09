@@ -471,22 +471,24 @@
                         <div class="searchable-select-options" id="page-select-options"></div>
                       </div>
                     </div>
-                    <button type="button" class="btn btn-primary btn-lg" id="edit-add-contact-page-btn" onclick="adminEnterCreateContactPage()" disabled>Add New Contact Page</button>
                   </div>
                   <input type="hidden" id="page-select" value="">
                 </div>
                 <div class="manage-contact-pages-field hidden" id="edit-contact-page-row">
                   <label class="form-label">Contact Page</label>
-                  <div class="searchable-select searchable-select-wide" id="edit-contact-page-container">
-                    <button type="button" class="searchable-select-trigger" id="edit-contact-page-trigger" onclick="toggleEditContactPageSelect()">
-                      <span id="edit-contact-page-text" class="searchable-select-placeholder">Select contact page...</span>
-                    </button>
-                    <div class="searchable-select-dropdown" id="edit-contact-page-dropdown">
-                      <div class="searchable-select-search">
-                        <input type="text" id="edit-contact-page-search" placeholder="Search pages..." oninput="filterEditContactPageOptions()" autocomplete="off">
+                  <div class="manage-contact-pages-cp-row">
+                    <div class="searchable-select searchable-select-wide" id="edit-contact-page-container">
+                      <button type="button" class="searchable-select-trigger" id="edit-contact-page-trigger" onclick="toggleEditContactPageSelect()">
+                        <span id="edit-contact-page-text" class="searchable-select-placeholder">Select contact page...</span>
+                      </button>
+                      <div class="searchable-select-dropdown" id="edit-contact-page-dropdown">
+                        <div class="searchable-select-search">
+                          <input type="text" id="edit-contact-page-search" placeholder="Search pages..." oninput="filterEditContactPageOptions()" autocomplete="off">
+                        </div>
+                        <div class="searchable-select-options" id="edit-contact-page-options"></div>
                       </div>
-                      <div class="searchable-select-options" id="edit-contact-page-options"></div>
                     </div>
+                    <button type="button" class="btn btn-primary manage-contact-pages-add-btn" id="edit-add-contact-page-btn" onclick="adminEnterCreateContactPage()" disabled title="Add New Contact Page">+</button>
                   </div>
                   <input type="hidden" id="edit-contact-page-value" value="">
                 </div>

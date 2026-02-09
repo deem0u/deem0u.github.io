@@ -2478,18 +2478,39 @@ body {
 #admin-contact-view .admin-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); font-weight: 700; }
 #admin-contact-view .admin-view-url-line .url-slug-view:empty { display: none; }
 
-/* Manage Contact Pages: single column, 640px; stacked dropdowns; fixed field widths */
+/* Manage Contact Pages: compact single column; Contact Page row = dropdown + "+" button */
 .manage-contact-pages-tab { max-width: 640px; margin-left: auto; margin-right: auto; width: 100%; }
 .manage-contact-pages-bar { max-width: 640px; width: 100%; }
-.manage-contact-pages-bar .card-body { max-width: 640px; }
-.manage-contact-pages-bar .manage-contact-pages-stack { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 640px; }
-.manage-contact-pages-bar .manage-contact-pages-field { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; width: 100%; max-width: 640px; }
-.manage-contact-pages-bar .form-label { font-weight: 700; }
-.manage-contact-pages-bar .manage-contact-pages-user-row { display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; width: 100%; max-width: 640px; }
+.manage-contact-pages-bar .card-body { max-width: 640px; padding: 0.5rem 0.75rem; }
+.manage-contact-pages-bar .manage-contact-pages-stack { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-width: 640px; }
+.manage-contact-pages-bar .manage-contact-pages-field { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; width: 100%; max-width: 640px; }
+.manage-contact-pages-bar .form-label { font-weight: 700; font-size: 0.875rem; margin-bottom: 0; }
+.manage-contact-pages-bar .manage-contact-pages-user-row { display: flex; align-items: flex-start; width: 100%; max-width: 640px; }
+.manage-contact-pages-bar .manage-contact-pages-cp-row { display: flex; align-items: center; gap: 0.5rem; width: 100%; max-width: 640px; flex-wrap: wrap; }
+.manage-contact-pages-bar .manage-contact-pages-add-btn { flex-shrink: 0; width: 2.25rem; min-width: 2.25rem; height: 2.25rem; padding: 0; font-size: 1.25rem; line-height: 1; font-weight: 700; }
 .manage-contact-pages-bar .searchable-select-wide { width: 60ch; min-width: 60ch; max-width: 60ch; box-sizing: border-box; }
-.manage-contact-pages-bar .searchable-select-wide .searchable-select-trigger { min-height: 2.5rem; align-items: flex-start; text-align: left; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.manage-contact-pages-bar .searchable-select-wide .searchable-select-trigger { min-height: 2.25rem; align-items: flex-start; text-align: left; padding-top: 0.35rem; padding-bottom: 0.35rem; }
 .manage-contact-pages-bar .searchable-select-trigger .select-trigger-line1 { display: block; }
-.manage-contact-pages-bar .searchable-select-trigger .select-trigger-line2 { display: block; font-size: 0.8125rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
+.manage-contact-pages-bar .searchable-select-trigger .select-trigger-line2 { display: block; font-size: 0.8125rem; color: var(--color-text-secondary, #666); margin-top: 0.1rem; }
+
+/* User dropdown: teal accents */
+.manage-contact-pages-bar #page-select-container .searchable-select-trigger { border-color: var(--accent-teal, #1ac5b0); }
+.manage-contact-pages-bar #page-select-container .searchable-select-trigger:hover { border-color: var(--accent-teal-hover, #15a894); }
+.manage-contact-pages-bar #page-select-container .searchable-select-trigger:focus { border-color: var(--accent-teal); box-shadow: 0 0 0 3px rgba(26, 197, 176, 0.35); }
+.manage-contact-pages-bar #page-select-dropdown { border-color: var(--accent-teal); }
+.manage-contact-pages-bar #page-select-dropdown .searchable-select-search input:focus { border-color: var(--accent-teal); box-shadow: 0 0 0 2px rgba(26, 197, 176, 0.35); }
+.manage-contact-pages-bar #page-select-dropdown .searchable-select-option:hover { background: rgba(26, 197, 176, 0.1); }
+.manage-contact-pages-bar #page-select-dropdown .searchable-select-option.selected { background: rgba(26, 197, 176, 0.15); color: var(--accent-teal); font-weight: 600; }
+
+/* Contact Page dropdown: purple accents */
+.manage-contact-pages-bar #edit-contact-page-container .searchable-select-trigger { border-color: var(--accent-purple, #9370db); }
+.manage-contact-pages-bar #edit-contact-page-container .searchable-select-trigger:hover { border-color: #7b5fc7; }
+.manage-contact-pages-bar #edit-contact-page-container .searchable-select-trigger:focus { border-color: var(--accent-purple); box-shadow: 0 0 0 3px rgba(147, 112, 219, 0.35); }
+.manage-contact-pages-bar #edit-contact-page-dropdown { border-color: var(--accent-purple); }
+.manage-contact-pages-bar #edit-contact-page-dropdown .searchable-select-search input:focus { border-color: var(--accent-purple); box-shadow: 0 0 0 2px rgba(147, 112, 219, 0.35); }
+.manage-contact-pages-bar #edit-contact-page-dropdown .searchable-select-option:hover { background: rgba(147, 112, 219, 0.1); }
+.manage-contact-pages-bar #edit-contact-page-dropdown .searchable-select-option.selected { background: rgba(147, 112, 219, 0.15); color: var(--accent-purple); font-weight: 600; }
+
 #admin-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; }
 #admin-contact-edit .card-header-fields { flex: 1; min-width: 0; }
 #admin-contact-edit .card-body { padding: 0.5rem 0.75rem; }
