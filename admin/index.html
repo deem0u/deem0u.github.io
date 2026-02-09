@@ -537,9 +537,9 @@
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; padding:0.5rem 0.75rem;">
                   <div style="flex:1; min-width:0;">
                     <div class="form-group">
-                      <label class="form-label">Contact Page Name</label>
-                      <span class="form-hint" style="display:block;">A name to identify this page. Must be unique among this user's contact pages.</span>
-                      <input type="text" id="contact-page-name" class="form-input" placeholder="Contact Page Name" maxlength="28" autocomplete="off">
+                      <label class="form-label" for="contact-page-name">Page Name <span class="form-required">*</span></label>
+                      <span class="form-hint" style="display:block;">A name to identify this page on your list of Contact Pages. Must be unique amongst this user's contact pages.</span>
+                      <input type="text" id="contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off" title="Page Name">
                       <span class="form-error" id="error-contact-page-name" role="alert"></span>
                     </div>
                     <div class="form-group">
@@ -547,10 +547,10 @@
                       <div class="contact-page-url-anatomy" id="admin-contact-page-url-anatomy">
                         <div class="url-anatomy-row">
                           <span class="card-header-url-prefix" style="font-size:0.875rem; color:var(--color-text-secondary,#666);">https://deem0u.github.io/user/<span id="contact-page-url-username">—</span>/</span>
-                          <input type="text" id="contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage or leave blank for random" pattern="^([a-zA-Z0-9_\u002D]{3,28})?$" maxlength="28" autocomplete="off">
+                          <input type="text" id="contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" maxlength="28" autocomplete="off" title="Contact Page URL">
                         </div>
-                        <div id="admin-contact-page-slug-warning" class="contact-page-slug-warning hidden" role="alert"></div>
-                        <span class="form-hint">A Slug for this page's URL. 3–28 characters – letters, numbers, hyphens, underscores. Must be unique amongst this user's Contact Pages. Leave blank when creating to use a random slug.</span>
+                        <div id="admin-contact-page-slug-warning" class="contact-page-slug-warning hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten with the new one.</div>
+                        <span class="form-hint">A Slug for this page's URL. 3–28 characters – letters, numbers, hyphens, underscores. Must be unique amongst this user's Contact Pages.</span>
                       </div>
                       <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
                     </div>
@@ -559,16 +559,19 @@
                 </div>
                 <form id="contact-form">
                   <div class="card-body">
-                    <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
+                    <div class="form-row form-row-with-hint" style="display:flex; flex-wrap:wrap; gap:1rem;">
                       <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><input type="text" id="first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-first-name" role="alert"></span></div>
                       <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><input type="text" id="surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off"><span class="form-error" id="error-surname" role="alert"></span></div>
                     </div>
-                    <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
+                    <span class="form-hint form-hint-row">Usually First and Last Name. Consider whether this needs to exactly match any formal ID.</span>
+                    <div class="form-row form-row-with-hint" style="display:flex; flex-wrap:wrap; gap:1rem;">
                       <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><input type="email" id="email" class="form-input" required autocomplete="off"><span class="form-error" id="error-email" role="alert"></span></div>
                       <div class="form-group"><label class="form-label">Contact Number</label><input type="tel" id="mobile" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel" autocomplete="off"><span class="form-error" id="error-mobile" role="alert"></span></div>
                     </div>
+                    <span class="form-hint form-hint-row">A suitable email and contact number you have access to so that you can be reached.</span>
                     <div class="form-group">
                       <label class="form-label">Home Country</label>
+                      <span class="form-hint form-hint-above" style="display:block; margin-bottom:0.35rem;">Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.</span>
                       <div class="searchable-select" id="home-country-edit-container">
                         <button type="button" class="searchable-select-trigger" id="home-country-edit-trigger" onclick="toggleCountrySelect('edit')">
                           <span id="home-country-edit-text" class="searchable-select-placeholder">Select country</span>
@@ -581,7 +584,6 @@
                         </div>
                       </div>
                       <input type="hidden" id="home-country" value="">
-                      <span class="form-hint">Your country of residence. Shown on your contact page for identification.</span>
                     </div>
                     <div class="form-group">
                       <label class="form-label">Destination Details</label>
@@ -593,6 +595,7 @@
                           <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input" autocomplete="off"><span class="form-error" id="error-dest-email" role="alert"></span></div>
                         </div>
                       </div>
+                      <span class="form-hint" id="hint-destination-details-admin"></span>
                     </div>
                     <div class="form-group">
                       <label class="form-label">Additional Information</label>
@@ -601,9 +604,9 @@
                     </div>
                     <div id="alert-editor" class="alert"></div>
                     <div class="form-actions form-actions-editor" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
-                      <button type="submit" id="save-btn" class="btn btn-primary btn-lg">Save Changes</button>
-                      <button type="button" class="btn btn-secondary btn-lg" id="admin-cancel-btn" onclick="adminCancelForm()">Cancel</button>
-                      <button type="button" class="btn btn-danger btn-lg" id="admin-delete-page-btn" style="display:none;" onclick="adminOpenDeletePageModal()">Delete</button>
+                      <button type="submit" id="save-btn" class="btn btn-primary btn-sm">Save Changes</button>
+                      <button type="button" class="btn btn-secondary btn-sm" id="admin-cancel-btn" onclick="adminCancelForm()">Cancel</button>
+                      <button type="button" class="btn btn-danger btn-sm" id="admin-delete-page-btn" style="display:none;" onclick="adminOpenDeletePageModal()">Delete</button>
                     </div>
                   </div>
                 </form>
@@ -1115,7 +1118,7 @@ function applyFormDescriptions() {
   });
   var dd = c['destination-details'];
   if (dd && dd.hint) {
-    ['hint-destination-details-new', 'hint-destination-details-edit'].forEach(function(id) {
+    ['hint-destination-details-new', 'hint-destination-details-edit', 'hint-destination-details-admin'].forEach(function(id) {
       var h = document.getElementById(id);
       if (h) h.innerHTML = dd.hint;
     });
@@ -2391,13 +2394,17 @@ async function adminEnterCreateContactPage() {
   document.getElementById('edit-contact-page-text').classList.add('searchable-select-value');
   document.getElementById('contact-page-url-username').textContent = username;
   document.getElementById('contact-page-name').value = '';
+  document.getElementById('contact-page-name').setAttribute('required', '');
   document.getElementById('contact-page-url-slug').value = '';
   document.getElementById('contact-page-url-slug').removeAttribute('readonly');
   document.getElementById('contact-page-url-slug').disabled = false;
+  document.getElementById('contact-page-url-slug').setAttribute('required', '');
+  document.getElementById('contact-page-url-slug').setAttribute('minlength', '3');
+  document.getElementById('contact-page-url-slug').placeholder = 'e.g. mypage';
   clearAdminContactForm();
   ['first-name', 'surname', 'email'].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.removeAttribute('required');
+    if (el) el.setAttribute('required', '');
   });
   adminRefreshViewFromForm();
   document.getElementById('admin-contact-view').classList.add('hidden');
@@ -2441,6 +2448,8 @@ async function loadPageForEditTab() {
     document.getElementById('contact-page-url-slug').value = (currentContactPageName === 'index' ? 'index' : currentContactPageName) || 'index';
     document.getElementById('contact-page-url-slug').setAttribute('readonly', 'readonly');
     document.getElementById('contact-page-url-slug').disabled = true;
+    document.getElementById('contact-page-url-slug').removeAttribute('required');
+    document.getElementById('contact-page-url-slug').removeAttribute('minlength');
     ['first-name', 'surname', 'email'].forEach(function(id) {
       var el = document.getElementById(id);
       if (el) el.setAttribute('required', '');
@@ -3397,7 +3406,11 @@ async function handleSave(e) {
   try {
     if (adminCreateNewPage) {
       var slugRaw = (document.getElementById('contact-page-url-slug') && document.getElementById('contact-page-url-slug').value) ? document.getElementById('contact-page-url-slug').value.trim() : '';
-      var contactpagename = (slugRaw && /^[a-zA-Z0-9_-]{3,28}$/.test(slugRaw)) ? slugRaw : generateRandomSlug();
+      if (!slugRaw || !/^[a-zA-Z0-9_-]{3,28}$/.test(slugRaw)) {
+        showAlert('alert-editor', 'Page URL (slug) is required. Use 3–28 characters: letters, numbers, hyphens, underscores.', 'error');
+        return;
+      }
+      var contactpagename = slugRaw;
       var content = generateHTML();
       var nameTrim = (document.getElementById('contact-page-name') && document.getElementById('contact-page-name').value) ? document.getElementById('contact-page-name').value.trim() : '';
       var body = { username: currentFolder, content: content, contactpagename: contactpagename };
@@ -3436,54 +3449,6 @@ async function handleSave(e) {
         }
         populateUI();
         showAlert('alert-editor', 'Contact page created. Page URL uses slug: ' + currentContactPageName + '.', 'success');
-      } else if (r.status === 409 && !slugRaw) {
-        var retries = 0;
-        while (retries < 3) {
-          contactpagename = generateRandomSlug();
-          body.contactpagename = contactpagename;
-          r = await fetch(API + '/api/page', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify(body) });
-          d = await r.json();
-          if (r.ok) {
-            currentSha = d.sha;
-            currentContactPageName = d.contactpagename || contactpagename;
-            adminCreateNewPage = false;
-            editTabContactPagesList.push({ slug: currentContactPageName, name: (d.contactPageName || nameTrim || currentContactPageName) });
-            document.getElementById('edit-contact-page-value').value = currentContactPageName;
-            document.getElementById('edit-contact-page-text').textContent = (d.contactPageName || nameTrim || currentContactPageName) || currentContactPageName;
-            document.getElementById('contact-page-url-slug').value = currentContactPageName;
-            document.getElementById('contact-page-url-slug').setAttribute('readonly', 'readonly');
-            document.getElementById('contact-page-url-slug').disabled = true;
-            var introEl2 = document.getElementById('admin-create-contact-page-intro');
-            if (introEl2) introEl2.classList.add('hidden');
-            document.getElementById('admin-contact-edit').classList.add('hidden');
-            document.getElementById('admin-contact-view').classList.remove('hidden');
-            document.getElementById('admin-delete-page-btn').style.display = '';
-            adminRefreshViewFromForm();
-            document.getElementById('admin-view-page-link').href = PAGES_URL + currentFolder + '/' + currentContactPageName + '.html';
-            var pgGiven2 = document.getElementById('first-name').value.trim();
-            var pgFamily2 = document.getElementById('surname').value.trim();
-            var pgEmail2 = document.getElementById('email').value.trim();
-            var now2 = new Date().toISOString();
-            if (userInfo[currentFolder]) {
-              userInfo[currentFolder].pageGivenName = pgGiven2;
-              userInfo[currentFolder].pageFamilyName = pgFamily2;
-              userInfo[currentFolder].pageEmail = pgEmail2;
-              userInfo[currentFolder].lastUpdated = now2;
-              userInfo[currentFolder].updatedBy = 'admin';
-            } else {
-              userInfo[currentFolder] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: pgGiven2, pageFamilyName: pgFamily2, pageEmail: pgEmail2, lastUpdated: now2, updatedBy: 'admin', folder: currentFolder };
-            }
-            populateUI();
-            showAlert('alert-editor', 'Contact page created. Page URL uses slug: ' + currentContactPageName + '.', 'success');
-            break;
-          }
-          if (r.status !== 409) {
-            showAlert('alert-editor', (d && d.error) || 'Failed to create.', 'error');
-            break;
-          }
-          retries++;
-        }
-        if (retries >= 3 && !r.ok) showAlert('alert-editor', (d && d.error) || 'Failed to create (slug conflict).', 'error');
       } else {
         showAlert('alert-editor', (d && d.error) || 'Failed to create.', 'error');
       }
