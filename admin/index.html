@@ -455,39 +455,43 @@
         <div id="tab-edit" class="tab-content">
           <div class="card">
             <div class="card-body">
-              <div class="form-row-inline" style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:1rem;">
-                <div class="form-group form-group-inline">
-                  <label class="form-label">User</label>
-                  <div class="searchable-select" id="page-select-container">
-                    <button type="button" class="searchable-select-trigger" id="page-select-trigger" onclick="togglePageSelect()">
-                      <span id="page-select-text" class="searchable-select-placeholder">Select a user...</span>
-                    </button>
-                    <div class="searchable-select-dropdown" id="page-select-dropdown">
-                      <div class="searchable-select-search">
-                        <input type="text" id="page-select-search" placeholder="Search users..." oninput="filterPageOptions()" autocomplete="off">
+              <div class="form-row-inline" style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:1.5rem;">
+                <div class="form-group form-group-inline" style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:0.75rem;">
+                  <div>
+                    <label class="form-label">User</label>
+                    <div class="searchable-select" id="page-select-container">
+                      <button type="button" class="searchable-select-trigger" id="page-select-trigger" onclick="togglePageSelect()">
+                        <span id="page-select-text" class="searchable-select-placeholder">Select a user...</span>
+                      </button>
+                      <div class="searchable-select-dropdown" id="page-select-dropdown">
+                        <div class="searchable-select-search">
+                          <input type="text" id="page-select-search" placeholder="Search users..." oninput="filterPageOptions()" autocomplete="off">
+                        </div>
+                        <div class="searchable-select-options" id="page-select-options"></div>
                       </div>
-                      <div class="searchable-select-options" id="page-select-options"></div>
                     </div>
+                    <input type="hidden" id="page-select" value="">
                   </div>
-                  <input type="hidden" id="page-select" value="">
+                  <button type="button" class="btn btn-success btn-lg" onclick="showNewUserForm()">+ Add New User</button>
                 </div>
-                <div class="form-group form-group-inline hidden" id="edit-contact-page-row">
-                  <label class="form-label">Contact page</label>
-                  <div class="searchable-select" id="edit-contact-page-container">
-                    <button type="button" class="searchable-select-trigger" id="edit-contact-page-trigger" onclick="toggleEditContactPageSelect()">
-                      <span id="edit-contact-page-text" class="searchable-select-placeholder">Select contact page...</span>
-                    </button>
-                    <div class="searchable-select-dropdown" id="edit-contact-page-dropdown">
-                      <div class="searchable-select-search">
-                        <input type="text" id="edit-contact-page-search" placeholder="Search pages..." oninput="filterEditContactPageOptions()" autocomplete="off">
+                <div class="form-group form-group-inline hidden" id="edit-contact-page-row" style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:0.75rem; border-left:1px solid var(--color-border,#eee); padding-left:1.5rem;">
+                  <div>
+                    <label class="form-label">Contact Page</label>
+                    <div class="searchable-select" id="edit-contact-page-container">
+                      <button type="button" class="searchable-select-trigger" id="edit-contact-page-trigger" onclick="toggleEditContactPageSelect()">
+                        <span id="edit-contact-page-text" class="searchable-select-placeholder">Select contact page...</span>
+                      </button>
+                      <div class="searchable-select-dropdown" id="edit-contact-page-dropdown">
+                        <div class="searchable-select-search">
+                          <input type="text" id="edit-contact-page-search" placeholder="Search pages..." oninput="filterEditContactPageOptions()" autocomplete="off">
+                        </div>
+                        <div class="searchable-select-options" id="edit-contact-page-options"></div>
                       </div>
-                      <div class="searchable-select-options" id="edit-contact-page-options"></div>
                     </div>
+                    <input type="hidden" id="edit-contact-page-value" value="">
                   </div>
-                  <input type="hidden" id="edit-contact-page-value" value="">
+                  <button type="button" class="btn btn-primary btn-lg" id="edit-add-contact-page-btn" onclick="adminEnterCreateContactPage()">Add New Contact Page</button>
                 </div>
-                <button type="button" class="btn btn-success btn-lg" onclick="showNewUserForm()">+ Add New User</button>
-                <button type="button" class="btn btn-primary btn-lg hidden" id="edit-add-contact-page-btn" onclick="adminEnterCreateContactPage()">+ Add new contact page</button>
               </div>
             </div>
           </div>
@@ -570,6 +574,7 @@
                 </div>
               </div>
               <div id="admin-contact-edit" class="admin-contact-edit hidden">
+                <p id="admin-create-contact-page-intro" class="form-hint mb-3 hidden" style="margin-bottom:1rem;"></p>
                 <div class="card-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; padding:0.5rem 0.75rem;">
                   <div style="flex:1; min-width:0;">
                     <div class="form-group">
@@ -2420,6 +2425,11 @@ async function adminEnterCreateContactPage() {
   adminRefreshViewFromForm();
   document.getElementById('admin-contact-view').classList.add('hidden');
   document.getElementById('admin-contact-edit').classList.remove('hidden');
+  var introEl = document.getElementById('admin-create-contact-page-intro');
+  if (introEl) {
+    introEl.textContent = 'Adding a new contact page for ' + username + '. Fill the form below and click Save.';
+    introEl.classList.remove('hidden');
+  }
   document.getElementById('admin-delete-page-btn').style.display = 'none';
   document.getElementById('editor-card').classList.remove('hidden');
   hideAlert('alert-editor');
@@ -2464,6 +2474,8 @@ async function loadPageForEditTab() {
     document.getElementById('admin-view-page-link').href = currentContactPageName === 'index' ? (PAGES_URL + currentFolder + '/') : (PAGES_URL + currentFolder + '/' + currentContactPageName + '.html');
     document.getElementById('admin-contact-view').classList.remove('hidden');
     document.getElementById('admin-contact-edit').classList.add('hidden');
+    var introEl = document.getElementById('admin-create-contact-page-intro');
+    if (introEl) introEl.classList.add('hidden');
     card.classList.remove('hidden');
     hideAlert('alert-editor');
   } catch (e) {
@@ -2504,6 +2516,8 @@ function adminEnterEditMode() {
 }
 
 function adminBackToViewMode() {
+  var introEl = document.getElementById('admin-create-contact-page-intro');
+  if (introEl) introEl.classList.add('hidden');
   if (adminCreateNewPage) {
     document.getElementById('admin-contact-edit').classList.add('hidden');
     document.getElementById('admin-contact-view').classList.remove('hidden');
@@ -3496,6 +3510,8 @@ async function handleSave(e) {
         document.getElementById('contact-page-url-slug').value = currentContactPageName;
         document.getElementById('contact-page-url-slug').setAttribute('readonly', 'readonly');
         document.getElementById('contact-page-url-slug').disabled = true;
+        var introEl = document.getElementById('admin-create-contact-page-intro');
+        if (introEl) introEl.classList.add('hidden');
         document.getElementById('admin-contact-edit').classList.add('hidden');
         document.getElementById('admin-contact-view').classList.remove('hidden');
         document.getElementById('admin-delete-page-btn').style.display = '';
@@ -3533,6 +3549,8 @@ async function handleSave(e) {
             document.getElementById('contact-page-url-slug').value = currentContactPageName;
             document.getElementById('contact-page-url-slug').setAttribute('readonly', 'readonly');
             document.getElementById('contact-page-url-slug').disabled = true;
+            var introEl2 = document.getElementById('admin-create-contact-page-intro');
+            if (introEl2) introEl2.classList.add('hidden');
             document.getElementById('admin-contact-edit').classList.add('hidden');
             document.getElementById('admin-contact-view').classList.remove('hidden');
             document.getElementById('admin-delete-page-btn').style.display = '';
