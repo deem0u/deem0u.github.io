@@ -2567,7 +2567,8 @@ body {
 .manage-contact-pages-bar .manage-contact-pages-field { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; width: 100%; max-width: 640px; }
 .manage-contact-pages-bar .form-label { font-weight: 700; font-size: 0.875rem; margin-bottom: 0; }
 .manage-contact-pages-bar .manage-contact-pages-user-row { display: flex; align-items: flex-start; width: 100%; max-width: 640px; }
-.manage-contact-pages-bar .manage-contact-pages-cp-row { display: flex; align-items: center; gap: 0.5rem; width: 100%; max-width: 640px; flex-wrap: wrap; }
+.manage-contact-pages-bar .manage-contact-pages-cp-row { display: flex; align-items: center; gap: 0.5rem; width: 100%; max-width: 640px; flex-wrap: nowrap; }
+.manage-contact-pages-bar .manage-contact-pages-cp-row .searchable-select-wide { flex: 1; min-width: 0; width: auto; max-width: none; }
 .manage-contact-pages-bar .manage-contact-pages-add-btn { flex-shrink: 0; width: 2.25rem; min-width: 2.25rem; height: 2.25rem; padding: 0; font-size: 1.25rem; line-height: 1; font-weight: 700; }
 .manage-contact-pages-bar .searchable-select-wide { width: 60ch; min-width: 60ch; max-width: 60ch; box-sizing: border-box; }
 .manage-contact-pages-bar .searchable-select-wide .searchable-select-trigger { min-height: 2.25rem; align-items: flex-start; text-align: left; padding-top: 0.35rem; padding-bottom: 0.35rem; }
@@ -2592,6 +2593,7 @@ body {
 .manage-contact-pages-bar #edit-contact-page-dropdown .searchable-select-option:hover { background: rgba(147, 112, 219, 0.1); }
 .manage-contact-pages-bar #edit-contact-page-dropdown .searchable-select-option.selected { background: rgba(147, 112, 219, 0.15); color: var(--accent-purple); font-weight: 600; }
 
+#admin-contact-edit .card-header .card-title .card-title-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
 #admin-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; }
 #admin-contact-edit .card-header-fields { flex: 1; min-width: 0; }
 #admin-contact-edit .card-body { padding: 0.5rem 0.75rem; }

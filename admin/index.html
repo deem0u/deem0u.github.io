@@ -2575,11 +2575,12 @@ function setAdminEditorCardTitle() {
   var first = (u.firstName || u.pageGivenName || '').trim();
   var last = (u.lastName || u.pageFamilyName || '').trim();
   var name = [first, last].filter(Boolean).join(' ');
-  var title = name ? (name + ' (' + (currentFolder || '') + ')') : 'Edit Contact Information';
+  var username = currentFolder || '';
+  var title = name ? (name + ' (<span class="card-title-username">' + escapeHtml(username) + '</span>)') : 'Edit Contact Information';
   var t1 = document.getElementById('admin-editor-card-title');
   var t2 = document.getElementById('admin-editor-edit-card-title');
-  if (t1) t1.textContent = title;
-  if (t2) t2.textContent = title;
+  if (t1) t1.innerHTML = title;
+  if (t2) t2.innerHTML = title;
 }
 
 function adminRefreshViewFromForm() {
