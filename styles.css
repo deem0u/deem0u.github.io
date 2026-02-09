@@ -240,9 +240,15 @@ body {
 .nav-dropdown-trigger.tab {
   flex: none;
 }
-.nav-dropdown-trigger:hover,
-.nav-dropdown:hover .nav-dropdown-trigger {
+.nav-dropdown-trigger:hover {
   color: var(--color-text);
+  background: var(--color-bg-muted, rgba(0,0,0,0.05));
+}
+/* When dropdown is open (hover or focus), highlight trigger like active tab */
+.nav-dropdown:hover .nav-dropdown-trigger,
+.nav-dropdown:focus-within .nav-dropdown-trigger {
+  color: var(--accent-teal);
+  font-weight: 500;
   background: var(--color-bg-muted, rgba(0,0,0,0.05));
 }
 .nav-dropdown-chevron {
