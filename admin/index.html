@@ -436,6 +436,7 @@
                 <option value="folder-asc">Sort: User name A-Z</option>
                 <option value="folder-desc">Sort: User name Z-A</option>
               </select>
+              <button type="button" class="btn btn-success" onclick="openAddUserModal()">+ Add User</button>
             </div>
             <div class="user-list-stats-block">
               <div class="stats-chart-wrap">
@@ -472,7 +473,6 @@
                     </div>
                     <input type="hidden" id="page-select" value="">
                   </div>
-                  <button type="button" class="btn btn-success btn-lg" onclick="showNewUserForm()">+ Add New User</button>
                 </div>
                 <div class="form-group form-group-inline hidden" id="edit-contact-page-row" style="display:flex; flex-wrap:wrap; align-items:flex-end; gap:0.75rem; border-left:1px solid var(--color-border,#eee); padding-left:1.5rem;">
                   <div>
@@ -493,47 +493,6 @@
                   <button type="button" class="btn btn-primary btn-lg" id="edit-add-contact-page-btn" onclick="adminEnterCreateContactPage()">Add New Contact Page</button>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          <!-- New User Form (minimal: admin creates account so user can sign in via OTP and complete profile in My Account) -->
-          <div id="new-user-card" class="card hidden">
-            <div class="card-header"><span class="card-title">Add New User</span></div>
-            <div class="card-body">
-              <p class="form-hint mb-3">Create an account with the minimum required information. Only <strong>User Name</strong> is required. The user can sign in via OTP (sent to Account Email if provided) and set a password and other details in My Account. Add contact pages from the user card when ready.</p>
-              <form id="new-user-form">
-                <div class="form-group">
-                  <label class="form-label">User Name <span class="form-required">*</span></label>
-                  <input type="text" id="new-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" required autocomplete="off" placeholder="e.g. john-smith">
-                  <span class="form-hint" id="hint-new-username">3–28 characters. Letters, numbers, hyphens, underscores. Stored as lowercase (e.g. John-Smith → john-smith).</span>
-                  <span class="form-error" id="error-new-username" role="alert"></span>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Account Email</label>
-                  <input type="email" id="new-account-email" class="form-input" autocomplete="off" placeholder="your@email.com">
-                  <span class="form-hint">Must be unique. Used for sign-in and recovery (OTP sent here).</span>
-                  <span class="form-error" id="error-new-account-email" role="alert"></span>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">First Name</label>
-                    <input type="text" id="new-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="off" placeholder="Given names">
-                    <span class="form-hint">Letters, spaces, apostrophes, hyphens, periods. Up to 32 characters.</span>
-                    <span class="form-error" id="error-new-first-name" role="alert"></span>
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Last Name</label>
-                    <input type="text" id="new-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" autocomplete="off" placeholder="Family name">
-                    <span class="form-hint">Letters, spaces, apostrophes, hyphens, periods. Up to 32 characters.</span>
-                    <span class="form-error" id="error-new-surname" role="alert"></span>
-                  </div>
-                </div>
-                <div id="alert-new-user" class="alert"></div>
-                <div class="form-actions">
-                  <button type="submit" id="create-btn" class="btn btn-success btn-lg">Create</button>
-                  <button type="button" class="btn btn-secondary btn-lg" onclick="hideNewUserForm()">Cancel</button>
-                </div>
-              </form>
             </div>
           </div>
 
@@ -698,6 +657,26 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeDeleteUserModal()">Cancel</button>
         <button type="button" class="btn btn-danger" id="modal-delete-user-confirm-btn" disabled onclick="confirmDeleteUserExecute()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-add-user" class="modal-overlay hidden">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header"><h3 class="modal-title">Add User</h3></div>
+      <div class="modal-body">
+        <p class="form-hint mb-2">Creates the user folder. Set profile, secrets, and contact pages from the user card after it appears.</p>
+        <div class="form-group">
+          <label class="form-label">Username <span class="form-required">*</span></label>
+          <input type="text" id="modal-add-user-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" placeholder="e.g. john-smith" autocomplete="off">
+          <span class="form-hint">3–28 characters. Letters, numbers, hyphens, underscores. Stored as lowercase.</span>
+          <span class="form-error" id="error-modal-add-user-username" role="alert"></span>
+        </div>
+        <div id="alert-modal-add-user" class="alert"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAddUserModal()">Cancel</button>
+        <button type="button" class="btn btn-success" id="modal-add-user-submit" onclick="handleAddUserModalSubmit()">Add User</button>
       </div>
     </div>
   </div>
@@ -970,7 +949,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const recoveryForm1 = document.getElementById('recovery-form-step1');
     const recoveryForm2 = document.getElementById('recovery-form-step2');
     const contactForm = document.getElementById('contact-form');
-    const newUserForm = document.getElementById('new-user-form');
     
     if (setupForm) setupForm.addEventListener('submit', handleSetup);
     if (loginForm) {
@@ -1056,7 +1034,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     var pushMessageSaveBtn = document.getElementById('push-message-save-btn');
     if (pushMessageSaveBtn) pushMessageSaveBtn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); if (typeof handlePushMessagePrimaryClick === 'function') handlePushMessagePrimaryClick(e); });
     if (contactForm) contactForm.addEventListener('submit', handleSave);
-    if (newUserForm) newUserForm.addEventListener('submit', handleCreateUser);
     var adminSlugInp = document.getElementById('contact-page-url-slug');
     var adminSlugWarn = document.getElementById('admin-contact-page-slug-warning');
     if (adminSlugInp && adminSlugWarn) {
@@ -2451,9 +2428,7 @@ function clearAdminContactForm() {
 async function loadPageForEditTab() {
   currentFolder = document.getElementById('page-select').value;
   const card = document.getElementById('editor-card');
-  const newUserCard = document.getElementById('new-user-card');
   if (!currentFolder) { card.classList.add('hidden'); return; }
-  newUserCard.classList.add('hidden');
   try {
     const pagePath = currentContactPageName && currentContactPageName !== 'index' ? currentFolder + '/' + currentContactPageName : currentFolder;
     const r = await fetch(API + '/api/page/' + pagePath, { headers: { 'X-Admin-Key': adminKey } });
@@ -2882,34 +2857,27 @@ async function deleteUser(f) {
   } catch { showAlert('alert-manage', 'Error', 'error'); }
 }
 
-function showNewUserForm() {
-  document.getElementById('new-user-card').classList.remove('hidden');
-  document.getElementById('editor-card').classList.add('hidden');
-  document.getElementById('page-select').value = '';
-  const textEl = document.getElementById('page-select-text');
-  textEl.textContent = 'Select a user...';
-  textEl.classList.add('searchable-select-placeholder');
-  textEl.classList.remove('searchable-select-value');
-  document.getElementById('page-select-dropdown').classList.remove('show');
-  document.querySelectorAll('#page-select-options .searchable-select-option').forEach(function(opt) { opt.classList.remove('selected'); });
-  document.getElementById('page-select-search').value = '';
-  filterPageOptions();
-  document.getElementById('new-username').focus();
+function openAddUserModal() {
+  var inp = document.getElementById('modal-add-user-username');
+  var errEl = document.getElementById('error-modal-add-user-username');
+  var alertEl = document.getElementById('alert-modal-add-user');
+  if (inp) { inp.value = ''; inp.classList.remove('is-invalid'); }
+  if (errEl) { errEl.textContent = ''; errEl.removeAttribute('aria-live'); }
+  if (alertEl) { alertEl.textContent = ''; alertEl.classList.add('hidden'); }
+  document.getElementById('modal-add-user').classList.remove('hidden');
+  document.getElementById('modal-add-user').classList.add('show');
+  if (inp) inp.focus();
 }
 
-function hideNewUserForm() {
-  document.getElementById('new-user-card').classList.add('hidden');
-  document.getElementById('new-user-form').reset();
-  hideAlert('alert-new-user');
-  function clearErr(id, errId) {
-    var e = document.getElementById(errId), i = document.getElementById(id);
-    if (e) { e.textContent = ''; e.removeAttribute('aria-live'); }
-    if (i) i.classList.remove('is-invalid');
-  }
-  clearErr('new-username', 'error-new-username');
-  clearErr('new-account-email', 'error-new-account-email');
-  clearErr('new-first-name', 'error-new-first-name');
-  clearErr('new-surname', 'error-new-surname');
+function closeAddUserModal() {
+  document.getElementById('modal-add-user').classList.remove('show');
+  document.getElementById('modal-add-user').classList.add('hidden');
+  var inp = document.getElementById('modal-add-user-username');
+  var errEl = document.getElementById('error-modal-add-user-username');
+  var alertEl = document.getElementById('alert-modal-add-user');
+  if (inp) inp.value = '';
+  if (errEl) errEl.textContent = '';
+  if (alertEl) { alertEl.textContent = ''; alertEl.classList.add('hidden'); }
 }
 
 function validateFolder(val) {
@@ -3107,105 +3075,46 @@ function initDestinationEmailValidation() {
   });
 }
 
-async function handleCreateUser(e) {
-  e.preventDefault();
-  const btn = document.getElementById('create-btn');
-  const usernameInput = document.getElementById('new-username');
-  const username = usernameInput.value.trim().toLowerCase();
-  var r = validateFolder(usernameInput.value);
-  var errEl = document.getElementById('error-new-username');
+async function handleAddUserModalSubmit() {
+  var inp = document.getElementById('modal-add-user-username');
+  var errEl = document.getElementById('error-modal-add-user-username');
+  var alertEl = document.getElementById('alert-modal-add-user');
+  var btn = document.getElementById('modal-add-user-submit');
+  if (!inp) return;
+  var raw = inp.value.trim();
+  var username = raw.toLowerCase();
+  var r = validateFolder(raw);
   if (!r.valid) {
     if (errEl) { errEl.textContent = r.message; errEl.setAttribute('aria-live', 'polite'); }
-    usernameInput.classList.add('is-invalid');
-    usernameInput.focus();
+    inp.classList.add('is-invalid');
+    inp.focus();
     return;
   }
   if (errEl) errEl.textContent = '';
-  usernameInput.classList.remove('is-invalid');
-
-  var accountEmailInp = document.getElementById('new-account-email');
-  var accountEmail = (accountEmailInp && accountEmailInp.value) ? accountEmailInp.value.trim() : '';
-  if (accountEmail) {
-    r = validateEmailInput(accountEmailInp, false);
-    if (!r.valid) {
-      errEl = document.getElementById('error-new-account-email');
-      if (errEl) { errEl.textContent = r.message; errEl.setAttribute('aria-live', 'polite'); }
-      accountEmailInp.classList.add('is-invalid');
-      accountEmailInp.focus();
-      return;
-    }
-    if (document.getElementById('error-new-account-email')) document.getElementById('error-new-account-email').textContent = '';
-    accountEmailInp.classList.remove('is-invalid');
-  }
-
-  var firstNameInp = document.getElementById('new-first-name');
-  var firstName = (firstNameInp && firstNameInp.value) ? firstNameInp.value.trim() : '';
-  if (firstName) {
-    r = validateGivenNames(firstName, false);
-    if (!r.valid) {
-      errEl = document.getElementById('error-new-first-name');
-      if (errEl) { errEl.textContent = r.message; errEl.setAttribute('aria-live', 'polite'); }
-      firstNameInp.classList.add('is-invalid');
-      firstNameInp.focus();
-      return;
-    }
-    if (document.getElementById('error-new-first-name')) document.getElementById('error-new-first-name').textContent = '';
-    firstNameInp.classList.remove('is-invalid');
-  }
-
-  var surnameInp = document.getElementById('new-surname');
-  var lastName = (surnameInp && surnameInp.value) ? surnameInp.value.trim() : '';
-  if (lastName) {
-    r = validateFamilyName(lastName, false);
-    if (!r.valid) {
-      errEl = document.getElementById('error-new-surname');
-      if (errEl) { errEl.textContent = r.message; errEl.setAttribute('aria-live', 'polite'); }
-      surnameInp.classList.add('is-invalid');
-      surnameInp.focus();
-      return;
-    }
-    if (document.getElementById('error-new-surname')) document.getElementById('error-new-surname').textContent = '';
-    surnameInp.classList.remove('is-invalid');
-  }
-
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...';
+  inp.classList.remove('is-invalid');
+  if (alertEl) { alertEl.textContent = ''; alertEl.classList.add('hidden'); }
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Creating...'; }
   try {
-    const res = await fetch(`${API}/api/admin/create-user`, {
+    var res = await fetch(API + '/api/admin/create-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ username: username })
     });
-    const d = await res.json();
-    if (!res.ok) {
-      showAlert('alert-new-user', d.error || 'Failed to create', 'error');
-      return;
+    var d = await res.json();
+    if (res.ok) {
+      pages.push(username);
+      if (!userInfo[username]) userInfo[username] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', folder: username };
+      fetchAccountEmailsAndRefresh();
+      closeAddUserModal();
+      populateUI();
+      showAlert('alert-manage', 'User created. Use the user card to set profile, secrets, and contact pages.', 'success');
+    } else {
+      if (alertEl) { alertEl.textContent = (d && d.error) ? d.error : 'Failed to create'; alertEl.classList.remove('hidden'); alertEl.className = 'alert alert-error show'; }
     }
-    pages.push(username);
-    if (!userInfo[username]) userInfo[username] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: '', pageFamilyName: '', pageEmail: '', folder: username };
-
-    if (accountEmail || firstName || lastName) {
-      const putRes = await fetch(API + '/api/profile/' + encodeURIComponent(username), {
-        method: 'PUT',
-        headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountEmail: accountEmail || undefined, firstName: firstName || undefined, lastName: lastName || undefined })
-      });
-      const putData = await putRes.json();
-      if (putRes.ok) {
-        if (userInfo[username]) {
-          userInfo[username].accountEmail = accountEmail || null;
-          userInfo[username].firstName = firstName || '';
-          userInfo[username].lastName = lastName || '';
-        }
-      } else {
-        showAlert('alert-manage', 'User created but profile update failed: ' + (putData.error || 'Unknown error') + '. Use Edit Profile on the user card to set details.', 'error');
-      }
-    }
-    fetchAccountEmailsAndRefresh();
-    hideNewUserForm();
-    showAlert('alert-manage', 'User created for ' + username + '. They can sign in via OTP (if Account Email was set) and complete their profile in My Account. Add contact pages from the user card when ready.', 'success');
-    switchTab('manage');
-  } catch (err) { showAlert('alert-new-user', 'Error', 'error'); }
-  finally { btn.disabled = false; btn.textContent = 'Create'; }
+  } catch (err) {
+    if (alertEl) { alertEl.textContent = 'Error'; alertEl.classList.remove('hidden'); alertEl.className = 'alert alert-error show'; }
+  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Add User'; }
 }
 
 function generateNewUserHTML() {
@@ -3411,12 +3320,7 @@ function editUser(f) {
 async function loadPage() {
   currentFolder = document.getElementById('page-select').value;
   const card = document.getElementById('editor-card');
-  const newUserCard = document.getElementById('new-user-card');
   if (!currentFolder) { card.classList.add('hidden'); return; }
-  
-  // Hide new user form if open
-  newUserCard.classList.add('hidden');
-  
   try { 
     const pagePath = currentContactPageName && currentContactPageName !== 'index' ? `${currentFolder}/${currentContactPageName}` : currentFolder;
     const r = await fetch(`${API}/api/page/${pagePath}`, { headers: { 'X-Admin-Key': adminKey } }); 
