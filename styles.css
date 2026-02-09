@@ -244,7 +244,7 @@ body {
   color: var(--color-text);
   background: var(--color-bg-muted, rgba(0,0,0,0.05));
 }
-/* When dropdown is open (hover or focus), style trigger like active tab: white bg, teal text, teal accent */
+/* When dropdown is open (hover or focus), style trigger like active tab: white bg, teal text, teal accent – stays for full duration while panel is shown */
 .nav-dropdown:hover .nav-dropdown-trigger,
 .nav-dropdown:focus-within .nav-dropdown-trigger {
   color: var(--accent-teal, #1ac5b0);
@@ -255,21 +255,26 @@ body {
   margin-bottom: -2px;
 }
 .nav-dropdown-chevron {
-  font-size: 0.65em;
-  opacity: 0.8;
+  font-size: 0.95em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.9;
   transition: transform var(--transition);
 }
 .nav-dropdown:hover .nav-dropdown-chevron,
 .nav-dropdown:focus-within .nav-dropdown-chevron {
   transform: rotate(180deg);
+  color: var(--accent-teal, #1ac5b0);
 }
 .nav-dropdown-panel {
   position: absolute;
   top: 100%;
   left: 0;
-  margin-top: var(--space-1);
+  margin-top: 0;
   min-width: 12rem;
   padding: var(--space-1);
+  padding-top: 2px;
   background: var(--white);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
