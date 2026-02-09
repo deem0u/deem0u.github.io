@@ -926,7 +926,7 @@
         <div id="modal-push-message-error" class="alert alert-error hidden"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="push-message-save-btn" disabled onclick="handlePushMessagePrimaryClick(event)">Push</button>
+        <button type="button" class="btn btn-primary" id="push-message-save-btn" onclick="handlePushMessagePrimaryClick(event)">Push</button>
         <button type="button" class="btn btn-secondary" id="push-message-cancel-btn" onclick="handlePushMessageCancelClick()">Cancel</button>
       </div>
     </div>
@@ -1088,6 +1088,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (pwConfirm) pwConfirm.addEventListener('input', updateSetPasswordButton);
     var modalResetSubmit = document.getElementById('modal-password-reset-submit');
     if (modalResetSubmit) modalResetSubmit.addEventListener('click', handlePasswordResetModalSubmit);
+    var pushMessageSaveBtn = document.getElementById('push-message-save-btn');
+    if (pushMessageSaveBtn) pushMessageSaveBtn.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); if (typeof handlePushMessagePrimaryClick === 'function') handlePushMessagePrimaryClick(e); });
     if (contactForm) contactForm.addEventListener('submit', handleSave);
     if (newUserForm) newUserForm.addEventListener('submit', handleCreateUser);
     var adminSlugInp = document.getElementById('contact-page-url-slug');
@@ -3718,14 +3720,9 @@ function handlePushMessageCancelClick() {
 }
 
 function updatePushMessageButtonState() {
-  var editor = document.getElementById('push-message-editor');
   var btn = document.getElementById('push-message-save-btn');
-  var confirmCb = document.getElementById('push-message-confirm-cb');
-  if (!editor || !btn) return;
-  var raw = (editor && editor.innerHTML) ? editor.innerHTML.trim() : '';
-  var hasContent = raw.length > 0;
-  var confirmed = confirmCb && confirmCb.checked;
-  btn.disabled = !hasContent || !confirmed;
+  if (!btn) return;
+  btn.disabled = !!pushMessageSaving;
 }
 
 function handlePushMessagePrimaryClick(e) {
@@ -3758,9 +3755,11 @@ function sanitizePushMessageHtml(html) {
     if (node.nodeType === 1) {
       var tag = node.tagName.toLowerCase();
       if (!allowedTags[tag]) {
-        while (node.firstChild) node.parentNode.insertBefore(node.firstChild, node);
-        node.parentNode.removeChild(node);
-        return;
+        if (node.parentNode) {
+          while (node.firstChild) node.parentNode.insertBefore(node.firstChild, node);
+          node.parentNode.removeChild(node);
+          return;
+        }
       }
       if (tag === 'a') {
         var href = node.getAttribute('href') || '';
@@ -4180,18 +4179,23 @@ function closeModal() { document.getElementById('modal').classList.remove('show'
 document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
 
 (function() {
-  var pushSaveBtn = document.getElementById('push-message-save-btn');
-  if (pushSaveBtn) {
-    pushSaveBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      handlePushMessagePrimaryClick(e);
+  var modalPush = document.getElementById('modal-push-message');
+  if (modalPush) {
+    modalPush.addEventListener('click', function(e) {
+      if (e.target && (e.target.id === 'push-message-save-btn' || (e.target.closest && e.target.closest('#push-message-save-btn')))) {
+        e.preventDefault();
+        e.stopPropagation();
+        handlePushMessagePrimaryClick(e);
+      }
     });
   }
   var sitePushSection = document.getElementById('site-push-message-section');
   if (sitePushSection) {
     sitePushSection.addEventListener('click', function(e) {
-      if (e.target && e.target.closest && e.target.closest('#site-push-message-btn')) { handleSitePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
+      if (!e.target || !e.target.closest) return;
+      var inSection = e.target.closest('#site-push-message-section');
+      var onSiteBtn = e.target.closest('#site-push-message-btn');
+      if (inSection && onSiteBtn) { handleSitePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
     }, true);
   }
 })();
