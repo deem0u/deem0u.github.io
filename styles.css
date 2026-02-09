@@ -2465,6 +2465,15 @@ body {
 
 /* Admin dashboard: contact form matches MyAccount Contact Editor (compact layout, same sections and sizing) */
 #editor-card { max-width: 640px; }
+
+/* Manage Contact Pages: section width matches form, centered; dropdowns 60ch; label and dropdown top-aligned */
+.manage-contact-pages-tab { max-width: 640px; margin-left: auto; margin-right: auto; width: 100%; }
+.manage-contact-pages-bar .manage-contact-pages-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1.5rem; }
+.manage-contact-pages-bar .manage-contact-pages-field { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
+.manage-contact-pages-bar .searchable-select-wide { min-width: 60ch; max-width: 100%; }
+.manage-contact-pages-bar .searchable-select-wide .searchable-select-trigger { min-height: 2.5rem; align-items: flex-start; text-align: left; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.manage-contact-pages-bar .searchable-select-trigger .select-trigger-line1 { display: block; }
+.manage-contact-pages-bar .searchable-select-trigger .select-trigger-line2 { display: block; font-size: 0.8125rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
 #admin-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; }
 #admin-contact-edit .card-header-fields { flex: 1; min-width: 0; }
 #admin-contact-edit .card-body { padding: 0.5rem 0.75rem; }
