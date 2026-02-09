@@ -145,7 +145,7 @@ async function getContactPageCountForUser(username, env) {
   if (indexHtml && indexHtml.sha) {
     await migrateUserFolderIndexToGitkeep(username, indexHtml.sha, env);
   }
-  return files.filter(item => item.type === 'file' && item.name && item.name.endsWith('.html') && item.name !== 'index.html').length;
+  return files.filter(item => item.type === 'file' && item.name && item.name.endsWith('.html') && item.name !== 'index.html' && item.name !== 'main.html').length;
 }
 
 /** Returns true if the user folder exists on GitHub. */
@@ -2862,7 +2862,7 @@ async function handlePageSummaries(request, env) {
       if (indexHtml && indexHtml.sha) {
         await migrateUserFolderIndexToGitkeep(username, indexHtml.sha, env);
       }
-      const htmlFiles = files.filter(f => f.name && f.name.endsWith('.html') && f.name !== 'index.html');
+      const htmlFiles = files.filter(f => f.name && f.name.endsWith('.html') && f.name !== 'index.html' && f.name !== 'main.html');
       const contactPageCount = htmlFiles.length;
       contactPageCountByUser[username] = contactPageCount;
       if (contactPageCount === 0) return { username, summary: null, contactPageCount: 0 };
@@ -2934,13 +2934,14 @@ async function handleListContactPages(username, request, env) {
     await migrateUserFolderIndexToGitkeep(u, indexHtml.sha, env);
   }
   const slugs = files
-    .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html') && item.name !== 'index.html')
-    .map(item => item.name.replace(/\.html$/i, ''));
+    .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html') && item.name !== 'index.html' && item.name !== 'main.html')
+    .map(item => item.name.replace(/\.html$/i, ''))
+    .filter(slug => slug !== 'index' && slug !== 'main');
   const contactPages = [];
   for (const slug of slugs) {
     const name = env.EDIT_KEYS_KV
-      ? (await env.EDIT_KEYS_KV.get(`contact_page_name:${u}:${slug}`)) || (slug === 'index' ? 'Main (index)' : slug)
-      : (slug === 'index' ? 'Main (index)' : slug);
+      ? (await env.EDIT_KEYS_KV.get(`contact_page_name:${u}:${slug}`)) || slug
+      : slug;
     contactPages.push({ slug, name });
   }
   const currentCount = slugs.length;
