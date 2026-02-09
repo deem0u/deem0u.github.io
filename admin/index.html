@@ -2663,6 +2663,11 @@ function adminCancelForm() {
     document.getElementById('admin-contact-edit').classList.add('hidden');
     document.getElementById('admin-contact-view').classList.remove('hidden');
     document.getElementById('admin-delete-page-btn').style.display = 'none';
+    if (slug) {
+      loadPageForEditTab();
+    } else {
+      document.getElementById('editor-card').classList.add('hidden');
+    }
     return;
   }
   loadPageForEditTab();
