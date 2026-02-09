@@ -456,19 +456,22 @@
         <div id="tab-edit" class="tab-content manage-contact-pages-tab">
           <div class="card manage-contact-pages-bar">
             <div class="card-body">
-              <div class="manage-contact-pages-row">
+              <div class="manage-contact-pages-stack">
                 <div class="manage-contact-pages-field">
                   <label class="form-label">User</label>
-                  <div class="searchable-select searchable-select-wide" id="page-select-container">
-                    <button type="button" class="searchable-select-trigger" id="page-select-trigger" onclick="togglePageSelect()">
-                      <span id="page-select-text" class="searchable-select-placeholder">Select a user...</span>
-                    </button>
-                    <div class="searchable-select-dropdown" id="page-select-dropdown">
-                      <div class="searchable-select-search">
-                        <input type="text" id="page-select-search" placeholder="Search users..." oninput="filterPageOptions()" autocomplete="off">
+                  <div class="manage-contact-pages-user-row">
+                    <div class="searchable-select searchable-select-wide" id="page-select-container">
+                      <button type="button" class="searchable-select-trigger" id="page-select-trigger" onclick="togglePageSelect()">
+                        <span id="page-select-text" class="searchable-select-placeholder">Select a user...</span>
+                      </button>
+                      <div class="searchable-select-dropdown" id="page-select-dropdown">
+                        <div class="searchable-select-search">
+                          <input type="text" id="page-select-search" placeholder="Search users..." oninput="filterPageOptions()" autocomplete="off">
+                        </div>
+                        <div class="searchable-select-options" id="page-select-options"></div>
                       </div>
-                      <div class="searchable-select-options" id="page-select-options"></div>
                     </div>
+                    <button type="button" class="btn btn-primary btn-lg" id="edit-add-contact-page-btn" onclick="adminEnterCreateContactPage()" disabled>Add New Contact Page</button>
                   </div>
                   <input type="hidden" id="page-select" value="">
                 </div>
@@ -486,7 +489,6 @@
                     </div>
                   </div>
                   <input type="hidden" id="edit-contact-page-value" value="">
-                  <button type="button" class="btn btn-primary btn-lg" id="edit-add-contact-page-btn" onclick="adminEnterCreateContactPage()">Add New Contact Page</button>
                 </div>
               </div>
             </div>
@@ -2276,7 +2278,7 @@ function selectPage(folder, preferredContactSlug) {
   });
   
   document.getElementById('edit-contact-page-row').classList.remove('hidden');
-  document.getElementById('edit-add-contact-page-btn').classList.remove('hidden');
+  document.getElementById('edit-add-contact-page-btn').disabled = false;
   document.getElementById('edit-contact-page-value').value = '';
   setEditContactPageTriggerLabel(null, null, null);
   document.getElementById('editor-card').classList.add('hidden');
