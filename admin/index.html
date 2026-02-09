@@ -922,7 +922,7 @@
         <div id="modal-push-message-error" class="alert alert-error hidden"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="push-message-save-btn" disabled onclick="handlePushMessagePrimaryClick(event)">Push</button>
+        <button type="button" class="btn btn-primary" id="push-message-save-btn" disabled>Push</button>
         <button type="button" class="btn btn-secondary" id="push-message-cancel-btn" onclick="handlePushMessageCancelClick()">Cancel</button>
       </div>
     </div>
@@ -4181,13 +4181,15 @@ function closeModal() { document.getElementById('modal').classList.remove('show'
 document.getElementById('modal-confirm').addEventListener('click', () => { if (modalCallback) modalCallback(); closeModal(); });
 
 (function() {
-  var pushModal = document.getElementById('modal-push-message');
-  var sitePushSection = document.getElementById('site-push-message-section');
-  if (pushModal) {
-    pushModal.addEventListener('click', function(e) {
-      if (e.target && e.target.closest && e.target.closest('#push-message-save-btn')) { handlePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
-    }, true);
+  var pushSaveBtn = document.getElementById('push-message-save-btn');
+  if (pushSaveBtn) {
+    pushSaveBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      handlePushMessagePrimaryClick(e);
+    });
   }
+  var sitePushSection = document.getElementById('site-push-message-section');
   if (sitePushSection) {
     sitePushSection.addEventListener('click', function(e) {
       if (e.target && e.target.closest && e.target.closest('#site-push-message-btn')) { handleSitePushMessagePrimaryClick(e); e.preventDefault(); e.stopPropagation(); }
