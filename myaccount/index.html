@@ -56,8 +56,8 @@
   .status-banner-dismiss { padding: 0.35rem 0.75rem; font-size: 0.875rem; border-radius: 6px; cursor: pointer; white-space: nowrap; border: 1px solid transparent; background: transparent; color: inherit; }
   .status-banner.alert-error .status-banner-dismiss { background: rgba(113, 0, 0, 0.12); border-color: var(--status-error-border, #710000); color: var(--color-text); }
   .status-banner.alert-error .status-banner-dismiss:hover { background: rgba(113, 0, 0, 0.2); border-color: var(--status-error-border); }
-  #no-contact-pages-dismiss-btn { background: rgba(212, 160, 23, 0.2); border: 1px solid var(--banner-reminder-border, #d4a017); color: var(--color-text); padding: 0.35rem 0.75rem; font-size: 0.875rem; border-radius: 6px; cursor: pointer; }
-  #no-contact-pages-dismiss-btn:hover { background: rgba(212, 160, 23, 0.35); border-color: var(--banner-reminder-border); }
+  .no-contact-pages-hint { margin-top: 0.75rem; padding: 0.6rem 0.75rem; font-size: var(--text-sm, 0.875rem); color: var(--color-text-secondary, #6b7280); background: var(--color-bg-subtle, #f5f5f5); border: none; border-radius: var(--radius-md, 6px); line-height: 1.4; }
+  .no-contact-pages-hint.hidden { display: none; }
   .banner-push-message .banner-push-message-actions button { background: rgba(26, 197, 176, 0.2); border: 1px solid var(--status-success-border); color: var(--accent-teal); padding: 0.35rem 0.75rem; font-size: 0.875rem; border-radius: 6px; cursor: pointer; }
   .banner-push-message .banner-push-message-actions button:hover { background: rgba(26, 197, 176, 0.35); border-color: var(--status-success-border); }
   .banner-reminder,
@@ -457,6 +457,7 @@
                 <button type="button" class="btn btn-primary btn-sm btn-block" id="new-contact-page-btn" onclick="enterCreateMode()">Add new contact page</button>
                 <p id="contact-pages-limit-msg" class="form-hint mt-2 hidden" style="margin-top:0.35rem; font-size:0.85rem;"></p>
               </div>
+              <div id="no-contact-pages-banner" class="no-contact-pages-hint hidden" role="status">You have no Contact Pages. Click the button above to add one.</div>
               <div id="contact-pages-list" class="contact-pages-list"></div>
               <div id="contact-pages-dropdown-wrap" class="contact-pages-dropdown-wrap">
                 <div id="contact-pages-dropdown" class="contact-pages-dropdown">
@@ -508,14 +509,6 @@
           </div>
         </div>
         <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
-        <div id="no-contact-pages-banner" class="banner-reminder hidden" role="status">
-          <div class="banner-reminder-content">
-            <p class="banner-reminder-message">You have no Contact Pages. Use <strong>Add new contact page</strong> in the sidebar to create one.</p>
-          </div>
-          <div class="banner-reminder-actions">
-            <button type="button" class="btn btn-ghost btn-sm" id="no-contact-pages-dismiss-btn" onclick="dismissNoContactPagesBanner()">OK</button>
-          </div>
-        </div>
         <div id="no-contact-pages-placeholder" class="no-contact-pages-placeholder hidden" role="status">No Contact Pages</div>
         <div class="card" id="editor-contact-card">
           <div id="editor-contact-view" class="editor-contact-view">
@@ -1951,26 +1944,17 @@ async function fetchContactPagesList() {
   updateMainContentVisibility();
 }
 
-var noContactPagesBannerDismissed = false;
-function dismissNoContactPagesBanner() {
-  noContactPagesBannerDismissed = true;
-  var noBanner = document.getElementById('no-contact-pages-banner');
-  if (noBanner) noBanner.classList.add('hidden');
-  updateMainContentVisibility();
-}
 function updateMainContentVisibility() {
   var noBanner = document.getElementById('no-contact-pages-banner');
   var placeholder = document.getElementById('no-contact-pages-placeholder');
   var welcomeCard = document.getElementById('welcome-card');
   var editorCard = document.getElementById('editor-contact-card');
   var empty = contactPagesListData.length === 0;
-  if (!empty) noContactPagesBannerDismissed = false;
-  var showBanner = empty && !isCreateMode && !noContactPagesBannerDismissed;
-  var showPlaceholder = empty && !isCreateMode && noContactPagesBannerDismissed;
-  if (noBanner) noBanner.classList.toggle('hidden', !showBanner);
-  if (placeholder) placeholder.classList.toggle('hidden', !showPlaceholder);
+  var showWhenEmpty = empty && !isCreateMode;
+  if (noBanner) noBanner.classList.toggle('hidden', !showWhenEmpty);
+  if (placeholder) placeholder.classList.toggle('hidden', !showWhenEmpty);
   if (welcomeCard) welcomeCard.classList.remove('hidden');
-  if (editorCard) editorCard.classList.toggle('hidden', empty && !isCreateMode);
+  if (editorCard) editorCard.classList.toggle('hidden', showWhenEmpty);
 }
 
 function enterCreateMode() {
