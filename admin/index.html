@@ -3753,7 +3753,7 @@ function pushMessageCmd(cmd) {
 }
 
 function sanitizePushMessageHtml(html) {
-  var allowedTags = { b:1, i:1, u:1, strong:1, em:1, ul:1, ol:1, li:1, a:1, p:1, br:1, span:1 };
+  var allowedTags = { b:1, i:1, u:1, strong:1, em:1, ul:1, ol:1, li:1, a:1, p:1, br:1, span:1, blockquote:1 };
   var div = document.createElement('div');
   div.innerHTML = html;
   function walk(node) {
