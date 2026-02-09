@@ -500,36 +500,45 @@
             <div class="card-header"><span class="card-title">Edit Contact Information</span></div>
             <div class="card-body">
               <div id="admin-contact-view" class="admin-contact-view">
-                <div class="admin-contact-view-content">
-                  <div class="editor-view-header-row" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.5rem;">
-                    <span class="editor-view-value editor-view-title" id="admin-view-contact-page-name" style="font-size:1.25rem; font-weight:600;"></span>
-                    <div style="display:flex; gap:0.35rem;">
+                <div class="editor-contact-view-content" id="admin-contact-view-content">
+                  <div class="editor-view-header-row">
+                    <span class="editor-view-value editor-view-title" id="admin-view-contact-page-name"></span>
+                    <div class="editor-view-actions">
                       <a id="admin-view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm">View Page</a>
                       <button type="button" class="btn btn-primary btn-sm" id="admin-edit-contact-btn" onclick="adminEnterEditMode()">Edit</button>
                     </div>
                   </div>
-                  <div class="form-group" style="margin-bottom:0.75rem; padding-bottom:0.75rem; border-bottom:1px solid var(--color-border,#eee);"><span class="form-label">Page URL</span><span class="editor-view-value" id="admin-view-contact-page-url"></span></div>
-                  <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
-                    <div class="form-group"><label class="form-label">Given Names</label><span class="editor-view-value" id="admin-view-first-name"></span></div>
-                    <div class="form-group"><label class="form-label">Family Name</label><span class="editor-view-value" id="admin-view-surname"></span></div>
+                  <div class="editor-view-url-block editor-view-header">
+                    <div class="form-label">Page URL</div>
+                    <span class="editor-view-value" id="admin-view-contact-page-url"></span>
                   </div>
-                  <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
-                    <div class="form-group"><label class="form-label">Email</label><span class="editor-view-value" id="admin-view-email"></span></div>
+                  <div class="form-row">
+                    <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><span class="editor-view-value" id="admin-view-first-name"></span></div>
+                    <div class="form-group"><label class="form-label">Family Name <span class="form-required">*</span></label><span class="editor-view-value" id="admin-view-surname"></span></div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group"><label class="form-label">Email <span class="form-required">*</span></label><span class="editor-view-value" id="admin-view-email"></span></div>
                     <div class="form-group"><label class="form-label">Contact Number</label><span class="editor-view-value" id="admin-view-mobile"></span></div>
                   </div>
-                  <div class="form-group"><label class="form-label">Home Country</label><span class="editor-view-value" id="admin-view-home-country"></span></div>
+                  <div class="form-group">
+                    <label class="form-label">Home Country</label>
+                    <span class="editor-view-value" id="admin-view-home-country"></span>
+                  </div>
                   <div class="form-group">
                     <label class="form-label">Destination Details</label>
-                    <div class="form-section" style="padding:0.4rem 0; margin-top:0.35rem;">
+                    <div class="form-section">
                       <div class="form-group"><label class="form-label">Destination Name</label><span class="editor-view-value" id="admin-view-dest-name"></span></div>
                       <div class="form-group"><label class="form-label">Destination Address</label><span class="editor-view-value" id="admin-view-dest-address"></span></div>
-                      <div class="form-row" style="display:flex; flex-wrap:wrap; gap:1rem;">
+                      <div class="form-row">
                         <div class="form-group"><label class="form-label">Destination Contact Number</label><span class="editor-view-value" id="admin-view-dest-phone"></span></div>
                         <div class="form-group"><label class="form-label">Destination Email</label><span class="editor-view-value" id="admin-view-dest-email"></span></div>
                       </div>
                     </div>
                   </div>
-                  <div class="form-group"><label class="form-label">Additional Information</label><span class="editor-view-value editor-view-value-block" id="admin-view-additional-info" style="display:block; margin-top:0.2rem; white-space:pre-wrap;"></span></div>
+                  <div class="form-group">
+                    <label class="form-label">Additional Information</label>
+                    <span class="editor-view-value editor-view-value-block" id="admin-view-additional-info"></span>
+                  </div>
                 </div>
               </div>
               <div id="admin-contact-edit" class="admin-contact-edit hidden">
@@ -2496,13 +2505,13 @@ async function loadPageForEditTab() {
     document.getElementById('contact-page-url-username').textContent = currentFolder;
     document.getElementById('contact-page-name').value = (d.contactPageName || (currentContactPageName === 'index' ? 'Main (index)' : currentContactPageName)) || '';
     document.getElementById('contact-page-url-slug').value = (currentContactPageName === 'index' ? 'index' : currentContactPageName) || 'index';
-    document.getElementById('contact-page-url-slug').setAttribute('readonly', 'readonly');
-    document.getElementById('contact-page-url-slug').disabled = true;
+    document.getElementById('contact-page-url-slug').removeAttribute('readonly');
+    document.getElementById('contact-page-url-slug').disabled = false;
     document.getElementById('contact-page-url-slug').removeAttribute('required');
     document.getElementById('contact-page-url-slug').removeAttribute('minlength');
     ['first-name', 'surname', 'email'].forEach(function(id) {
       var el = document.getElementById(id);
-      if (el) el.setAttribute('required', '');
+      if (el) el.removeAttribute('required');
     });
     adminRefreshViewFromForm();
     document.getElementById('admin-view-page-link').href = currentContactPageName === 'index' ? (PAGES_URL + currentFolder + '/') : (PAGES_URL + currentFolder + '/' + currentContactPageName + '.html');
@@ -2548,7 +2557,7 @@ function adminEnterEditMode() {
   if (backWrap) backWrap.classList.remove('hidden');
   document.getElementById('admin-delete-page-btn').style.display = '';
   var adminSlugWarnEl = document.getElementById('admin-contact-page-slug-warning');
-  if (adminSlugWarnEl) adminSlugWarnEl.classList.add('hidden');
+  if (adminSlugWarnEl) adminSlugWarnEl.classList.remove('hidden');
   adminCaptureContactFormSnapshot();
   document.getElementById('save-btn').disabled = true;
 }
@@ -3507,16 +3516,85 @@ async function handleSave(e) {
       showAlert('alert-editor', (d && d.error) || 'Failed to create.', 'error');
     } else {
       var c = generateHTML();
-      var pagePath = currentContactPageName && currentContactPageName !== 'index' ? currentFolder + '/' + currentContactPageName : currentFolder;
       var contactPageNameVal = (document.getElementById('contact-page-name') && document.getElementById('contact-page-name').value) ? document.getElementById('contact-page-name').value.trim() : null;
+      var slugRaw = (document.getElementById('contact-page-url-slug') && document.getElementById('contact-page-url-slug').value) ? document.getElementById('contact-page-url-slug').value.trim() : '';
+      var newSlug = (slugRaw === '' || slugRaw.toLowerCase() === 'index') ? 'index' : slugRaw;
+      var oldSlug = (currentContactPageName === 'index' || !currentContactPageName) ? 'index' : currentContactPageName;
+      var slugChanged = newSlug !== oldSlug;
+      if (slugChanged && !/^[a-zA-Z0-9_-]+$/.test(newSlug)) {
+        showAlert('alert-editor', 'Page URL can only use letters, numbers, hyphens, and underscores.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+        return;
+      }
+      if (slugChanged && newSlug.length >= 2 && newSlug.length <= 28) {
+        var renameBody = { oldContactpagename: oldSlug, newContactpagename: newSlug, content: c, sha: currentSha };
+        if (contactPageNameVal != null) renameBody.contactPageName = contactPageNameVal;
+        var r = await fetch(API + '/api/page/' + encodeURIComponent(currentFolder) + '/rename', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify(renameBody) });
+        var d = await r.json();
+        if (r.ok) {
+          currentSha = (d.sha != null) ? d.sha : currentSha;
+          currentContactPageName = (d.contactpagename != null) ? d.contactpagename : newSlug;
+          var oldName = (editTabContactPagesList.find(function(p) { var s = (p && p.slug != null) ? p.slug : p; return s === oldSlug; }) || {}).name;
+          var displayName = contactPageNameVal || oldName || (currentContactPageName === 'index' ? 'Main (index)' : currentContactPageName);
+          editTabContactPagesList = editTabContactPagesList.filter(function(p) { var s = (p && p.slug != null) ? p.slug : p; return s !== oldSlug; });
+          editTabContactPagesList.push({ slug: currentContactPageName, name: displayName });
+          editTabContactPagesList.sort(function(a, b) { var sa = (a.slug === 'index') ? '' : (a.slug || ''); var sb = (b.slug === 'index') ? '' : (b.slug || ''); return sa.localeCompare(sb); });
+          var optionsEl = document.getElementById('edit-contact-page-options');
+          if (optionsEl && editTabContactPagesList.length > 0) {
+            optionsEl.innerHTML = editTabContactPagesList.map(function(p) {
+              var s = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
+              var label = (typeof p === 'object' && p.name != null) ? p.name : (s === 'index' ? 'Main (index)' : s);
+              return '<div class="searchable-select-option" data-value="' + escapeHtml(s) + '" data-label="' + escapeHtml(label) + '" onclick="selectEditContactPage(this.dataset.value||\'index\', this.dataset.label||\'\')"><div class="searchable-select-option-title">' + escapeHtml(label) + '</div><div class="searchable-select-option-meta">' + escapeHtml(currentFolder + (s === 'index' ? '/' : '/' + s)) + '</div></div>';
+            }).join('');
+          }
+          document.getElementById('edit-contact-page-value').value = currentContactPageName;
+          document.getElementById('edit-contact-page-text').textContent = displayName;
+          document.querySelectorAll('#edit-contact-page-options .searchable-select-option').forEach(function(opt) { opt.classList.toggle('selected', (opt.dataset.value || '') === currentContactPageName); });
+          var now = new Date().toISOString();
+          var pgGiven = (document.getElementById('first-name') && document.getElementById('first-name').value) ? document.getElementById('first-name').value.trim() : '';
+          var pgFamily = (document.getElementById('surname') && document.getElementById('surname').value) ? document.getElementById('surname').value.trim() : '';
+          var pgEmail = (document.getElementById('email') && document.getElementById('email').value) ? document.getElementById('email').value.trim() : '';
+          if (userInfo[currentFolder]) {
+            userInfo[currentFolder].pageGivenName = pgGiven;
+            userInfo[currentFolder].pageFamilyName = pgFamily;
+            userInfo[currentFolder].pageEmail = pgEmail;
+            userInfo[currentFolder].lastUpdated = now;
+            userInfo[currentFolder].updatedBy = 'admin';
+          } else {
+            userInfo[currentFolder] = { accountEmail: null, firstName: '', lastName: '', pageGivenName: pgGiven, pageFamilyName: pgFamily, pageEmail: pgEmail, lastUpdated: now, updatedBy: 'admin', folder: currentFolder };
+          }
+          populateUI();
+          adminRefreshViewFromForm();
+          document.getElementById('admin-view-page-link').href = currentContactPageName === 'index' ? (PAGES_URL + currentFolder + '/') : (PAGES_URL + currentFolder + '/' + currentContactPageName + '.html');
+          document.getElementById('admin-contact-edit').classList.add('hidden');
+          document.getElementById('admin-contact-view').classList.remove('hidden');
+          adminCaptureContactFormSnapshot();
+          document.getElementById('save-btn').disabled = true;
+          btn.textContent = 'Save Changes';
+          showAlert('alert-editor', 'Contact page renamed and saved. New URL: ' + (currentContactPageName === 'index' ? (PAGES_URL + currentFolder + '/') : (PAGES_URL + currentFolder + '/' + currentContactPageName + '.html')), 'success');
+          return;
+        }
+        showAlert('alert-editor', (d && d.error) || 'Failed to rename/update.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+        return;
+      }
+      if (slugChanged && (newSlug.length < 2 || newSlug.length > 28)) {
+        showAlert('alert-editor', 'Page URL must be 2–28 characters when changing the slug.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+        return;
+      }
+      var pagePath = currentContactPageName && currentContactPageName !== 'index' ? currentFolder + '/' + currentContactPageName : currentFolder;
       var r = await fetch(API + '/api/page/' + pagePath, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }, body: JSON.stringify({ content: c, sha: currentSha, contactPageName: contactPageNameVal }) });
       var d = await r.json();
       if (r.ok) {
         currentSha = d.sha;
         var now = new Date().toISOString();
-        var pgGiven = document.getElementById('first-name').value.trim();
-        var pgFamily = document.getElementById('surname').value.trim();
-        var pgEmail = document.getElementById('email').value.trim();
+        var pgGiven = (document.getElementById('first-name') && document.getElementById('first-name').value) ? document.getElementById('first-name').value.trim() : '';
+        var pgFamily = (document.getElementById('surname') && document.getElementById('surname').value) ? document.getElementById('surname').value.trim() : '';
+        var pgEmail = (document.getElementById('email') && document.getElementById('email').value) ? document.getElementById('email').value.trim() : '';
         if (userInfo[currentFolder]) {
           userInfo[currentFolder].pageGivenName = pgGiven;
           userInfo[currentFolder].pageFamilyName = pgFamily;
