@@ -495,20 +495,27 @@
           </div>
 
           <div id="editor-card" class="card hidden">
-            <div class="card-header"><span class="card-title">Edit Contact Information</span></div>
+            <div class="card-header admin-editor-card-header" id="admin-editor-view-header">
+              <span class="card-title" id="admin-editor-card-title">Edit Contact Information</span>
+              <div class="admin-editor-header-actions">
+                <a id="admin-view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm">View Page</a>
+                <button type="button" class="btn btn-primary btn-sm" id="admin-edit-contact-btn" onclick="adminEnterEditMode()">Edit</button>
+              </div>
+            </div>
             <div class="card-body">
               <div id="admin-contact-view" class="admin-contact-view">
                 <div class="editor-contact-view-content" id="admin-contact-view-content">
                   <div class="editor-view-header-row">
                     <span class="editor-view-value editor-view-title" id="admin-view-contact-page-name"></span>
-                    <div class="editor-view-actions">
-                      <a id="admin-view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm">View Page</a>
-                      <button type="button" class="btn btn-primary btn-sm" id="admin-edit-contact-btn" onclick="adminEnterEditMode()">Edit</button>
-                    </div>
                   </div>
                   <div class="editor-view-url-block editor-view-header">
                     <div class="form-label">Page URL</div>
-                    <span class="editor-view-value" id="admin-view-contact-page-url"></span>
+                    <div class="editor-view-url-line admin-view-url-line" id="admin-view-contact-page-url-wrap">
+                      <span class="url-part url-base">https://deem0u.github.io/user/</span>
+                      <span class="url-part url-username url-username-view" id="admin-view-contact-page-url-username"></span>
+                      <span class="url-part url-slash">/</span>
+                      <span class="url-part url-slug url-slug-view" id="admin-view-contact-page-url-slug"></span>
+                    </div>
                   </div>
                   <div class="form-row">
                     <div class="form-group"><label class="form-label">Given Names <span class="form-required">*</span></label><span class="editor-view-value" id="admin-view-first-name"></span></div>
@@ -542,6 +549,10 @@
               <div id="admin-contact-edit" class="admin-contact-edit hidden">
                 <p id="admin-create-contact-page-intro" class="form-hint hidden" style="margin-bottom:0.5rem;"></p>
                 <div class="card-header">
+                  <div class="admin-edit-header-top">
+                    <span class="card-title" id="admin-editor-edit-card-title">Edit Contact Information</span>
+                    <div class="editor-edit-mode-actions" id="admin-back-to-view-wrap"><button type="button" class="btn btn-secondary btn-sm" id="admin-back-to-view-btn" onclick="adminBackToViewMode()">Back to View Mode</button></div>
+                  </div>
                   <div class="card-header-fields">
                     <div class="form-group">
                       <label class="form-label" for="contact-page-name">Page Name <span class="form-required">*</span></label>
@@ -562,7 +573,6 @@
                       <span class="form-error" id="error-contact-page-url-slug" role="alert"></span>
                     </div>
                   </div>
-                  <div class="editor-edit-mode-actions" id="admin-back-to-view-wrap"><button type="button" class="btn btn-secondary btn-sm" id="admin-back-to-view-btn" onclick="adminBackToViewMode()">Back to View Mode</button></div>
                 </div>
                 <div class="card-body" id="admin-editor-contact-form-wrap">
                   <form id="contact-form">
@@ -610,10 +620,12 @@
                       <span class="form-hint">Optional. e.g. emergency contact, special instructions.</span>
                     </div>
                     <div id="alert-editor" class="alert"></div>
-                    <div class="form-actions form-actions-editor">
-                      <button type="submit" id="save-btn" class="btn btn-primary btn-sm">Save Changes</button>
-                      <button type="button" class="btn btn-secondary btn-sm" id="admin-cancel-btn" onclick="adminCancelForm()">Cancel</button>
-                      <button type="button" class="btn btn-danger btn-sm" id="admin-delete-page-btn" style="display:none;" onclick="adminOpenDeletePageModal()">Delete</button>
+                    <div class="form-actions form-actions-editor admin-editor-form-actions">
+                      <div class="admin-editor-form-actions-left">
+                        <button type="submit" id="save-btn" class="btn btn-primary btn-sm">Save Changes</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="admin-cancel-btn" onclick="adminCancelForm()">Cancel</button>
+                      </div>
+                      <button type="button" class="btn btn-danger btn-sm admin-editor-delete-btn" id="admin-delete-page-btn" style="display:none;" onclick="adminOpenDeletePageModal()">Delete</button>
                     </div>
                   </form>
                 </div>
@@ -2418,6 +2430,7 @@ async function adminEnterCreateContactPage() {
   currentFolder = username;
   currentContactPageName = '';
   currentSha = null;
+  setAdminEditorCardTitle();
   document.getElementById('edit-contact-page-value').value = '';
   setEditContactPageTriggerLabel('New page (unsaved)', currentFolder, '');
   document.getElementById('contact-page-url-username').textContent = username;
@@ -2435,6 +2448,8 @@ async function adminEnterCreateContactPage() {
     if (el) el.setAttribute('required', '');
   });
   adminRefreshViewFromForm();
+  var viewHeader = document.getElementById('admin-editor-view-header');
+  if (viewHeader) viewHeader.classList.add('hidden');
   document.getElementById('admin-contact-view').classList.add('hidden');
   document.getElementById('admin-contact-edit').classList.remove('hidden');
   var backWrap = document.getElementById('admin-back-to-view-wrap');
@@ -2531,7 +2546,9 @@ async function loadPageForEditTab() {
       if (el) el.removeAttribute('required');
     });
     adminRefreshViewFromForm();
+    setAdminEditorCardTitle();
     document.getElementById('admin-view-page-link').href = currentContactPageName === 'index' ? (PAGES_URL + currentFolder + '/') : (PAGES_URL + currentFolder + '/' + currentContactPageName + '.html');
+    adminShowViewHeader();
     document.getElementById('admin-contact-view').classList.remove('hidden');
     document.getElementById('admin-contact-edit').classList.add('hidden');
     var introEl = document.getElementById('admin-create-contact-page-intro');
@@ -2544,6 +2561,18 @@ async function loadPageForEditTab() {
   }
 }
 
+function setAdminEditorCardTitle() {
+  var u = userInfo[currentFolder] || {};
+  var first = (u.firstName || u.pageGivenName || '').trim();
+  var last = (u.lastName || u.pageFamilyName || '').trim();
+  var name = [first, last].filter(Boolean).join(' ');
+  var title = name ? (name + ' (' + (currentFolder || '') + ')') : 'Edit Contact Information';
+  var t1 = document.getElementById('admin-editor-card-title');
+  var t2 = document.getElementById('admin-editor-edit-card-title');
+  if (t1) t1.textContent = title;
+  if (t2) t2.textContent = title;
+}
+
 function adminRefreshViewFromForm() {
   function el(id) { var e = document.getElementById(id); return e ? (e.value || e.textContent || '').trim() : ''; }
   function setView(id, text) { var e = document.getElementById(id); if (e) e.textContent = (text != null && String(text).trim() !== '') ? String(text).trim() : ''; }
@@ -2553,7 +2582,8 @@ function adminRefreshViewFromForm() {
   var slug = (slugInp && slugInp.value) ? slugInp.value.trim() : (currentContactPageName === 'index' ? '' : currentContactPageName);
   if (slug && slug.toLowerCase() === 'index') slug = '';
   setView('admin-view-contact-page-name', nameInp ? nameInp.value : '');
-  setView('admin-view-contact-page-url', u ? (PAGES_URL + u + '/' + (slug || '')) : '');
+  setView('admin-view-contact-page-url-username', u || '');
+  setView('admin-view-contact-page-url-slug', slug || '');
   setView('admin-view-first-name', el('first-name'));
   setView('admin-view-surname', el('surname'));
   setView('admin-view-email', el('email'));
@@ -2568,6 +2598,8 @@ function adminRefreshViewFromForm() {
 }
 
 function adminEnterEditMode() {
+  var viewHeader = document.getElementById('admin-editor-view-header');
+  if (viewHeader) viewHeader.classList.add('hidden');
   document.getElementById('admin-contact-view').classList.add('hidden');
   document.getElementById('admin-contact-edit').classList.remove('hidden');
   var backWrap = document.getElementById('admin-back-to-view-wrap');
@@ -2583,6 +2615,7 @@ function adminBackToViewMode() {
   var introEl = document.getElementById('admin-create-contact-page-intro');
   if (introEl) introEl.classList.add('hidden');
   if (adminCreateNewPage) {
+    adminShowViewHeader();
     document.getElementById('admin-contact-edit').classList.add('hidden');
     document.getElementById('admin-contact-view').classList.remove('hidden');
     adminCreateNewPage = false;
@@ -2591,6 +2624,11 @@ function adminBackToViewMode() {
     return;
   }
   loadPageForEditTab();
+}
+
+function adminShowViewHeader() {
+  var viewHeader = document.getElementById('admin-editor-view-header');
+  if (viewHeader) viewHeader.classList.remove('hidden');
 }
 
 function adminCancelForm() {
