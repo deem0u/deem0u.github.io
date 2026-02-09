@@ -2030,6 +2030,11 @@ body {
   color: var(--color-success);
 }
 
+.badge-teal {
+  background: var(--accent-teal);
+  color: var(--white);
+}
+
 .badge-warning {
   background: var(--grey-200);
   color: var(--accent-dark);

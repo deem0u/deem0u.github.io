@@ -358,8 +358,7 @@
                 </div>
               </div>
               <div class="form-group mb-4" id="admin-password-section">
-                <label class="form-label">Administrator Email Password</label>
-                <span id="admin-password-badge" class="badge badge-success hidden" style="margin-left:0.5rem;">Password Set</span>
+                <label class="form-label">Administrator Email Password <span id="admin-password-badge" class="badge badge-teal hidden" style="margin-left:0.5rem;">Password Set</span></label>
                 <div id="admin-password-not-set">
                   <div style="display:flex; flex-direction:column; gap:0.5rem; max-width:20rem;">
                     <input type="password" id="dashboard-password-new" class="form-input" placeholder="Password (min 8 characters)" minlength="8" autocomplete="off">
@@ -369,21 +368,18 @@
                   <span class="form-hint">Enter password twice; button enables when both match and meet criteria.</span>
                 </div>
                 <div id="admin-password-set" class="hidden">
-                  <p class="form-hint" style="margin-bottom:0.5rem;">Password is set for email sign-in.</p>
-                  <button type="button" class="btn btn-secondary" id="reset-password-trigger-btn">Reset</button>
-                  <span class="form-hint" style="display:block; margin-top:0.5rem;">Sends OTP to your admin email; enter code and new password to reset.</span>
+                  <button type="button" class="btn btn-secondary" id="reset-password-trigger-btn">Reset Password</button>
                 </div>
               </div>
               <div class="form-group mb-0">
-                <label class="form-label">Local Admin Key (ADMIN_KEY)</label>
-                <span id="admin-key-badge" class="badge badge-success hidden" style="margin-left:0.5rem;">Admin Key Set</span>
+                <label class="form-label">Admin Session Key <span id="admin-key-badge" class="badge badge-teal hidden" style="margin-left:0.5rem;">Admin Key Set</span></label>
                 <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
                   <input type="text" id="dashboard-admin-key" class="form-input" placeholder="Generate a key to set or change" style="max-width:20rem; background:var(--color-bg-muted); color:var(--color-text-secondary);" readonly aria-readonly="true" autocomplete="off">
                   <button type="button" class="btn btn-secondary" id="generate-admin-key-btn">Generate</button>
-                  <button type="button" class="btn btn-secondary hidden" id="save-admin-key-btn">Save &amp; Store Locally</button>
-                  <button type="button" class="btn btn-ghost btn-sm hidden" id="reset-admin-key-btn">Reset</button>
+                  <button type="button" class="btn btn-secondary hidden" id="save-admin-key-btn">Save to Server</button>
+                  <button type="button" class="btn btn-secondary hidden" id="reset-admin-key-btn">Reset</button>
                 </div>
-                <span class="form-hint">Field is read-only. Generate a key, then save to server and this device.</span>
+                <span class="form-hint">Field is read-only. Generate a key, then save to server. Key is not stored on this device; you will need to sign in again after closing the browser.</span>
               </div>
             </div>
           </div>
@@ -723,20 +719,6 @@
     </div>
   </div>
 
-  <div id="modal-account-report" class="modal-overlay hidden">
-    <div class="modal" style="max-width: 640px;">
-      <div class="modal-header"><h3 class="modal-title" id="modal-account-report-title">Account Report</h3></div>
-      <div class="modal-body">
-        <div id="modal-account-report-loading" class="modal-qr-loading"><span class="spinner"></span> Generating report…</div>
-        <pre id="modal-account-report-content" class="debug-output hidden" style="max-height: 70vh; overflow: auto; white-space: pre-wrap;"></pre>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeAccountReportModal()">Close</button>
-        <button type="button" class="btn btn-primary hidden" id="modal-account-report-copy-btn" onclick="copyAccountReport()">Copy</button>
-      </div>
-    </div>
-  </div>
-
   <div id="modal-password-reset" class="modal-overlay hidden">
     <div class="modal" style="max-width:400px;">
       <div class="modal-header"><h3 class="modal-title">Reset password</h3></div>
@@ -934,7 +916,7 @@
 
   <div id="modal-kv-purge" class="modal-overlay">
     <div class="modal modal-kv-purge" style="max-width: 560px;">
-      <div class="modal-header"><h3 class="modal-title" id="modal-kv-purge-title">KV Purge</h3></div>
+      <div class="modal-header"><h3 class="modal-title" id="modal-kv-purge-title">KV List</h3></div>
       <div class="modal-body">
         <div id="kv-purge-loading" class="modal-qr-loading"><span class="spinner"></span> Loading keys…</div>
         <div id="kv-purge-content" class="hidden kv-purge-content">
@@ -1837,12 +1819,11 @@ async function handleSaveAdminKey() {
     var d = await r.json();
     if (r.ok) {
       adminKey = key;
-      sessionStorage.setItem('admin_key', key);
       inp.value = '';
       document.getElementById('generate-admin-key-btn').classList.remove('hidden');
       document.getElementById('save-admin-key-btn').classList.add('hidden');
       document.getElementById('reset-admin-key-btn').classList.add('hidden');
-      showAlert('alert-administrator', 'Admin key saved. You stay signed in on this device.', 'success');
+      showAlert('alert-administrator', 'Admin key saved to server. You are signed in for this session; the key is not stored on this device.', 'success');
     } else { showAlert('alert-administrator', (d && d.error) || 'Failed to save.', 'error'); }
   } catch (e) { showAlert('alert-administrator', 'Connection error.', 'error'); }
 }
@@ -2831,8 +2812,7 @@ function renderList(t) {
             <span class="action-row-label">Developer</span>
             <div class="action-row-buttons action-row-buttons-developer" style="flex-wrap:wrap; align-items:center; gap:0.35rem;">
               <button type="button" class="btn btn-secondary btn-sm" onclick="debugUserApi('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Diagnose anything related to this user that might be broken">Debug API</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="openKvPurgeModal('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Report and purge KV keys for this user">KV Purge</button>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="showAccountReportModal('${escapeHtml(f).replace(/'/g, "\\'")}')" title="Generate summary stats and account report including contact cards">Summary</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openKvPurgeModal('${escapeHtml(f).replace(/'/g, "\\'")}')" title="List and purge KV keys for this user">KV List</button>
             </div>
           </div>
         </div>
@@ -2891,77 +2871,6 @@ function confirmDeleteUserExecute() {
   var f = deleteUserModalFolder;
   closeDeleteUserModal();
   deleteUser(f);
-}
-
-var accountReportModalFolder = null;
-
-function closeAccountReportModal() {
-  document.getElementById('modal-account-report').classList.remove('show');
-  document.getElementById('modal-account-report').classList.add('hidden');
-  accountReportModalFolder = null;
-}
-
-async function showAccountReportModal(folder) {
-  accountReportModalFolder = folder;
-  document.getElementById('modal-account-report-title').textContent = 'Account Report - ' + folder;
-  document.getElementById('modal-account-report-loading').classList.remove('hidden');
-  document.getElementById('modal-account-report-content').classList.add('hidden');
-  document.getElementById('modal-account-report-content').textContent = '';
-  document.getElementById('modal-account-report-copy-btn').classList.add('hidden');
-  document.getElementById('modal-account-report').classList.remove('hidden');
-  document.getElementById('modal-account-report').classList.add('show');
-  try {
-    var debugRes = await fetch(API + '/api/admin/debug-user/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
-    var contactRes = await fetch(API + '/api/contact-pages/' + encodeURIComponent(folder), { headers: { 'X-Admin-Key': adminKey } });
-    var debugData = await debugRes.json().catch(function() { return {}; });
-    var contactData = await contactRes.json().catch(function() { return {}; });
-    var d = debugData.debug || debugData;
-    var pages = (contactData.contactPages && Array.isArray(contactData.contactPages)) ? contactData.contactPages : [];
-    var u = userInfo[folder] || {};
-    var lines = [
-      '=== Account Report: ' + folder + ' ===',
-      '',
-      '--- Profile ---',
-      'Username: ' + (d.username || folder),
-      'Resolved email: ' + (d.resolvedEmail || '(none)'),
-      'First name: ' + (d.firstName || '(none)'),
-      'Last name: ' + (d.lastName || '(none)'),
-      'In GitHub repo: ' + (d.inGitHub ? 'Yes' : 'No'),
-      '',
-      '--- Access & Recovery ---',
-      'Password set: ' + (d.passwordSet ? 'Yes' : 'No'),
-      'OTP set: ' + (d.otpSet ? 'Yes' : 'No'),
-      'Email verified: ' + (d.emailVerified ? 'Yes' : 'No') + (d.emailVerifiedAdmin ? ' (admin)' : ''),
-      'DOB set: ' + (d.dobSet ? 'Yes' : 'No'),
-      'Recovery SQs: ' + (d.recoverySqCount || 0) + '/3',
-      '',
-      '--- Limits & Flags ---',
-      'Max contact pages: ' + (d.maxContactPages != null ? d.maxContactPages : '(unset)'),
-      'Divert Emails: ' + (d.divertEmail ? 'Yes' : 'No'),
-      'Account details sent: ' + (d.accountDetailsSent ? 'Yes' : 'No'),
-      '',
-      '--- Contact Pages (' + pages.length + ') ---'
-    ];
-    pages.forEach(function(p) {
-      lines.push('  - ' + (p.slug || p.name || '') + (p.name && p.slug ? ' → ' + p.name : ''));
-    });
-    lines.push('');
-    lines.push('--- End report ---');
-    document.getElementById('modal-account-report-content').textContent = lines.join('\n');
-    document.getElementById('modal-account-report-loading').classList.add('hidden');
-    document.getElementById('modal-account-report-content').classList.remove('hidden');
-    document.getElementById('modal-account-report-copy-btn').classList.remove('hidden');
-  } catch (e) {
-    document.getElementById('modal-account-report-loading').classList.add('hidden');
-    document.getElementById('modal-account-report-content').textContent = 'Error generating report: ' + (e && e.message) || 'Unknown error';
-    document.getElementById('modal-account-report-content').classList.remove('hidden');
-  }
-}
-
-function copyAccountReport() {
-  var pre = document.getElementById('modal-account-report-content');
-  if (!pre || !pre.textContent) return;
-  navigator.clipboard.writeText(pre.textContent).then(function() { showAlert('alert-manage', 'Report copied to clipboard.', 'success'); }).catch(function() {});
 }
 
 async function deleteUser(f) {
@@ -4426,7 +4335,7 @@ function closeKvPurgeModal() {
 async function openKvPurgeModal(folder) {
   kvPurgeUsername = folder;
   kvPurgeReportData = null;
-  document.getElementById('modal-kv-purge-title').textContent = 'KV Purge - ' + folder;
+  document.getElementById('modal-kv-purge-title').textContent = 'KV List - ' + folder;
   document.getElementById('kv-purge-loading').classList.remove('hidden');
   document.getElementById('kv-purge-content').classList.add('hidden');
   document.getElementById('kv-purge-empty').classList.add('hidden');
