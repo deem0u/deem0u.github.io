@@ -188,6 +188,9 @@ body {
   border-left: 1px solid var(--color-border);
   box-sizing: content-box;
 }
+.header-signout-slot .btn {
+  font-size: var(--text-sm);
+}
 
 .app-nav.tabs {
   display: flex;
@@ -212,6 +215,84 @@ body {
 .app-nav.tabs .tab.active {
   color: var(--accent-teal);
   font-weight: 500;
+}
+
+/* Header nav dropdown (e.g. Resources) – hover and focus-within */
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+}
+.nav-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--transition), background var(--transition);
+}
+.nav-dropdown-trigger.tab {
+  flex: none;
+}
+.nav-dropdown-trigger:hover,
+.nav-dropdown:hover .nav-dropdown-trigger {
+  color: var(--color-text);
+  background: var(--color-bg-muted, rgba(0,0,0,0.05));
+}
+.nav-dropdown-chevron {
+  font-size: 0.65em;
+  opacity: 0.8;
+  transition: transform var(--transition);
+}
+.nav-dropdown:hover .nav-dropdown-chevron,
+.nav-dropdown:focus-within .nav-dropdown-chevron {
+  transform: rotate(180deg);
+}
+.nav-dropdown-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: var(--space-1);
+  min-width: 12rem;
+  padding: var(--space-1);
+  background: var(--white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity var(--transition), visibility var(--transition), transform var(--transition);
+  z-index: 100;
+}
+.nav-dropdown:hover .nav-dropdown-panel,
+.nav-dropdown:focus-within .nav-dropdown-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.nav-dropdown-item {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+.nav-dropdown-item:hover {
+  color: var(--color-text);
+  background: var(--color-bg-muted, rgba(0,0,0,0.05));
+}
+.nav-dropdown-item:focus {
+  outline: 2px solid var(--accent-teal);
+  outline-offset: 2px;
 }
 
 .app-logo {
