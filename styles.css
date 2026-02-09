@@ -738,8 +738,8 @@ body {
 
 .banner-push-message .banner-push-message-content blockquote {
   margin: 0.25rem 0 0.25rem 1rem;
-  padding-left: 0.75rem;
-  border-left: 3px solid var(--status-success-border);
+  padding-left: 0;
+  border: none;
 }
 
 .banner-push-message .banner-push-message-actions {
@@ -767,7 +767,13 @@ body {
 .site-push-user-option-hidden { display: none !important; }
 .push-message-editor { min-height: 140px; max-height: 280px; overflow-y: auto; margin-top: 0; }
 .push-message-editor:empty::before { content: attr(data-placeholder); color: var(--color-text-secondary); }
-.push-message-editor blockquote { margin: 0.25rem 0 0.25rem 1.5rem; padding-left: 0.75rem; border-left: 3px solid var(--color-border-strong, #ccc); }
+.push-message-editor blockquote { margin: 0.25rem 0 0.25rem 1.5rem; padding-left: 0; border: none; }
+.push-message-editor ul,
+.push-message-editor ol { margin: 0.35rem 0 0 1.25rem; padding-left: 1.5rem; }
+.push-message-editor ul ul,
+.push-message-editor ol ol,
+.push-message-editor ul ol,
+.push-message-editor ol ul { margin: 0.2rem 0 0 0; padding-left: 1.5rem; }
 .modal-push-message .modal-body { padding: var(--space-4) var(--space-5); }
 .modal-push-message .modal-footer .btn + .btn { margin-left: 0.5rem; }
 
