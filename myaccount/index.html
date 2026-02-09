@@ -1828,9 +1828,11 @@ function sanitizePushMessageHtml(html) {
     if (node.nodeType === 1) {
       var tag = node.tagName.toLowerCase();
       if (!allowedTags[tag]) {
-        while (node.firstChild) node.parentNode.insertBefore(node.firstChild, node);
-        node.parentNode.removeChild(node);
-        return;
+        if (node.parentNode) {
+          while (node.firstChild) node.parentNode.insertBefore(node.firstChild, node);
+          node.parentNode.removeChild(node);
+          return;
+        }
       }
       if (tag === 'a') {
         var href = node.getAttribute('href') || '';
