@@ -328,6 +328,11 @@
                   </div>
                   <div id="site-push-message-user-list" class="site-push-user-list" style="max-height:14rem; overflow-y:auto; border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:0.5rem;"></div>
                 </div>
+                <p class="form-hint mt-2 mb-1" id="site-push-recipients-summary">Recipients: <span id="site-push-recipients-count">0 selected</span></p>
+                <label class="toggle-label" style="display:flex; align-items:flex-start; gap:0.5rem; margin-top:1rem; cursor:pointer;">
+                  <input type="checkbox" id="site-push-confirm-cb" onchange="updateSitePushMessageButtonState()">
+                  <span>I confirm I want to push this message to <strong id="site-push-confirm-targets">the selected users</strong>' My Accounts.</span>
+                </label>
                 <div id="site-push-message-error" class="alert alert-error hidden mt-2"></div>
                 <div class="modal-footer" style="margin-top:1rem; padding:0;">
                   <button type="button" class="btn btn-primary" id="site-push-message-btn" disabled onclick="handleSitePushMessagePrimaryClick(event)">Push</button>
@@ -3734,8 +3739,6 @@ async function savePushMessage() {
   }
 }
 
-var sitePushConfirmStep = false;
-
 function sitePushMessageCmd(cmd) {
   var editor = document.getElementById('site-push-message-editor');
   if (!editor) return;
@@ -3756,11 +3759,31 @@ function sitePushMessageCmd(cmd) {
 function updateSitePushMessageButtonState() {
   var editor = document.getElementById('site-push-message-editor');
   var btn = document.getElementById('site-push-message-btn');
+  var confirmCb = document.getElementById('site-push-confirm-cb');
+  var pushToAll = document.getElementById('site-push-to-all');
   if (!editor || !btn) return;
-  var raw = (editor.innerText || editor.textContent || '').trim();
+  var raw = (editor && editor.innerHTML) ? editor.innerHTML.trim() : '';
   var hasContent = raw.length > 0;
-  if (sitePushConfirmStep) btn.disabled = false;
-  else btn.disabled = !hasContent;
+  var confirmed = confirmCb && confirmCb.checked;
+  var targets = getSitePushTargetUsers();
+  var hasRecipients = targets.length > 0;
+  btn.disabled = !hasContent || !confirmed || !hasRecipients;
+}
+
+function updateSitePushRecipientsSummary() {
+  var pushToAll = document.getElementById('site-push-to-all');
+  var countEl = document.getElementById('site-push-recipients-count');
+  var targetsEl = document.getElementById('site-push-confirm-targets');
+  if (!countEl) return;
+  if (pushToAll && pushToAll.checked) {
+    var total = (typeof pages !== 'undefined' && Array.isArray(pages)) ? pages.length : 0;
+    countEl.textContent = 'All users (' + total + ')';
+    if (targetsEl) targetsEl.textContent = 'all users';
+  } else {
+    var targets = getSitePushTargetUsers();
+    countEl.textContent = targets.length + ' selected';
+    if (targetsEl) targetsEl.textContent = 'the selected users';
+  }
 }
 
 function toggleSitePushUserList() {
@@ -3769,6 +3792,8 @@ function toggleSitePushUserList() {
   if (!pushToAll || !wrap) return;
   if (pushToAll.checked) wrap.classList.add('hidden');
   else { wrap.classList.remove('hidden'); populateSitePushUserList(); }
+  updateSitePushRecipientsSummary();
+  updateSitePushMessageButtonState();
 }
 
 function populateSitePushUserList() {
@@ -3796,7 +3821,9 @@ function populateSitePushUserList() {
     label.appendChild(span);
     wrap.appendChild(label);
     list.appendChild(wrap);
+    cb.addEventListener('change', function() { updateSitePushRecipientsSummary(); updateSitePushMessageButtonState(); });
   });
+  updateSitePushRecipientsSummary();
   if (users.length === 0) {
     var empty = document.createElement('p');
     empty.className = 'form-hint';
@@ -3826,6 +3853,8 @@ function filterSitePushUserList() {
     else if (q) countEl.textContent = 'Showing ' + visible + ' of ' + options.length + ' users';
     else countEl.textContent = options.length + ' user' + (options.length === 1 ? '' : 's');
   }
+  updateSitePushRecipientsSummary();
+  updateSitePushMessageButtonState();
 }
 
 function sitePushSelectVisibleUsers(checked) {
@@ -3845,35 +3874,30 @@ function getSitePushTargetUsers() {
 }
 
 function handleSitePushMessageCancelClick() {
-  if (sitePushConfirmStep) {
-    sitePushConfirmStep = false;
-    document.getElementById('site-push-message-btn').textContent = 'Push';
-    document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
-    updateSitePushMessageButtonState();
-  }
+  var confirmCb = document.getElementById('site-push-confirm-cb');
+  if (confirmCb) confirmCb.checked = false;
+  updateSitePushMessageButtonState();
 }
 
 function handleSitePushMessagePrimaryClick(e) {
   if (e) { e.preventDefault(); e.stopPropagation(); }
-  if (sitePushConfirmStep) {
-    executeSitePushMessage();
+  executeSitePushMessage();
+}
+
+async function executeSitePushMessage() {
+  var confirmCb = document.getElementById('site-push-confirm-cb');
+  if (!confirmCb || !confirmCb.checked) {
+    showAlert('alert-admin-access', 'Please confirm you want to push this message.', 'error');
     return;
   }
   var targets = getSitePushTargetUsers();
   var pushToAll = document.getElementById('site-push-to-all');
-  if (!pushToAll || !pushToAll.checked) {
-    if (targets.length === 0) {
-      showAlert('alert-admin-access', 'Select at least one user or check “Push to all users”.', 'error');
-      return;
-    }
+  if (targets.length === 0) {
+    document.getElementById('site-push-message-error').textContent = 'Select at least one user or check "Push to all users".';
+    document.getElementById('site-push-message-error').classList.remove('hidden');
+    showAlert('alert-admin-access', 'Select at least one user or check "Push to all users".', 'error');
+    return;
   }
-  sitePushConfirmStep = true;
-  document.getElementById('site-push-message-btn').textContent = 'Confirm Push';
-  document.getElementById('site-push-message-cancel-btn').textContent = 'Abort';
-  document.getElementById('site-push-message-btn').disabled = false;
-}
-
-async function executeSitePushMessage() {
   var editor = document.getElementById('site-push-message-editor');
   var errEl = document.getElementById('site-push-message-error');
   var btn = document.getElementById('site-push-message-btn');
@@ -3881,22 +3905,12 @@ async function executeSitePushMessage() {
   if (!raw) {
     errEl.textContent = 'Please enter a message.';
     errEl.classList.remove('hidden');
-    sitePushConfirmStep = false;
-    document.getElementById('site-push-message-btn').textContent = 'Push';
-    document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
-    updateSitePushMessageButtonState();
     return;
   }
   var html = sanitizePushMessageHtml(raw);
-  var targets = getSitePushTargetUsers();
-  if (targets.length === 0) {
-    sitePushConfirmStep = false;
-    document.getElementById('site-push-message-btn').textContent = 'Push';
-    document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
-    updateSitePushMessageButtonState();
-    errEl.textContent = 'No users selected. Select users below or check "Push to all users".';
+  if (!html) {
+    errEl.textContent = 'Please enter a message.';
     errEl.classList.remove('hidden');
-    showAlert('alert-admin-access', 'No users selected.', 'error');
     return;
   }
   errEl.classList.add('hidden');
@@ -3911,15 +3925,14 @@ async function executeSitePushMessage() {
       } catch (e) { fail++; if (i === 0) { errEl.textContent = 'Connection error. Check API URL and network.'; errEl.classList.remove('hidden'); } }
     }
   } finally {
-    sitePushConfirmStep = false;
-    document.getElementById('site-push-message-btn').textContent = 'Push';
-    document.getElementById('site-push-message-cancel-btn').textContent = 'Cancel';
     if (btn) btn.disabled = false;
     updateSitePushMessageButtonState();
   }
   if (fail === 0) {
     showAlert('alert-admin-access', 'Push message sent to ' + ok + ' user(s).', 'success');
     editor.innerHTML = '';
+    if (confirmCb) confirmCb.checked = false;
+    updateSitePushRecipientsSummary();
     updateSitePushMessageButtonState();
   } else {
     errEl.textContent = 'Sent to ' + ok + ' user(s); ' + fail + ' failed. Check connection and admin key.';
