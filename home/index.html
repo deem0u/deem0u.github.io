@@ -87,6 +87,7 @@
   .step4-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 9999px; margin-left: 0.35rem; vertical-align: middle; }
   .step4-badge-verified { background: rgba(26, 197, 176, 0.2); color: var(--accent-teal, #0d9488); }
   .step4-badge-not-verified { background: rgba(212, 160, 23, 0.2); color: #b45309; }
+  .step4-intro { text-align: center; margin-bottom: 1.25rem; }
   .home-success-details ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
   .home-success-details ol li { margin-bottom: 0.5rem; }
   .home-success-action { margin-top: 1.5rem; }
@@ -320,7 +321,7 @@
             <span class="step-pill" id="progress-step1">1. Create Account</span>
             <span class="step-pill" id="progress-step2">2. Add Contact Page</span>
             <span class="step-pill" id="progress-step3">3. Generate QR</span>
-            <span class="step-pill" id="progress-step4">4. All Set!</span>
+            <span class="step-pill" id="progress-step4">4. Summary</span>
           </div>
           <div id="signup-step1-card" class="card signup-step1-card hidden">
             <div class="card-body">
@@ -512,8 +513,9 @@
             </div>
           </div>
           <div id="signup-step4-card" class="card hidden">
-            <div class="card-header"><span class="card-title">All Set!</span></div>
+            <div class="card-header"><span class="card-title">Summary</span></div>
             <div class="card-body">
+              <p class="step4-intro text-secondary">Below is a summary of the information you have provided just now. Remember that you can change these details anytime from your My Account once you have verified your account email (if you haven&apos;t already).</p>
               <div id="step4-summary" class="home-success-details"></div>
               <p class="text-secondary mt-3">A copy of this information has been sent to your email.</p>
               <div class="form-actions mt-3">
@@ -1044,27 +1046,27 @@
       ? '<span class="step4-badge step4-badge-verified">Verified</span>'
       : '<span class="step4-badge step4-badge-not-verified">Not Verified</span>';
     var profileSection =
-      '<p class="home-success-banner">Welcome! Your account is ready.</p>' +
-      '<p class="success-heading">1. Profile details</p>' +
+      '<p class="success-heading">Profile details</p>' +
       '<ul class="step4-detail-list">' +
       '<li><strong>User Name:</strong> ' + (username || '') + '</li>' +
       '<li><strong>First Name:</strong> ' + (firstName || '') + '</li>' +
       '<li><strong>Last Name:</strong> ' + (lastName || '') + '</li>' +
       '<li><strong>Account Email:</strong> ' + (email || '') + ' ' + emailBadge + '</li>' +
-      '<li><strong>Date of Birth:</strong> ' + (dob ? '**/**/****' : '') + '</li>' +
+      '<li><strong>Date of Birth:</strong> ' + (dob || '') + '</li>' +
       '</ul>';
     var pageSection = contactSlug
-      ? '<p class="success-heading">2. Contact page</p>' +
+      ? '<p class="success-heading">Contact Page &amp; QR&apos;s</p>' +
         '<ul class="step4-detail-list"><li><strong>Page URL:</strong> <a href="' + viewUrl + '" target="_blank" rel="noopener">' + viewUrl + '</a></li></ul>'
-      : '<p class="success-heading">2. Contact pages</p>' +
-        '<p class="text-secondary">None just yet. But you can start creating them in My Account once you verify your email.</p>';
+      : '<p class="success-heading">Contact Page &amp; QR&apos;s</p>' +
+        '<ul class="step4-detail-list"><li>—</li><li><i>To be setup later in My Account</i></li></ul>';
     var nextSteps =
-      '<p class="success-heading">3. What you can do next</p>' +
-      '<p class="text-secondary">Go to <strong>My Account</strong> and sign in with your Account Email and Password. There you can:</p>' +
+      '<p class="success-heading">Next steps</p>' +
+      '<p class="text-secondary">Click the &quot;Go to My Account&quot; button below where you can:</p>' +
       '<ul class="step4-detail-list">' +
-      '<li>Edit your profile details (name, email, user name)</li>' +
-      '<li>Add or edit contact pages</li>' +
-      '<li>Generate and download QR codes for your pages</li>' +
+      '<li>Add new or view and edit all your contact pages</li>' +
+      '<li>Generate the QR codes for your Contact Pages, vCard &amp; text</li>' +
+      '<li>Edit your profile details including your username</li>' +
+      '<li>Change your login password and reset your security questions</li>' +
       '</ul>';
     document.getElementById('step4-summary').innerHTML = profileSection + pageSection + nextSteps;
   }
