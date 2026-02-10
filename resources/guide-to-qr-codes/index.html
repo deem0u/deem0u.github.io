@@ -33,6 +33,10 @@
     .resource-page .nfc-type-card svg { width: 48px; height: 48px; margin-bottom: 0.5rem; display: block; margin-left: auto; margin-right: auto; }
     .resource-page .callout { padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-teal); background: rgba(26, 197, 176, 0.08); }
     .resource-page .callout p:last-child { margin-bottom: 0; }
+    .resource-page .callout-hero { padding: 1.25rem 1.5rem; border-radius: 10px; margin: 1.5rem 0; border: 2px solid var(--accent-teal); background: rgba(26, 197, 176, 0.12); }
+    .resource-page .callout-hero .callout-hero-title { font-size: 1.1rem; font-weight: 700; color: var(--accent-dark); margin: 0 0 0.5rem 0; }
+    .resource-page .callout-hero p { margin-bottom: 0.5rem; color: var(--color-text); }
+    .resource-page .callout-hero p:last-child { margin-bottom: 0; }
   </style>
 </head>
 <body class="resource-page">
@@ -78,6 +82,11 @@
       <h1>Guide to QR Codes &amp; NFC</h1>
       <p class="lead">Once you’ve created your DigiCon iD contact page, this guide shows you how to use QR codes and NFC tags so finders can reach you—whether on luggage, bags, or everyday items.</p>
 
+      <div class="callout-hero" role="region" aria-labelledby="key-benefit-heading">
+        <h2 id="key-benefit-heading" class="callout-hero-title">Easiest way to get value: scan our QR in an NFC app, then write to a tag</h2>
+        <p><strong>The QR codes and links we generate are designed to be scanned by NFC writing apps</strong> (such as <strong>NFC Tools</strong> by wakdev and <strong>NFC TagWriter by NXP</strong> on iOS and Android). Open the app, scan the QR code from My Account—or use the copied URL/vCard—and the app imports your contact page or vCard. Then tap your phone to an NFC tag to write it. <strong>No need to manually type anything on your phone.</strong> This is the simplest way to use DigiCon iD: generate once on the website, scan to import on your phone, then write to as many NFC tags as you like.</p>
+      </div>
+
       <!-- Part 1: QR codes and your contact page -->
       <h2>QR codes and your contact page</h2>
       <p>A <strong>QR (Quick Response) code</strong> is a 2D barcode that stores a URL or other data. When someone scans it with their phone camera or a QR app, they open that link—in your case, your DigiCon iD contact page with your details, destination, and how to reach you. No need to print your name or phone number on the tag; the code keeps your info digital and updatable.</p>
@@ -90,6 +99,7 @@
         <li><strong>Plain text</strong> — A simple text version of your details for copying or sharing.</li>
       </ul>
       <p>Use the <strong>Page URL</strong> QR for tags and stickers so finders land on your full contact page. Use the <strong>vCard</strong> QR when you want them to save your details straight to their contacts.</p>
+      <p><strong>For NFC:</strong> These same QR codes are designed to be <strong>scanned inside NFC writing apps</strong>. The app reads the URL or vCard from the QR so you can write it to an NFC tag without entering anything by hand on your phone.</p>
 
       <!-- Step-by-step: print and adhere -->
       <h2>Step-by-step: printing and using your QR on luggage and belongings</h2>
@@ -101,63 +111,14 @@
         <li><strong>Attach to your items:</strong> thread a card through a luggage strap or loop, or peel and stick stickers onto suitcase handles, backpacks, or key rings. Place the QR where it’s easy to scan (flat and visible).</li>
       </ol>
 
-      <figure class="figure" aria-hidden="true">
-        <svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg" width="280" height="160" role="img" aria-labelledby="fig-luggage-caption">
-          <title>Luggage with QR tag attached</title>
-          <!-- Simple suitcase -->
-          <rect x="40" y="50" width="120" height="80" rx="8" fill="#DDDDDD" stroke="#999" stroke-width="1"/>
-          <rect x="52" y="62" width="96" height="56" rx="4" fill="#fff" stroke="#ccc" stroke-width="1"/>
-          <circle cx="100" cy="95" r="8" fill="#BBB"/>
-          <!-- Luggage tag with QR -->
-          <rect x="170" y="30" width="90" height="100" rx="6" fill="#fff" stroke="#1ac5b0" stroke-width="2"/>
-          <rect x="180" y="42" width="70" height="70" fill="#272932"/>
-          <rect x="185" y="47" width="12" height="12" fill="#fff"/>
-          <rect x="200" y="47" width="12" height="12" fill="#fff"/>
-          <rect x="215" y="47" width="12" height="12" fill="#fff"/>
-          <rect x="185" y="62" width="12" height="12" fill="#fff"/>
-          <rect x="200" y="62" width="12" height="12" fill="#fff"/>
-          <rect x="215" y="62" width="12" height="12" fill="#fff"/>
-          <rect x="185" y="77" width="12" height="12" fill="#fff"/>
-          <rect x="200" y="77" width="12" height="12" fill="#fff"/>
-          <rect x="215" y="77" width="12" height="12" fill="#fff"/>
-          <!-- Tag loop -->
-          <path d="M 215 30 L 215 20 Q 215 10 225 10 Q 235 10 235 20 L 235 30" fill="none" stroke="#666" stroke-width="3" stroke-linecap="round"/>
-        </svg>
-        <figcaption id="fig-luggage-caption">Luggage tag with QR code attached to a bag. Use a card or laminated tag so the QR stays readable.</figcaption>
+      <figure class="figure">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Suitcase_with_luggage_labels_%28178491614%29.jpg/560px-Suitcase_with_luggage_labels_%28178491614%29.jpg" alt="Suitcase with luggage labels" width="560" height="auto" loading="lazy">
+        <figcaption id="fig-luggage-caption">Luggage with labels. Use a card or laminated tag with your QR code so finders can scan it. <a href="https://commons.wikimedia.org/wiki/File:Suitcase_with_luggage_labels_(178491614).jpg" target="_blank" rel="noopener">Image: Wikimedia Commons</a></figcaption>
       </figure>
 
-      <figure class="figure" aria-hidden="true">
-        <svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg" width="280" height="120" role="img" aria-labelledby="fig-print-caption">
-          <title>Card and sticker print layout</title>
-          <!-- Card -->
-          <rect x="20" y="20" width="100" height="80" rx="6" fill="#fff" stroke="#1ac5b0" stroke-width="2"/>
-          <rect x="30" y="30" width="80" height="80" fill="#272932"/>
-          <rect x="35" y="35" width="10" height="10" fill="#fff"/>
-          <rect x="48" y="35" width="10" height="10" fill="#fff"/>
-          <rect x="61" y="35" width="10" height="10" fill="#fff"/>
-          <rect x="35" y="48" width="10" height="10" fill="#fff"/>
-          <rect x="48" y="48" width="10" height="10" fill="#fff"/>
-          <rect x="61" y="48" width="10" height="10" fill="#fff"/>
-          <rect x="35" y="61" width="10" height="10" fill="#fff"/>
-          <rect x="48" y="61" width="10" height="10" fill="#fff"/>
-          <rect x="61" y="61" width="10" height="10" fill="#fff"/>
-          <text x="70" y="105" text-anchor="middle" font-size="11" fill="#666">Card / tag</text>
-          <!-- Stickers -->
-          <rect x="160" y="25" width="50" height="50" rx="4" fill="#fff" stroke="#e455ae" stroke-width="2"/>
-          <rect x="168" y="33" width="34" height="34" fill="#272932"/>
-          <rect x="172" y="37" width="8" height="8" fill="#fff"/>
-          <rect x="182" y="37" width="8" height="8" fill="#fff"/>
-          <rect x="172" y="47" width="8" height="8" fill="#fff"/>
-          <rect x="182" y="47" width="8" height="8" fill="#fff"/>
-          <rect x="230" y="30" width="50" height="50" rx="4" fill="#fff" stroke="#e455ae" stroke-width="2"/>
-          <rect x="238" y="38" width="34" height="34" fill="#272932"/>
-          <rect x="242" y="42" width="8" height="8" fill="#fff"/>
-          <rect x="252" y="42" width="8" height="8" fill="#fff"/>
-          <rect x="242" y="52" width="8" height="8" fill="#fff"/>
-          <rect x="252" y="52" width="8" height="8" fill="#fff"/>
-          <text x="185" y="90" text-anchor="middle" font-size="11" fill="#666">Stickers</text>
-        </svg>
-        <figcaption id="fig-print-caption">Print your QR on a card (e.g. luggage tag) or on sticker sheets to adhere to bags and belongings.</figcaption>
+      <figure class="figure">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/QR_codes_at_museum.jpg/560px-QR_codes_at_museum.jpg" alt="QR codes on display" width="560" height="auto" loading="lazy">
+        <figcaption id="fig-print-caption">Print your QR on a card (e.g. luggage tag) or on sticker sheets to adhere to bags and belongings. <a href="https://commons.wikimedia.org/wiki/File:QR_codes_at_museum.jpg" target="_blank" rel="noopener">Image: Wikimedia Commons</a></figcaption>
       </figure>
 
       <p><strong>Durability tip:</strong> Laminate paper tags or use waterproof sticker material so the QR stays scannable after rain, handling, or long trips.</p>
@@ -174,23 +135,9 @@
         <li><strong>NFC keychains and luggage tags</strong> — Hard plastic or rubber. Durable for keys or bag straps.</li>
       </ul>
 
-      <figure class="figure" aria-hidden="true">
-        <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg" width="280" height="100" role="img" aria-labelledby="fig-nfc-types-caption">
-          <title>NFC tag types: sticker, card, keychain</title>
-          <rect x="20" y="20" width="70" height="50" rx="4" fill="#f5f5f5" stroke="#999" stroke-width="1"/>
-          <circle cx="55" cy="45" r="12" fill="none" stroke="#1ac5b0" stroke-width="2"/>
-          <circle cx="55" cy="45" r="6" fill="none" stroke="#1ac5b0" stroke-width="1"/>
-          <text x="55" y="82" text-anchor="middle" font-size="10" fill="#666">Sticker</text>
-          <rect x="110" y="15" width="80" height="55" rx="6" fill="#f5f5f5" stroke="#999" stroke-width="1"/>
-          <circle cx="150" cy="42" r="14" fill="none" stroke="#1ac5b0" stroke-width="2"/>
-          <circle cx="150" cy="42" r="7" fill="none" stroke="#1ac5b0" stroke-width="1"/>
-          <text x="150" y="82" text-anchor="middle" font-size="10" fill="#666">Card</text>
-          <ellipse cx="245" cy="42" rx="28" ry="22" fill="#f5f5f5" stroke="#999" stroke-width="1"/>
-          <circle cx="245" cy="42" r="10" fill="none" stroke="#1ac5b0" stroke-width="2"/>
-          <circle cx="245" cy="42" r="4" fill="none" stroke="#1ac5b0" stroke-width="1"/>
-          <text x="245" y="82" text-anchor="middle" font-size="10" fill="#666">Keychain</text>
-        </svg>
-        <figcaption id="fig-nfc-types-caption">NFC stickers, cards, and keychains can all store your contact page URL or vCard.</figcaption>
+      <figure class="figure">
+        <img src="https://images.pexels.com/photos/4483613/pexels-photo-4483613.jpeg?w=560&amp;auto=compress" alt="Contactless NFC card tap" width="560" height="auto" loading="lazy">
+        <figcaption id="fig-nfc-types-caption">NFC stickers, cards, and keychains can all store your contact page URL or vCard. <a href="https://www.pexels.com/search/nfc/" target="_blank" rel="noopener">Image: Pexels</a></figcaption>
       </figure>
 
       <h3>What to write on the NFC tag</h3>
@@ -198,10 +145,10 @@
         <li><strong>Contact page URL</strong> — Best for finders: one tap opens your full DigiCon iD page in the browser.</li>
         <li><strong>vCard</strong> — Writes your name, phone, email, etc. so the finder can save you as a contact with one tap.</li>
       </ul>
-      <p>Copy your contact page URL or vCard from My Account (same as for QR codes), then use an NFC app to write that data to the tag.</p>
+      <p><strong>No manual entry needed:</strong> Copy your contact page URL or vCard from My Account, or—even easier—<strong>scan the QR code from this website inside your NFC app</strong>. The app imports the URL or vCard so you can write it to the tag with one tap. You don’t have to type anything on your phone.</p>
 
       <h3>Apps to write NFC tags (iOS and Android)</h3>
-      <p>You need an app that can <strong>write</strong> URLs or vCards to NFC tags. These work on both platforms:</p>
+      <p>Use an app that can <strong>write</strong> URLs or vCards to NFC tags—and that can <strong>scan a QR code to import</strong> that data. These work on both platforms:</p>
 
       <div class="callout">
         <p><strong>NFC Tools</strong> (by wakdev) — Free app to read and write NFC tags. You can write a URL (your contact page) or create a contact/vCard. Available on <strong>iOS</strong> and <strong>Android</strong>.</p>
@@ -209,30 +156,19 @@
       <div class="callout">
         <p><strong>NFC TagWriter by NXP</strong> — NXP’s official app for writing NFC tags. Supports writing URLs and contact (vCard) records. Available on <strong>iOS</strong> and <strong>Android</strong>.</p>
       </div>
-      <p>Search for “NFC Tools” or “NFC TagWriter” in the App Store (iOS) or Google Play (Android). After installing, open the app, choose “Write” or “Add record”, then paste your contact page URL or add your vCard details and tap your phone to the NFC tag to write it.</p>
+      <p>Search for “NFC Tools” or “NFC TagWriter” in the App Store (iOS) or Google Play (Android). After installing, the <strong>easiest method</strong> is: open the app, use “Scan” or “Read QR” (or similar) to scan the QR code from your DigiCon iD page in My Account—the app imports the URL or vCard for you. Then choose “Write” and tap your phone to the NFC tag. No manual entry required.</p>
 
-      <figure class="figure" aria-hidden="true">
-        <svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg" width="280" height="140" role="img" aria-labelledby="fig-nfc-tap-caption">
-          <title>Phone tapping NFC tag to write or read</title>
-          <!-- NFC tag -->
-          <rect x="90" y="70" width="100" height="55" rx="6" fill="#f0f0f0" stroke="#1ac5b0" stroke-width="2"/>
-          <circle cx="140" cy="97" r="15" fill="none" stroke="#1ac5b0" stroke-width="2"/>
-          <circle cx="140" cy="97" r="6" fill="none" stroke="#1ac5b0" stroke-width="1"/>
-          <!-- Phone -->
-          <rect x="100" y="10" width="80" height="55" rx="8" fill="#272932" stroke="#333" stroke-width="1"/>
-          <rect x="105" y="18" width="70" height="39" rx="4" fill="#1a1a1a"/>
-          <path d="M 130 52 L 140 58 L 150 52" stroke="#1ac5b0" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="140" y="95" text-anchor="middle" font-size="9" fill="#666">Tap phone to tag</text>
-        </svg>
-        <figcaption id="fig-nfc-tap-caption">Tap your phone (with an NFC writing app) to the tag to write your contact page URL or vCard.</figcaption>
+      <figure class="figure">
+        <img src="https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?w=560&amp;auto=compress" alt="Smartphone with contactless payment or NFC" width="560" height="auto" loading="lazy">
+        <figcaption id="fig-nfc-tap-caption">Tap your phone (with an NFC writing app) to the tag to write your contact page URL or vCard. <a href="https://www.pexels.com/search/contactless/" target="_blank" rel="noopener">Image: Pexels</a></figcaption>
       </figure>
 
-      <h3>Quick steps: putting your contact page on an NFC tag</h3>
+      <h3>Quick steps: putting your contact page on an NFC tag (no typing)</h3>
       <ol class="step-list">
-        <li>In <strong>My Account</strong>, open your contact page and copy the <strong>Page URL</strong> (or prepare your vCard).</li>
+        <li>In <strong>My Account</strong>, open your contact page and go to the <strong>QR Codes</strong> section. Have the <strong>Page URL</strong> or <strong>vCard</strong> QR visible on screen (or copy the URL).</li>
         <li>Install <strong>NFC Tools</strong> (wakdev) or <strong>NFC TagWriter by NXP</strong> on your iPhone or Android phone.</li>
-        <li>In the app, start a new “Write” or “Add record” and choose <strong>URL</strong> (or <strong>Contact/vCard</strong>). Paste your contact page URL or enter contact details.</li>
-        <li>Tap your phone against the NFC tag and follow the app’s prompt to write. Once written, finders can tap the tag with their phone to open your page or save your contact.</li>
+        <li>In the app, use <strong>Scan QR</strong> (or “Add record” and then “From QR” / similar) and scan the QR code from the DigiCon iD page. The app imports the URL or vCard—no manual entry.</li>
+        <li>Choose <strong>Write</strong> and tap your phone against the NFC tag. Once written, finders can tap the tag to open your page or save your contact.</li>
       </ol>
 
       <h2>Scanning QR codes</h2>

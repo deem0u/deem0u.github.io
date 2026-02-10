@@ -15,6 +15,7 @@
     .resource-page h2 { font-size: 1.25rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border); }
     .resource-page h3 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
     .resource-page p { color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+    .resource-page code { font-family: ui-monospace, monospace; font-size: 0.9em; background: var(--grey-100, #eee); padding: 0.15rem 0.4rem; border-radius: 4px; }
   </style>
 </head>
 <body class="resource-page">
@@ -60,22 +61,26 @@
       <h1 style="font-size: 1.5rem; margin-bottom: 1rem;">Frequently Asked Questions</h1>
 
       <h2>What is DigiCon iD?</h2>
-      <p>DigiCon iD is a digital luggage tag system. You get a personal contact page and a QR code. When someone scans the code on your tag, they can reach you without seeing your private details on the tag itself.</p>
+      <p><strong>DigiCon iD</strong> stands for <strong>Digital Contact and Identification</strong>. That’s literally what it is. Think of the old-school physical name tag or “If found, contact…” label—we take that idea and turn it into a digital version. One link, one QR code (or NFC tag), and whoever finds your stuff can reach you without your private details being plastered on the outside.</p>
+      <p>Digitising something as simple as contact info has its perks: you can <strong>update it anytime</strong> (new number? New trip? Just edit the page), <strong>reuse the same tag</strong> for different trips or purposes, and add <strong>extra context</strong>—destination, notes, whatever helps. No reprinting, no crossing things out with a biro. It’s still “contact me” and “who I am,” just in a format that doesn’t go out of date the moment you change your phone number.</p>
+
+      <h2>What information do you ask for?</h2>
+      <p>We ask for the <strong>minimum</strong> that anyone would typically want if they’re trying to figure out who you are and how to reach you—enough to identify you and get in touch, without asking for anything sensitive or confidential. You’re in control: you choose what goes on your contact page and what stays off. You can add extra notes or fields to fit your use case (travel, events, work, whatever). So it’s as much or as little as you want, and you can tweak it whenever.</p>
+
+      <h2>Why does this site have a GitHub Pages URL? Do you not have a proper domain?</h2>
+      <p>Short answer: <strong>I’m just one person, and this is a side project.</strong> I built DigiCon iD in my spare time and host it on GitHub Pages—hence the <code>deem0u.github.io</code> address instead of a snazzy custom domain. It’s the same tech that lots of devs and small projects use: free hosting, reliable, and it does the job. So yeah, the URL might look a bit “developer portfolio” rather than “big company,” but that’s because it’s genuinely a personal thing. No venture capital, no startup—just me and a project I thought was useful.</p>
+
+      <h2>How do you keep my data safe?</h2>
+      <p>I take it seriously. In practice that means: following <strong>sensible coding and security practices</strong> (the kind of stuff that’s standard when you build login systems and store user data), doing <strong>stress testing and risk audits</strong> so we spot weak points before they become problems, and using <strong>well-understood, battle-tested ways</strong> to build and host a site like this. I’m not reinventing the wheel—I’m leaning on the same approaches that are used elsewhere for handling accounts and sensitive info. Think “boring, careful, and by the book” rather than “experimental.” For the legal nitty-gritty, see the <a href="/terms-and-privacy/">Terms of Use &amp; Privacy Policy</a>.</p>
 
       <h2>How do I get my contact page and QR code?</h2>
-      <p>Sign up or sign in via My Account. You can create and edit your contact page there and download or copy your QR code and link to print or share.</p>
+      <p>Sign up or sign in via <a href="https://deem0u.github.io/myaccount/">My Account</a>. Create and edit your contact page there, and grab your QR code (or copy the link) to print, stick on a tag, or write to an NFC tag. You can do it during signup or anytime after.</p>
 
       <h2>Who can see my contact information?</h2>
-      <p>Only people who open your unique link or scan your QR code see your contact page. You choose what to show (e.g. a contact form, email, or other details) and can change it anytime in My Account.</p>
+      <p>Only people who open your unique link or scan your QR (or tap your NFC tag) see your contact page. There’s no public directory. You decide what’s on the page and you can change it whenever you like in My Account.</p>
 
-      <h2>Is my data secure?</h2>
-      <p>We use industry-standard practices to protect your data. For more detail, see our <a href="/terms-and-privacy/">Terms of Use &amp; Privacy Policy</a>.</p>
-
-      <h2>I lost my luggage—what should I do?</h2>
-      <p>Report it to the airline or transport provider as usual. If someone finds your bag and scans your DigiCon iD tag, they can use your contact page to get in touch with you.</p>
-
-      <h2>Where can I learn more about QR codes?</h2>
-      <p>See our <a href="/resources/guide-to-qr-codes/">Guide to QR Codes</a> for a short overview of how QR codes work and how to use them on your tag.</p>
+      <h2>Where can I learn more about QR codes and NFC?</h2>
+      <p>Check out our <a href="/resources/guide-to-qr-codes/">Guide to QR Codes &amp; NFC</a>—it walks you through using your QR, printing and sticking it on stuff, and using NFC tags (including the easiest way: scanning our QR in an NFC app so you don’t have to type anything on your phone).</p>
     </main>
   </div>
 </body>
