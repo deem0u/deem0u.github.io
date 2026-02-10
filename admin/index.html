@@ -2454,7 +2454,7 @@ async function adminEnterCreateContactPage() {
   clearAdminContactForm();
   ['first-name', 'surname', 'email'].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.removeAttribute('required');
+    if (el) el.setAttribute('required', '');
   });
   adminRefreshViewFromForm();
   var viewHeader = document.getElementById('admin-editor-view-header');
@@ -2465,7 +2465,7 @@ async function adminEnterCreateContactPage() {
   if (backWrap) backWrap.classList.add('hidden');
   var introEl = document.getElementById('admin-create-contact-page-intro');
   if (introEl) {
-    introEl.textContent = 'Adding a new contact page for ' + username + '. Fill the form below (Page Name is required; Given Names, Family Name and Email are optional) and click Save when ready.';
+    introEl.textContent = 'Adding a new contact page for ' + username + '. Fill the form below (Page Name is required) and click Save when ready.';
     introEl.classList.remove('hidden');
   }
   document.getElementById('admin-delete-page-btn').style.display = 'none';
@@ -2617,7 +2617,7 @@ function adminEnterEditMode() {
   document.getElementById('admin-delete-page-btn').style.display = '';
   ['first-name', 'surname', 'email'].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.removeAttribute('required');
+    if (el) el.setAttribute('required', '');
   });
   var adminSlugWarnEl = document.getElementById('admin-contact-page-slug-warning');
   if (adminSlugWarnEl) adminSlugWarnEl.classList.remove('hidden');
