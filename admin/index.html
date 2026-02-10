@@ -426,34 +426,33 @@
 
         <div id="tab-manage" class="tab-content active">
           <div class="user-list-header">
-            <div class="search-filter-row">
-              <div class="search-wrapper">
-                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="search-manage" class="search-input" placeholder="Search users..." oninput="filterUsers('manage')" autocomplete="off">
+            <div class="user-list-header-top">
+              <div class="search-filter-row search-filter-row-search-only">
+                <div class="search-wrapper">
+                  <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="search-manage" class="search-input" placeholder="Search users..." oninput="filterUsers('manage')" autocomplete="off">
+                </div>
+                <button type="button" class="btn btn-success btn-add-user-compact" onclick="openAddUserModal()" title="Add User">+</button>
               </div>
+              <div class="user-list-stats-block">
+                <div class="stats-chart-wrap">
+                  <svg id="stats-chart" class="stats-chart" viewBox="0 0 100 100" width="80" height="80" aria-hidden="true"></svg>
+                </div>
+                <div class="user-list-stats">
+                  <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Users</span></div>
+                  <div class="stat"><span class="stat-value" id="stat-incomplete">0</span><span class="stat-label">Incomplete</span></div>
+                  <div class="stat"><span class="stat-value" id="stat-empty-accounts">0</span><span class="stat-label">Empty Accounts</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="search-filter-row search-filter-row-filter-only">
               <select id="filter-manage" class="filter-select" onchange="filterUsers('manage')">
                 <option value="all">All users</option>
-                <option value="access">With edit access</option>
-                <option value="incomplete">Incomplete</option>
-                <option value="new">New</option>
+                <option value="new">New Users</option>
+                <option value="unverified">Unverified Emails</option>
+                <option value="incomplete">Incomplete Profile</option>
+                <option value="empty">Empty Accounts</option>
               </select>
-              <select id="sort-manage" class="filter-select" onchange="filterUsers('manage')">
-                <option value="name-asc">Sort: Name A-Z</option>
-                <option value="name-desc">Sort: Name Z-A</option>
-                <option value="folder-asc">Sort: User name A-Z</option>
-                <option value="folder-desc">Sort: User name Z-A</option>
-              </select>
-              <button type="button" class="btn btn-success" onclick="openAddUserModal()">+ Add User</button>
-            </div>
-            <div class="user-list-stats-block">
-              <div class="stats-chart-wrap">
-                <svg id="stats-chart" class="stats-chart" viewBox="0 0 100 100" width="80" height="80" aria-hidden="true"></svg>
-              </div>
-              <div class="user-list-stats">
-                <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="stat-label">Total Users</span></div>
-                <div class="stat"><span class="stat-value" id="stat-incomplete">0</span><span class="stat-label">Incomplete</span></div>
-                <div class="stat"><span class="stat-value" id="stat-empty-accounts">0</span><span class="stat-label">Empty Accounts</span></div>
-              </div>
             </div>
           </div>
           <div id="alert-manage" class="alert"></div>
@@ -2865,22 +2864,19 @@ function renderList(t) {
     const u = userInfo[f] || {};
     const searchMatch = !s.trim() || `${f} ${u.firstName||''} ${u.lastName||''} ${u.accountEmail||''}`.toLowerCase().includes(s.toLowerCase());
     if (!searchMatch) return false;
-    if (filterVal === 'access') return !!editKeys[f];
-    if (filterVal === 'incomplete') return isIncomplete(f);
     if (filterVal === 'new') return !!editKeys[f] && !(u.accountDetailsSent === true);
+    if (filterVal === 'unverified') {
+      const hasEmail = !!(u.accountEmail || '').trim();
+      return hasEmail && u.emailVerification !== 'admin' && u.emailVerification !== 'user';
+    }
+    if (filterVal === 'incomplete') return isIncomplete(f);
+    if (filterVal === 'empty') return (contactPageCountByUser[f] || 0) === 0;
     return true;
   });
-  var sortEl = document.getElementById('sort-manage');
-  var sortVal = sortEl ? sortEl.value : 'name-asc';
   fl.sort((a, b) => {
     const uA = userInfo[a] || {}, uB = userInfo[b] || {};
     const nameA = getDisplayName(uA, a).toLowerCase();
     const nameB = getDisplayName(uB, b).toLowerCase();
-    const folderA = (a || '').toLowerCase(), folderB = (b || '').toLowerCase();
-    if (sortVal === 'name-asc') return nameA.localeCompare(nameB);
-    if (sortVal === 'name-desc') return nameB.localeCompare(nameA);
-    if (sortVal === 'folder-asc') return folderA.localeCompare(folderB);
-    if (sortVal === 'folder-desc') return folderB.localeCompare(folderA);
     return nameA.localeCompare(nameB);
   });
   if (!fl.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-title">No users found</div></div>'; return; }

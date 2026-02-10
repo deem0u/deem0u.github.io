@@ -1625,9 +1625,15 @@ body {
 
 .user-list-header {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.user-list-header-top {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-4);
   gap: var(--space-4);
   flex-wrap: wrap;
 }
@@ -1635,6 +1641,28 @@ body {
 .user-list-header .search-filter-row {
   flex: 1;
   min-width: 0;
+}
+
+.user-list-header .search-filter-row-search-only {
+  flex: 1;
+  min-width: 0;
+  max-width: 360px;
+}
+
+.user-list-header .search-filter-row-search-only .search-wrapper {
+  flex: 1;
+  min-width: 180px;
+}
+
+.user-list-header .search-filter-row-filter-only {
+  align-items: flex-start;
+}
+
+.btn-add-user-compact {
+  flex-shrink: 0;
+  min-width: 2.5rem;
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
 }
 
 .user-list-stats-block {
