@@ -26,6 +26,7 @@
     .resource-page .figure img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--color-border); }
     .resource-page .figure svg { max-width: 100%; height: auto; }
     .resource-page .figure figcaption { font-size: 0.9rem; color: var(--color-text-secondary); margin-top: 0.5rem; }
+    .resource-page .img-placeholder { display: block; width: 100%; min-height: 200px; background: var(--grey-200, #e5e5e5); border-radius: 8px; border: 1px dashed var(--grey-400, #bbb); color: var(--grey-500, #666); font-size: 0.9rem; text-align: center; line-height: 200px; margin: 1rem 0; }
     .resource-page .app-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
     .resource-page .app-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.6rem; background: var(--grey-100); border-radius: 6px; font-size: 0.85rem; }
     .resource-page .nfc-types { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; margin: 1rem 0; }
@@ -82,99 +83,34 @@
       <h1>Guide to QR Codes &amp; NFC</h1>
       <p class="lead">Once you’ve created your DigiCon iD contact page, this guide shows you how to use QR codes and NFC tags so finders can reach you—whether on luggage, bags, or everyday items.</p>
 
-      <div class="callout-hero" role="region" aria-labelledby="key-benefit-heading">
-        <h2 id="key-benefit-heading" class="callout-hero-title">Easiest way to get value: scan our QR in an NFC app, then write to a tag</h2>
-        <p><strong>The QR codes and links we generate are designed to be scanned by NFC writing apps</strong> (such as <strong>NFC Tools</strong> by wakdev and <strong>NFC TagWriter by NXP</strong> on iOS and Android). Open the app, scan the QR code from My Account—or use the copied URL/vCard—and the app imports your contact page or vCard. Then tap your phone to an NFC tag to write it. <strong>No need to manually type anything on your phone.</strong> This is the simplest way to use DigiCon iD: generate once on the website, scan to import on your phone, then write to as many NFC tags as you like.</p>
+      <div class="callout-hero" role="region" aria-labelledby="nfc-tip-heading">
+        <h2 id="nfc-tip-heading" class="callout-hero-title">Skip the typing: scan our QR in an NFC app, then tap to write</h2>
+        <p><strong>Our QR codes are meant to be scanned inside NFC apps</strong> like <strong>NFC Tools</strong> (wakdev) and <strong>NFC TagWriter by NXP</strong> (both iOS and Android). Open the app, scan the QR from My Account—or paste the URL if you’ve copied it—and the app pulls in your contact page or vCard. Then tap your phone to an NFC tag to write it. <strong>You don’t have to type a thing.</strong> Generate once on the site, scan on your phone, then write to as many tags as you need.</p>
       </div>
 
-      <!-- Part 1: QR codes and your contact page -->
       <h2>QR codes and your contact page</h2>
-      <p>A <strong>QR (Quick Response) code</strong> is a 2D barcode that stores a URL or other data. When someone scans it with their phone camera or a QR app, they open that link—in your case, your DigiCon iD contact page with your details, destination, and how to reach you. No need to print your name or phone number on the tag; the code keeps your info digital and updatable.</p>
+      <p>A <strong>QR (Quick Response) code</strong> is basically a 2D barcode that holds a link or other data. When someone scans it with their phone camera or a QR app, they get taken to that link—for you, that’s your DigiCon iD contact page with your details, destination, and how to reach you. You don’t have to print your name or number on the tag; the code does the job and you can update it anytime.</p>
 
-      <h3>Getting your QR codes from My Account</h3>
-      <p>From <strong>My Account</strong> you can generate and download QR codes for each of your contact pages. You get three options:</p>
-      <ul>
-        <li><strong>Page URL</strong> — Opens your contact page in the browser (best for luggage and general use).</li>
-        <li><strong>vCard</strong> — Adds your contact info directly into the finder’s phone (name, phone, email, etc.).</li>
-        <li><strong>Plain text</strong> — A simple text version of your details for copying or sharing.</li>
-      </ul>
-      <p>Use the <strong>Page URL</strong> QR for tags and stickers so finders land on your full contact page. Use the <strong>vCard</strong> QR when you want them to save your details straight to their contacts.</p>
-      <p><strong>For NFC:</strong> These same QR codes are designed to be <strong>scanned inside NFC writing apps</strong>. The app reads the URL or vCard from the QR so you can write it to an NFC tag without entering anything by hand on your phone.</p>
+      <p>In <strong>My Account</strong> you get three options per contact page: <strong>Page URL</strong> (opens your contact page in the browser—best for tags and stickers), <strong>vCard</strong> (saves your contact into the finder’s phone), and <strong>Plain text</strong> (for copying or sharing). Use Page URL for luggage and general use; use vCard when you want finders to save you as a contact. The same QR can be <strong>scanned inside an NFC app</strong> so you can write it to an NFC tag without typing anything on your phone.</p>
 
-      <!-- Step-by-step: print and adhere -->
-      <h2>Step-by-step: printing and using your QR on luggage and belongings</h2>
-      <ol class="step-list">
-        <li><strong>Sign in to My Account</strong> and open the contact page you want. Go to the <strong>QR Codes</strong> section (or generate QR during signup).</li>
-        <li><strong>Download or copy</strong> the QR image for “Page URL” (or vCard if you prefer). You can right‑click the QR to save the image, or use the download option if available.</li>
-        <li><strong>Choose your format:</strong> print the QR on a <strong>card</strong> (e.g. luggage tag, business-card size) or on <strong>sticker labels</strong> you can stick to bags, keys, or devices.</li>
-        <li><strong>Print</strong> on sturdy paper or cardstock. Use a clear, high-contrast print (black QR on white works best). If the tag will get wet or handled a lot, laminate the card or use a plastic sleeve.</li>
-        <li><strong>Attach to your items:</strong> thread a card through a luggage strap or loop, or peel and stick stickers onto suitcase handles, backpacks, or key rings. Place the QR where it’s easy to scan (flat and visible).</li>
-      </ol>
+      <h2>Printing and using your QR</h2>
+      <p>Sign in to My Account, open your contact page, and go to <strong>QR Codes</strong>. Download or copy the QR image (Page URL or vCard), then print it on a card (e.g. luggage tag) or sticker labels. Use sturdy paper or cardstock, black-on-white for best scan results; laminate or use a plastic sleeve if it’ll get wet. Attach the card to a strap or loop, or stick stickers on bags, keys, or devices—keep the QR flat and visible.</p>
 
-      <figure class="figure">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Suitcase_with_luggage_labels_%28178491614%29.jpg/560px-Suitcase_with_luggage_labels_%28178491614%29.jpg" alt="Suitcase with luggage labels" width="560" height="auto" loading="lazy">
-        <figcaption id="fig-luggage-caption">Luggage with labels. Use a card or laminated tag with your QR code so finders can scan it. <a href="https://commons.wikimedia.org/wiki/File:Suitcase_with_luggage_labels_(178491614).jpg" target="_blank" rel="noopener">Image: Wikimedia Commons</a></figcaption>
-      </figure>
+      <div class="img-placeholder" aria-hidden="true">Image placeholder: luggage / bag with QR tag or card (add later)</div>
 
-      <figure class="figure">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/QR_codes_at_museum.jpg/560px-QR_codes_at_museum.jpg" alt="QR codes on display" width="560" height="auto" loading="lazy">
-        <figcaption id="fig-print-caption">Print your QR on a card (e.g. luggage tag) or on sticker sheets to adhere to bags and belongings. <a href="https://commons.wikimedia.org/wiki/File:QR_codes_at_museum.jpg" target="_blank" rel="noopener">Image: Wikimedia Commons</a></figcaption>
-      </figure>
+      <p><strong>Tip:</strong> Laminate paper tags or use waterproof stickers so the QR still scans after rain or a beating.</p>
 
-      <p><strong>Durability tip:</strong> Laminate paper tags or use waterproof sticker material so the QR stays scannable after rain, handling, or long trips.</p>
-
-      <!-- Part 2: NFC -->
       <h2>Using NFC tags instead of (or with) QR codes</h2>
-      <p><strong>NFC (Near Field Communication)</strong> lets a phone read or write small chips in tags, stickers, or cards by tapping. Unlike a QR code, the finder doesn’t need to open the camera—they tap their phone on the tag and can open your contact page or save your vCard. NFC works on most recent Android and iPhone models.</p>
+      <p><strong>NFC (Near Field Communication)</strong> is the tech that lets your phone talk to little chips in tags, stickers, or cards by tapping. No camera needed—whoever finds your stuff just taps their phone on the tag and can open your contact page or save your vCard. Most recent Android and iPhone models support it.</p>
 
-      <h3>Types of NFC tags and where to use them</h3>
-      <p>NFC comes in several forms; all can store a URL (your contact page) or vCard data:</p>
-      <ul>
-        <li><strong>NFC stickers</strong> — Thin, adhesive labels. Stick them on luggage, laptop, passport holder, or inside a bag.</li>
-        <li><strong>NFC cards</strong> — Card-sized, like a business card. Good for wallets or as a luggage tag insert.</li>
-        <li><strong>NFC keychains and luggage tags</strong> — Hard plastic or rubber. Durable for keys or bag straps.</li>
-      </ul>
+      <p>NFC tags come as stickers, cards, or keychains—they all store a URL (your contact page) or vCard. Put the <strong>contact page URL</strong> on the tag so one tap opens your DigiCon iD page, or put a <strong>vCard</strong> so finders can save you as a contact. You don’t have to type: <strong>scan the QR from My Account inside an NFC app</strong> and the app pulls in the URL or vCard; then tap your phone to the tag to write it. Recommended apps: <strong>NFC Tools</strong> (wakdev) and <strong>NFC TagWriter by NXP</strong> (both free on iOS and Android). Search for them in the App Store or Google Play, open the app, scan the QR from your contact page, then choose Write and tap the tag. Done.</p>
 
-      <figure class="figure">
-        <img src="https://images.pexels.com/photos/4483613/pexels-photo-4483613.jpeg?w=560&amp;auto=compress" alt="Contactless NFC card tap" width="560" height="auto" loading="lazy">
-        <figcaption id="fig-nfc-types-caption">NFC stickers, cards, and keychains can all store your contact page URL or vCard. <a href="https://www.pexels.com/search/nfc/" target="_blank" rel="noopener">Image: Pexels</a></figcaption>
-      </figure>
-
-      <h3>What to write on the NFC tag</h3>
-      <ul>
-        <li><strong>Contact page URL</strong> — Best for finders: one tap opens your full DigiCon iD page in the browser.</li>
-        <li><strong>vCard</strong> — Writes your name, phone, email, etc. so the finder can save you as a contact with one tap.</li>
-      </ul>
-      <p><strong>No manual entry needed:</strong> Copy your contact page URL or vCard from My Account, or—even easier—<strong>scan the QR code from this website inside your NFC app</strong>. The app imports the URL or vCard so you can write it to the tag with one tap. You don’t have to type anything on your phone.</p>
-
-      <h3>Apps to write NFC tags (iOS and Android)</h3>
-      <p>Use an app that can <strong>write</strong> URLs or vCards to NFC tags—and that can <strong>scan a QR code to import</strong> that data. These work on both platforms:</p>
-
-      <div class="callout">
-        <p><strong>NFC Tools</strong> (by wakdev) — Free app to read and write NFC tags. You can write a URL (your contact page) or create a contact/vCard. Available on <strong>iOS</strong> and <strong>Android</strong>.</p>
-      </div>
-      <div class="callout">
-        <p><strong>NFC TagWriter by NXP</strong> — NXP’s official app for writing NFC tags. Supports writing URLs and contact (vCard) records. Available on <strong>iOS</strong> and <strong>Android</strong>.</p>
-      </div>
-      <p>Search for “NFC Tools” or “NFC TagWriter” in the App Store (iOS) or Google Play (Android). After installing, the <strong>easiest method</strong> is: open the app, use “Scan” or “Read QR” (or similar) to scan the QR code from your DigiCon iD page in My Account—the app imports the URL or vCard for you. Then choose “Write” and tap your phone to the NFC tag. No manual entry required.</p>
-
-      <figure class="figure">
-        <img src="https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?w=560&amp;auto=compress" alt="Smartphone with contactless payment or NFC" width="560" height="auto" loading="lazy">
-        <figcaption id="fig-nfc-tap-caption">Tap your phone (with an NFC writing app) to the tag to write your contact page URL or vCard. <a href="https://www.pexels.com/search/contactless/" target="_blank" rel="noopener">Image: Pexels</a></figcaption>
-      </figure>
-
-      <h3>Quick steps: putting your contact page on an NFC tag (no typing)</h3>
-      <ol class="step-list">
-        <li>In <strong>My Account</strong>, open your contact page and go to the <strong>QR Codes</strong> section. Have the <strong>Page URL</strong> or <strong>vCard</strong> QR visible on screen (or copy the URL).</li>
-        <li>Install <strong>NFC Tools</strong> (wakdev) or <strong>NFC TagWriter by NXP</strong> on your iPhone or Android phone.</li>
-        <li>In the app, use <strong>Scan QR</strong> (or “Add record” and then “From QR” / similar) and scan the QR code from the DigiCon iD page. The app imports the URL or vCard—no manual entry.</li>
-        <li>Choose <strong>Write</strong> and tap your phone against the NFC tag. Once written, finders can tap the tag to open your page or save your contact.</li>
-      </ol>
+      <div class="img-placeholder" aria-hidden="true">Image placeholder: NFC tag types and/or phone tapping tag (add later)</div>
 
       <h2>Scanning QR codes</h2>
-      <p>Most smartphones can scan QR codes with the built-in camera: open the camera, point it at the code, and tap the banner that appears. If that doesn’t work, install a free “QR code reader” or “QR scanner” app from the App Store or Google Play.</p>
+      <p>Most phones can scan QR codes with the built-in camera: open the camera, point it at the code, and tap the link that pops up. If yours doesn’t, grab a free “QR code reader” or “QR scanner” app from the App Store or Google Play.</p>
 
-      <p>For more about your account and contact pages, see <a href="/how-it-works/">How It Works</a> or sign in at <a href="https://deem0u.github.io/myaccount/">My Account</a>.</p>
+      <p>For more on your account and contact pages, see <a href="/how-it-works/">How It Works</a> or sign in at <a href="https://deem0u.github.io/myaccount/">My Account</a>.</p>
     </main>
   </div>
 </body>
