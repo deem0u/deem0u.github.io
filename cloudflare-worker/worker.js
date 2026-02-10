@@ -3352,7 +3352,20 @@ async function handleGetProfile(username, request, env) {
   const emailVerified = (await getKvUser(env, 'email_verified:', uLower, u)) === '1';
   const dob = await getKvUser(env, 'user_dob:', uLower, u);
   const dobMasked = (dob && dob.length >= 4) ? '**/**/' + dob.slice(-4) : '';
-  return jsonResponse({
+  let easterEggEligible = false;
+  const recoveryRaw = await getKvUser(env, 'user_recovery:', uLower, u);
+  if (recoveryRaw) {
+    try {
+      const r = JSON.parse(recoveryRaw);
+      const sq = Array.isArray(r.secretQuestions) ? r.secretQuestions : [];
+      easterEggEligible = sq.some(q => {
+        if (!q || (q.questionId !== 10 && q.questionId !== '10')) return false;
+        const a = (q.answer || '').trim().toLowerCase().replace(/^\s*the\s+/, '');
+        return a === 'martian';
+      });
+    } catch (_) {}
+  }
+  const profile = {
     username: u || '',
     firstName: firstName || '',
     lastName: lastName || '',
@@ -3360,7 +3373,9 @@ async function handleGetProfile(username, request, env) {
     emailVerified,
     dob: dob || '',
     dobMasked
-  });
+  };
+  if (easterEggEligible) profile.easterEggEligible = true;
+  return jsonResponse(profile);
 }
 
 async function handlePutProfile(username, request, env) {

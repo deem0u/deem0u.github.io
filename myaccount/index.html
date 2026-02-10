@@ -2318,10 +2318,7 @@ function isMartianAnswer(answer) {
   return a === 'martian';
 }
 function isEasterEggEligible(profile) {
-  if (!profile || !Array.isArray(profile.secretQuestions)) return false;
-  return profile.secretQuestions.some(function(q) {
-    return q && (q.questionId === 10 || q.questionId === '10') && isMartianAnswer(q.answer);
-  });
+  return !!(profile && profile.easterEggEligible === true);
 }
 function isFirstLoginToday(user) {
   if (!user) return false;
