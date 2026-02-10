@@ -84,6 +84,9 @@
   .home-success-details ul li { margin-bottom: 0.5rem; }
   .home-success-details .success-important { font-weight: bold; color: #C00000; margin: 1rem 0; }
   .home-success-details .success-heading { font-weight: 600; margin: 1rem 0 0.5rem; }
+  .step4-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 9999px; margin-left: 0.35rem; vertical-align: middle; }
+  .step4-badge-verified { background: rgba(26, 197, 176, 0.2); color: var(--accent-teal, #0d9488); }
+  .step4-badge-not-verified { background: rgba(212, 160, 23, 0.2); color: #b45309; }
   .home-success-details ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
   .home-success-details ol li { margin-bottom: 0.5rem; }
   .home-success-action { margin-top: 1.5rem; }
@@ -139,6 +142,22 @@
   .signup-step1-card .form-actions .btn { padding: 0.5rem 1rem; }
   .signup-step1-card #signup-step1-alert { margin-top: 0.5rem; margin-bottom: 0; }
   .signup-step1-card .consent-text { font-size: 0.85rem; line-height: 1.5; }
+  .signup-step2-card .card-header.signup-step2-header { text-align: center; }
+  .signup-step2-card .form-label { font-weight: 700; }
+  .signup-step2-card .step2-hints-hidden .step2-hint { display: none; }
+  .signup-step2-card .step2-toggle-hints-wrap { margin-bottom: 0.5rem; }
+  .signup-step2-card .step2-row-given-family { margin-bottom: 1rem; }
+  .signup-step2-card .step2-row-email-phone { margin-bottom: 1rem; }
+  .signup-step2-card .step2-url-group { margin-bottom: 0.75rem; }
+  .signup-step2-card .step2-url-anatomy { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+  .signup-step2-card .step2-url-prefix { font-size: 0.9rem; color: var(--color-text-muted, #6b7280); }
+  .signup-step2-card .step2-url-username { color: var(--color-text-muted, #6b7280); }
+  .signup-step2-card .step2-url-slug-input,
+  .signup-step2-card .step2-slug-label { color: #7c3aed; }
+  .signup-step2-card .step2-url-slug-input { min-width: 8rem; }
+  .signup-step2-card .step2-skip-wrap { margin-left: 0.5rem; }
+  .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-link, #2563eb); }
+  .signup-step2-card .step2-skip-link:hover { text-decoration: underline; }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -299,8 +318,9 @@
         <div id="signup-steps-section" class="home-right-col hidden" style="max-width: 560px;">
           <div class="signup-progress" id="signup-progress">
             <span class="step-pill" id="progress-step1">1. Create Account</span>
-            <span class="step-pill" id="progress-step3">2. Generate QR</span>
-            <span class="step-pill" id="progress-step4">3. All Set!</span>
+            <span class="step-pill" id="progress-step2">2. Add Contact Page</span>
+            <span class="step-pill" id="progress-step3">3. Generate QR</span>
+            <span class="step-pill" id="progress-step4">4. All Set!</span>
           </div>
           <div id="signup-step1-card" class="card signup-step1-card hidden">
             <div class="card-body">
@@ -347,6 +367,12 @@
             <div class="card-header"><span class="card-title">Verify your email</span></div>
             <div class="card-body">
               <p class="text-secondary mb-3">We've sent a 6-digit code to <strong id="otp-email-display"></strong>. Enter it below. Check your spam/junk folder if you don't see it.</p>
+              <div class="banner-reminder mb-3" style="padding: 0.75rem 1rem; border-radius: var(--radius-md, 8px);">
+                <div class="banner-reminder-content">
+                  <p class="banner-reminder-message" style="margin: 0 0 0.5rem 0;">You can do this later from your My Account; however you will not be able to add your Contact Page and generate your QR codes until you verify your email address.</p>
+                  <button type="button" class="btn btn-ghost btn-sm" style="padding: 0.25rem 0;" onclick="skipVerificationToAllSet()">Skip Verification →</button>
+                </div>
+              </div>
               <div class="form-group">
                 <label class="form-label">Verification code</label>
                 <input type="text" id="otp-code-input" class="form-input" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code">
@@ -356,6 +382,94 @@
               <div class="form-actions">
                 <button type="button" class="btn btn-primary btn-lg" id="otp-verify-btn" onclick="verifyOtp()">Verify</button>
                 <button type="button" class="btn btn-ghost btn-lg" onclick="resendOtp()">Resend code</button>
+              </div>
+            </div>
+          </div>
+          <div id="signup-step2-card" class="card signup-step2-card hidden step2-hints-hidden">
+            <div class="card-header signup-step2-header"><span class="card-title">Add Contact Page</span></div>
+            <div class="card-body">
+              <div class="step2-toggle-hints-wrap">
+                <button type="button" class="btn btn-ghost btn-sm step2-toggle-hints" id="step2-toggle-hints" aria-pressed="false">Show hints</button>
+              </div>
+              <form id="step2-contact-form">
+                <div class="form-group">
+                  <label class="form-label" for="step2-contact-page-name">Page Name <span class="form-required">*</span></label>
+                  <input type="text" id="step2-contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off">
+                  <span class="form-error" id="error-step2-contact-page-name" role="alert"></span>
+                </div>
+                <div class="form-group step2-url-group">
+                  <label class="form-label step2-slug-label" for="step2-contact-page-url-slug">Page URL Slug</label>
+                  <div class="step2-url-anatomy">
+                    <span class="step2-url-prefix">https://deem0u.github.io/user/<span id="step2-contact-page-url-username" class="step2-url-username">—</span>/</span>
+                    <input type="text" id="step2-contact-page-url-slug" class="form-input step2-url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" maxlength="28" autocomplete="off">
+                  </div>
+                  <span class="form-hint step2-hint">Letters, numbers, hyphens, underscores (3–28 chars).</span>
+                  <span class="form-error" id="error-step2-contact-page-url-slug" role="alert"></span>
+                </div>
+                <div class="form-group step2-row-given-family">
+                  <label class="form-label" for="step2-first-name">Given Names <span class="form-required">*</span></label>
+                  <input type="text" id="step2-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off">
+                  <span class="form-hint step2-hint">First name including middle names as on your ID. Shown on your contact page.</span>
+                  <span class="form-error" id="error-step2-first-name" role="alert"></span>
+                </div>
+                <div class="form-group step2-row-given-family">
+                  <label class="form-label" for="step2-surname">Family Name <span class="form-required">*</span></label>
+                  <input type="text" id="step2-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off">
+                  <span class="form-hint step2-hint">Surname as on your ID. Shown on your contact page.</span>
+                  <span class="form-error" id="error-step2-surname" role="alert"></span>
+                </div>
+                <div class="form-group step2-row-email-phone">
+                  <label class="form-label" for="step2-email">Email <span class="form-required">*</span></label>
+                  <input type="email" id="step2-email" class="form-input" required autocomplete="email">
+                  <span class="form-hint step2-hint">Shown on your contact page. Distinct from Account Email.</span>
+                  <span class="form-error" id="error-step2-email" role="alert"></span>
+                </div>
+                <div class="form-group step2-row-email-phone">
+                  <label class="form-label" for="step2-mobile">Contact Number</label>
+                  <input type="text" id="step2-mobile" class="form-input" maxlength="32" placeholder="e.g. +61432123456" autocomplete="tel">
+                  <span class="form-hint step2-hint">Phone including country code. Shown on your contact page.</span>
+                  <span class="form-error" id="error-step2-mobile" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="step2-home-country">Home Country</label>
+                  <select id="step2-home-country" class="form-input" autocomplete="country-name">
+                    <option value="">— Select country —</option>
+                  </select>
+                  <span class="form-hint step2-hint">Main country of residence.</span>
+                  <span class="form-error" id="error-step2-home-country" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Destination Details</label>
+                  <span class="form-hint step2-hint">Where you will be staying (e.g. hotel name, address, phone, email).</span>
+                  <input type="text" id="step2-dest-name" class="form-input" placeholder="Name" maxlength="64" autocomplete="off">
+                  <input type="text" id="step2-dest-address" class="form-input" placeholder="Address" maxlength="128" autocomplete="off">
+                  <input type="text" id="step2-dest-phone" class="form-input" placeholder="Contact number" maxlength="32" autocomplete="tel">
+                  <input type="email" id="step2-dest-email" class="form-input" placeholder="Email" maxlength="64" autocomplete="email">
+                  <span class="form-error" id="error-step2-dest" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label form-label-optional" for="step2-additional-info">Additional Information</label>
+                  <textarea id="step2-additional-info" class="form-textarea" rows="3" maxlength="500" placeholder="Any extra notes for lost property or emergency contact" autocomplete="off"></textarea>
+                  <span class="form-hint step2-hint">Optional. Any additional notes that can help with identifying and contacting you.</span>
+                  <span class="form-error" id="error-step2-additional-info" role="alert"></span>
+                </div>
+                <div id="step2-alert" class="alert"></div>
+                <div class="form-actions">
+                  <button type="submit" id="step2-save-btn" class="btn btn-primary btn-lg">Save contact page</button>
+                  <span class="step2-skip-wrap"><button type="button" class="btn btn-ghost step2-skip-link" id="step2-skip-btn">Skip Adding Contact Page →</button></span>
+                </div>
+              </form>
+              <div id="step2-after-save" class="hidden">
+                <p class="text-secondary">Contact page saved. Click below to continue.</p>
+                <div class="form-actions mt-3">
+                  <button type="button" class="btn btn-primary btn-lg" onclick="step2ContinueToStep3()">Continue to Step 3</button>
+                </div>
+              </div>
+              <div id="step2-skip-msg" class="hidden">
+                <p class="text-secondary">You can add a contact page later from My Account.</p>
+                <div class="form-actions mt-3">
+                  <button type="button" class="btn btn-primary btn-lg" onclick="step2ContinueToStep3()">Continue to Step 3</button>
+                </div>
               </div>
             </div>
           </div>
@@ -392,7 +506,7 @@
               </div>
               <div id="step3-qr-error" class="modal-qr-error hidden"></div>
               <div class="form-actions mt-4" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;">
-                <button type="button" class="btn btn-ghost" onclick="goBackFromStep3()">Previous Step</button>
+                <button type="button" class="btn btn-ghost" onclick="goBackFromStep3()">Back to Add Contact Page</button>
                 <button type="button" class="btn btn-primary btn-lg" onclick="continueToStep4()">Continue</button>
               </div>
             </div>
@@ -585,9 +699,11 @@
     sessionStorage.removeItem('signup_password');
     sessionStorage.removeItem('signup_dob');
     sessionStorage.removeItem('signup_contact_slug');
+    sessionStorage.removeItem('signup_contact_sha');
     document.getElementById('signup-steps-section').classList.add('hidden');
     document.getElementById('signup-step1-card').classList.add('hidden');
     document.getElementById('signup-otp-card').classList.add('hidden');
+    document.getElementById('signup-step2-card').classList.add('hidden');
     document.getElementById('signup-step3-card').classList.add('hidden');
     document.getElementById('signup-step4-card').classList.add('hidden');
     var twoCol = document.querySelector('.home-two-col');
@@ -622,9 +738,9 @@
       var res = await fetch(API + '/api/otp/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, code }) });
       var d = await res.json();
       if (res.ok && d.success) {
+        sessionStorage.setItem('signup_email_verified', 'true');
         document.getElementById('signup-otp-card').classList.add('hidden');
-        sessionStorage.removeItem('signup_contact_slug');
-        continueToStep3();
+        continueToStep2();
       } else {
         showAlert('otp-alert', (d && d.error) || 'Invalid or expired code. Try resending.', 'error');
       }
@@ -714,21 +830,207 @@
 
   function goBackFromStep3() {
     document.getElementById('signup-step3-card').classList.add('hidden');
-    document.getElementById('signup-otp-card').classList.remove('hidden');
-    updateProgressBar(1);
+    document.getElementById('signup-step2-card').classList.remove('hidden');
+    document.getElementById('step2-contact-form').style.display = '';
+    document.getElementById('step2-after-save').classList.add('hidden');
+    document.getElementById('step2-skip-msg').classList.add('hidden');
+    updateProgressBar(2);
   }
 
-  function continueToStep3() {
+  function continueToStep2() {
     document.getElementById('signup-otp-card').classList.add('hidden');
-    document.getElementById('signup-step3-card').classList.remove('hidden');
+    document.getElementById('signup-step2-card').classList.remove('hidden');
     updateProgressBar(2);
+    var username = sessionStorage.getItem('signup_username') || '';
+    var card = document.getElementById('signup-step2-card');
+    if (card) card.classList.add('step2-hints-hidden');
+    var toggleBtn = document.getElementById('step2-toggle-hints');
+    if (toggleBtn) { toggleBtn.textContent = 'Show hints'; toggleBtn.setAttribute('aria-pressed', 'false'); }
+    document.getElementById('step2-contact-page-url-username').textContent = username;
+    document.getElementById('step2-contact-form').reset();
+    document.getElementById('step2-contact-form').style.display = '';
+    document.getElementById('step2-after-save').classList.add('hidden');
+    document.getElementById('step2-skip-msg').classList.add('hidden');
+    var errIds = ['error-step2-contact-page-name','error-step2-contact-page-url-slug','error-step2-first-name','error-step2-surname','error-step2-email','error-step2-mobile'];
+    errIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    hideAlert('step2-alert');
+    populateStep2Countries();
+  }
+
+  function populateStep2Countries() {
+    var sel = document.getElementById('step2-home-country');
+    if (!sel || !window.COUNTRIES) return;
+    if (sel.options.length > 1) return;
+    var frag = document.createDocumentFragment();
+    window.COUNTRIES.forEach(function(pair) {
+      var opt = document.createElement('option');
+      opt.value = pair[0];
+      opt.textContent = pair[0];
+      frag.appendChild(opt);
+    });
+    sel.appendChild(frag);
+  }
+
+  function step2BuildContent() {
+    var f = function(id) { var el = document.getElementById(id); return el && el.value ? el.value.trim() : ''; };
+    var firstName = f('step2-first-name');
+    var surname = f('step2-surname');
+    var email = f('step2-email');
+    var mobile = f('step2-mobile');
+    var homeCountry = f('step2-home-country');
+    var destName = f('step2-dest-name');
+    var destAddress = f('step2-dest-address');
+    var destPhone = f('step2-dest-phone');
+    var destEmail = f('step2-dest-email');
+    var additionalInfo = f('step2-additional-info');
+    var escapeHtml = function(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
+    var formatMultiline = function(s) { var text = (s ?? '').toString().trim(); if (!text) return ''; return escapeHtml(text).replace(/\r?\n/g, '<br>'); };
+    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{font-family:\'Quicksand\',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}@media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}@media(min-width:640px){.container{padding:48px 40px;max-width:760px}}.last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}';
+    var dName = (destName || '').trim();
+    var dAddr = (destAddress || '').trim();
+    var dPhone = (destPhone || '').trim();
+    var dEmail = (destEmail || '').trim();
+    var hasDest = !!(dName || dAddr || dPhone || dEmail);
+    var destParts = [dName, dAddr, dPhone, dEmail].map(function(t) { return '<span>' + (t ? escapeHtml(t) : '') + '</span>'; });
+    var destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
+    var additionalHtml = additionalInfo ? '<span class="value">' + formatMultiline(additionalInfo) + '</span>' : '<span class="value">—</span>';
+    var ml = (mobile || '').replace(/\s/g, '');
+    var mobileHtml = (mobile && mobile.trim()) ? '<a href="tel:' + escapeHtml(ml) + '">' + escapeHtml(String(mobile).trim()) + '</a>' : '—';
+    var homeCountryHtml = (homeCountry && homeCountry.trim()) ? escapeHtml(homeCountry.trim()) : '—';
+    var now = new Date().toISOString();
+    var lastUpdatedData = 'data-timestamp="' + now + '" data-updated-by="user"';
+    var D = window.FORM_DESCRIPTIONS || {};
+    var lbl = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
+    var fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
+    var zh = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
+    var lblBoth = function(k) { var e = k === 'section-title' ? 'Contact Information' : lbl(k); return e + ' \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
+    var lastUpdatedBlockHtml = '<div class="last-updated-block"><span class="last-updated-titles">Last updated</span><span class="last-updated-display" ' + lastUpdatedData + '>—</span></div>';
+    var formatTimestampScript = '<script>(function(){function formatTimestamp(isoString,updatedBy){if(!isoString)return "";var d=new Date(isoString);var days=[\'Sunday\',\'Monday\',\'Tuesday\',\'Wednesday\',\'Thursday\',\'Friday\',\'Saturday\'];var months=[\'January\',\'February\',\'March\',\'April\',\'May\',\'June\',\'July\',\'August\',\'September\',\'October\',\'November\',\'December\'];return days[d.getDay()]+\', \'+d.getDate()+\' \'+months[d.getMonth()]+\' \'+d.getFullYear()+\' by \'+(updatedBy===\'admin\'?\'Admin\':\'User\');}document.querySelectorAll(\'.last-updated-display\').forEach(function(el){var ts=el.getAttribute(\'data-timestamp\');var ub=el.getAttribute(\'data-updated-by\');if(ts)el.textContent=formatTimestamp(ts,ub);});})();<\/script>';
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + escapeHtml(firstName + ' ' + surname) + '</title><style>' + css + '</style></head><body><div class="container">' + lastUpdatedBlockHtml + '<h1>' + lblBoth('section-title') + '</h1><div class="info"><span class="label">' + lblBoth('first-name') + '</span><span class="value">' + escapeHtml(firstName) + '</span></div><div class="info"><span class="label">' + lblBoth('surname') + '</span><span class="value">' + escapeHtml(surname) + '</span></div><div class="info"><span class="label">' + lblBoth('email') + '</span><span class="value"><a href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a></span></div><div class="info"><span class="label">' + lblBoth('mobile') + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblBoth('home-country') + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblBoth('destination-details') + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblBoth('additional-info') + '</span>' + additionalHtml + '</div></div>' + formatTimestampScript + '</body></html>';
+  }
+
+  function step2Skip() {
+    sessionStorage.removeItem('signup_contact_slug');
+    document.getElementById('step2-contact-form').style.display = 'none';
+    document.getElementById('step2-after-save').classList.add('hidden');
+    document.getElementById('step2-skip-msg').classList.remove('hidden');
+  }
+
+  function step2ContinueToStep3() {
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.remove('hidden');
+    updateProgressBar(3);
     populateStep3Qr();
   }
 
-  async function continueToStep4() {
-    document.getElementById('signup-step3-card').classList.add('hidden');
-    document.getElementById('signup-step4-card').classList.remove('hidden');
+  async function step2SubmitContactForm(e) {
+    e.preventDefault();
+    hideAlert('step2-alert');
+    ['error-step2-contact-page-name','error-step2-contact-page-url-slug','error-step2-first-name','error-step2-surname','error-step2-email'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    var nameInp = document.getElementById('step2-contact-page-name');
+    var slugInp = document.getElementById('step2-contact-page-url-slug');
+    var nameTrim = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
+    var slugRaw = (slugInp && slugInp.value) ? slugInp.value.trim() : '';
+    if (!nameTrim) {
+      var nameErr = document.getElementById('error-step2-contact-page-name');
+      if (nameErr) nameErr.textContent = 'Page Name is required.';
+      if (nameInp) nameInp.focus();
+      return;
+    }
+    var slug = (slugRaw === '' || slugRaw.toLowerCase() === 'index') ? 'index' : slugRaw;
+    if (slug.toLowerCase() === 'index') {
+      var slugErr = document.getElementById('error-step2-contact-page-url-slug');
+      if (slugErr) slugErr.textContent = 'Use a different URL slug (e.g. main, contact).';
+      if (slugInp) slugInp.focus();
+      return;
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(slug) || slug.length < 3 || slug.length > 28) {
+      var errEl = document.getElementById('error-step2-contact-page-url-slug');
+      if (errEl) errEl.textContent = 'Page URL must be 3–28 characters (letters, numbers, hyphens, underscores).';
+      if (slugInp) slugInp.focus();
+      return;
+    }
+    var fnInp = document.getElementById('step2-first-name');
+    var snInp = document.getElementById('step2-surname');
+    var emInp = document.getElementById('step2-email');
+    var r = validateGivenNames(fnInp && fnInp.value ? fnInp.value.trim() : '', true);
+    if (!r.valid) {
+      document.getElementById('error-step2-first-name').textContent = r.message;
+      if (fnInp) fnInp.focus();
+      return;
+    }
+    r = validateFamilyName(snInp && snInp.value ? snInp.value.trim() : '', true);
+    if (!r.valid) {
+      document.getElementById('error-step2-surname').textContent = r.message;
+      if (snInp) snInp.focus();
+      return;
+    }
+    r = validateEmailInput(emInp, true);
+    if (!r.valid) {
+      document.getElementById('error-step2-email').textContent = r.message;
+      if (emInp) emInp.focus();
+      return;
+    }
+    var username = sessionStorage.getItem('signup_username');
+    var token = sessionStorage.getItem('signup_token');
+    if (!username || !token) {
+      showAlert('step2-alert', 'Session missing. Please start over from the beginning.', 'error');
+      return;
+    }
+    var content = step2BuildContent();
+    var btn = document.getElementById('step2-save-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...'; }
+    var existingSlug = sessionStorage.getItem('signup_contact_slug');
+    var existingSha = sessionStorage.getItem('signup_contact_sha');
+    var isUpdate = existingSlug && existingSha && slug === existingSlug;
+    try {
+      var res;
+      if (isUpdate) {
+        res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/' + encodeURIComponent(slug), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ content: content, sha: existingSha, contactPageName: nameTrim || undefined })
+        });
+      } else {
+        res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ contactpagename: slug, contactPageName: nameTrim || undefined, content: content })
+        });
+      }
+      var data = await res.json();
+      if (res.ok && (data.success || (isUpdate && data.sha))) {
+        if (!isUpdate) sessionStorage.setItem('signup_contact_slug', data.contactpagename || slug);
+        if (data.sha) sessionStorage.setItem('signup_contact_sha', data.sha);
+        document.getElementById('step2-contact-form').style.display = 'none';
+        document.getElementById('step2-skip-msg').classList.add('hidden');
+        document.getElementById('step2-after-save').classList.remove('hidden');
+      } else {
+        var errMsg = (data && data.error) || 'Failed to create contact page.';
+        if (data.error && (data.error.indexOf('URL') !== -1 || data.error.indexOf('slug') !== -1 || data.error.indexOf('exists') !== -1)) {
+          document.getElementById('error-step2-contact-page-url-slug').textContent = errMsg;
+          if (slugInp) slugInp.focus();
+        } else if (data.error && data.error.indexOf('Contact Page Name') !== -1) {
+          document.getElementById('error-step2-contact-page-name').textContent = errMsg;
+          if (nameInp) nameInp.focus();
+        } else {
+          showAlert('step2-alert', errMsg, 'error');
+        }
+      }
+    } catch (err) {
+      showAlert('step2-alert', 'Connection error. Please try again.', 'error');
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Save contact page'; }
+  }
+
+  function continueToStep3() {
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.remove('hidden');
     updateProgressBar(3);
+    populateStep3Qr();
+  }
+
+  function buildStep4Summary(emailVerified) {
     var username = sessionStorage.getItem('signup_username');
     var firstName = sessionStorage.getItem('signup_first_name') || '';
     var lastName = sessionStorage.getItem('signup_last_name') || '';
@@ -738,32 +1040,46 @@
     var viewUrl = contactSlug
       ? (PAGES_URL + username + '/' + contactSlug + '.html')
       : (PAGES_URL + username + '/');
-    var editUrl = EDITOR_URL;
+    var emailBadge = emailVerified
+      ? '<span class="step4-badge step4-badge-verified">Verified</span>'
+      : '<span class="step4-badge step4-badge-not-verified">Not Verified</span>';
     var profileSection =
       '<p class="home-success-banner">Welcome! Your account is ready.</p>' +
-      '<p class="success-heading">Profile details</p>' +
+      '<p class="success-heading">1. Profile details</p>' +
       '<ul class="step4-detail-list">' +
       '<li><strong>User Name:</strong> ' + (username || '') + '</li>' +
       '<li><strong>First Name:</strong> ' + (firstName || '') + '</li>' +
       '<li><strong>Last Name:</strong> ' + (lastName || '') + '</li>' +
-      '<li><strong>Account Email:</strong> ' + (email || '') + '</li>' +
+      '<li><strong>Account Email:</strong> ' + (email || '') + ' ' + emailBadge + '</li>' +
       '<li><strong>Date of Birth:</strong> ' + (dob ? '**/**/****' : '') + '</li>' +
       '</ul>';
     var pageSection = contactSlug
-      ? '<p class="success-heading">Contact page</p>' +
+      ? '<p class="success-heading">2. Contact page</p>' +
         '<ul class="step4-detail-list"><li><strong>Page URL:</strong> <a href="' + viewUrl + '" target="_blank" rel="noopener">' + viewUrl + '</a></li></ul>'
-      : '<p class="success-heading">Contact pages</p>' +
-        '<p class="text-secondary">You don’t have a contact page yet. In My Account you can add one or more contact pages and create QR codes for them.</p>';
+      : '<p class="success-heading">2. Contact pages</p>' +
+        '<p class="text-secondary">None just yet. But you can start creating them in My Account once you verify your email.</p>';
     var nextSteps =
-      '<p class="success-heading">What you can do next</p>' +
-      '<p class="text-secondary">Go to <strong>My Account</strong> to sign in with your Account Email and Password. There you can:</p>' +
+      '<p class="success-heading">3. What you can do next</p>' +
+      '<p class="text-secondary">Go to <strong>My Account</strong> and sign in with your Account Email and Password. There you can:</p>' +
       '<ul class="step4-detail-list">' +
       '<li>Edit your profile details (name, email, user name)</li>' +
       '<li>Add or edit contact pages</li>' +
       '<li>Generate and download QR codes for your pages</li>' +
       '</ul>';
     document.getElementById('step4-summary').innerHTML = profileSection + pageSection + nextSteps;
-    document.getElementById('step4-editor-link').href = editUrl;
+  }
+
+  async function continueToStep4() {
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.remove('hidden');
+    updateProgressBar(4);
+    var emailVerified = sessionStorage.getItem('signup_email_verified') === 'true';
+    buildStep4Summary(emailVerified);
+    var username = sessionStorage.getItem('signup_username');
+    var email = sessionStorage.getItem('signup_email') || '';
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    document.getElementById('step4-editor-link').href = EDITOR_URL;
     try {
       await fetch(API + '/api/signup-success-email', {
         method: 'POST',
@@ -772,6 +1088,44 @@
       });
     } catch (e) {}
   }
+
+  function skipVerificationToAllSet() {
+    document.getElementById('signup-otp-card').classList.add('hidden');
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.remove('hidden');
+    updateProgressBar(4);
+    buildStep4Summary(false);
+    document.getElementById('step4-editor-link').href = EDITOR_URL;
+    var username = sessionStorage.getItem('signup_username');
+    var email = sessionStorage.getItem('signup_email') || '';
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    try {
+      fetch(API + '/api/signup-success-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, accountEmail: email, firstName, lastName })
+      }).catch(function() {});
+    } catch (e) {}
+  }
+
+  (function initStep2Listeners() {
+    var form = document.getElementById('step2-contact-form');
+    if (form) form.addEventListener('submit', step2SubmitContactForm);
+    var skipBtn = document.getElementById('step2-skip-btn');
+    if (skipBtn) skipBtn.addEventListener('click', step2Skip);
+    var toggleHints = document.getElementById('step2-toggle-hints');
+    if (toggleHints) {
+      toggleHints.addEventListener('click', function() {
+        var card = document.getElementById('signup-step2-card');
+        if (!card) return;
+        var hidden = card.classList.toggle('step2-hints-hidden');
+        toggleHints.textContent = hidden ? 'Show hints' : 'Hide hints';
+        toggleHints.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+      });
+    }
+  })();
 
   (function initStep3QrListeners() {
     document.querySelectorAll('.step3-qr-tab').forEach(function(tab) {
@@ -798,7 +1152,7 @@
   })();
 
   function updateProgressBar(step) {
-    ['progress-step1','progress-step3','progress-step4'].forEach(function(id, i) {
+    ['progress-step1','progress-step2','progress-step3','progress-step4'].forEach(function(id, i) {
       var el = document.getElementById(id);
       if (!el) return;
       el.classList.remove('active','done');
