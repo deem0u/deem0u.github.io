@@ -699,7 +699,7 @@
         <p class="form-hint mb-2">Creates the user folder. Set profile, secrets, and contact pages from the user card after it appears.</p>
         <div class="form-group">
           <label class="form-label">Username <span class="form-required">*</span></label>
-          <input type="text" id="modal-add-user-username" class="form-input" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" placeholder="e.g. john-smith" autocomplete="off">
+          <input type="text" id="modal-add-user-username" class="form-input username-mask" pattern="^[a-zA-Z0-9_\u002D]{3,28}$" minlength="3" maxlength="28" placeholder="e.g. john-smith" autocomplete="off">
           <span class="form-hint">3–28 characters. Letters, numbers, hyphens, underscores. Stored as lowercase.</span>
           <span class="form-error" id="error-modal-add-user-username" role="alert"></span>
         </div>
@@ -786,7 +786,7 @@
         <div id="modal-profile-form" class="hidden">
           <div class="form-group">
             <label class="form-label">Account Username</label>
-            <input type="text" id="profile-username" class="form-input" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_\u002D]{3,28}" minlength="3" maxlength="28" autocomplete="off" oninput="updateProfileModalState()" onblur="updateProfileModalState()">
+            <input type="text" id="profile-username" class="form-input username-mask" placeholder="e.g. john-smith" pattern="[a-zA-Z0-9_\u002D]{3,28}" minlength="3" maxlength="28" autocomplete="off" oninput="updateProfileModalState()" onblur="updateProfileModalState()">
             <span class="form-hint">3–32 characters: letters, numbers, hyphens, underscores. Changing this renames the user folder and URL. After rename, they sign in with the same account email (now tied to the new username).</span>
             <span class="form-error" id="error-profile-username" role="alert"></span>
           </div>
@@ -1119,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyFormDescriptions();
   initFolderValidation();
   if (typeof attachDobMask === 'function') attachDobMask();
+  if (typeof attachUsernameMask === 'function') attachUsernameMask();
   if (typeof initSecretsModalValidations === 'function') initSecretsModalValidations();
   initGivenNamesValidation();
   initFamilyNameValidation();
@@ -3582,9 +3583,20 @@ async function handleSave(e) {
         currentSha = d.sha;
         currentContactPageName = d.contactpagename || contactpagename;
         adminCreateNewPage = false;
-        editTabContactPagesList.push({ slug: currentContactPageName, name: (d.contactPageName || nameTrim || (currentContactPageName === 'index' ? 'Main (index)' : currentContactPageName)) });
+        var displayName = (d.contactPageName || nameTrim || (currentContactPageName === 'index' ? 'Main (index)' : currentContactPageName)) || currentContactPageName;
+        editTabContactPagesList.push({ slug: currentContactPageName, name: displayName });
+        editTabContactPagesList.sort(function(a, b) { var sa = (a.slug === 'index') ? '' : (a.slug || ''); var sb = (b.slug === 'index') ? '' : (b.slug || ''); return sa.localeCompare(sb); });
+        var optionsEl = document.getElementById('edit-contact-page-options');
+        if (optionsEl && editTabContactPagesList.length > 0) {
+          optionsEl.innerHTML = editTabContactPagesList.map(function(p) {
+            var s = (typeof p === 'object' && p.slug != null) ? p.slug : (p === 'index' ? 'index' : p);
+            var label = (typeof p === 'object' && p.name != null) ? p.name : (s === 'index' ? 'Main (index)' : s);
+            return '<div class="searchable-select-option" data-value="' + escapeHtml(s) + '" data-label="' + escapeHtml(label) + '" onclick="selectEditContactPage(this.dataset.value||\'index\', this.dataset.label||\'\')"><div class="searchable-select-option-title">' + escapeHtml(label) + '</div><div class="searchable-select-option-meta">' + escapeHtml(currentFolder + (s === 'index' ? '/' : '/' + s)) + '</div></div>';
+          }).join('');
+        }
         document.getElementById('edit-contact-page-value').value = currentContactPageName;
-        setEditContactPageTriggerLabel((d.contactPageName || nameTrim || currentContactPageName) || currentContactPageName, currentFolder, currentContactPageName);
+        setEditContactPageTriggerLabel(displayName, currentFolder, currentContactPageName);
+        document.querySelectorAll('#edit-contact-page-options .searchable-select-option').forEach(function(opt) { opt.classList.toggle('selected', (opt.dataset.value || '') === currentContactPageName); });
         document.getElementById('contact-page-url-slug').value = currentContactPageName;
         document.getElementById('contact-page-url-slug').setAttribute('readonly', 'readonly');
         document.getElementById('contact-page-url-slug').disabled = true;
@@ -4331,6 +4343,7 @@ function syncSecretsModalSqOptions() {
 
 function formatDob(val){var d=(val||'').replace(/\D/g,'').substring(0,8);if(!d.length)return '';if(d.length<=2)return d;if(d.length<=4)return d.substring(0,2)+'/'+d.substring(2);return d.substring(0,2)+'/'+d.substring(2,4)+'/'+d.substring(4);}
 function attachDobMask(){document.querySelectorAll('.dob-mask').forEach(function(inp){if(inp.dataset.dobMaskAttached)return;inp.dataset.dobMaskAttached='1';inp.addEventListener('input',function(){var val=this.value;var formatted=formatDob(val);if(formatted!==val)this.value=formatted;});});}
+function attachUsernameMask(){document.querySelectorAll('.username-mask').forEach(function(inp){if(inp.dataset.usernameMaskAttached)return;inp.dataset.usernameMaskAttached='1';var maxLen=parseInt(inp.getAttribute('maxlength'),10)||28;inp.addEventListener('input',function(){var raw=this.value;var allowed=raw.replace(/[^a-zA-Z0-9_-]/g,'').slice(0,maxLen);if(allowed!==raw)this.value=allowed;});});}
 function initSecretsModalValidations(){
   function validateDob(val){var s=(val||'').trim().replace(/\s+/g,'');if(!s)return{valid:true};var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)return{valid:false,message:'Please enter a valid date in dd/mm/yyyy format.'};var d=parseInt(m[1],10),mo=parseInt(m[2],10),y=parseInt(m[3],10);if(d<1||d>31||mo<1||mo>12||y<1900||y>2100)return{valid:false,message:'Please enter a valid date.'};return{valid:true};}
   function validateSecretAnswer(a){var t=(a||'').trim();if(t.length<4)return{valid:false,message:'Answer must be at least 4 characters.'};if(t.length>30)return{valid:false,message:'Answer must be 30 characters or fewer.'};return{valid:true};}
