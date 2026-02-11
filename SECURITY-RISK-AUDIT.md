@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-The application uses a clear split between admin (X-Admin-Key) and user (JWT Bearer) auth, with `validateAuth(username, request, env)` enforcing same-user or admin for user-scoped routes. KV access is gated by these checks. **Remediated since last audit:** CORS is allowlist-based; 500 responses use a generic message unless `DEBUG` is set; push messages are sanitized before render; rate limiting is in place for auth/signup/OTP/recovery. **Remaining risks:** Admin key and JWT in client storage (XSS impact), user enumeration, internal setup endpoint, secrets API returning sensitive data, and third-party script (QR code CDN). Remediations are listed per finding.
+The application uses a clear split between admin (X-Admin-Key) and user (JWT Bearer) auth, with `validateAuth(username, request, env)` enforcing same-user or admin for user-scoped routes. KV access is gated by these checks. **Remediated since last audit:** CORS is allowlist-based; 500 responses use a generic message unless `DEBUG` is set; push messages are sanitized before render; rate limiting is in place for auth/signup/OTP/recovery. **Remaining risks:** Admin key and JWT in client storage (XSS impact), internal setup endpoint, and secrets API returning sensitive data. **Remediated (2026-02-11):** User enumeration (generic responses for check-username, check-account-email, recovery/check); email relay uses constant-time secret compare; QR code script has SRI and crossorigin; admin OTP read is logged. Remediations are listed per finding.
 
 ---
 
@@ -71,11 +71,11 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 - **Risk:** Security question answers and DOB are sensitive. If an admin account is compromised or a user’s JWT is stolen, this data is exposed. Transmit only over HTTPS (enforced by Cloudflare).
 - **Recommendation:** Consider not returning security answers in API responses; allow admin to “set” or “reset” without echoing answers back. At minimum, ensure TLS and short-lived admin sessions.
 
-### 4.2 ⚠️ Admin can read user OTP (Medium)
+### 4.2 ⚠️ Admin can read user OTP (Medium) — audit log in place
 
-- **Location:** `handleGetSecrets` — when `auth.isAdmin && storedOtp`, the response includes `payload.otp = storedOtp` (plaintext one-time password).
+- **Location:** `handleGetSecrets` — when `auth.isAdmin && storedOtp`, the response includes `payload.otp = storedOtp` (plaintext one-time password). The Worker logs `"Admin OTP read"` plus the username when returning OTP to an admin (audit trail in Cloudflare logs).
 - **Risk:** By design for admin-assisted recovery, but any compromise of admin credentials allows reading active OTPs and signing in as users.
-- **Recommendation:** Treat as intended but sensitive; audit admin access and use primary/secondary key discipline. Optionally log when OTP is read by admin.
+- **Recommendation:** Treat as intended but sensitive; use primary/secondary key discipline. Check Cloudflare logs when auditing admin OTP access.
 
 ### 4.3 ✅ No KV key listing for unauthenticated users
 
@@ -102,25 +102,22 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 - **Location:** Reset token is 32 bytes from `crypto.getRandomValues`, stored in KV with 1-hour expiry. No reuse after use.
 - **Finding:** Reset token is cryptographically strong and single-use.
 
-### 5.4 ⚠️ JWT secret configuration (Medium)
+### 5.4 ✅ JWT secret: single name (remediated)
 
-- **Location:** Worker uses `env.JWT_SECRET || env.SESSION_SECRET` for signing/verifying user JWTs.
-- **Risk:** Two different secret names; if one is set in one environment and the other in another, tokens may not validate across deployments. Weak or default secret would allow forging JWTs.
-- **Recommendation:** Standardize on one secret name (e.g. `JWT_SECRET`) and document it. Ensure a long, random value (e.g. 32+ bytes) and store only in Cloudflare secrets.
+- **Location:** Worker uses only `env.JWT_SECRET` for signing/verifying user JWTs. No fallback to another name.
+- **Finding:** One secret name (JWT_SECRET) eliminates env mismatch. Ensure the value is long and random (e.g. 32+ chars) and stored only in Cloudflare secrets. If you previously used SESSION_SECRET, set JWT_SECRET to the same value (or rotate) and redeploy; see JWT-SECRET-EXPLAINED.md.
 
 ---
 
 ## 6. User Enumeration & Information Disclosure
 
-### 6.1 ⚠️ Unauthenticated user/account existence checks (Medium)
+### 6.1 ✅ Generic enumeration responses (remediated 2026-02-11)
 
 - **Endpoints:**  
-  - **GET /api/check-username/:username** — returns `available: true/false`.  
-  - **GET /api/check-account-email/:email** — returns `available: true/false`.  
-  - **POST /api/recovery/check** (body: `username`) — returns `exists`, `canRecover`, and optionally `recoveryQuestionId`.  
-  - **POST /api/recovery/check-by-email** (body: `accountEmail`) — same idea.
-- **Risk:** Enables enumeration of usernames and account emails and whether an account can use recovery. Often acceptable for UX (e.g. “username taken”, “we’ll send recovery if this email exists”); still discloses account existence.
-- **Recommendation:** If acceptable for your threat model, keep but add rate limiting. If you want to reduce enumeration, return generic messages (e.g. “If an account exists, you will receive an email”) and avoid differing responses for “exists but can’t recover” vs “doesn’t exist”.
+  - **GET /api/check-username/:username** — returns generic `{ status: 'ok' }` for valid format (no `available`); format errors still return 400 with message.  
+  - **GET /api/check-account-email/:email** — returns generic `{ status: 'ok' }` (no `available`).  
+  - **POST /api/recovery/check** and **POST /api/recovery/check-by-email** — always return the same shape: `{ message: "If an account exists and is eligible for recovery...", recoveryQuestionId }` or `recoveryQuestionIds`; no `exists` or `canRecover`. Real or random question IDs so response does not leak existence.
+- **Finding:** Account existence and recovery eligibility are no longer disclosed by these endpoints. Frontend (home, myaccount, admin) updated to not rely on availability from check endpoints; “username taken” / “email in use” appear only on signup or profile submit when the server returns 409.
 
 ### 6.2 ✅ 500 error body no longer leaks details (remediated)
 
@@ -152,14 +149,13 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 
 ### 8.1 ✅ Sensitive values not in repo
 
-- **wrangler.toml** documents that `GITHUB_TOKEN`, `EMAIL_RELAY_SECRET`, `JWT_SECRET`/`SESSION_SECRET`, `ADMIN_SETUP_SECRET` are set via Cloudflare Dashboard (secrets). KV namespace id and non-secret vars are in the file.
+- **wrangler.toml** documents that `GITHUB_TOKEN`, `EMAIL_RELAY_SECRET`, `JWT_SECRET`, `ADMIN_SETUP_SECRET` are set via Cloudflare Dashboard (secrets). KV namespace id and non-secret vars are in the file.
 - **Finding:** No hardcoded secrets in the repo; good practice.
 
-### 8.2 ⚠️ Email relay secret (Vercel)
+### 8.2 ✅ Email relay secret — constant-time compare (remediated 2026-02-11)
 
-- **Location:** Worker sends `X-Relay-Secret` to the Vercel email relay; relay compares with `RELAY_SECRET`. Comparison is string equality (not constant-time).
-- **Risk:** In theory, timing attacks could help guess the secret; in practice usually low impact for long random secrets. Ensure `RELAY_SECRET` is long and random.
-- **Recommendation:** Use a long random value; optional: use a constant-time compare if you have a crypto utility.
+- **Location:** Vercel email relay `email-relay/api/send.js`. Worker sends `X-Relay-Secret`; relay compares with `RELAY_SECRET` using a constant-time comparison (SHA-256 hash of both values then `crypto.timingSafeEqual`).
+- **Finding:** Timing attacks on the relay secret are mitigated. Keep `RELAY_SECRET` long and random.
 
 ### 8.3 ✅ GitHub token usage
 
@@ -180,11 +176,11 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 | Internal endpoint | Medium   | `/api/internal/set-admin-credentials` protected only by one secret. |
 | Secrets API       | Medium   | Returns DOB and security answers in plaintext (access-controlled). |
 | Admin OTP read    | Medium   | Admin can read user OTP from GET secrets (by design but sensitive). |
-| JWT secret config | Medium   | Two secret names; weak or inconsistent secret risks forged JWTs. |
+| JWT secret config | ✅ Remediated | Single name (JWT_SECRET); ensure long random value. |
 | Recovery code     | Medium   | 6-digit code, 10 min; rate limiting now mitigates brute force. |
-| User enumeration  | Medium   | check-username, check-account-email, recovery/check expose existence. |
+| User enumeration  | ✅ Remediated | Generic responses; no exists/available/canRecover disclosed. |
 | Alert/banner HTML | Medium   | innerHTML used for alerts; ensure messages are escaped or sanitized. |
-| Third-party script| Low      | QR code library from CDN (admin, home, myaccount); no SRI. |
+| Third-party script| ✅ Remediated | QR code script (admin, home, myaccount) has SRI (sha384) and crossorigin="anonymous". |
 
 ---
 
@@ -195,11 +191,11 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 3. ~~**High:** Push message sanitization.~~ **Done:** sanitizePushMessageHtml allowlist.  
 4. ~~**High:** Rate limiting.~~ **Done:** checkRateLimit on auth/signup/OTP/recovery.  
 5. **High:** Move admin key to sessionStorage and/or replace with short-lived session tokens; harden against XSS (CSP, sanitization).  
-6. **Medium:** Standardize JWT secret to one env var; ensure strong value.  
+6. ~~**Medium:** Standardize JWT secret.~~ **Done:** Worker uses only JWT_SECRET; ensure strong value.  
 7. **Medium:** Harden internal setup endpoint (strong secret, consider disabling after setup).  
 8. **Medium:** Review whether secrets API must return security answers; reduce or mask if possible.  
 9. **Ongoing:** Ensure all user/API-derived content shown in the UI is escaped or sanitized before innerHTML.  
-10. **Low:** Consider SRI (integrity) for QR code CDN script if supply-chain risk is a concern.
+10. **Low — remediated:** SRI (sha384) and `crossorigin="anonymous"` added for QR code script on admin, home, and myaccount.
 
 ---
 
@@ -211,7 +207,7 @@ Re-audit pass after QR modal alignment (admin, myaccount), relay default name (D
 - **500 responses:** Confirmed generic message when `env.DEBUG` not set.  
 - **Push message:** Confirmed `sanitizePushMessageHtml` used before `contentEl.innerHTML` in My Account.  
 - **Rate limiting:** Confirmed `checkRateLimit` used for login, signup, OTP, recovery, recover-reset.  
-- **New surface:** QR code library loaded from `cdn.jsdelivr.net` (admin, home, myaccount); no integrity/SRI. Documented as low (third-party script) in summary table.
+- **New surface:** QR code library loaded from `cdn.jsdelivr.net` (admin, home, myaccount); SRI (sha384) and crossorigin added 2026-02-11.
 
 No changes to access control, KV exposure, or auth flows. Previous high findings for CORS, 500 body, push XSS, and rate limiting are marked remediated.
 

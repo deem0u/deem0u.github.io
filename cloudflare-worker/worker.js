@@ -650,6 +650,10 @@ export default {
         return patchCors(resp, allowedOrigin);
       }
       if (request.method === 'POST' && path === '/api/internal/set-admin-credentials') {
+        if (env.SETUP_ROUTE_ENABLED !== 'true') {
+          resp = jsonResponse({ error: 'Not found' }, 404);
+          return patchCors(resp, allowedOrigin);
+        }
         resp = await handleInternalSetAdminCredentials(request, env);
         return patchCors(resp, allowedOrigin);
       }
@@ -958,7 +962,7 @@ async function handleAuth(request, env) {
 
 async function handleAuthUser(request, env) {
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!secret) return jsonResponse({ error: 'Auth not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
   const accountEmail = (body.accountEmail || '').trim().toLowerCase();
@@ -1012,16 +1016,16 @@ async function handleAuthUser(request, env) {
 async function handleCheckUsername(username, env) {
   const u = normalizeUsername(username);
   if (!u || !/^[a-z0-9_-]{3,28}$/.test(u)) {
-    return jsonResponse({ available: false, error: 'Invalid username format (letters, numbers, hyphens, underscores only; stored as lowercase)' });
+    return jsonResponse({ error: 'Invalid username format (letters, numbers, hyphens, underscores only; stored as lowercase)' }, 400);
   }
   const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
   if (reserved.includes(u)) {
-    return jsonResponse({ available: false });
+    return jsonResponse({ status: 'ok' });
   }
   if (!env.GITHUB_TOKEN) {
-    return jsonResponse({ available: true });
+    return jsonResponse({ status: 'ok' });
   }
-  const res = await fetch(
+  await fetch(
     `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${u}?ref=${CONFIG.branch}`,
     {
       headers: {
@@ -1031,18 +1035,16 @@ async function handleCheckUsername(username, env) {
       }
     }
   );
-  return jsonResponse({ available: !res.ok });
+  return jsonResponse({ status: 'ok' });
 }
 async function handleCheckAccountEmail(email, excludeFolder, env) {
   if (!email || !email.includes('@')) {
-    return jsonResponse({ available: false, error: 'Invalid email format' });
+    return jsonResponse({ error: 'Invalid email format' }, 400);
   }
   const el = email.trim().toLowerCase();
-  if (!env.EDIT_KEYS_KV) return jsonResponse({ available: true });
-  const existing = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + el);
-  if (!existing) return jsonResponse({ available: true });
-  if (excludeFolder && existing === excludeFolder.trim()) return jsonResponse({ available: true });
-  return jsonResponse({ available: false });
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ status: 'ok' });
+  await env.EDIT_KEYS_KV.get('account_email_to_folder:' + el);
+  return jsonResponse({ status: 'ok' });
 }
 
 async function handleSignup(request, env) {
@@ -1159,7 +1161,7 @@ async function handleSignup(request, env) {
     secretQuestions: secretQuestions.map(q => ({ questionId: q.questionId, answer: (q.answer || '').trim() }))
   }), { metadata: buildKvKeyMetadata(`user_recovery:${username}`) });
 
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   const token = secret ? await signJwt({ username, exp: Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400) }, secret) : null;
   const base = `https://${CONFIG.owner}.github.io`;
   return jsonResponse({
@@ -1367,7 +1369,7 @@ async function validateAuth(username, request, env) {
   // Check JWT (Bearer token)
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (token && secret) {
     const payload = await verifyJwt(token, secret);
     const payloadUser = (payload && payload.username || '').trim();
@@ -1398,7 +1400,7 @@ function accountDeletedResponse() {
 async function handleSessionCheck(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
@@ -3239,9 +3241,12 @@ async function handleRecoveryCheck(request, env) {
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
   const username = (body.username || '').trim().toLowerCase();
-  if (!username || username.length < 3 || username.length > 28) return jsonResponse({ exists: false, canRecover: false });
+  const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const genericMessage = 'If an account exists and is eligible for recovery, you will receive an email after completing the next steps.';
+  if (!username || username.length < 3 || username.length > 28) {
+    return jsonResponse({ message: genericMessage, recoveryQuestionId: validIds[Math.floor(Math.random() * validIds.length)] });
+  }
   const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
-  if (!pwHash) return jsonResponse({ exists: false, canRecover: false });
   const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
   const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
   const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
@@ -3250,37 +3255,38 @@ async function handleRecoveryCheck(request, env) {
   const hasAccountEmail = !!(accountEmail && accountEmail.includes('@'));
   const hasDob = !!(dob && dob.trim());
   const hasSecretQuestions = secretQuestions.length === 3 && secretQuestions.every(q => q && q.questionId && (q.answer || '').trim().length >= 4);
-  const canRecover = hasAccountEmail && hasDob && hasSecretQuestions;
-  if (!canRecover) return jsonResponse({ exists: true, canRecover: false });
-  const qIds = secretQuestions.map(q => q.questionId).filter(Boolean);
-  const randomId = qIds[Math.floor(Math.random() * qIds.length)];
-  return jsonResponse({ exists: true, canRecover: true, recoveryQuestionId: randomId });
+  const canRecover = !!pwHash && hasAccountEmail && hasDob && hasSecretQuestions;
+  const qIds = canRecover ? secretQuestions.map(q => q.questionId).filter(Boolean) : validIds;
+  const recoveryQuestionId = qIds.length ? qIds[Math.floor(Math.random() * qIds.length)] : validIds[0];
+  return jsonResponse({ message: genericMessage, recoveryQuestionId });
 }
 
 async function handleRecoveryCheckByEmail(request, env) {
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
   let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
   const accountEmail = (body.accountEmail || '').trim().toLowerCase();
-  if (!accountEmail || !accountEmail.includes('@')) return jsonResponse({ exists: false, canRecover: false });
+  const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const genericMessage = 'If an account exists and is eligible for recovery, you will receive an email after completing the next steps.';
+  if (!accountEmail || !accountEmail.includes('@')) {
+    const two = validIds.slice().sort(() => Math.random() - 0.5).slice(0, 2);
+    return jsonResponse({ message: genericMessage, recoveryQuestionIds: two });
+  }
   const username = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmail);
-  if (!username) return jsonResponse({ exists: false, canRecover: false });
-  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
-  if (!pwHash) return jsonResponse({ exists: false, canRecover: false });
-  const storedEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
-  const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
-  const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+  const pwHash = username ? await env.EDIT_KEYS_KV.get('user_password_hash:' + username) : null;
+  const storedEmail = username ? await env.EDIT_KEYS_KV.get('account_email:' + username) : null;
+  const dob = username ? await env.EDIT_KEYS_KV.get('user_dob:' + username) : null;
+  const recoveryRaw = username ? await env.EDIT_KEYS_KV.get('user_recovery:' + username) : null;
   let secretQuestions = [];
   if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : []; } catch (_) {} }
   const hasAccountEmail = !!(storedEmail && storedEmail.includes('@'));
   const hasDob = !!(dob && dob.trim());
   const hasSecretQuestions = secretQuestions.length === 3 && secretQuestions.every(q => q && q.questionId && (q.answer || '').trim().length >= 4);
-  const canRecover = hasAccountEmail && hasDob && hasSecretQuestions;
-  if (!canRecover) return jsonResponse({ exists: true, canRecover: false });
-  const qIds = secretQuestions.map(q => q.questionId).filter(Boolean);
-  if (qIds.length < 2) return jsonResponse({ exists: true, canRecover: false });
-  const shuffled = qIds.slice().sort(() => Math.random() - 0.5);
-  const [id1, id2] = shuffled.slice(0, 2);
-  return jsonResponse({ exists: true, canRecover: true, recoveryQuestionIds: [id1, id2] });
+  const canRecover = !!username && !!pwHash && hasAccountEmail && hasDob && hasSecretQuestions;
+  const qIds = canRecover ? secretQuestions.map(q => q.questionId).filter(Boolean) : validIds;
+  const two = qIds.length >= 2
+    ? qIds.slice().sort(() => Math.random() - 0.5).slice(0, 2)
+    : validIds.slice().sort(() => Math.random() - 0.5).slice(0, 2);
+  return jsonResponse({ message: genericMessage, recoveryQuestionIds: two });
 }
 async function handleRecoveryVerify(request, env) {
   if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
@@ -3444,7 +3450,7 @@ async function handlePutProfile(username, request, env) {
 async function handleVerifyEmailChange(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
@@ -3477,7 +3483,7 @@ async function handleVerifyEmailChange(request, env) {
 async function handleCancelEmailChange(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
@@ -3518,7 +3524,7 @@ async function handlePutPushMessage(username, request, env) {
 async function handleGetPushMessage(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ messages: [] });
@@ -3543,7 +3549,7 @@ async function handleGetPushMessage(request, env) {
 async function handleDismissPushMessage(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
@@ -3558,7 +3564,7 @@ async function handleDismissPushMessage(request, env) {
 async function handleSetPasswordAfterOtp(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
@@ -3582,7 +3588,7 @@ async function handleSetPasswordAfterOtp(request, env) {
 async function handleVerifyPassword(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
@@ -3603,7 +3609,7 @@ async function handleVerifyPassword(request, env) {
 async function handleChangePasswordAndSq(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
@@ -3661,7 +3667,7 @@ async function handleChangePasswordAndSq(request, env) {
 async function handleProfileRename(request, env) {
   const authHeader = request.headers.get('Authorization');
   const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
-  const secret = env.JWT_SECRET || env.SESSION_SECRET;
+  const secret = env.JWT_SECRET;
   if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
   const payload = await verifyJwt(token, secret);
   if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);

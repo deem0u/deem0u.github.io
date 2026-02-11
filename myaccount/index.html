@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" integrity="sha384-Izc791esqyEy3BEIC42q7jbE0AaOkACziN+dyyXgYeDmpeMCLz0xA+xYN3aCd5zz" crossorigin="anonymous"></script>
   <style>
   .edit-recovery-success-banner { padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-weight: 500; }
   .edit-recovery-success-details ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
@@ -990,18 +990,15 @@ function recoveryCheckUsername() {
     body: JSON.stringify({ username: username })
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
-    if (!d.exists) {
-      showRecoveryAlert('No account with the User Name exists. Forgot your User Name? Try entering your Account Email instead.', 'error');
-      return;
-    }
-    if (!d.canRecover) {
-      showRecoveryAlert("Access Recovery for your account is not available right now. Please email deem0u.github.io@gmail.com for support.", 'error');
+    if (d.error) {
+      showRecoveryAlert(d.error || 'Something went wrong.', 'error');
       return;
     }
     recoveryPath = 'username';
     recoveryUsername = username;
-    recoveryQuestionId = d.recoveryQuestionId;
+    recoveryQuestionId = d.recoveryQuestionId != null ? d.recoveryQuestionId : 1;
     recoveryQuestionIds = null;
+    if (d.message) showRecoveryAlert(d.message, 'info');
     showRecoveryStep2();
   }).catch(function() {
     if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
@@ -1024,19 +1021,16 @@ function recoveryCheckByEmail() {
     body: JSON.stringify({ accountEmail: email })
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
-    if (!d.exists) {
-      showRecoveryAlert('No account with this email.', 'error');
-      return;
-    }
-    if (!d.canRecover) {
-      showRecoveryAlert("Access Recovery for your account is not available right now. Please email deem0u.github.io@gmail.com for support.", 'error');
+    if (d.error) {
+      showRecoveryAlert(d.error || 'Something went wrong.', 'error');
       return;
     }
     recoveryPath = 'email';
     recoveryUsername = null;
     recoveryQuestionId = null;
-    recoveryQuestionIds = d.recoveryQuestionIds || [];
+    recoveryQuestionIds = Array.isArray(d.recoveryQuestionIds) && d.recoveryQuestionIds.length >= 2 ? d.recoveryQuestionIds : [1, 2];
     recoveryAccountEmail = email;
+    if (d.message) showRecoveryAlert(d.message, 'info');
     showRecoveryStep2();
   }).catch(function() {
     if (btn) { btn.disabled = false; btn.textContent = 'Recover Access'; }
@@ -2674,10 +2668,10 @@ async function runProfileUsernameValidation() {
   try {
     var r = await fetch(API + "/api/check-username/" + encodeURIComponent(normalized));
     var data = await r.json();
-    if (data.available) {
-      setProfileUsernameError("");
+    if (data.error) {
+      setProfileUsernameError(data.error);
     } else {
-      setProfileUsernameError(data.error || "Username is taken or reserved.");
+      setProfileUsernameError("");
     }
   } catch (_) {
     setProfileUsernameError("");

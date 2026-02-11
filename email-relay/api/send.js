@@ -12,7 +12,15 @@
  * - EMAIL_FROM_NAME: display name recipients see. Default: "DigiCon iD"
  */
 
+const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+
+function constantTimeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const hashA = crypto.createHash('sha256').update(a, 'utf8').digest();
+  const hashB = crypto.createHash('sha256').update(b, 'utf8').digest();
+  return hashA.length === hashB.length && crypto.timingSafeEqual(hashA, hashB);
+}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -20,10 +28,10 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const secret = req.headers['x-relay-secret'];
-  const expected = process.env.RELAY_SECRET;
+  const secret = req.headers['x-relay-secret'] || '';
+  const expected = process.env.RELAY_SECRET || '';
 
-  if (!expected || !secret || secret !== expected) {
+  if (!expected || !secret || !constantTimeEqual(secret, expected)) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }

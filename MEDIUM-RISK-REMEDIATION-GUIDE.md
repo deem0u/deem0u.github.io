@@ -58,15 +58,15 @@ Whenever the API returns a user’s OTP to an admin (when they load that user’
 ### 4. JWT secret configuration
 
 **Risk in plain language**  
-When a user signs in, the site gets a “token” (JWT) that proves they’re that user. That token is signed with a **secret** that only your server knows. The code was written to use either a secret called **JWT_SECRET** or one called **SESSION_SECRET**. Having two names can cause confusion: you might set one in production and the other in a different environment, so tokens don’t work where you expect. Also, if the secret is weak or left at a default, someone could forge tokens and sign in as any user.
+When a user signs in, the site gets a “token” (JWT) that proves they’re that user. That token is signed with a **secret** that only your server knows. The Worker now uses **only** the secret named **JWT_SECRET** (the **SESSION_SECRET** fallback was removed). Having one name avoids confusion: you might set one in production and the other in a different environment, so tokens don’t work where you expect. Also, if the secret is weak or left at a default, someone could forge tokens and sign in as any user.
 
 **How it was addressed**  
-No code logic was changed (the Worker still accepts **JWT_SECRET** or **SESSION_SECRET** so existing setups keep working). The **wrangler.toml** and comments were updated to state clearly that **JWT_SECRET** is the **preferred** name and that the value must be long and random (e.g. 32+ characters). That way anyone configuring the Worker knows which secret to set and how strong it should be.
+The Worker was updated to use only **env.JWT_SECRET**; the **SESSION_SECRET** fallback was removed. Wrangler and docs state that **JWT_SECRET** is the only name used and must be long and random (e.g. 32+ characters). If you previously had only **SESSION_SECRET** set, add **JWT_SECRET** with the same value (or rotate) and redeploy; see JWT-SECRET-EXPLAINED.md.
 
 **Material impacts and changes**  
-- **If you already have JWT_SECRET or SESSION_SECRET set:** Nothing breaks; behaviour is unchanged.  
-- **When you next configure or rotate secrets:** Prefer **JWT_SECRET** and use a long random value. If you like, you can remove **SESSION_SECRET** and use only **JWT_SECRET** so there’s a single name everywhere.  
-- **New deployments:** Set **JWT_SECRET** (not **SESSION_SECRET**) and use a strong value from the start.
+- **If you already have JWT_SECRET set:** No change needed.  
+- **If you only had SESSION_SECRET set:** Add **JWT_SECRET** in Cloudflare with the same value (or rotate), redeploy, then you can delete **SESSION_SECRET**. Until JWT_SECRET is set, user sign-in will fail.  
+- **New deployments:** Set **JWT_SECRET** only; use a long, random value (32+ characters).
 
 ---
 
@@ -109,34 +109,32 @@ The Admin and My Account “Set Secrets” screens **pre-fill** the form with da
 
 ---
 
-### 7. User enumeration
+### 7. User enumeration — Implemented 2026-02-11
 
 **Risk in plain language**  
-Some parts of your site let anyone (without logging in) ask “does this username exist?” or “does this email have an account?” or “can this account use recovery?”. The API answers with things like “available: true/false” or “exists: true, canRecover: false”. That lets someone systematically try many usernames or emails and build a list of who has an account. That’s called “user enumeration.” It can help attackers target real accounts (e.g. for phishing or password guessing) or learn who’s on your platform.
+Some parts of your site let anyone (without logging in) ask “does this username exist?” or “does this email have an account?” or “can this account use recovery?”. The API used to answer with things like “available: true/false” or “exists: true, canRecover: false”, which allowed user enumeration. We added rate limiting earlier; generic responses are now in place as well.
 
-**Why it wasn’t fully “fixed”**  
-Those endpoints exist for normal use: e.g. the signup form checks “is this username taken?” and the recovery flow checks “does this email have an account that can recover?”. So we didn’t remove them. We **did** add **rate limiting** so that a single IP can’t fire off thousands of checks in a short time; that makes bulk enumeration much harder and was the main mitigation.
+**Implemented (2026-02-11)**  
+- **API:** check-username and check-account-email now return generic `{ status: 'ok' }` (no `available`). Recovery check endpoints return a single message and question ID(s); no `exists` or `canRecover`.  
+- **Frontend:** Signup and recovery no longer show “account doesn’t exist” or “can’t recover” from these APIs. “Username taken” / “email in use” appear only when the user submits (signup or profile) and the server returns 409. Recovery flow always shows the next step with a generic message.
 
-**Material impacts of current state**  
-- **Users:** No change. Signup and recovery still work the same; you still get “username taken” or “we’ll send an email if that account exists.”  
-- **Attackers:** They can still get “exists” vs “doesn’t exist” for a given username/email, but only at a **limited rate** (so building a huge list quickly is impractical).
-
-**Optional further hardening**  
-You could change the **wording** and **responses** so they don’t reveal whether an account exists. For example: always say “If an account exists for that email, you will receive instructions” and always return the same kind of response, whether the account exists or not. That would require changing both the API responses and the frontend copy (and possibly the recovery flow UX) so users still understand what to do. That’s a design and UX choice, not done here.
+**Material impacts**  
+- **Users:** Recovery shows a generic “If an account exists and is eligible for recovery…” message and the form; they don’t see “no account” or “can’t recover” from the check. Signup “username taken” / “email in use” appear only after submit.  
+- **Attackers:** They can no longer distinguish “exists” vs “doesn’t exist” or “can recover” vs “can’t” from these endpoints.
 
 ---
 
-### 8. Email relay secret (constant-time compare)
+### 8. Email relay secret (constant-time compare) — Implemented 2026-02-11
 
 **Risk in plain language**  
-Your Worker sends emails through a Vercel “relay” and proves it’s allowed to do so by sending a shared **secret** in a header. The relay checks that header by comparing it to the stored secret character by character. In theory, an attacker could measure **how long** the comparison takes and use tiny timing differences to guess the secret one character at a time (a “timing attack”). In practice, if the secret is long and random, this is very hard to exploit and usually not a real-world concern.
+Your Worker sends emails through a Vercel “relay” and proves it’s allowed to do so by sending a shared **secret** in a header. The relay had been comparing that header to the stored secret with a normal string comparison; in theory, timing could be used to guess the secret.
 
-**Why it wasn’t changed**  
-The relay code lives in your **Vercel** project (email-relay), not in the Worker. Changing it would mean updating the relay to use a “constant-time” comparison (so the time doesn’t depend on how many characters match). For a long random secret, the practical risk is low, so no change was made.
+**How it was addressed**  
+In **email-relay/api/send.js** the relay now compares the secret using a constant-time comparison: both values are hashed with SHA-256 and the hashes are compared with Node’s `crypto.timingSafeEqual`. So the time taken does not depend on how many characters match.
 
 **Material impacts**  
-- **None today.** Emails and relay keep working as before.  
-- **If you want to harden later:** In the Vercel relay, replace the normal string comparison with a constant-time one (e.g. using a crypto library’s timing-safe compare). You’d need to do that in the email-relay code; the Worker doesn’t need to change.
+- **None for normal use.** Emails and relay work as before.  
+- **Security:** Timing attacks on the relay secret are mitigated.
 
 ---
 
@@ -147,8 +145,9 @@ The relay code lives in your **Vercel** project (email-relay), not in the Worker
 | ADMIN_SETUP_SECRET length   | Enforced      | Set secret ≥ 32 chars in Cloudflare. |
 | Recovery code 8-digit       | Done          | None; use 8-digit code from email. |
 | Admin OTP read log          | Done          | Check Cloudflare logs when auditing. |
-| JWT_SECRET                  | Documented    | Prefer JWT_SECRET; use long random value. |
+| JWT_SECRET                  | Implemented   | Worker uses only JWT_SECRET; use long random value. |
 | showAlert / showStatusBanner| Escaped       | None. |
 | Secrets API answers         | Not changed   | Optional: strip answers + update admin/myaccount UI. |
-| User enumeration            | Rate limited  | Optional: generic messages + UX changes. |
-| Email relay timing          | Not changed   | Optional: constant-time compare in Vercel relay. |
+| User enumeration            | ✅ Generic responses | check-username, check-account-email, recovery: no exists/available/canRecover. |
+| Email relay timing          | ✅ Constant-time     | email-relay/api/send.js uses SHA-256 + timingSafeEqual. |
+| QR code script (SRI)        | ✅ Done              | admin, home, myaccount: integrity (sha384) + crossorigin="anonymous". |

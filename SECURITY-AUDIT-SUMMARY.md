@@ -72,17 +72,17 @@ This document summarizes the security review of the Digital Luggage Tags site: w
 - **Why not changed:** The admin and user “Set Secrets” screens pre-fill the form from this API. Removing answers would require changing the screens so they no longer show or expect current answers (e.g. show “••••” and only allow setting new ones). That’s a design/UX choice left for later.  
 - **What would be compromised if exploited:** Security-question answers and date of birth for users whose admin or token was compromised.
 
-**12. Some features let anyone (without logging in) ask “does this username exist?” or “does this email have an account?”**  
-- **Risk:** Attackers could probe many usernames or emails and build a list of who has an account (user enumeration).  
-- **Impact:** **End users** — Slightly higher risk of targeted phishing or guessing. **Admins** — No direct impact. **Site** — Privacy of “who is on the site” is reduced.  
-- **Why not fully changed:** Those checks are used for normal signup and recovery (e.g. “username taken”, “we’ll email you if that account exists”). We added **rate limiting** so bulk probing is much harder. Making responses completely generic (so existence is never revealed) would need UX and copy changes and was left optional.  
-- **What would be compromised:** Privacy of account existence; rate limiting reduces but doesn’t remove the possibility of enumeration.
+**12. User enumeration (check-username, check-account-email, recovery/check)** — **Remediated 2026-02-11**  
+- **What we did:** All these endpoints now return generic responses: no `available`, `exists`, or `canRecover` in the response. Recovery returns a single message and question ID(s); check-username/check-account-email return `{ status: 'ok' }` for valid input. “Username taken” / “email in use” appear only when the user submits signup or profile and the server returns 409.  
+- **Impact:** Account existence and recovery eligibility are no longer disclosed by these APIs.
 
-**13. The email relay checks the “relay secret” with a normal string comparison**  
-- **Risk:** In theory, timing could be used to guess the secret character by character. In practice, with a long random secret, this is not a realistic concern.  
-- **Impact:** **End users and admins** — Negligible if the secret is strong. **Site** — Same.  
-- **Why not changed:** The relay lives in a separate (Vercel) project. Changing to a “constant-time” comparison would require editing that project. Risk was judged low.  
-- **What would be compromised:** Only in a very theoretical attack; no change made.
+**13. Email relay secret comparison** — **Remediated 2026-02-11**  
+- **What we did:** The Vercel email relay now compares the relay secret using a constant-time comparison (SHA-256 hash of both values then `crypto.timingSafeEqual` in `email-relay/api/send.js`).  
+- **Impact:** Timing attacks on the relay secret are mitigated.
+
+**14. QR code script (CDN)** — **Remediated 2026-02-11**  
+- **What we did:** The QR code script on admin, home, and myaccount now has Subresource Integrity (SRI) with sha384 and `crossorigin="anonymous"`.  
+- **Impact:** If the CDN is compromised or the file is altered, the browser will reject the script.
 
 ---
 
@@ -108,11 +108,9 @@ This document summarizes the security review of the Digital Luggage Tags site: w
 - **Secrets API still returns security-question answers**  
   **Why:** The Set Secrets screens (admin and user) pre-fill from this API. Removing answers would require changing those screens (e.g. show “••••” and only allow setting new answers). Left as an optional improvement. You can still rely on access control and HTTPS; if you want to harden further, you’d change the API and the UI together.
 
-- **User enumeration not fully removed**  
-  **Why:** Signup and recovery need to say things like “username taken” or “we’ll email you if that account exists.” We added rate limiting so bulk probing is impractical. Making responses fully generic (so existence is never revealed) would need UX and wording changes and was left optional.
+- **User enumeration** — **Now implemented (2026-02-11):** Generic responses for check-username, check-account-email, and recovery/check; “taken”/“in use” only on submit (409).
 
-- **Email relay secret not compared in “constant-time”**  
-  **Why:** Risk is very low with a long random secret. The relay is in a separate project; changing it was deferred.
+- **Email relay secret** — **Now implemented (2026-02-11):** Constant-time compare in Vercel relay (`email-relay/api/send.js`).
 
 ---
 

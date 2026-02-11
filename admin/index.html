@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" integrity="sha384-Izc791esqyEy3BEIC42q7jbE0AaOkACziN+dyyXgYeDmpeMCLz0xA+xYN3aCd5zz" crossorigin="anonymous"></script>
 </head>
 <body>
   <div class="app">
@@ -5070,11 +5070,11 @@ async function saveSecrets() {
     try {
       var checkRes = await fetch(API + '/api/check-account-email/' + encodeURIComponent(accountEmail) + '?exclude=' + encodeURIComponent(secretsModalFolder));
       var checkData = await checkRes.json();
-      if (checkData.available === false) {
-        if (accEmErr) accEmErr.textContent = 'This account email is already in use.';
+      if (checkData.error) {
+        if (accEmErr) accEmErr.textContent = checkData.error;
         if (accEmInp) accEmInp.classList.add('is-invalid');
         var errEl = document.getElementById('modal-secrets-error');
-        if (errEl) { errEl.textContent = 'This account email is already in use.'; errEl.classList.remove('hidden'); }
+        if (errEl) { errEl.textContent = checkData.error; errEl.classList.remove('hidden'); }
         return;
       }
     } catch (e) {}

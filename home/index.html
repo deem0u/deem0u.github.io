@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" integrity="sha384-Izc791esqyEy3BEIC42q7jbE0AaOkACziN+dyyXgYeDmpeMCLz0xA+xYN3aCd5zz" crossorigin="anonymous"></script>
   <style>
   /* DigiCon iD wordmark per DIGICON-ID-BRAND-TYPOGRAPHY.md – fits header (96px), slightly larger than 1/3 icon height */
   .app-header .digicon-logo {
@@ -1277,9 +1277,7 @@
     var r = validateEmailInput(document.getElementById('signup-email'), true);
     if (!r.valid) { document.getElementById('error-signup-email').textContent = r.message; document.getElementById('signup-email').classList.add('is-invalid'); return; }
     try {
-      var res = await fetch(API + '/api/check-account-email/' + encodeURIComponent(emailVal));
-      var d = await res.json();
-      if (d.available === false) { document.getElementById('error-signup-email').textContent = 'This email is already in use.'; document.getElementById('signup-email').classList.add('is-invalid'); return; }
+      await fetch(API + '/api/check-account-email/' + encodeURIComponent(emailVal));
     } catch (err) { showAlert('signup-step0-alert', 'Connection error. Please try again.', 'error'); return; }
     var firstName = document.getElementById('signup-step0-first-name').value.trim();
     var lastName = document.getElementById('signup-step0-last-name').value.trim();
@@ -1313,7 +1311,7 @@
         return fetch(API + '/api/check-username/' + encodeURIComponent(u))
           .then(function(res) { return res.json(); })
           .then(function(d) {
-            if (d.available === false) { showErr('This user name is already taken. Please choose another.'); } else { clearErr(); }
+            if (d.error) { showErr(d.error); } else { clearErr(); }
           })
           .catch(function() { if (folderErr.textContent === 'Checking...') folderErr.textContent = ''; });
       }
@@ -1423,8 +1421,8 @@
     try {
       var checkRes = await fetch(API + '/api/check-username/' + encodeURIComponent(username));
       var checkData = await checkRes.json();
-      if (checkData.available === false) {
-        document.getElementById('error-signup-folder').textContent = 'This user name is already taken. Please choose another.';
+      if (checkData.error) {
+        document.getElementById('error-signup-folder').textContent = checkData.error;
         document.getElementById('signup-folder').classList.add('is-invalid');
         document.getElementById('signup-folder').focus();
         return;
