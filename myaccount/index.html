@@ -3805,7 +3805,6 @@ ${formatTimestampScript}
 </html>`;
 }
 
-function escapeHtml(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 function showAlert(id, msg, type) {
   var e = document.getElementById(id); e.className = 'alert alert-' + type + ' show';
   var safe = escapeHtml(msg);

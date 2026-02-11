@@ -91,3 +91,9 @@ Reference forms: **Add New User** (admin), **Edit Contact Information** (admin),
 - **My Account:** Given Names, Family Name, Email required; validation enforced on submit.
 - **Home signup:** User Name, Account Email, DOB, 3 Security Questions + answers, consent required.
 - **Set Secrets:** Admin can save with all empty. Edit requires at least one of Account Email, DOB, or 3 SQ. When provided, strict format checks. Secret Questions: either 3 complete or all empty (no partial).
+
+---
+
+## Audit update (2026-02-11)
+
+Re-validated form behaviour: no changes to required/optional rules or submit handling. QR modal (admin, home, myaccount) does not add new form fields; MyAccount QR Codes button uses existing contact form data in view mode. Validation logic unchanged.

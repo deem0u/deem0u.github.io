@@ -4,6 +4,21 @@ Use this as a reference if you need to roll back the site or Worker to a known-g
 
 ---
 
+## 2026-02-11 — QR modal alignment, MyAccount QR, security audit update
+
+**Git commit:** `ef38cd3` (after “Admin + MyAccount: align QR modal with signup; MyAccount QR Codes button in view mode”)
+
+**State at this point:**
+- Admin QR modal matches signup (description, NFC banner, tabs “Contact Page URL” / “vCard”, Copy / Download vCard / Download on template).
+- MyAccount: QR Codes button in contact page view mode (next to View Page, Edit); same QR modal content; QR data built from current form; button disabled when create mode or email unverified.
+- SECURITY-RISK-AUDIT.md updated: CORS, 500 error, push-message sanitization, rate limiting marked remediated; audit update §11 (2026-02-11).
+
+**To roll back to this point:**
+- **Repo (GitHub Pages):** `git checkout ef38cd3` (or revert later commits), then push.
+- **Cloudflare Worker:** Redeploy from this commit: from `cloudflare-worker/` run `npx wrangler deploy` after checking out this commit.
+
+---
+
 ## 2026-02-11 — Post–email divert fix & OG meta
 
 **Git commit:** `fe4c31c` (full: `fe4c31c10f6d9fa71149511326066b75e7ed56f4`)

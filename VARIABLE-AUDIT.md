@@ -91,3 +91,9 @@ Standardise on one of:
 2. **Unify lastName/surname** in the worker: either always use `lastName` (and have home send `lastName` not `surname`) or always use `surname`. Worker `handleSignup` uses `body.surname`; `account-profiles` returns `lastName`; `handlePutProfile` uses `body.lastName`. Align to one term.
 
 3. **Admin-created users**: When admin adds a user with Given/Family names, consider also setting `user_first_name`/`user_last_name` in KV so account-profiles returns them. Currently only signup sets these.
+
+---
+
+## Audit update (2026-02-11)
+
+Re-audit: variable naming and data-flow unchanged. MyAccount QR modal builds URL from `viewPageHref()` and vCard from form fields (`first-name`, `surname`, `email`, `mobile`, `home-country`, etc.) — same semantics as Contact Page; no new variables introduced.

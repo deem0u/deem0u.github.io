@@ -3,11 +3,13 @@
 **Scope:** Cloudflare Worker API, Admin dashboard, My Account portal, KV storage, and related configuration.  
 **Focus:** Data breaches, unauthorized access to KV and stored information, misconfigurations, and code vulnerabilities.
 
+**Last full audit:** See sections below. **Update (2026-02-11):** Re-audit pass; several prior high findings have been remediated (CORS, 500 error body, push-message sanitization, rate limiting). See §11 Audit update (2026-02-11).
+
 ---
 
 ## Executive Summary
 
-The application uses a clear split between admin (X-Admin-Key) and user (JWT Bearer) auth, with `validateAuth(username, request, env)` enforcing same-user or admin for user-scoped routes. KV access is gated by these checks. Several areas still pose risk: **permissive CORS**, **sensitive data in client storage**, **no rate limiting**, **user enumeration**, **error message leakage**, **push-message XSS**, and **reliance on secret strength** for internal and recovery flows. Remediations are listed per finding.
+The application uses a clear split between admin (X-Admin-Key) and user (JWT Bearer) auth, with `validateAuth(username, request, env)` enforcing same-user or admin for user-scoped routes. KV access is gated by these checks. **Remediated since last audit:** CORS is allowlist-based; 500 responses use a generic message unless `DEBUG` is set; push messages are sanitized before render; rate limiting is in place for auth/signup/OTP/recovery. **Remaining risks:** Admin key and JWT in client storage (XSS impact), user enumeration, internal setup endpoint, secrets API returning sensitive data, and third-party script (QR code CDN). Remediations are listed per finding.
 
 ---
 
@@ -38,11 +40,10 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 
 ## 2. CORS & Cross-Origin Risk
 
-### 2.1 🔴 Permissive CORS (High)
+### 2.1 ✅ CORS restricted to allowlist (remediated)
 
-- **Location:** `cloudflare-worker/worker.js` — `corsHeaders` uses `'Access-Control-Allow-Origin': '*'`.
-- **Risk:** Any website can send requests to your Worker with the user’s credentials (Cookie, `Authorization: Bearer`, `X-Admin-Key`). If a user has the admin dashboard open and visits a malicious site, that site can issue fetch requests to your API with `credentials: 'include'` or by tricking the user into pasting the admin key; with `*`, the browser will allow the cross-origin response to be read. Combined with admin key in `localStorage` (see 3.1), a malicious page on another origin can’t read localStorage directly but could use a same-origin compromise or a browser extension to exfiltrate the key and then call your API from their origin.
-- **Recommendation:** Set `Access-Control-Allow-Origin` to the exact origin(s) of your frontends (e.g. `https://deem0u.github.io`). Avoid `*` when any endpoint uses credentials or returns sensitive data.
+- **Location:** `cloudflare-worker/worker.js` — `getAllowedOrigin(request, env)` and `patchCors(response, allowedOrigin)`. Origin is taken from request and must be in allowlist (default: `https://deem0u.github.io` plus localhost ports); `Access-Control-Allow-Origin` is set to that origin, not `*`.
+- **Finding:** CORS no longer permits arbitrary origins; only configured origins (env `ALLOWED_ORIGINS` or default list) are allowed. Reduces risk of other sites calling the API with user credentials.
 
 ---
 
@@ -85,11 +86,10 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 
 ## 5. Authentication & Recovery
 
-### 5.1 🔴 No rate limiting (High)
+### 5.1 ✅ Rate limiting in place (remediated)
 
-- **Location:** All auth and recovery endpoints — e.g. `POST /api/auth`, `POST /api/auth/user`, `POST /api/signup`, `POST /api/otp/send`, `POST /api/otp/verify`, `POST /api/recover`, `POST /api/recovery/check`, `POST /api/recovery/verify`, `POST /api/recover/verify-reset-token`, `POST /api/recover/reset-password`.
-- **Risk:** Brute force on passwords, OTPs, or recovery codes; credential stuffing; abuse of signup/OTP/recovery to spam or enumerate users.
-- **Recommendation:** Add rate limiting (e.g. by IP and/or identifier) at the Worker or at the edge (Cloudflare Rate Limiting). Limit failed logins, OTP requests, and recovery attempts per user/email/IP per time window.
+- **Location:** `cloudflare-worker/worker.js` — `checkRateLimit(request, env, keyPrefix, limit, windowSec)` using KV; applied to login (10/60s), signup (5/600s), OTP send/verify (5 and 10/600s), recovery check/verify (5/600s), recover reset (10/600s). Returns 429 when over limit. Can be disabled with `RATE_LIMIT_DISABLED=1`.
+- **Finding:** Auth, signup, OTP, and recovery endpoints are rate-limited by IP. Reduces brute-force and abuse; ensure KV is available for rate-limit keys.
 
 ### 5.2 ⚠️ Admin recovery code entropy (Medium)
 
@@ -122,11 +122,10 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 - **Risk:** Enables enumeration of usernames and account emails and whether an account can use recovery. Often acceptable for UX (e.g. “username taken”, “we’ll send recovery if this email exists”); still discloses account existence.
 - **Recommendation:** If acceptable for your threat model, keep but add rate limiting. If you want to reduce enumeration, return generic messages (e.g. “If an account exists, you will receive an email”) and avoid differing responses for “exists but can’t recover” vs “doesn’t exist”.
 
-### 6.2 🔴 Server error messages leak internal details (High)
+### 6.2 ✅ 500 error body no longer leaks details (remediated)
 
-- **Location:** Top-level `catch` in Worker: `return jsonResponse({ error: error.message }, 500);`
-- **Risk:** Any uncaught exception (e.g. from GitHub API, KV, or code bugs) returns `error.message` to the client. This can leak paths, configuration hints, or stack details.
-- **Recommendation:** In production, return a generic message (e.g. “An error occurred”) and log the full error server-side only. Use a single place for 500 responses so you don’t leak stack or env details.
+- **Location:** Worker top-level catch: `const message = env.DEBUG ? error.message : 'An error occurred. Please try again later.'`; 500 response uses `message`.
+- **Finding:** In production (without `DEBUG`), clients receive a generic message. Set `DEBUG` only in non-production if needed for diagnostics.
 
 ---
 
@@ -137,11 +136,10 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 - **Location:** Worker uses `escapeHtml` / local `esc` for contact form email body and for `generateContactPageHTML` (givenName, familyName, contactEmail, mobile, etc.). Characters `& < > " '` are escaped.
 - **Finding:** Contact form and generated contact page HTML are protected against HTML injection/XSS in those fields.
 
-### 7.2 🔴 Push message HTML rendered without sanitization (High)
+### 7.2 ✅ Push message HTML sanitized (remediated)
 
-- **Location:** Worker **PUT /api/push-message/:username** stores `body.html` in KV. **My Account** fetches it and does `contentEl.innerHTML = d.html` (`myaccount/index.html`).
-- **Risk:** Admin-controlled HTML is rendered as raw HTML. A compromised admin (or malicious admin) can set `html` to `<script>...</script>` or other active content, leading to XSS in the context of the user’s My Account session (session hijack, token/keystroke exfiltration).
-- **Recommendation:** Either (a) treat push message as plain text and render with `textContent` or (b) allow a small subset of HTML and sanitize (e.g. allow only `<p>`, `<strong>`, `<a>` with safe attributes) via a sanitizer (e.g. DOMPurify) before `innerHTML`. Prefer (a) if rich text is not required.
+- **Location:** `myaccount/index.html` — `sanitizePushMessageHtml(msg.html)` is used before assigning to `contentEl.innerHTML`. Allowlist: `b`, `i`, `u`, `strong`, `em`, `ul`, `ol`, `li`, `a`, `p`, `br`, `span`, `blockquote`; links restricted to http(s).
+- **Finding:** Admin-supplied push message HTML is sanitized (tag allowlist and link scheme) before render, reducing XSS from push messages. Continue to restrict allowed tags and attributes if extending the allowlist.
 
 ### 7.3 ⚠️ Other innerHTML usage (Medium)
 
@@ -174,32 +172,48 @@ The application uses a clear split between admin (X-Admin-Key) and user (JWT Bea
 
 | Area              | Severity | Finding |
 |-------------------|----------|---------|
-| CORS              | High     | `Access-Control-Allow-Origin: *` allows any origin to call API with credentials. |
-| Admin key storage| High     | Admin key in `localStorage`; XSS or same-origin compromise could steal it. |
-| Rate limiting     | High     | No rate limiting on auth, signup, OTP, recovery — brute force and abuse possible. |
-| 500 error body    | High     | `error.message` returned to client can leak internal details. |
-| Push message XSS  | High     | Admin-supplied HTML rendered with `innerHTML` in My Account. |
+| CORS              | ✅ Remediated | Allowlist-based origin; not `*`. |
+| Admin key storage | High     | Admin key in `localStorage`; XSS or same-origin compromise could steal it. |
+| Rate limiting     | ✅ Remediated | KV-based rate limits on login, signup, OTP, recovery. |
+| 500 error body    | ✅ Remediated | Generic message unless `DEBUG`; no leak of internal details. |
+| Push message XSS  | ✅ Remediated | Push message HTML sanitized (tag allowlist) before innerHTML. |
 | Internal endpoint | Medium   | `/api/internal/set-admin-credentials` protected only by one secret. |
 | Secrets API       | Medium   | Returns DOB and security answers in plaintext (access-controlled). |
 | Admin OTP read    | Medium   | Admin can read user OTP from GET secrets (by design but sensitive). |
 | JWT secret config | Medium   | Two secret names; weak or inconsistent secret risks forged JWTs. |
-| Recovery code     | Medium   | 6-digit code, 10 min — add rate limiting to mitigate brute force. |
+| Recovery code     | Medium   | 6-digit code, 10 min; rate limiting now mitigates brute force. |
 | User enumeration  | Medium   | check-username, check-account-email, recovery/check expose existence. |
 | Alert/banner HTML | Medium   | innerHTML used for alerts; ensure messages are escaped or sanitized. |
+| Third-party script| Low      | QR code library from CDN (admin, home, myaccount); no SRI. |
 
 ---
 
 ## 10. Recommended Remediation Order
 
-1. **Immediate:** Restrict CORS to your actual frontend origin(s).  
-2. **Immediate:** Stop returning raw `error.message` in 500 responses; log server-side, return generic message to client.  
-3. **High:** Sanitize or disallow HTML for push messages; render as text or with a safe subset of HTML.  
-4. **High:** Add rate limiting for auth, signup, OTP, and recovery endpoints (IP and/or identifier).  
+1. ~~**Immediate:** Restrict CORS.~~ **Done:** Allowlist in place.  
+2. ~~**Immediate:** 500 error body.~~ **Done:** Generic message unless DEBUG.  
+3. ~~**High:** Push message sanitization.~~ **Done:** sanitizePushMessageHtml allowlist.  
+4. ~~**High:** Rate limiting.~~ **Done:** checkRateLimit on auth/signup/OTP/recovery.  
 5. **High:** Move admin key to sessionStorage and/or replace with short-lived session tokens; harden against XSS (CSP, sanitization).  
 6. **Medium:** Standardize JWT secret to one env var; ensure strong value.  
 7. **Medium:** Harden internal setup endpoint (strong secret, consider disabling after setup).  
 8. **Medium:** Review whether secrets API must return security answers; reduce or mask if possible.  
-9. **Ongoing:** Ensure all user/API-derived content shown in the UI is escaped or sanitized before innerHTML.
+9. **Ongoing:** Ensure all user/API-derived content shown in the UI is escaped or sanitized before innerHTML.  
+10. **Low:** Consider SRI (integrity) for QR code CDN script if supply-chain risk is a concern.
+
+---
+
+## 11. Audit update (2026-02-11)
+
+Re-audit pass after QR modal alignment (admin, myaccount), relay default name (DigiCon iD), and template download feature.
+
+- **CORS:** Confirmed allowlist via `getAllowedOrigin` / `patchCors`; no `*`.  
+- **500 responses:** Confirmed generic message when `env.DEBUG` not set.  
+- **Push message:** Confirmed `sanitizePushMessageHtml` used before `contentEl.innerHTML` in My Account.  
+- **Rate limiting:** Confirmed `checkRateLimit` used for login, signup, OTP, recovery, recover-reset.  
+- **New surface:** QR code library loaded from `cdn.jsdelivr.net` (admin, home, myaccount); no integrity/SRI. Documented as low (third-party script) in summary table.
+
+No changes to access control, KV exposure, or auth flows. Previous high findings for CORS, 500 body, push XSS, and rate limiting are marked remediated.
 
 ---
 
