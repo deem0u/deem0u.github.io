@@ -17,6 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" crossorigin=""></script>
   <style>
   .edit-recovery-success-banner { padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-weight: 500; }
   .edit-recovery-success-details ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
@@ -548,6 +549,7 @@
                 <span class="editor-view-value editor-view-title" id="view-contact-page-name"></span>
                 <div class="editor-view-actions">
                   <a id="view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm">View Page</a>
+                  <button type="button" class="btn btn-primary btn-sm" id="view-qr-codes-btn" onclick="showMyAccountQrModal()" disabled>QR Codes</button>
                   <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit</button>
                 </div>
               </div>
@@ -780,6 +782,49 @@
       </div>
     </div>
   </div>
+  <div id="modal-qr" class="modal-overlay">
+    <div class="modal modal-qr">
+      <div class="modal-header"><h3 class="modal-title">QR Codes</h3></div>
+      <div class="modal-body" id="modal-qr-body">
+        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
+        <div id="modal-qr-content" class="modal-qr-content hidden">
+          <div class="modal-qr-desc">
+            <p>Print and stick these QR codes as-is or use them to import to your chosen NFC app to write its contents to a tag. When the QR is scanned or NFC is tapped it will redirect to your Contact Page URL or present you with a vCard populated with the same details on your Contact Page.</p>
+            <div class="banner-reminder modal-qr-nfc-banner">
+              <div class="banner-reminder-content">
+                <p class="banner-reminder-message" style="margin:0;"><strong>Putting both on one NFC tag:</strong> You can store both a URL and a vCard on the same NFC tag. How a phone reacts depends on the device: Android usually offers to save the contact if the vCard is first; iPhones often work better with URL&apos;s (e.g. a link to download the Contact Card) and may not handle the vCards that are directly embedded. If you put both on one tag, expect that some phones will prefer one or the other.</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-qr-tabs">
+            <button type="button" class="modal-qr-tab active" data-qr="url" aria-pressed="true">Contact Page URL</button>
+            <button type="button" class="modal-qr-tab" data-qr="vcard" aria-pressed="false">vCard</button>
+          </div>
+          <div class="modal-qr-panels">
+            <div id="modal-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="modal-qr-img-url" alt="QR code: Contact Page URL" class="modal-qr-img"></div></div>
+            <div id="modal-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
+          </div>
+          <div class="modal-qr-actions">
+            <div id="modal-qr-action-url" class="modal-qr-action active">
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy Contact Page URL</button>
+            </div>
+            <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
+              <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
+            </div>
+            <div class="modal-qr-action modal-qr-action-template">
+              <p class="modal-qr-action-desc">Embed the visible QR on a printable card template and download as PNG.</p>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-download-template">Download on template</button>
+            </div>
+          </div>
+        </div>
+        <div id="modal-qr-error" class="modal-qr-error hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeMyAccountQrModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <div id="delete-page-modal" class="modal-overlay hidden">
     <div class="modal" style="max-width:420px;">
       <div class="modal-header"><h3 class="modal-title">Delete contact page?</h3></div>
@@ -1575,6 +1620,52 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   var verifyEmailCodeInput = document.getElementById('verify-email-code');
   if (verifyEmailCodeInput) verifyEmailCodeInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); submitVerifyEmailCode(); } });
+  (function initMyAccountQrModal() {
+    document.querySelectorAll('#modal-qr .modal-qr-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() { switchMyAccountQrTab(tab.dataset.qr); });
+    });
+    var copyUrlBtn = document.getElementById('modal-qr-copy-url');
+    if (copyUrlBtn) copyUrlBtn.addEventListener('click', function() {
+      if (!myAccountQrData.url) return;
+      navigator.clipboard.writeText(myAccountQrData.url).then(function() {
+        var orig = copyUrlBtn.textContent;
+        copyUrlBtn.textContent = 'Copied!';
+        copyUrlBtn.classList.add('btn-success');
+        copyUrlBtn.classList.remove('btn-primary');
+        setTimeout(function() {
+          copyUrlBtn.textContent = orig;
+          copyUrlBtn.classList.remove('btn-success');
+          copyUrlBtn.classList.add('btn-primary');
+        }, 2000);
+      });
+    });
+    var templateBtn = document.getElementById('modal-qr-download-template');
+    if (templateBtn) templateBtn.addEventListener('click', function() {
+      if (!myAccountQrData || (!myAccountQrData.url && !myAccountQrData.vcard)) return;
+      if (!window.QRCode) return;
+      var useUrl = !document.getElementById('modal-qr-action-url').classList.contains('hidden');
+      var data = useUrl ? myAccountQrData.url : (myAccountQrData.vcard || '');
+      if (!data) return;
+      var cw = 600, ch = 350, qrSize = 160;
+      var qrX = cw - qrSize - 40, qrY = Math.round((ch - qrSize) / 2);
+      var main = document.createElement('canvas');
+      main.width = cw; main.height = ch;
+      var ctx = main.getContext('2d');
+      ctx.fillStyle = '#fafafa'; ctx.fillRect(0, 0, cw, ch);
+      ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, cw - 2, ch - 2);
+      ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 24px Inter, sans-serif'; ctx.fillText('DigiCon iD', 24, 40);
+      ctx.font = '14px sans-serif'; ctx.fillStyle = '#555'; ctx.fillText('Scan QR for contact', 24, 62);
+      var qrCanvas = document.createElement('canvas');
+      window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 2 }, function(err) {
+        if (err) return;
+        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+        var a = document.createElement('a');
+        a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '.png';
+        a.href = main.toDataURL('image/png');
+        a.click();
+      });
+    });
+  })();
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.searchable-select')) {
       document.querySelectorAll('.searchable-select-dropdown').forEach(d => d.classList.remove('show'));
@@ -1741,10 +1832,93 @@ function enterViewMode() {
   refreshViewModeDisplay();
   var vpl = document.getElementById('view-page-link');
   if (vpl) { vpl.href = viewPageHref(); vpl.style.pointerEvents = isCreateMode ? 'none' : ''; }
+  var qrBtn = document.getElementById('view-qr-codes-btn');
+  if (qrBtn) qrBtn.disabled = isCreateMode;
   document.getElementById('editor-contact-edit').classList.remove('show');
   document.getElementById('editor-contact-view').classList.remove('hidden');
   var delBtn = document.getElementById('form-delete-page-btn');
   if (delBtn) delBtn.style.display = 'none';
+}
+
+var myAccountQrData = { url: '', vcard: '', fn: '' };
+
+function buildMyAccountQrData() {
+  function v(id) { var e = document.getElementById(id); return e ? (e.value || e.textContent || '').trim() : ''; }
+  var given = v('first-name');
+  var family = v('surname');
+  var email = v('email');
+  var tel = v('mobile');
+  var country = (function() { var e = document.getElementById('home-country-edit-text'); return e && e.textContent !== 'Select country' ? e.textContent.trim() : v('home-country'); })();
+  var fn = [given, family].filter(Boolean).join(' ').trim() || username || 'contact';
+  var url = viewPageHref();
+  var lines = ['Given Name: ' + given, 'Family Name: ' + family, 'Email: ' + email, 'Contact Number: ' + tel, 'Home Country: ' + country];
+  var text = lines.join('\r\n');
+  var adr = ';;;;;;' + (country || '').replace(/;/g, ',');
+  var vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:' + fn + '\r\nN:' + family + ';' + given + ';;;\r\n';
+  if (tel) vcard += 'TEL;TYPE=VOICE:' + tel + '\r\n';
+  if (email) vcard += 'EMAIL:' + email + '\r\n';
+  vcard += 'URL:' + url + '\r\n';
+  vcard += 'ADR;TYPE=HOME:' + adr + '\r\n';
+  var note = (text || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n');
+  vcard += 'NOTE:' + note + '\r\n';
+  vcard += 'END:VCARD';
+  return { url: url, vcard: vcard, fn: fn };
+}
+
+function showMyAccountQrModal() {
+  var overlay = document.getElementById('modal-qr');
+  var loading = document.getElementById('modal-qr-loading');
+  var content = document.getElementById('modal-qr-content');
+  var errEl = document.getElementById('modal-qr-error');
+  var downloadA = document.getElementById('modal-qr-download-vcard');
+  if (!overlay || !loading || !content || !errEl) return;
+  overlay.classList.add('show');
+  loading.classList.remove('hidden');
+  content.classList.add('hidden');
+  errEl.classList.add('hidden');
+  errEl.textContent = '';
+  try {
+    myAccountQrData = buildMyAccountQrData();
+    var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';
+    document.getElementById('modal-qr-img-url').setAttribute('src', base + encodeURIComponent(myAccountQrData.url));
+    document.getElementById('modal-qr-img-vcard').setAttribute('src', base + encodeURIComponent(myAccountQrData.vcard || ''));
+    if (downloadA) {
+      downloadA.setAttribute('href', 'data:text/vcard;charset=utf-8,' + encodeURIComponent(myAccountQrData.vcard || ''));
+      downloadA.setAttribute('download', (myAccountQrData.fn || 'contact').replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf');
+    }
+    switchMyAccountQrTab('url');
+    loading.classList.add('hidden');
+    content.classList.remove('hidden');
+  } catch (e) {
+    loading.classList.add('hidden');
+    errEl.textContent = (e && e.message) ? e.message : 'Could not generate QR codes.';
+    errEl.classList.remove('hidden');
+  }
+}
+
+function closeMyAccountQrModal() {
+  var overlay = document.getElementById('modal-qr');
+  if (overlay) overlay.classList.remove('show');
+}
+
+function switchMyAccountQrTab(name) {
+  var tabs = document.querySelectorAll('#modal-qr .modal-qr-tab');
+  var panels = document.querySelectorAll('#modal-qr .modal-qr-panel');
+  var actions = document.querySelectorAll('#modal-qr .modal-qr-action:not(.modal-qr-action-template)');
+  tabs.forEach(function(t) {
+    var on = t.dataset.qr === name;
+    t.classList.toggle('active', on);
+    t.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  panels.forEach(function(p) {
+    p.classList.toggle('hidden', p.id !== 'modal-qr-panel-' + name);
+  });
+  actions.forEach(function(a) {
+    var isUrl = a.id === 'modal-qr-action-url';
+    var isVcard = a.id === 'modal-qr-action-vcard';
+    a.classList.toggle('hidden', !(isUrl && name === 'url') && !(isVcard && name === 'vcard'));
+    a.classList.toggle('active', (isUrl && name === 'url') || (isVcard && name === 'vcard'));
+  });
 }
 
 function cancelForm() {
@@ -2436,17 +2610,20 @@ function applyUnverifiedRestriction() {
   var bannerText = document.getElementById("unverified-banner-text");
   var editBtn = document.getElementById("edit-contact-page-btn");
   var newPageBtn = document.getElementById("new-contact-page-btn");
+  var qrBtn = document.getElementById("view-qr-codes-btn");
   var unverifiedTooltip = 'Verify your email to edit your Contact Page and add new contact pages.';
   if (isVerified) {
     if (wrap) wrap.classList.remove("editor-form-disabled");
     if (banner) banner.classList.add("hidden");
     if (editBtn) { editBtn.disabled = false; editBtn.removeAttribute('title'); }
     if (newPageBtn) { newPageBtn.disabled = !contactPagesLimit.canCreate; newPageBtn.removeAttribute('title'); }
+    if (qrBtn) { qrBtn.disabled = isCreateMode; qrBtn.removeAttribute('title'); }
   } else {
     if (wrap) wrap.classList.add("editor-form-disabled");
     if (banner) banner.classList.remove("hidden");
     if (editBtn) { editBtn.disabled = true; editBtn.setAttribute('title', unverifiedTooltip); }
     if (newPageBtn) { newPageBtn.disabled = true; newPageBtn.setAttribute('title', unverifiedTooltip); }
+    if (qrBtn) { qrBtn.disabled = true; qrBtn.setAttribute('title', unverifiedTooltip); }
     var verifyEmailBtn = document.getElementById('verify-email-btn');
     if (verifyEmailBtn) {
       verifyEmailBtn.disabled = !hasAccountEmail;

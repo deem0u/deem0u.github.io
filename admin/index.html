@@ -753,24 +753,29 @@
     <div class="modal modal-qr">
       <div class="modal-header"><h3 class="modal-title">QR Codes</h3></div>
       <div class="modal-body" id="modal-qr-body">
-        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading?</div>
+        <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
         <div id="modal-qr-content" class="modal-qr-content hidden">
-          <p class="modal-qr-desc">Toggle between the required QR codes for download, copy or exporting as needed. You can use the NFC Tools App to scan each QR to import as records to then write to an appropriate NFC tag.</p>
+          <div class="modal-qr-desc">
+            <p>Print and stick these QR codes as-is or use them to import to your chosen NFC app to write its contents to a tag. When the QR is scanned or NFC is tapped it will redirect to your Contact Page URL or present you with a vCard populated with the same details on your Contact Page.</p>
+            <div class="banner-reminder modal-qr-nfc-banner">
+              <div class="banner-reminder-content">
+                <p class="banner-reminder-message" style="margin:0;"><strong>Putting both on one NFC tag:</strong> You can store both a URL and a vCard on the same NFC tag. How a phone reacts depends on the device: Android usually offers to save the contact if the vCard is first; iPhones often work better with URL&apos;s (e.g. a link to download the Contact Card) and may not handle the vCards that are directly embedded. If you put both on one tag, expect that some phones will prefer one or the other.</p>
+              </div>
+            </div>
+          </div>
           <div class="modal-qr-tabs">
-            <button type="button" class="modal-qr-tab active" data-qr="url" aria-pressed="true">URL</button>
+            <button type="button" class="modal-qr-tab active" data-qr="url" aria-pressed="true">Contact Page URL</button>
             <button type="button" class="modal-qr-tab" data-qr="vcard" aria-pressed="false">vCard</button>
           </div>
           <div class="modal-qr-panels">
-            <div id="modal-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="modal-qr-img-url" alt="QR code: URL" class="modal-qr-img"></div></div>
+            <div id="modal-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="modal-qr-img-url" alt="QR code: Contact Page URL" class="modal-qr-img"></div></div>
             <div id="modal-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
           </div>
           <div class="modal-qr-actions">
             <div id="modal-qr-action-url" class="modal-qr-action active">
-              <p class="modal-qr-action-desc">Copy as URL to your Contact Page</p>
-              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy URL</button>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy Contact Page URL</button>
             </div>
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
-              <p class="modal-qr-action-desc">Download vCard</p>
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
             </div>
             <div class="modal-qr-action modal-qr-action-template">
@@ -5286,12 +5291,12 @@ document.getElementById('modal-qr-copy-url').addEventListener('click', function(
   if (!qrModalData.url) return;
   var btn = document.getElementById('modal-qr-copy-url');
   navigator.clipboard.writeText(qrModalData.url).then(function() {
-    var orig = btn.innerHTML;
-    btn.innerHTML = '? Copied';
+    var orig = btn.textContent;
+    btn.textContent = 'Copied!';
     btn.classList.add('btn-success');
     btn.classList.remove('btn-primary');
     setTimeout(function() {
-      btn.innerHTML = orig;
+      btn.textContent = orig;
       btn.classList.remove('btn-success');
       btn.classList.add('btn-primary');
     }, 2000);
