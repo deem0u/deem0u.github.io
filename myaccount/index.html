@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>DigiCon iD - MyAccount</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='24' font-size='24'>✉</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
@@ -2331,12 +2330,10 @@ function isMartianAnswer(answer) {
 function isEasterEggEligible(profile) {
   return !!(profile && profile.easterEggEligible === true);
 }
-function isFirstLoginToday(user) {
-  if (!user) return false;
-  var today = new Date().toISOString().slice(0, 10);
+function easterEggAlreadyShownThisSession() {
   try {
-    return (localStorage.getItem('easter_egg_last_' + user) || '') !== today;
-  } catch (_) { return false; }
+    return sessionStorage.getItem('easter_egg_shown') === '1';
+  } catch (_) { return true; }
 }
 function showEasterEggAnimation() {
   var overlay = document.createElement('div');
@@ -2349,6 +2346,9 @@ function showEasterEggAnimation() {
   img.setAttribute('referrerpolicy', 'no-referrer');
   overlay.appendChild(img);
   document.body.appendChild(overlay);
+  try {
+    sessionStorage.setItem('easter_egg_shown', '1');
+  } catch (_) {}
   var displayMs = 15000 + Math.floor(Math.random() * 15000);
   setTimeout(function() {
     overlay.classList.add('easter-egg-fadeout');
@@ -2356,13 +2356,10 @@ function showEasterEggAnimation() {
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     }, 1000);
   }, displayMs);
-  try {
-    if (username) localStorage.setItem('easter_egg_last_' + username, new Date().toISOString().slice(0, 10));
-  } catch (_) {}
 }
 function tryShowEasterEgg() {
   if (!username || !profileData) return;
-  if (!isEasterEggEligible(profileData) || !isFirstLoginToday(username)) return;
+  if (!isEasterEggEligible(profileData) || easterEggAlreadyShownThisSession()) return;
   showEasterEggAnimation();
 }
 

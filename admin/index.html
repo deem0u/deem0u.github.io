@@ -747,12 +747,10 @@
           <div class="modal-qr-tabs">
             <button type="button" class="modal-qr-tab active" data-qr="url" aria-pressed="true">URL</button>
             <button type="button" class="modal-qr-tab" data-qr="vcard" aria-pressed="false">vCard</button>
-            <button type="button" class="modal-qr-tab" data-qr="text" aria-pressed="false">Text</button>
           </div>
           <div class="modal-qr-panels">
             <div id="modal-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="modal-qr-img-url" alt="QR code: URL" class="modal-qr-img"></div></div>
             <div id="modal-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
-            <div id="modal-qr-panel-text" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-text" alt="QR code: text" class="modal-qr-img"></div></div>
           </div>
           <div class="modal-qr-actions">
             <div id="modal-qr-action-url" class="modal-qr-action active">
@@ -762,10 +760,6 @@
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <p class="modal-qr-action-desc">Download vCard</p>
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
-            </div>
-            <div id="modal-qr-action-text" class="modal-qr-action hidden">
-              <p class="modal-qr-action-desc">Copy as Plain Text</p>
-              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-text">Copy text</button>
             </div>
           </div>
         </div>
@@ -4295,11 +4289,11 @@ document.getElementById('modal-confirm').addEventListener('click', () => { if (m
   }
 })();
 
-var qrModalData = { url: '', vcard: '', text: '' };
+var qrModalData = { url: '', vcard: '' };
 
 function closeQrModal() {
   document.getElementById('modal-qr').classList.remove('show');
-  qrModalData = { url: '', vcard: '', text: '' };
+  qrModalData = { url: '', vcard: '' };
 }
 
 
@@ -5193,7 +5187,7 @@ async function showQrModal(folder) {
   errEl.classList.add('hidden');
   errEl.textContent = '';
   overlay.classList.add('show');
-  qrModalData = { url: '', vcard: '', text: '' };
+  qrModalData = { url: '', vcard: '' };
 
   try {
     if (contactPage === 'index' || !contactPage) {
@@ -5231,12 +5225,11 @@ async function showQrModal(folder) {
       throw new Error('Could not read contact page content. The page format may have changed.');
     }
     if (!data || typeof data.url !== 'string') throw new Error('Invalid contact data');
-    qrModalData = { url: data.url, vcard: data.vcard || '', text: data.text || '' };
+    qrModalData = { url: data.url, vcard: data.vcard || '' };
 
     var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';
     document.getElementById('modal-qr-img-url').setAttribute('src', base + encodeURIComponent(data.url));
     document.getElementById('modal-qr-img-vcard').setAttribute('src', base + encodeURIComponent(data.vcard || ''));
-    document.getElementById('modal-qr-img-text').setAttribute('src', base + encodeURIComponent(data.text || ''));
 
     downloadA.setAttribute('href', 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard || ''));
     downloadA.setAttribute('download', (data.fn || folder).replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf');
@@ -5288,22 +5281,6 @@ document.getElementById('modal-qr-copy-url').addEventListener('click', function(
     }, 2000);
   });
 });
-document.getElementById('modal-qr-copy-text').addEventListener('click', function() {
-  if (!qrModalData.text) return;
-  var btn = document.getElementById('modal-qr-copy-text');
-  navigator.clipboard.writeText(qrModalData.text).then(function() {
-    var orig = btn.innerHTML;
-    btn.innerHTML = '? Copied';
-    btn.classList.add('btn-success');
-    btn.classList.remove('btn-primary');
-    setTimeout(function() {
-      btn.innerHTML = orig;
-      btn.classList.remove('btn-success');
-      btn.classList.add('btn-primary');
-    }, 2000);
-  });
-});
-
 function escapeHtml(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 function showAlert(id, msg, type, appendSafeHtml, allowHtml) { const e = document.getElementById(id); e.className = 'alert alert-' + type + ' show'; var content = (allowHtml ? msg : escapeHtml(msg)); if (appendSafeHtml) content += appendSafeHtml; e.innerHTML = '<div class="alert-content">' + content + '</div>'; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
