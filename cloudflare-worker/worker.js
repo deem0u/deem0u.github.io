@@ -749,11 +749,13 @@ async function verifyPassword(plain, stored) {
 const EMAIL_RESTRICTION_RECIPIENT = 'deem0u.github.io@gmail.com';
 
 /**
- * Check if email for this user should be diverted to dev (KV overrides env).
- * When divertAllGlobal is '1', or divert_email:username is '1', or env EMAIL_SEND_RESTRICTED is not 'false', divert.
+ * Check if email for this user should be diverted to dev (restriction recipient).
+ * Divert only when explicitly enabled: env EMAIL_SEND_RESTRICTED is 'true' or '1', or KV site:divert_all_global is '1', or KV divert_email:username is '1'.
+ * When EMAIL_SEND_RESTRICTED is unset or 'false', emails go to the intended recipient unless KV overrides (divert all or per-user).
  */
 async function shouldDivertEmail(env, username) {
-  if (env.EMAIL_SEND_RESTRICTED !== 'false') return true;
+  const restrictEnv = (env.EMAIL_SEND_RESTRICTED || '').toString().toLowerCase();
+  if (restrictEnv === 'true' || restrictEnv === '1') return true;
   if (!env.EDIT_KEYS_KV) return false;
   const globalOn = (await env.EDIT_KEYS_KV.get('site:divert_all_global')) === '1';
   if (globalOn) return true;
@@ -764,7 +766,7 @@ async function shouldDivertEmail(env, username) {
 /**
  * Send email via the relay (Vercel serverless with Nodemailer + Gmail SMTP).
  * Requires env: EMAIL_RELAY_URL, EMAIL_RELAY_SECRET.
- * Divert: when shouldDivertEmail(env, opts.username) or EMAIL_SEND_RESTRICTED is not 'false', send to EMAIL_RESTRICTION_RECIPIENT with [DEV] subject.
+ * Divert: when shouldDivertEmail(env, opts.username) is true, send to EMAIL_RESTRICTION_RECIPIENT with [DEV] subject.
  * @param {object} env - Worker env
  * @param {{ to: string, subject: string, html?: string, text?: string, username?: string }} opts
  * @returns {{ ok: boolean, error?: string }}

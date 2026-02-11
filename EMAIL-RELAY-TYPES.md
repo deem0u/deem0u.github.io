@@ -2,7 +2,7 @@
 
 All transactional emails are sent by the **Cloudflare Worker** via the **Vercel email relay** (Nodemailer + Gmail SMTP). The relay accepts `to`, `subject`, `html`, and `text`; it uses a fixed **From** address: `"Contact Page Editor" <GMAIL_USER>` (where `GMAIL_USER` is the env var in Vercel).
 
-When **email divert** is on (e.g. `EMAIL_SEND_RESTRICTED` not `'false'`, or per-user `divert_email:username`), user-facing emails are sent to `EMAIL_RESTRICTION_RECIPIENT` with subject prefixed `[DEV] (would go to: …)`.
+When **email divert** is on (e.g. `EMAIL_SEND_RESTRICTED` is `'true'` or `'1'`, or KV `site:divert_all_global` or per-user `divert_email:username`), user-facing emails are sent to `EMAIL_RESTRICTION_RECIPIENT` with subject prefixed `[DEV] (would go to: …)`.
 
 ---
 
@@ -15,7 +15,7 @@ When **email divert** is on (e.g. `EMAIL_SEND_RESTRICTED` not `'false'`, or per-
 | **Subject** | `Admin Dashboard - Recovery Code` |
 | **Text** | `Your 8-digit recovery code is: {recoveryCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.` |
 | **HTML** | Not sent (text only). |
-| **Divert** | No `username` passed; divert is by global `EMAIL_SEND_RESTRICTED` only. |
+| **Divert** | No `username` passed; divert is by global `EMAIL_SEND_RESTRICTED` ('true'/'1') or KV only. |
 
 ---
 

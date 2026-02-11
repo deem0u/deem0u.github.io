@@ -15,7 +15,7 @@ EMAIL_RELAY_URL = "https://deem0u-github-io.vercel.app/api/send"
 # Optional (for automated email):
 # EMAIL_RELAY_URL - Vercel relay URL, e.g. https://your-project.vercel.app/api/send
 # EMAIL_RELAY_SECRET - Same value as RELAY_SECRET in Vercel
-# EMAIL_SEND_RESTRICTED - When not 'false', all emails go to deem0u.github.io@gmail.com (set to 'false' when live)
+# EMAIL_SEND_RESTRICTED - Set to 'true' or '1' to divert all emails to deem0u.github.io@gmail.com (unset or 'false' = send to real recipient)
 # Optional (security remediations):
 # ALLOWED_ORIGINS - Comma-separated CORS origins. Default includes production + localhost (3000, 8080, 5173). Set to override the full list.
 # RATE_LIMIT_DISABLED - Set to '1' to disable rate limiting (e.g. for local testing).
