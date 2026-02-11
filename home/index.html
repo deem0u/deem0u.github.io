@@ -150,10 +150,10 @@
   .signup-step2-card .form-group { margin-bottom: 0.5rem; }
   .signup-step2-card .form-group:last-child { margin-bottom: 0; }
   .signup-step2-card .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
-  .signup-step2-card .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; min-height: 0; line-height: 1.4; font-size: 0.8125rem; }
-  .signup-step2-card.step2-hints-hidden .form-hint.step2-hint { visibility: hidden; }
-  .signup-step2-card .form-hint-row { display: block; margin-top: 0.25rem; margin-bottom: 0.5rem; }
-  .signup-step2-card .form-hint-above { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
+  .signup-step2-card .form-hint { margin-top: 0.2rem; margin-bottom: 0.35rem; min-height: 0; line-height: 1.4; font-size: 0.8125rem; }
+  .signup-step2-card.step2-hints-hidden .form-hint.step2-hint { display: none !important; }
+  .signup-step2-card .form-hint-row { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
+  .signup-step2-card .form-hint-above { display: block; margin-top: 0.15rem; margin-bottom: 0.25rem; }
   .signup-step2-card .form-row.form-row-with-hint { margin-bottom: 0; }
   .signup-step2-card .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
   .signup-step2-card .form-section { padding: 0.4rem 0.5rem; margin-top: 0; background: var(--color-bg-subtle, #f9fafb); border: 1px solid var(--color-border, #eee); border-radius: var(--radius-md, 6px); }
@@ -163,19 +163,20 @@
   .signup-step2-card .form-input, .signup-step2-card .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
   .signup-step2-card .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
   .signup-step2-card .contact-page-url-anatomy .url-edit-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
-  .signup-step2-card .contact-page-url-anatomy .url-anatomy-row { flex-wrap: wrap; }
-  .signup-step2-card .contact-page-url-anatomy .url-slug-input { color: var(--accent-purple, #9370db); font-weight: 700; min-width: 10ch; flex: 1 1 12rem; }
+  .signup-step2-card .contact-page-url-anatomy .url-anatomy-row { flex-wrap: wrap; align-items: center; }
+  .signup-step2-card .contact-page-url-anatomy .url-slug-input { color: var(--accent-purple, #9370db); font-weight: 700; min-width: 0; max-width: 100%; flex: 1 1 12rem; box-sizing: border-box; }
   .signup-step2-card .step2-url-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
   .signup-step2-card .step2-toggle-hints-wrap { margin-left: auto; }
   .signup-step2-card .step2-skip-wrap { margin-left: 0.5rem; }
-  .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-text-secondary, #6b7280); font-size: inherit; }
-  .signup-step2-card .step2-skip-link:hover { color: var(--accent-teal, #0d9488); text-decoration: underline; }
+  .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-text-secondary, #6b7280); font-size: 0.875rem; }
+  .signup-step2-card .step2-skip-link:hover { color: var(--color-text, #111); text-decoration: underline; }
   @media (max-width: 768px) {
     .signup-step2-card .form-row { grid-template-columns: 1fr; }
   }
-  /* Signup OTP (verify email): spacing above yellow box; skip link in footer right */
+  /* Signup OTP (verify email): spacing above yellow box; actions row with skip aligned */
   .signup-otp-banner { margin-top: var(--space-4, 1rem); }
-  .signup-otp-footer { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-5); border-top: 1px solid var(--color-border, #eee); background: var(--white, #fff); }
+  .signup-otp-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+  .signup-otp-skip { margin-left: auto; }
   /* Generate QR step: yellow NFC banner; footer back link like skip */
   .modal-qr-nfc-banner { margin-top: var(--space-4, 1rem); }
   .step3-qr-footer-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
@@ -401,13 +402,11 @@
                 <span class="form-error" id="error-otp-code" role="alert"></span>
               </div>
               <div id="otp-alert" class="alert"></div>
-              <div class="form-actions">
-                <button type="button" class="btn btn-primary btn-lg" id="otp-verify-btn" onclick="verifyOtp()">Verify</button>
+              <div class="form-actions signup-otp-actions">
+                <button type="button" class="btn btn-primary" id="otp-verify-btn" onclick="verifyOtp()">Verify</button>
                 <button type="button" class="btn btn-secondary" onclick="resendOtp()">Resend code</button>
+                <button type="button" class="btn btn-ghost btn-sm signup-otp-skip" onclick="skipVerificationToAllSet()">Skip Verification →</button>
               </div>
-            </div>
-            <div class="card-footer signup-otp-footer">
-              <button type="button" class="btn btn-ghost btn-sm" onclick="skipVerificationToAllSet()">Skip Verification →</button>
             </div>
           </div>
           <div id="signup-step2-card" class="card signup-step2-card hidden step2-hints-hidden">
