@@ -238,19 +238,19 @@
   }
   .easter-egg-overlay.easter-egg-fadeout { opacity: 0; transition: opacity 1s ease-out; }
   @keyframes easter-egg-float {
-    0%   { left: 8%;  top: 18%; transform: rotate(-5deg) translateY(0); }
-    8%   { left: 18%; top: 12%; transform: rotate(3deg) translateY(-4px); }
-    16%  { left: 28%; top: 22%; transform: rotate(-2deg) translateY(2px); }
-    24%  { left: 42%; top: 15%; transform: rotate(4deg) translateY(-3px); }
-    32%  { left: 58%; top: 20%; transform: rotate(-3deg) translateY(0); }
-    40%  { left: 78%; top: 28%; transform: rotate(2deg) translateY(3px); }
-    48%  { left: 72%; top: 48%; transform: rotate(-4deg) translateY(-2px); }
-    56%  { left: 55%; top: 62%; transform: rotate(3deg) translateY(4px); }
-    64%  { left: 35%; top: 58%; transform: rotate(-2deg) translateY(0); }
-    72%  { left: 18%; top: 48%; transform: rotate(4deg) translateY(-3px); }
-    80%  { left: 12%; top: 32%; transform: rotate(-3deg) translateY(2px); }
-    88%  { left: 22%; top: 22%; transform: rotate(2deg) translateY(-2px); }
-    100% { left: 8%;  top: 18%; transform: rotate(-5deg) translateY(0); }
+    0%   { left: 8%;  top: 18%; transform: rotate(0deg) translateY(0); }
+    8%   { left: 18%; top: 12%; transform: rotate(29deg) translateY(-4px); }
+    16%  { left: 28%; top: 22%; transform: rotate(58deg) translateY(2px); }
+    24%  { left: 42%; top: 15%; transform: rotate(86deg) translateY(-3px); }
+    32%  { left: 58%; top: 20%; transform: rotate(115deg) translateY(0); }
+    40%  { left: 78%; top: 28%; transform: rotate(144deg) translateY(3px); }
+    48%  { left: 72%; top: 48%; transform: rotate(173deg) translateY(-2px); }
+    56%  { left: 55%; top: 62%; transform: rotate(202deg) translateY(4px); }
+    64%  { left: 35%; top: 58%; transform: rotate(230deg) translateY(0); }
+    72%  { left: 18%; top: 48%; transform: rotate(259deg) translateY(-3px); }
+    80%  { left: 12%; top: 32%; transform: rotate(288deg) translateY(2px); }
+    88%  { left: 22%; top: 22%; transform: rotate(317deg) translateY(-2px); }
+    100% { left: 8%;  top: 18%; transform: rotate(360deg) translateY(0); }
   }
   @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-sidebar { width: 100%; } .editor-profile-strip, .contact-pages-container { width: 100%; } }
     </style>
@@ -2362,6 +2362,24 @@ function tryShowEasterEgg() {
   if (!isEasterEggEligible(profileData) || easterEggAlreadyShownThisSession()) return;
   showEasterEggAnimation();
 }
+
+(function initEasterEggPhraseTrigger() {
+  var phrase = 'chris is the martian';
+  var buffer = '';
+  var maxLen = phrase.length + 5;
+  document.addEventListener('keydown', function(e) {
+    var el = document.activeElement;
+    var tag = el && el.tagName ? el.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || (el && el.isContentEditable)) return;
+    var key = (e.key && e.key.length === 1) ? e.key : '';
+    if (!key) return;
+    buffer = (buffer + key).slice(-maxLen);
+    if (buffer.toLowerCase().indexOf(phrase) !== -1) {
+      buffer = '';
+      if (username && profileData && isEasterEggEligible(profileData)) showEasterEggAnimation();
+    }
+  });
+})();
 
 function updateWelcomeUserName() {
   if (!username) return;
