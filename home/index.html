@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>DigiCon iD - Home</title>
+  <meta name="description" content="Your details. Your control. Create a digital contact page and QR code for luggage and tags—discreet, updatable, no ugly labels.">
+  <meta property="og:title" content="DigiCon iD - Home">
+  <meta property="og:description" content="Your details. Your control. Create a digital contact page and QR code for luggage and tags—discreet, updatable, no ugly labels.">
+  <meta property="og:url" content="https://deem0u.github.io/home/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DigiCon iD">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="DigiCon iD - Home">
+  <meta name="twitter:description" content="Your details. Your control. Create a digital contact page and QR code for luggage and tags—discreet, updatable, no ugly labels.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
@@ -1113,12 +1122,14 @@
     var email = sessionStorage.getItem('signup_email') || '';
     var firstName = sessionStorage.getItem('signup_first_name') || '';
     var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var dob = sessionStorage.getItem('signup_dob') || '';
+    var contactSlug = sessionStorage.getItem('signup_contact_slug') || '';
     document.getElementById('step4-editor-link').href = EDITOR_URL;
     try {
       await fetch(API + '/api/signup-success-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, accountEmail: email, firstName, lastName })
+        body: JSON.stringify({ username, accountEmail: email, firstName, lastName, dob, contactSlug })
       });
     } catch (e) {}
   }
@@ -1135,11 +1146,13 @@
     var email = sessionStorage.getItem('signup_email') || '';
     var firstName = sessionStorage.getItem('signup_first_name') || '';
     var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var dob = sessionStorage.getItem('signup_dob') || '';
+    var contactSlug = sessionStorage.getItem('signup_contact_slug') || '';
     try {
       fetch(API + '/api/signup-success-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, accountEmail: email, firstName, lastName })
+        body: JSON.stringify({ username, accountEmail: email, firstName, lastName, dob, contactSlug })
       }).catch(function() {});
     } catch (e) {}
   }

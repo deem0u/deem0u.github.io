@@ -890,7 +890,7 @@ async function handleRecover(request, env) {
 
     const baseUrl = getAdminBaseUrl(env);
     const resetLink = `${baseUrl}/?reset=${resetToken}`;
-    const subject = 'Admin Dashboard - Password Reset Link';
+    const subject = 'DigiCon iD - Admin Dashboard - Password Reset Link';
     const text = `Click the link below to set a new password. The link expires in 1 hour.\n\n${resetLink}\n\nIf you did not request this, please ignore this email.`;
     const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
     if (!emailResult.ok) {
@@ -905,7 +905,7 @@ async function handleRecover(request, env) {
   const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
   await env.EDIT_KEYS_KV.put('admin:recovery_code', JSON.stringify({ recoveryCode, expiresAt }));
 
-  const subject = 'Admin Dashboard - Recovery Code';
+  const subject = 'DigiCon iD - Admin Dashboard - Recovery Code';
   const text = `Your 8-digit recovery code is: ${recoveryCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
   const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
   if (!emailResult.ok) {
@@ -1177,9 +1177,9 @@ async function handleOtpSend(request, env) {
   if (!accountEmail || !accountEmail.includes('@')) return jsonResponse({ error: 'No account email' }, 400);
   const code = generateOtpCode();
   await env.EDIT_KEYS_KV.put(`otp:${username}`, code, { expirationTtl: 600 });
-  const subject = 'Your verification code - Digital Contact Page';
-  const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, you can ignore this email.\n\nPlease check your spam/junk folder if you don't see this email.`;
-  const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. If you did not request this, you can ignore this email.</p><p>Please check your spam/junk folder if you don't see this email.</p>`;
+  const subject = 'DigiCon iD - Your verification code';
+  const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, you can ignore this email.`;
+  const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. If you did not request this, you can ignore this email.</p>`;
   const sent = await sendEmail(env, { to: accountEmail, subject, text, html, username });
   if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send' }, 500);
   return jsonResponse({ sent: true });
@@ -1204,13 +1204,21 @@ async function handleSignupSuccessEmail(request, env) {
   const accountEmail = (body.accountEmail || '').trim();
   const firstName = (body.firstName || '').trim();
   const lastName = (body.lastName || body.surname || '').trim();
+  const dob = (body.dob || '').trim();
+  const contactSlug = (body.contactSlug || '').trim();
   if (!username || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
   const baseUrl = `https://${CONFIG.owner}.github.io`;
-  const viewLink = `${baseUrl}/user/${username}/`;
+  const viewLink = contactSlug ? `${baseUrl}/user/${username}/${contactSlug}.html` : `${baseUrl}/user/${username}/`;
   const editUrl = `${baseUrl}/myaccount/`;
-  const subject = `Your Digital Contact Page - ${username} - Account Details`;
-  const text = `Below are details related to your account you should keep handy.\n\n\t• User Name: ${username}\n\t• Your Digital Contact Page URL: ${viewLink}\n\nHOW TO UPDATE YOUR DIGITAL CONTACT PAGE\n\t1. Visit My Account (${editUrl}) and sign in with your Account Email and Password\n\t2. Make your changes\n\t3. Click "Save Changes"\n\nIf you wish to have your account deleted, contact deem0u.github.io@gmail.com`;
-  const html = `<p>Below are details related to your account you should keep handy.</p><ul><li><strong>User Name:</strong> ${username}</li><li><strong>Contact Page URL:</strong> <a href="${viewLink}">${viewLink}</a></li></ul><p><strong>HOW TO UPDATE YOUR DIGITAL CONTACT PAGE</strong></p><ol><li>Visit the <a href="${editUrl}">My Account</a> and sign in with your Account Email and Password</li><li>Make your changes</li><li>Click "Save Changes"</li></ol><p>If you wish to have your account deleted, contact deem0u.github.io@gmail.com</p>`;
+  const subject = `DigiCon iD - ${username} - Account Details`;
+  const contactPageLine = contactSlug
+    ? `\n\t• Page URL: ${viewLink}`
+    : '\n\t• —\n\t• To be setup later in My Account';
+  const text = `Below are details related to your account you should keep handy.\n\nProfile details\n\t• User Name: ${username}\n\t• First Name: ${firstName}\n\t• Last Name: ${lastName}\n\t• Account Email: ${accountEmail}\n\t• Date of Birth: ${dob}\n\nContact Page & QR's${contactPageLine}\n\nNext steps\nClick the "Go to My Account" button below where you can:\n\t• Add new or view and edit all your contact pages\n\t• Generate the QR codes for your Contact Pages (URL and vCard)\n\t• Edit your profile details including your username\n\t• Change your login password and reset your security questions\n\nIf you did not Sign Up or make these account changes please contact us at deem0u.github.io@gmail.com`;
+  const contactPageHtml = contactSlug
+    ? `<ul><li><strong>Page URL:</strong> <a href="${viewLink}">${viewLink}</a></li></ul>`
+    : `<ul><li>—</li><li><em>To be setup later in My Account</em></li></ul>`;
+  const html = `<div style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5; color: #1a1a1a;"><p>Below are details related to your account you should keep handy.</p><p><strong>Profile details</strong></p><ul><li><strong>User Name:</strong> ${escapeHtml(username)}</li><li><strong>First Name:</strong> ${escapeHtml(firstName)}</li><li><strong>Last Name:</strong> ${escapeHtml(lastName)}</li><li><strong>Account Email:</strong> ${escapeHtml(accountEmail)}</li><li><strong>Date of Birth:</strong> ${escapeHtml(dob)}</li></ul><p><strong>Contact Page &amp; QR's</strong></p>${contactPageHtml}<p><strong>Next steps</strong></p><p>Click the &quot;Go to My Account&quot; button below where you can:</p><ul><li>Add new or view and edit all your contact pages</li><li>Generate the QR codes for your Contact Pages (URL and vCard)</li><li>Edit your profile details including your username</li><li>Change your login password and reset your security questions</li></ul><p>If you did not Sign Up or make these account changes please contact us at <a href="mailto:deem0u.github.io@gmail.com">deem0u.github.io@gmail.com</a></p></div>`;
   const sent = await sendEmail(env, { to: accountEmail, subject, text, html, username });
   return jsonResponse({ ok: sent.ok, error: sent.error });
 }
@@ -2483,9 +2491,9 @@ async function handleAdminGenerateOtp(request, env) {
   await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
   const accountEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
   if (accountEmail && accountEmail.includes('@')) {
-    const subject = 'Your one-time password - Digital Contact Page';
-    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
-    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+    const subject = 'DigiCon iD - Your one-time password';
+    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.`;
+    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please get in touch via the Contact page.</p>`;
     await sendEmail(env, { to: accountEmail, subject, text, html, username });
   }
   return jsonResponse({ otp });
@@ -3305,9 +3313,9 @@ async function handleRecoveryVerify(request, env) {
     await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
     const toEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
     if (toEmail && toEmail.includes('@')) {
-      const subject = 'Your one-time password - Digital Contact Page';
-      const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
-      const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+      const subject = 'DigiCon iD - Your one-time password';
+      const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.`;
+      const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please get in touch via the Contact page.</p>`;
       await sendEmail(env, { to: toEmail, subject, text, html, username });
     }
     return jsonResponse({ success: true, username });
@@ -3329,9 +3337,9 @@ async function handleRecoveryVerify(request, env) {
   await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
   const toEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
   if (toEmail && toEmail.includes('@')) {
-    const subject = 'Your one-time password - Digital Contact Page';
-    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
-    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+    const subject = 'DigiCon iD - Your one-time password';
+    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.`;
+    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please get in touch via the Contact page.</p>`;
     await sendEmail(env, { to: toEmail, subject, text, html, username });
   }
   return jsonResponse({ success: true, username });
@@ -3412,9 +3420,9 @@ async function handlePutProfile(username, request, env) {
     const code = generateOtpCode();
     await env.EDIT_KEYS_KV.put('otp_email_change:' + username, code, { expirationTtl: 600 });
     await env.EDIT_KEYS_KV.put('pending_email_change:' + username, JSON.stringify({ newEmail: accountEmail.trim() }), { expirationTtl: 600 });
-    const subject = 'Verify your new email - Digital Contact Page';
-    const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. Use it in My Account to complete your email change.\n\nIf you did not request this, please sign in and change your password.`;
-    const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. Use it in My Account to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>`;
+    const subject = 'DigiCon iD - Verify your new email';
+    const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. Use it in MyAccount to complete your email change.\n\nIf you did not request this, please sign in and change your password.`;
+    const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. Use it in MyAccount to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>`;
     const sent = await sendEmail(env, { to: accountEmail.trim(), subject, text, html, username });
     if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send verification code' }, 500);
     return jsonResponse({ success: true, otpSent: true, message: 'Verification code sent to your new email.' });
@@ -3864,9 +3872,9 @@ async function handlePutSecrets(username, request, env) {
     await env.EDIT_KEYS_KV.put('user_otp:' + username, otpPlain);
     const accountEmailToSend = (body.accountEmail || accountEmail || await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
     if (accountEmailToSend && accountEmailToSend.includes('@')) {
-      const subject = 'Your one-time password - Digital Contact Page';
-      const text = `Your one-time sign-in password is: ${otpPlain}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.`;
-      const html = `<p>Your one-time sign-in password is: <strong>${otpPlain}</strong></p><p>Use this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please contact support.</p>`;
+      const subject = 'DigiCon iD - Your one-time password';
+      const text = `Your one-time sign-in password is: ${otpPlain}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.`;
+      const html = `<p>Your one-time sign-in password is: <strong>${otpPlain}</strong></p><p>Use this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please get in touch via the Contact page.</p>`;
       await sendEmail(env, { to: accountEmailToSend, subject, text, html, username });
     }
   } else if (password) {

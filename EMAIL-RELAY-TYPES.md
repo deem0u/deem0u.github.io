@@ -71,15 +71,15 @@ When **email divert** is on (e.g. `EMAIL_SEND_RESTRICTED` not `'false'`, or per-
 
 ---
 
-## 6. User recovery — one-time password (My Account)
+## 6. User recovery — one-time password (MyAccount)
 
 | Element | Value |
 |--------|--------|
 | **Trigger** | Multiple flows that issue a one-time sign-in password: (a) Admin “Send OTP” for a user (`POST /api/admin/send-otp`), (b) User recovery by email/DOB/secrets (`POST /api/recovery/check-by-email` → success path), (c) Admin set-secrets flow that sets OTP and emails it. All send the same email. |
 | **To** | User’s account email (`account_email:{username}`), or in admin-send-otp case the email from KV or request body. |
-| **Subject** | `Your one-time password - Digital Contact Page` |
-| **Text** | `Your one-time sign-in password is: {otp}\n\nUse this to sign in at My Account (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please contact support.` |
-| **HTML** | `<p>Your one-time sign-in password is: <strong>{otp}</strong></p><p>Use this to sign in at My Account …</p><p>If you did not request this, please contact support.</p>` |
+| **Subject** | `DigiCon iD - Your one-time password` |
+| **Text** | `Your one-time sign-in password is: {otp}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.` |
+| **HTML** | `<p>Your one-time sign-in password is: <strong>{otp}</strong></p><p>Use this to sign in at MyAccount …</p><p>If you did not request this, please get in touch via the Contact page.</p>` |
 | **Divert** | Yes where `username` is passed (user recovery and admin set-secrets). Admin send-otp does not pass username in one code path but does in another; see worker. |
 
 ---
@@ -90,9 +90,9 @@ When **email divert** is on (e.g. `EMAIL_SEND_RESTRICTED` not `'false'`, or per-
 |--------|--------|
 | **Trigger** | `POST /api/profile/verify-email-change` (or the endpoint that initiates email change) — user requests to change account email; backend stores pending new email and sends 6-digit code to the **new** address. |
 | **To** | New account email (the one user is changing to). |
-| **Subject** | `Verify your new email - Digital Contact Page` |
-| **Text** | `Your 6-digit verification code is: {code}\n\nThis code expires in 10 minutes. Use it in My Account to complete your email change.\n\nIf you did not request this, please sign in and change your password.` |
-| **HTML** | `<p>Your 6-digit verification code is: <strong>{code}</strong></p><p>This code expires in 10 minutes. Use it in My Account to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>` |
+| **Subject** | `DigiCon iD - Verify your new email` |
+| **Text** | `Your 6-digit verification code is: {code}\n\nThis code expires in 10 minutes. Use it in MyAccount to complete your email change.\n\nIf you did not request this, please sign in and change your password.` |
+| **HTML** | `<p>Your 6-digit verification code is: <strong>{code}</strong></p><p>This code expires in 10 minutes. Use it in MyAccount to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>` |
 | **Divert** | Yes — `username` passed. |
 
 ---
@@ -106,8 +106,8 @@ When **email divert** is on (e.g. `EMAIL_SEND_RESTRICTED` not `'false'`, or per-
 | 3 | User OTP (verify email) | account_email:username | Your verification code - Digital Contact Page |
 | 4 | Signup success / account details | accountEmail | Your Digital Contact Page - {username} - Account Details |
 | 5 | Contact form | CONTACT_FORM_RECIPIENT | Contact form: {enquiryType} from {name} |
-| 6 | User one-time password | account_email or body | Your one-time password - Digital Contact Page |
-| 7 | Email change verification | new account email | Verify your new email - Digital Contact Page |
+| 6 | User one-time password | account_email or body | DigiCon iD - Your one-time password |
+| 7 | Email change verification | new account email | DigiCon iD - Verify your new email |
 
 ---
 
