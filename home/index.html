@@ -151,11 +151,10 @@
   .signup-step2-card .form-group:last-child { margin-bottom: 0; }
   .signup-step2-card .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
   .signup-step2-card .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; min-height: 0; line-height: 1.4; font-size: 0.8125rem; }
-  .signup-step2-card.step2-hints-hidden .form-hint.step2-hint { display: none !important; }
+  .signup-step2-card.step2-hints-hidden .form-hint.step2-hint { visibility: hidden; }
   .signup-step2-card .form-hint-row { display: block; margin-top: 0.25rem; margin-bottom: 0.5rem; }
   .signup-step2-card .form-hint-above { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
   .signup-step2-card .form-row.form-row-with-hint { margin-bottom: 0; }
-  .signup-step2-card.step2-hints-hidden .form-row.form-row-with-hint { margin-bottom: 0.5rem; }
   .signup-step2-card .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
   .signup-step2-card .form-section { padding: 0.4rem 0.5rem; margin-top: 0; background: var(--color-bg-subtle, #f9fafb); border: 1px solid var(--color-border, #eee); border-radius: var(--radius-md, 6px); }
   .signup-step2-card .form-section .form-group { margin-bottom: 0.35rem; }
@@ -164,18 +163,24 @@
   .signup-step2-card .form-input, .signup-step2-card .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
   .signup-step2-card .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
   .signup-step2-card .contact-page-url-anatomy .url-edit-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
+  .signup-step2-card .contact-page-url-anatomy .url-anatomy-row { flex-wrap: wrap; }
+  .signup-step2-card .contact-page-url-anatomy .url-slug-input { color: var(--accent-purple, #9370db); font-weight: 700; min-width: 10ch; flex: 1 1 12rem; }
   .signup-step2-card .step2-url-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
-  .signup-step2-card .contact-page-url-anatomy .url-slug-input { color: var(--accent-purple, #9370db); font-weight: 700; }
   .signup-step2-card .step2-toggle-hints-wrap { margin-left: auto; }
   .signup-step2-card .step2-skip-wrap { margin-left: 0.5rem; }
-  .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-link, #2563eb); }
-  .signup-step2-card .step2-skip-link:hover { text-decoration: underline; }
+  .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-text-secondary, #6b7280); font-size: inherit; }
+  .signup-step2-card .step2-skip-link:hover { color: var(--accent-teal, #0d9488); text-decoration: underline; }
   @media (max-width: 768px) {
     .signup-step2-card .form-row { grid-template-columns: 1fr; }
   }
   /* Signup OTP (verify email): spacing above yellow box; skip link in footer right */
   .signup-otp-banner { margin-top: var(--space-4, 1rem); }
   .signup-otp-footer { display: flex; justify-content: flex-end; padding: var(--space-3) var(--space-5); border-top: 1px solid var(--color-border, #eee); background: var(--white, #fff); }
+  /* Generate QR step: yellow NFC banner; footer back link like skip */
+  .modal-qr-nfc-banner { margin-top: var(--space-4, 1rem); }
+  .step3-qr-footer-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .step3-back-link { background: none; border: none; padding: 0.25rem 0; font-size: inherit; text-decoration: underline; cursor: pointer; color: var(--color-text-secondary, #6b7280); }
+  .step3-back-link:hover { color: var(--accent-teal, #0d9488); }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -500,8 +505,8 @@
                 </div>
                 <div id="step2-alert" class="alert"></div>
                 <div class="form-actions form-actions-editor">
-                  <button type="submit" id="step2-save-btn" class="btn btn-primary btn-lg">Save contact page</button>
-                  <span class="step2-skip-wrap"><button type="button" class="btn btn-ghost step2-skip-link" id="step2-skip-btn">Skip Adding Contact Page →</button></span>
+                  <button type="submit" id="step2-save-btn" class="btn btn-primary">Save contact page</button>
+                  <span class="step2-skip-wrap"><button type="button" class="btn btn-ghost btn-sm step2-skip-link" id="step2-skip-btn">Skip Adding Contact Page →</button></span>
                 </div>
               </form>
               <div id="step2-skip-msg" class="hidden">
@@ -518,34 +523,34 @@
               <div id="step3-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
               <div id="step3-qr-content" class="modal-qr-content hidden">
                 <div class="modal-qr-desc">
-                  <p><strong>The following contact page QR codes are for:</strong></p>
-                  <p><strong>Contact Page URL</strong> — Print and stick this as is or import this to your chosen NFC app to write to a tag. When the QR is scanned or NFC is tapped it will redirect to your Contact Page URL.</p>
-                  <p><strong>vCard</strong> — Print and stick this as is or import this to your chosen NFC app to write to a tag. When the QR is scanned or NFC is tapped it will download on the user&apos;s phone as a vCard/phone contact which can then be saved.</p>
-                  <p class="modal-qr-nfc-note"><strong>Putting both on one NFC tag:</strong> You can store both a URL and a vCard on the same NFC tag. How a phone reacts depends on the device: Android usually offers to save the contact if the vCard is first; iPhones often work better with the URL (e.g. a link to download the contact) and may not handle the vCard directly. If you put both on one tag, expect that some phones will prefer one or the other. You can still generate these QR codes later from My Account.</p>
+                  <p>Print and stick these QR codes as-is or use them to import to your chosen NFC app to write its contents to a tag. When the QR is scanned or NFC is tapped it will redirect to your Contact Page URL or present you with a vCard populated with the same details on your Contact Page.</p>
+                  <div class="banner-reminder modal-qr-nfc-banner">
+                    <div class="banner-reminder-content">
+                      <p class="banner-reminder-message" style="margin:0;"><strong>Putting both on one NFC tag:</strong> You can store both a URL and a vCard on the same NFC tag. How a phone reacts depends on the device: Android usually offers to save the contact if the vCard is first; iPhones often work better with URL&apos;s (e.g. a link to download the Contact Card) and may not handle the vCards that are directly embedded. If you put both on one tag, expect that some phones will prefer one or the other.</p>
+                    </div>
+                  </div>
                 </div>
                 <div class="modal-qr-tabs">
-                  <button type="button" class="modal-qr-tab step3-qr-tab active" data-qr="url" aria-pressed="true">Page URL</button>
+                  <button type="button" class="modal-qr-tab step3-qr-tab active" data-qr="url" aria-pressed="true">Contact Page URL</button>
                   <button type="button" class="modal-qr-tab step3-qr-tab" data-qr="vcard" aria-pressed="false">vCard</button>
                 </div>
                 <div class="modal-qr-panels">
-                  <div id="step3-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="step3-qr-img-url" alt="QR code: Page URL" class="modal-qr-img"></div></div>
+                  <div id="step3-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="step3-qr-img-url" alt="QR code: Contact Page URL" class="modal-qr-img"></div></div>
                   <div id="step3-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="step3-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
                 </div>
                 <div class="modal-qr-actions">
                   <div id="step3-qr-action-url" class="modal-qr-action active">
-                    <p class="modal-qr-action-desc">Copy your Contact Page URL</p>
-                    <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-url">Copy URL</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-url">Copy Contact Page URL</button>
                   </div>
                   <div id="step3-qr-action-vcard" class="modal-qr-action hidden">
-                    <p class="modal-qr-action-desc">Download vCard</p>
                     <a id="step3-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
                   </div>
                 </div>
               </div>
               <div id="step3-qr-error" class="modal-qr-error hidden"></div>
-              <div class="form-actions mt-4" style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:space-between;">
-                <button type="button" class="btn btn-ghost" onclick="goBackFromStep3()">Back to Add Contact Page</button>
-                <button type="button" class="btn btn-primary btn-lg" onclick="continueToStep4()">Continue</button>
+              <div class="form-actions mt-4 step3-qr-footer-actions">
+                <button type="button" class="btn btn-ghost btn-sm step3-back-link" onclick="goBackFromStep3()">← Back to</button>
+                <button type="button" class="btn btn-primary" onclick="continueToStep4()">Continue</button>
               </div>
             </div>
           </div>
