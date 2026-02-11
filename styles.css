@@ -2736,9 +2736,77 @@ body {
    Responsive
    ======================================== */
 
+/* Mobile: prevent horizontal scroll, improve touch and readability */
 @media (max-width: 640px) {
+  html {
+    overflow-x: hidden;
+  }
+  body, .app {
+    overflow-x: hidden;
+  }
+
   .app-header {
     padding: var(--space-3) var(--space-4);
+  }
+  .app-header-inner {
+    min-height: auto;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .app-logo {
+    min-width: 0;
+  }
+  .app-logo-icon-mascot svg,
+  .app-header-logo-svg {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px;
+    min-height: 64px;
+  }
+  .app-logo-icon {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+  }
+  .app-header .digicon-logo {
+    font-size: 26px;
+  }
+  .app-header .app-logo-text-suffix {
+    font-size: 0.875rem;
+  }
+  .app-logo-text-wrap {
+    min-width: 0;
+  }
+  .app-header .app-logo-text-suffix {
+    white-space: normal;
+    word-break: break-word;
+  }
+  .app-header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .app-nav.tabs {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .app-nav.tabs .tab,
+  .nav-dropdown-trigger.tab {
+    min-height: 2.75rem;
+    padding: var(--space-2) var(--space-3);
+    display: inline-flex;
+    align-items: center;
+  }
+  .form-input,
+  select.form-input,
+  .form-input-header {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
+  .btn {
+    min-height: 2.75rem;
+    padding: var(--space-2) var(--space-4);
   }
   
   .app-main {
@@ -2845,6 +2913,40 @@ body {
   .modal {
     margin: var(--space-4);
     max-width: none;
+    width: calc(100% - var(--space-8));
+    max-height: calc(100vh - var(--space-8));
+    overflow-y: auto;
+  }
+
+  .manage-contact-pages-bar .searchable-select-wide {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: var(--space-2) var(--space-3);
+  }
+  .app-header-inner {
+    gap: var(--space-2);
+  }
+  .app-header .digicon-logo {
+    font-size: 22px;
+  }
+  .app-header .app-logo-text-suffix {
+    font-size: 0.8125rem;
+  }
+  .app-main {
+    padding: var(--space-4) var(--space-3);
+  }
+  .auth-card {
+    padding: var(--space-4);
+  }
+  .modal {
+    margin: var(--space-3);
+    width: calc(100% - var(--space-6));
   }
 }
 
