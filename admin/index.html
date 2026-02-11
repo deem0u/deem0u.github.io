@@ -17,6 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" crossorigin=""></script>
 </head>
 <body>
   <div class="app">
@@ -771,6 +772,10 @@
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <p class="modal-qr-action-desc">Download vCard</p>
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
+            </div>
+            <div class="modal-qr-action modal-qr-action-template">
+              <p class="modal-qr-action-desc">Embed the visible QR on a printable card template and download as PNG.</p>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-download-template">Download on template</button>
             </div>
           </div>
         </div>
@@ -5292,6 +5297,48 @@ document.getElementById('modal-qr-copy-url').addEventListener('click', function(
     }, 2000);
   });
 });
+
+function downloadQrOnTemplate() {
+  if (!window.QRCode || !qrModalData) return;
+  var useUrl = !document.getElementById('modal-qr-action-url').classList.contains('hidden');
+  var data = useUrl ? qrModalData.url : (qrModalData.vcard || '');
+  if (!data) return;
+  var cw = 600;
+  var ch = 350;
+  var qrSize = 160;
+  var qrX = cw - qrSize - 40;
+  var qrY = Math.round((ch - qrSize) / 2);
+  var main = document.createElement('canvas');
+  main.width = cw;
+  main.height = ch;
+  var ctx = main.getContext('2d');
+  ctx.fillStyle = '#fafafa';
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, cw - 2, ch - 2);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = 'bold 24px Quicksand, sans-serif';
+  ctx.fillText('DigiCon iD', 24, 40);
+  ctx.font = '14px sans-serif';
+  ctx.fillStyle = '#555';
+  ctx.fillText('Scan QR for contact', 24, 62);
+  var qrCanvas = document.createElement('canvas');
+  window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 2 }, function(err) {
+    if (err) return;
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+    var a = document.createElement('a');
+    a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '.png';
+    a.href = main.toDataURL('image/png');
+    a.click();
+  });
+}
+
+document.getElementById('modal-qr-download-template').addEventListener('click', function() {
+  if (!qrModalData || (!qrModalData.url && !qrModalData.vcard)) return;
+  downloadQrOnTemplate();
+});
+
 function escapeHtml(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 function showAlert(id, msg, type, appendSafeHtml, allowHtml) { const e = document.getElementById(id); e.className = 'alert alert-' + type + ' show'; var content = (allowHtml ? msg : escapeHtml(msg)); if (appendSafeHtml) content += appendSafeHtml; e.innerHTML = '<div class="alert-content">' + content + '</div>'; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }

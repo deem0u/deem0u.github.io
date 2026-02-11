@@ -1,6 +1,6 @@
 # Email relay — types and elements
 
-All transactional emails are sent by the **Cloudflare Worker** via the **Vercel email relay** (Nodemailer + Gmail SMTP). The relay accepts `to`, `subject`, `html`, and `text`; it uses a fixed **From** address: `"Contact Page Editor" <GMAIL_USER>` (where `GMAIL_USER` is the env var in Vercel).
+All transactional emails are sent by the **Cloudflare Worker** via the **Vercel email relay** (Nodemailer + Gmail SMTP). The relay accepts `to`, `subject`, `html`, and `text`; the **From** address is `"<NAME>" <GMAIL_USER>` where `<NAME>` is the Vercel env var **EMAIL_FROM_NAME** (default: `DigiCon iD`) and `GMAIL_USER` is the sender email.
 
 When **email divert** is on (e.g. `EMAIL_SEND_RESTRICTED` is `'true'` or `'1'`, or KV `site:divert_all_global` or per-user `divert_email:username`), user-facing emails are sent to `EMAIL_RESTRICTION_RECIPIENT` with subject prefixed `[DEV] (would go to: …)`.
 
@@ -117,4 +117,4 @@ When **email divert** is on (e.g. `EMAIL_SEND_RESTRICTED` is `'true'` or `'1'`, 
 - **Headers:** `Content-Type: application/json`, `X-Relay-Secret: <EMAIL_RELAY_SECRET>`  
 - **Body:** `{ to, subject, html?, text? }`  
   - At least one of `html` or `text` is required in practice (relay falls back to text from html if text missing).  
-- **From:** Set by relay to `"Contact Page Editor" <GMAIL_USER>`.
+- **From:** Set by relay to `"<EMAIL_FROM_NAME>" <GMAIL_USER>` (default name: DigiCon iD).

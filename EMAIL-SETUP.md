@@ -168,7 +168,13 @@ If you did not add these during the initial deploy (Step 2.3), add them now:
 | `GMAIL_APP_PASSWORD` | Your 16-character App Password | From Part 1. Remove spaces; use `abcdefghijklmnop` format. |
 | `RELAY_SECRET` | Your random secret from Step 2.2 | The 64-character hex string. Must match what you will put in Cloudflare. |
 
-6. After adding all three, **redeploy** so they take effect:
+**Optional:** To change the name recipients see in the "From" field (default is "DigiCon iD"), add:
+
+| Key | Value |
+|-----|-------|
+| `EMAIL_FROM_NAME` | Your preferred sender display name |
+
+6. After adding all variables, **redeploy** so they take effect:
    - Go to the **Deployments** tab.
    - Find the latest deployment, click the **⋯** (three dots) menu on the right.
    - Click **Redeploy**.

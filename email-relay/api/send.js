@@ -7,6 +7,9 @@
  * - GMAIL_USER: sender email (e.g. deem0u.github.io@gmail.com)
  * - GMAIL_APP_PASSWORD: Gmail App Password (16 chars, no spaces)
  * - RELAY_SECRET: shared secret for authenticating requests from the Worker
+ *
+ * Optional:
+ * - EMAIL_FROM_NAME: display name recipients see. Default: "DigiCon iD"
  */
 
 const nodemailer = require('nodemailer');
@@ -54,9 +57,10 @@ module.exports = async (req, res) => {
     auth: { user, pass }
   });
 
+  const fromName = (process.env.EMAIL_FROM_NAME || 'DigiCon iD').replace(/"/g, '');
   try {
     const info = await transporter.sendMail({
-      from: `"Contact Page Editor" <${user}>`,
+      from: `"${fromName}" <${user}>`,
       to: Array.isArray(to) ? to.join(', ') : to,
       subject,
       text: text || (html ? html.replace(/<[^>]+>/g, '') : ''),
