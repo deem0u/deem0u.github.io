@@ -143,22 +143,36 @@
   .signup-step1-card .form-actions .btn { padding: 0.5rem 1rem; }
   .signup-step1-card #signup-step1-alert { margin-top: 0.5rem; margin-bottom: 0; }
   .signup-step1-card .consent-text { font-size: 0.85rem; line-height: 1.5; }
-  .signup-step2-card .card-header.signup-step2-header { text-align: center; }
-  .signup-step2-card .form-label { font-weight: 700; }
-  .signup-step2-card .step2-hints-hidden .step2-hint { display: none; }
-  .signup-step2-card .step2-toggle-hints-wrap { margin-bottom: 0.5rem; }
-  .signup-step2-card .step2-row-given-family { margin-bottom: 1rem; }
-  .signup-step2-card .step2-row-email-phone { margin-bottom: 1rem; }
-  .signup-step2-card .step2-url-group { margin-bottom: 0.75rem; }
-  .signup-step2-card .step2-url-anatomy { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
-  .signup-step2-card .step2-url-prefix { font-size: 0.9rem; color: var(--color-text-muted, #6b7280); }
-  .signup-step2-card .step2-url-username { color: var(--color-text-muted, #6b7280); }
-  .signup-step2-card .step2-url-slug-input,
-  .signup-step2-card .step2-slug-label { color: #7c3aed; }
-  .signup-step2-card .step2-url-slug-input { min-width: 8rem; }
+  /* Signup Step 2: match Add Contact Page form layout/formatting from myaccount editor */
+  .signup-step2-card .card-header.signup-step2-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding: var(--space-4) var(--space-5); text-align: left; }
+  .signup-step2-card .card-header .card-title { margin: 0; }
+  .signup-step2-card .card-body { padding: var(--space-4) var(--space-5); }
+  .signup-step2-card .form-group { margin-bottom: 0.5rem; }
+  .signup-step2-card .form-group:last-child { margin-bottom: 0; }
+  .signup-step2-card .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
+  .signup-step2-card .form-hint { margin-top: 0.25rem; margin-bottom: 0.5rem; min-height: 0; line-height: 1.4; font-size: 0.8125rem; }
+  .signup-step2-card.step2-hints-hidden .form-hint.step2-hint { display: none !important; }
+  .signup-step2-card .form-hint-row { display: block; margin-top: 0.25rem; margin-bottom: 0.5rem; }
+  .signup-step2-card .form-hint-above { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
+  .signup-step2-card .form-row.form-row-with-hint { margin-bottom: 0; }
+  .signup-step2-card.step2-hints-hidden .form-row.form-row-with-hint { margin-bottom: 0.5rem; }
+  .signup-step2-card .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .signup-step2-card .form-section { padding: 0.4rem 0.5rem; margin-top: 0; background: var(--color-bg-subtle, #f9fafb); border: 1px solid var(--color-border, #eee); border-radius: var(--radius-md, 6px); }
+  .signup-step2-card .form-section .form-group { margin-bottom: 0.35rem; }
+  .signup-step2-card .form-section .form-group:last-child { margin-bottom: 0; }
+  .signup-step2-card .form-actions { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--color-border, #eee); }
+  .signup-step2-card .form-input, .signup-step2-card .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
+  .signup-step2-card .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
+  .signup-step2-card .contact-page-url-anatomy .url-edit-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
+  .signup-step2-card .step2-url-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
+  .signup-step2-card .contact-page-url-anatomy .url-slug-input { color: var(--accent-purple, #9370db); font-weight: 700; }
+  .signup-step2-card .step2-toggle-hints-wrap { margin-left: auto; }
   .signup-step2-card .step2-skip-wrap { margin-left: 0.5rem; }
   .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-link, #2563eb); }
   .signup-step2-card .step2-skip-link:hover { text-decoration: underline; }
+  @media (max-width: 768px) {
+    .signup-step2-card .form-row { grid-template-columns: 1fr; }
+  }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -387,85 +401,104 @@
             </div>
           </div>
           <div id="signup-step2-card" class="card signup-step2-card hidden step2-hints-hidden">
-            <div class="card-header signup-step2-header"><span class="card-title">Add Contact Page</span></div>
-            <div class="card-body">
+            <div class="card-header signup-step2-header">
+              <span class="card-title">Add Contact Page</span>
               <div class="step2-toggle-hints-wrap">
                 <button type="button" class="btn btn-ghost btn-sm step2-toggle-hints" id="step2-toggle-hints" aria-pressed="false">Show hints</button>
               </div>
+            </div>
+            <div class="card-body">
               <form id="step2-contact-form">
                 <div class="form-group">
                   <label class="form-label" for="step2-contact-page-name">Page Name <span class="form-required">*</span></label>
                   <input type="text" id="step2-contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off">
+                  <span class="form-hint step2-hint">A name to identify this page. Must be unique amongst your Contact Pages.</span>
                   <span class="form-error" id="error-step2-contact-page-name" role="alert"></span>
                 </div>
-                <div class="form-group step2-url-group">
-                  <label class="form-label step2-slug-label" for="step2-contact-page-url-slug">Page URL Slug</label>
-                  <div class="step2-url-anatomy">
-                    <span class="step2-url-prefix">https://deem0u.github.io/user/<span id="step2-contact-page-url-username" class="step2-url-username">—</span>/</span>
-                    <input type="text" id="step2-contact-page-url-slug" class="form-input step2-url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" maxlength="28" autocomplete="off">
+                <div class="form-group">
+                  <label class="form-label" for="step2-contact-page-url-slug">Page URL <span class="form-required">*</span></label>
+                  <div class="contact-page-url-anatomy" id="step2-contact-page-url-anatomy">
+                    <div class="url-anatomy-row">
+                      <span class="url-edit-prefix">https://deem0u.github.io/user/<span id="step2-contact-page-url-username" class="step2-url-username">—</span>/</span>
+                      <input type="text" id="step2-contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off">
+                    </div>
+                    <span class="form-hint step2-hint">3–28 characters: letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
                   </div>
-                  <span class="form-hint step2-hint">Letters, numbers, hyphens, underscores (3–28 chars).</span>
                   <span class="form-error" id="error-step2-contact-page-url-slug" role="alert"></span>
                 </div>
-                <div class="form-group step2-row-given-family">
-                  <label class="form-label" for="step2-first-name">Given Names <span class="form-required">*</span></label>
-                  <input type="text" id="step2-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off">
-                  <span class="form-hint step2-hint">First name including middle names as on your ID. Shown on your contact page.</span>
-                  <span class="form-error" id="error-step2-first-name" role="alert"></span>
+                <div class="form-row form-row-with-hint">
+                  <div class="form-group">
+                    <label class="form-label" for="step2-first-name">Given Names <span class="form-required">*</span></label>
+                    <input type="text" id="step2-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off">
+                    <span class="form-error" id="error-step2-first-name" role="alert"></span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="step2-surname">Family Name <span class="form-required">*</span></label>
+                    <input type="text" id="step2-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off">
+                    <span class="form-error" id="error-step2-surname" role="alert"></span>
+                  </div>
                 </div>
-                <div class="form-group step2-row-given-family">
-                  <label class="form-label" for="step2-surname">Family Name <span class="form-required">*</span></label>
-                  <input type="text" id="step2-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off">
-                  <span class="form-hint step2-hint">Surname as on your ID. Shown on your contact page.</span>
-                  <span class="form-error" id="error-step2-surname" role="alert"></span>
+                <span class="form-hint form-hint-row step2-hint">Usually First and Last Name. Consider whether this needs to exactly match any formal ID.</span>
+                <div class="form-row form-row-with-hint">
+                  <div class="form-group">
+                    <label class="form-label" for="step2-email">Email <span class="form-required">*</span></label>
+                    <input type="email" id="step2-email" class="form-input" required autocomplete="email">
+                    <span class="form-error" id="error-step2-email" role="alert"></span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="step2-mobile">Contact Number</label>
+                    <input type="text" id="step2-mobile" class="form-input" maxlength="32" placeholder="e.g. +61432123456" autocomplete="tel">
+                    <span class="form-error" id="error-step2-mobile" role="alert"></span>
+                  </div>
                 </div>
-                <div class="form-group step2-row-email-phone">
-                  <label class="form-label" for="step2-email">Email <span class="form-required">*</span></label>
-                  <input type="email" id="step2-email" class="form-input" required autocomplete="email">
-                  <span class="form-hint step2-hint">Shown on your contact page. Distinct from Account Email.</span>
-                  <span class="form-error" id="error-step2-email" role="alert"></span>
-                </div>
-                <div class="form-group step2-row-email-phone">
-                  <label class="form-label" for="step2-mobile">Contact Number</label>
-                  <input type="text" id="step2-mobile" class="form-input" maxlength="32" placeholder="e.g. +61432123456" autocomplete="tel">
-                  <span class="form-hint step2-hint">Phone including country code. Shown on your contact page.</span>
-                  <span class="form-error" id="error-step2-mobile" role="alert"></span>
-                </div>
+                <span class="form-hint form-hint-row step2-hint">A suitable email and contact number you have access to so that you can be reached.</span>
                 <div class="form-group">
                   <label class="form-label" for="step2-home-country">Home Country</label>
+                  <span class="form-hint form-hint-above step2-hint">Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.</span>
                   <select id="step2-home-country" class="form-input" autocomplete="country-name">
                     <option value="">— Select country —</option>
                   </select>
-                  <span class="form-hint step2-hint">Main country of residence.</span>
                   <span class="form-error" id="error-step2-home-country" role="alert"></span>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Destination Details</label>
+                  <div class="form-section">
+                    <div class="form-group">
+                      <label class="form-label" for="step2-dest-name">Destination Name</label>
+                      <input type="text" id="step2-dest-name" class="form-input" placeholder="Name" maxlength="64" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="step2-dest-address">Destination Address</label>
+                      <input type="text" id="step2-dest-address" class="form-input" placeholder="Address" maxlength="128" autocomplete="off">
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-phone">Destination Contact Number</label>
+                        <input type="text" id="step2-dest-phone" class="form-input" placeholder="Contact number" maxlength="32" autocomplete="tel">
+                        <span class="form-error" id="error-step2-dest-phone" role="alert"></span>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-email">Destination Email</label>
+                        <input type="email" id="step2-dest-email" class="form-input" placeholder="Email" maxlength="64" autocomplete="email">
+                        <span class="form-error" id="error-step2-dest-email" role="alert"></span>
+                      </div>
+                    </div>
+                  </div>
                   <span class="form-hint step2-hint">Where you will be staying (e.g. hotel name, address, phone, email).</span>
-                  <input type="text" id="step2-dest-name" class="form-input" placeholder="Name" maxlength="64" autocomplete="off">
-                  <input type="text" id="step2-dest-address" class="form-input" placeholder="Address" maxlength="128" autocomplete="off">
-                  <input type="text" id="step2-dest-phone" class="form-input" placeholder="Contact number" maxlength="32" autocomplete="tel">
-                  <input type="email" id="step2-dest-email" class="form-input" placeholder="Email" maxlength="64" autocomplete="email">
                   <span class="form-error" id="error-step2-dest" role="alert"></span>
                 </div>
                 <div class="form-group">
                   <label class="form-label form-label-optional" for="step2-additional-info">Additional Information</label>
-                  <textarea id="step2-additional-info" class="form-textarea" rows="3" maxlength="500" placeholder="Any extra notes for lost property or emergency contact" autocomplete="off"></textarea>
-                  <span class="form-hint step2-hint">Optional. Any additional notes that can help with identifying and contacting you.</span>
+                  <textarea id="step2-additional-info" class="form-textarea form-textarea-additional" rows="4" maxlength="500" placeholder="Any extra notes for lost property or emergency contact" autocomplete="off"></textarea>
+                  <span class="form-hint step2-hint">Optional. e.g. emergency contact, special instructions.</span>
                   <span class="form-error" id="error-step2-additional-info" role="alert"></span>
                 </div>
                 <div id="step2-alert" class="alert"></div>
-                <div class="form-actions">
+                <div class="form-actions form-actions-editor">
                   <button type="submit" id="step2-save-btn" class="btn btn-primary btn-lg">Save contact page</button>
                   <span class="step2-skip-wrap"><button type="button" class="btn btn-ghost step2-skip-link" id="step2-skip-btn">Skip Adding Contact Page →</button></span>
                 </div>
               </form>
-              <div id="step2-after-save" class="hidden">
-                <p class="text-secondary">Contact page saved. Click below to continue.</p>
-                <div class="form-actions mt-3">
-                  <button type="button" class="btn btn-primary btn-lg" onclick="step2ContinueToStep3()">Continue to Step 3</button>
-                </div>
-              </div>
               <div id="step2-skip-msg" class="hidden">
                 <p class="text-secondary">You can add a contact page later from My Account.</p>
                 <div class="form-actions mt-3">
@@ -479,16 +512,19 @@
             <div class="card-body">
               <div id="step3-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
               <div id="step3-qr-content" class="modal-qr-content hidden">
-                <p class="modal-qr-desc">Toggle between the QR codes for your Contact Page URL, vCard and plain text. Download, copy or scan as needed. You can also generate these later from My Account.</p>
+                <div class="modal-qr-desc">
+                  <p><strong>The following contact page QR codes are for:</strong></p>
+                  <p><strong>Contact Page URL</strong> — Print and stick this as is or import this to your chosen NFC app to write to a tag. When the QR is scanned or NFC is tapped it will redirect to your Contact Page URL.</p>
+                  <p><strong>vCard</strong> — Print and stick this as is or import this to your chosen NFC app to write to a tag. When the QR is scanned or NFC is tapped it will download on the user&apos;s phone as a vCard/phone contact which can then be saved.</p>
+                  <p class="modal-qr-nfc-note"><strong>Putting both on one NFC tag:</strong> You can store both a URL and a vCard on the same NFC tag. How a phone reacts depends on the device: Android usually offers to save the contact if the vCard is first; iPhones often work better with the URL (e.g. a link to download the contact) and may not handle the vCard directly. If you put both on one tag, expect that some phones will prefer one or the other. You can still generate these QR codes later from My Account.</p>
+                </div>
                 <div class="modal-qr-tabs">
                   <button type="button" class="modal-qr-tab step3-qr-tab active" data-qr="url" aria-pressed="true">Page URL</button>
                   <button type="button" class="modal-qr-tab step3-qr-tab" data-qr="vcard" aria-pressed="false">vCard</button>
-                  <button type="button" class="modal-qr-tab step3-qr-tab" data-qr="text" aria-pressed="false">Text</button>
                 </div>
                 <div class="modal-qr-panels">
                   <div id="step3-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="step3-qr-img-url" alt="QR code: Page URL" class="modal-qr-img"></div></div>
                   <div id="step3-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="step3-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
-                  <div id="step3-qr-panel-text" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="step3-qr-img-text" alt="QR code: text" class="modal-qr-img"></div></div>
                 </div>
                 <div class="modal-qr-actions">
                   <div id="step3-qr-action-url" class="modal-qr-action active">
@@ -498,10 +534,6 @@
                   <div id="step3-qr-action-vcard" class="modal-qr-action hidden">
                     <p class="modal-qr-action-desc">Download vCard</p>
                     <a id="step3-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
-                  </div>
-                  <div id="step3-qr-action-text" class="modal-qr-action hidden">
-                    <p class="modal-qr-action-desc">Copy as plain text</p>
-                    <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-text">Copy text</button>
                   </div>
                 </div>
               </div>
@@ -777,13 +809,11 @@
     var fn = [firstName, lastName].filter(Boolean).join(' ').trim() || username;
     var family = lastName || '';
     var given = firstName || '';
-    var lines = ['Given Name: ' + given, 'Family Name: ' + family, 'Email: ' + email, 'Contact Page URL: ' + url];
-    var text = lines.join('\r\n');
     var vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:' + fn + '\r\nN:' + family + ';' + given + ';;;\r\n';
     if (email) vcard += 'EMAIL:' + email + '\r\n';
     vcard += 'URL:' + url + '\r\n';
     vcard += 'END:VCARD';
-    return { url: url, vcard: vcard, text: text, fn: fn };
+    return { url: url, vcard: vcard, fn: fn };
   }
 
   function populateStep3Qr() {
@@ -797,14 +827,12 @@
     if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
     try {
       var data = buildStep3QrData();
-      step3QrData = { url: data.url, vcard: data.vcard, text: data.text };
+      step3QrData = { url: data.url, vcard: data.vcard };
       var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';
       var imgUrl = document.getElementById('step3-qr-img-url');
       var imgVcard = document.getElementById('step3-qr-img-vcard');
-      var imgText = document.getElementById('step3-qr-img-text');
       if (imgUrl) imgUrl.setAttribute('src', base + encodeURIComponent(data.url));
       if (imgVcard) imgVcard.setAttribute('src', base + encodeURIComponent(data.vcard || ''));
-      if (imgText) imgText.setAttribute('src', base + encodeURIComponent(data.text || ''));
       if (downloadA) {
         downloadA.setAttribute('href', 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard || ''));
         downloadA.setAttribute('download', (data.fn || 'contact').replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf');
@@ -819,7 +847,7 @@
   }
 
   function switchStep3QrTab(name) {
-    ['url', 'vcard', 'text'].forEach(function(n) {
+    ['url', 'vcard'].forEach(function(n) {
       var on = n === name;
       var tab = document.querySelector('.step3-qr-tab[data-qr="' + n + '"]');
       var panel = document.getElementById('step3-qr-panel-' + n);
@@ -834,7 +862,6 @@
     document.getElementById('signup-step3-card').classList.add('hidden');
     document.getElementById('signup-step2-card').classList.remove('hidden');
     document.getElementById('step2-contact-form').style.display = '';
-    document.getElementById('step2-after-save').classList.add('hidden');
     document.getElementById('step2-skip-msg').classList.add('hidden');
     updateProgressBar(2);
   }
@@ -851,7 +878,6 @@
     document.getElementById('step2-contact-page-url-username').textContent = username;
     document.getElementById('step2-contact-form').reset();
     document.getElementById('step2-contact-form').style.display = '';
-    document.getElementById('step2-after-save').classList.add('hidden');
     document.getElementById('step2-skip-msg').classList.add('hidden');
     var errIds = ['error-step2-contact-page-name','error-step2-contact-page-url-slug','error-step2-first-name','error-step2-surname','error-step2-email','error-step2-mobile'];
     errIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
@@ -914,7 +940,6 @@
   function step2Skip() {
     sessionStorage.removeItem('signup_contact_slug');
     document.getElementById('step2-contact-form').style.display = 'none';
-    document.getElementById('step2-after-save').classList.add('hidden');
     document.getElementById('step2-skip-msg').classList.remove('hidden');
   }
 
@@ -1004,9 +1029,7 @@
       if (res.ok && (data.success || (isUpdate && data.sha))) {
         if (!isUpdate) sessionStorage.setItem('signup_contact_slug', data.contactpagename || slug);
         if (data.sha) sessionStorage.setItem('signup_contact_sha', data.sha);
-        document.getElementById('step2-contact-form').style.display = 'none';
-        document.getElementById('step2-skip-msg').classList.add('hidden');
-        document.getElementById('step2-after-save').classList.remove('hidden');
+        step2ContinueToStep3();
       } else {
         var errMsg = (data && data.error) || 'Failed to create contact page.';
         if (data.error && (data.error.indexOf('URL') !== -1 || data.error.indexOf('slug') !== -1 || data.error.indexOf('exists') !== -1)) {
@@ -1064,7 +1087,7 @@
       '<p class="text-secondary">Click the &quot;Go to My Account&quot; button below where you can:</p>' +
       '<ul class="step4-detail-list">' +
       '<li>Add new or view and edit all your contact pages</li>' +
-      '<li>Generate the QR codes for your Contact Pages, vCard &amp; text</li>' +
+      '<li>Generate the QR codes for your Contact Pages (URL and vCard)</li>' +
       '<li>Edit your profile details including your username</li>' +
       '<li>Change your login password and reset your security questions</li>' +
       '</ul>';
@@ -1140,15 +1163,6 @@
         var orig = copyUrlBtn.textContent;
         copyUrlBtn.textContent = 'Copied!';
         setTimeout(function() { copyUrlBtn.textContent = orig; }, 2000);
-      });
-    });
-    var copyTextBtn = document.getElementById('step3-qr-copy-text');
-    if (copyTextBtn) copyTextBtn.addEventListener('click', function() {
-      if (!step3QrData.text) return;
-      navigator.clipboard.writeText(step3QrData.text).then(function() {
-        var orig = copyTextBtn.textContent;
-        copyTextBtn.textContent = 'Copied!';
-        setTimeout(function() { copyTextBtn.textContent = orig; }, 2000);
       });
     });
   })();

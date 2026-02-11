@@ -235,18 +235,23 @@
     height: auto;
     max-height: 220px;
     object-fit: contain;
-    animation: easter-egg-float 22s ease-in-out infinite;
+    animation: easter-egg-float 28s ease-in-out infinite;
   }
   .easter-egg-overlay.easter-egg-fadeout { opacity: 0; transition: opacity 1s ease-out; }
   @keyframes easter-egg-float {
-    0%   { left: 12%; top: 20%; transform: rotate(-6deg); }
-    14%  { left: 22%; top: 15%; transform: rotate(2deg); }
-    28%  { left: 35%; top: 22%; transform: rotate(-3deg); }
-    42%  { left: 52%; top: 18%; transform: rotate(4deg); }
-    56%  { left: 68%; top: 25%; transform: rotate(-4deg); }
-    70%  { left: 58%; top: 38%; transform: rotate(3deg); }
-    84%  { left: 32%; top: 32%; transform: rotate(-5deg); }
-    100% { left: 12%; top: 20%; transform: rotate(-6deg); }
+    0%   { left: 8%;  top: 18%; transform: rotate(-5deg) translateY(0); }
+    8%   { left: 18%; top: 12%; transform: rotate(3deg) translateY(-4px); }
+    16%  { left: 28%; top: 22%; transform: rotate(-2deg) translateY(2px); }
+    24%  { left: 42%; top: 15%; transform: rotate(4deg) translateY(-3px); }
+    32%  { left: 58%; top: 20%; transform: rotate(-3deg) translateY(0); }
+    40%  { left: 78%; top: 28%; transform: rotate(2deg) translateY(3px); }
+    48%  { left: 72%; top: 48%; transform: rotate(-4deg) translateY(-2px); }
+    56%  { left: 55%; top: 62%; transform: rotate(3deg) translateY(4px); }
+    64%  { left: 35%; top: 58%; transform: rotate(-2deg) translateY(0); }
+    72%  { left: 18%; top: 48%; transform: rotate(4deg) translateY(-3px); }
+    80%  { left: 12%; top: 32%; transform: rotate(-3deg) translateY(2px); }
+    88%  { left: 22%; top: 22%; transform: rotate(2deg) translateY(-2px); }
+    100% { left: 8%;  top: 18%; transform: rotate(-5deg) translateY(0); }
   }
   @media (max-width: 768px) { .editor-layout { flex-direction: column; } .editor-sidebar { width: 100%; } .editor-profile-strip, .contact-pages-container { width: 100%; } }
     </style>
@@ -2344,12 +2349,13 @@ function showEasterEggAnimation() {
   img.setAttribute('referrerpolicy', 'no-referrer');
   overlay.appendChild(img);
   document.body.appendChild(overlay);
+  var displayMs = 15000 + Math.floor(Math.random() * 15000);
   setTimeout(function() {
     overlay.classList.add('easter-egg-fadeout');
     setTimeout(function() {
       if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     }, 1000);
-  }, 28000);
+  }, displayMs);
   try {
     if (username) localStorage.setItem('easter_egg_last_' + username, new Date().toISOString().slice(0, 10));
   } catch (_) {}
