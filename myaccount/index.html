@@ -1652,13 +1652,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         var qrX = Math.round(qrRefX * (tw / refW));
         var qrY = Math.round(qrRefY * (th / refH));
         var qrSize = Math.round(qrRefSize * scale);
+        var pad = 1;
+        var drawX = qrX + pad;
+        var drawY = qrY + pad;
+        var drawSize = qrSize - 2 * pad;
         function drawAndDownload(qrImage) {
           var main = document.createElement('canvas');
           main.width = tw;
           main.height = th;
           var ctx = main.getContext('2d');
           ctx.drawImage(templateImg, 0, 0);
-          ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+          ctx.drawImage(qrImage, drawX, drawY, drawSize, drawSize);
           try {
             var dataUrl = main.toDataURL('image/png');
             var a = document.createElement('a');
@@ -1671,7 +1675,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         if (window.QRCode) {
           var qrCanvas = document.createElement('canvas');
-          window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 0 }, function(err) {
+          window.QRCode.toCanvas(qrCanvas, data, { width: drawSize, margin: 0 }, function(err) {
             if (err) {
               loadQrFromApi();
               return;
@@ -1690,7 +1694,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           qrImg.onload = function() {
             drawAndDownload(qrImg);
           };
-          qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + qrSize + 'x' + qrSize + '&margin=0&data=' + encodeURIComponent(data);
+          qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + drawSize + 'x' + drawSize + '&margin=0&data=' + encodeURIComponent(data);
         }
       };
       templateImg.src = baseUrl + encodeURIComponent('QR Template (Card).png');
