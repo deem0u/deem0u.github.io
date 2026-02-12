@@ -805,15 +805,13 @@
             <div id="modal-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
           </div>
           <div class="modal-qr-actions">
+            <p class="modal-qr-action-desc modal-qr-action-desc-top">Embed the visible QR on a printable card template and download as PNG.</p>
             <div id="modal-qr-action-url" class="modal-qr-action active">
               <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy Contact Page URL</button>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-download-template">Download to Template</button>
             </div>
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
-            </div>
-            <div class="modal-qr-action modal-qr-action-template">
-              <p class="modal-qr-action-desc">Embed the visible QR on a printable card template and download as PNG.</p>
-              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-download-template">Download on template</button>
             </div>
           </div>
         </div>
@@ -1640,24 +1638,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       var useUrl = !document.getElementById('modal-qr-action-url').classList.contains('hidden');
       var data = useUrl ? myAccountQrData.url : (myAccountQrData.vcard || '');
       if (!data) return;
-      var cw = 600, ch = 350, qrSize = 160;
-      var qrX = cw - qrSize - 40, qrY = Math.round((ch - qrSize) / 2);
-      var main = document.createElement('canvas');
-      main.width = cw; main.height = ch;
-      var ctx = main.getContext('2d');
-      ctx.fillStyle = '#fafafa'; ctx.fillRect(0, 0, cw, ch);
-      ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, cw - 2, ch - 2);
-      ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 24px Inter, sans-serif'; ctx.fillText('DigiCon iD', 24, 40);
-      ctx.font = '14px sans-serif'; ctx.fillStyle = '#555'; ctx.fillText('Scan QR for contact', 24, 62);
-      var qrCanvas = document.createElement('canvas');
-      window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 2 }, function(err) {
-        if (err) return;
-        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-        var a = document.createElement('a');
-        a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '.png';
-        a.href = main.toDataURL('image/png');
-        a.click();
-      });
+      var templateImg = new Image();
+      templateImg.onerror = function() {
+        console.warn('QR template image failed to load');
+      };
+      templateImg.onload = function() {
+        var tw = templateImg.naturalWidth;
+        var th = templateImg.naturalHeight;
+        var refW = 732, refH = 968;
+        var qrRefX = 226, qrRefY = 213, qrRefSize = 280;
+        var scale = Math.min(tw / refW, th / refH);
+        var qrX = Math.round(qrRefX * (tw / refW));
+        var qrY = Math.round(qrRefY * (th / refH));
+        var qrSize = Math.round(qrRefSize * scale);
+        var main = document.createElement('canvas');
+        main.width = tw;
+        main.height = th;
+        var ctx = main.getContext('2d');
+        ctx.drawImage(templateImg, 0, 0);
+        var qrCanvas = document.createElement('canvas');
+        window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 0 }, function(err) {
+          if (err) return;
+          ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+          var a = document.createElement('a');
+          a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '-template.png';
+          a.href = main.toDataURL('image/png');
+          a.click();
+        });
+      };
+      templateImg.src = 'QR Template (Card).png';
     });
   })();
   document.addEventListener('click', (e) => {
