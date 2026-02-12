@@ -2538,13 +2538,24 @@ body {
   margin: 0 0 var(--space-2);
   width: 100%;
 }
-.modal-qr-action#modal-qr-action-url {
+.modal-qr-action#modal-qr-action-url,
+.modal-qr-action#modal-qr-action-vcard,
+#step3-qr-action-url,
+#step3-qr-action-vcard {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-3);
 }
 .modal-qr-action.hidden { display: none !important; }
+/* Signup step 3 QR section: same max-width as QR modal */
+#signup-step3-card #step3-qr-loading,
+#signup-step3-card #step3-qr-content,
+#signup-step3-card #step3-qr-error {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
 .modal-qr-action-desc {
   font-size: var(--text-sm);
   color: var(--color-text-secondary);

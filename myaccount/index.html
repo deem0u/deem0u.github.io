@@ -807,10 +807,11 @@
             <p class="modal-qr-action-desc modal-qr-action-desc-top">Embed the visible QR on a printable card template and download as PNG.</p>
             <div id="modal-qr-action-url" class="modal-qr-action active">
               <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy Contact Page URL</button>
-              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-download-template">Download to Template</button>
+              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download to Template</button>
             </div>
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
+              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download to Template</button>
             </div>
           </div>
         </div>
@@ -1630,8 +1631,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2000);
       });
     });
-    var templateBtn = document.getElementById('modal-qr-download-template');
-    if (templateBtn) templateBtn.addEventListener('click', function() {
+    document.querySelectorAll('.modal-qr-download-template-btn').forEach(function(templateBtn) {
+      templateBtn.addEventListener('click', function() {
       if (!myAccountQrData || (!myAccountQrData.url && !myAccountQrData.vcard)) return;
       var useUrl = !document.getElementById('modal-qr-action-url').classList.contains('hidden');
       var data = useUrl ? myAccountQrData.url : (myAccountQrData.vcard || '');
@@ -1698,6 +1699,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       };
       templateImg.src = baseUrl + encodeURIComponent('QR Template (Card).png');
+    });
     });
   })();
   document.addEventListener('click', (e) => {

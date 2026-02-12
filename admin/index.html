@@ -772,15 +772,14 @@
             <div id="modal-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
           </div>
           <div class="modal-qr-actions">
+            <p class="modal-qr-action-desc modal-qr-action-desc-top">Embed the visible QR on a printable card template and download as PNG.</p>
             <div id="modal-qr-action-url" class="modal-qr-action active">
               <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy Contact Page URL</button>
+              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download to Template</button>
             </div>
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
-            </div>
-            <div class="modal-qr-action modal-qr-action-template">
-              <p class="modal-qr-action-desc">Embed the visible QR on a printable card template and download as PNG.</p>
-              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-download-template">Download on template</button>
+              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download to Template</button>
             </div>
           </div>
         </div>
@@ -5303,45 +5302,59 @@ document.getElementById('modal-qr-copy-url').addEventListener('click', function(
   });
 });
 
-function downloadQrOnTemplate() {
-  if (!window.QRCode || !qrModalData) return;
+function runDownloadQrOnTemplate() {
+  if (!qrModalData || (!qrModalData.url && !qrModalData.vcard)) return;
   var useUrl = !document.getElementById('modal-qr-action-url').classList.contains('hidden');
   var data = useUrl ? qrModalData.url : (qrModalData.vcard || '');
   if (!data) return;
-  var cw = 600;
-  var ch = 350;
-  var qrSize = 160;
-  var qrX = cw - qrSize - 40;
-  var qrY = Math.round((ch - qrSize) / 2);
-  var main = document.createElement('canvas');
-  main.width = cw;
-  main.height = ch;
-  var ctx = main.getContext('2d');
-  ctx.fillStyle = '#fafafa';
-  ctx.fillRect(0, 0, cw, ch);
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(1, 1, cw - 2, ch - 2);
-  ctx.fillStyle = '#1a1a1a';
-  ctx.font = 'bold 24px Quicksand, sans-serif';
-  ctx.fillText('DigiCon iD', 24, 40);
-  ctx.font = '14px sans-serif';
-  ctx.fillStyle = '#555';
-  ctx.fillText('Scan QR for contact', 24, 62);
-  var qrCanvas = document.createElement('canvas');
-  window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 2 }, function(err) {
-    if (err) return;
-    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-    var a = document.createElement('a');
-    a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '.png';
-    a.href = main.toDataURL('image/png');
-    a.click();
-  });
+  var templateSrc = window.location.origin + '/myaccount/' + encodeURIComponent('QR Template (Card).png');
+  var templateImg = new Image();
+  templateImg.onerror = function() { alert('Could not load the card template image. Please check your connection and try again.'); };
+  templateImg.onload = function() {
+    var tw = templateImg.naturalWidth, th = templateImg.naturalHeight;
+    var refW = 732, refH = 968;
+    var qrRefX = 172, qrRefY = 274;
+    var qrRefW = 281, qrRefH = 279;
+    var qrRefSize = Math.min(qrRefW, qrRefH);
+    var scale = Math.min(tw / refW, th / refH);
+    var qrX = Math.round(qrRefX * (tw / refW));
+    var qrY = Math.round(qrRefY * (th / refH));
+    var qrSize = Math.round(qrRefSize * scale);
+    var pad = 1;
+    var drawX = qrX + pad, drawY = qrY + pad, drawSize = qrSize - 2 * pad;
+    function drawAndDownload(qrImage) {
+      var main = document.createElement('canvas');
+      main.width = tw; main.height = th;
+      var ctx = main.getContext('2d');
+      ctx.drawImage(templateImg, 0, 0);
+      ctx.drawImage(qrImage, drawX, drawY, drawSize, drawSize);
+      try {
+        var a = document.createElement('a');
+        a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '-template.png';
+        a.href = main.toDataURL('image/png');
+        a.click();
+      } catch (e) { alert('Could not create download. If you use a strict browser or extensions, try allowing this site.'); }
+    }
+    if (window.QRCode) {
+      var qrCanvas = document.createElement('canvas');
+      window.QRCode.toCanvas(qrCanvas, data, { width: drawSize, margin: 0 }, function(err) {
+        if (err) { loadQrFromApi(); return; }
+        drawAndDownload(qrCanvas);
+      });
+    } else { loadQrFromApi(); }
+    function loadQrFromApi() {
+      var qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+      qrImg.onerror = function() { alert('Could not generate QR code. Please check your connection and try again.'); };
+      qrImg.onload = function() { drawAndDownload(qrImg); };
+      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + drawSize + 'x' + drawSize + '&margin=0&data=' + encodeURIComponent(data);
+    }
+  };
+  templateImg.src = templateSrc;
 }
 
-document.getElementById('modal-qr-download-template').addEventListener('click', function() {
-  if (!qrModalData || (!qrModalData.url && !qrModalData.vcard)) return;
-  downloadQrOnTemplate();
+document.querySelectorAll('.modal-qr-download-template-btn').forEach(function(btn) {
+  btn.addEventListener('click', runDownloadQrOnTemplate);
 });
 
 function showAlert(id, msg, type, appendSafeHtml, allowHtml) { const e = document.getElementById(id); e.className = 'alert alert-' + type + ' show'; var content = (allowHtml ? msg : escapeHtml(msg)); if (appendSafeHtml) content += appendSafeHtml; e.innerHTML = '<div class="alert-content">' + content + '</div>'; }
