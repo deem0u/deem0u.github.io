@@ -17,7 +17,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" integrity="sha384-Izc791esqyEy3BEIC42q7jbE0AaOkACziN+dyyXgYeDmpeMCLz0xA+xYN3aCd5zz" crossorigin="anonymous"></script>
   <style>
   .edit-recovery-success-banner { padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-weight: 500; }
   .edit-recovery-success-details ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
@@ -1634,15 +1633,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     var templateBtn = document.getElementById('modal-qr-download-template');
     if (templateBtn) templateBtn.addEventListener('click', function() {
       if (!myAccountQrData || (!myAccountQrData.url && !myAccountQrData.vcard)) return;
-      if (!window.QRCode) {
-        alert('QR code library did not load. Please refresh the page and try again.');
-        return;
-      }
       var useUrl = !document.getElementById('modal-qr-action-url').classList.contains('hidden');
       var data = useUrl ? myAccountQrData.url : (myAccountQrData.vcard || '');
       if (!data) return;
-      var templateImg = new Image();
       var baseUrl = new URL('.', window.location.href).href;
+      var templateImg = new Image();
       templateImg.onerror = function() {
         alert('Could not load the card template image. Please check your connection and try again.');
       };
@@ -1655,18 +1650,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         var qrX = Math.round(qrRefX * (tw / refW));
         var qrY = Math.round(qrRefY * (th / refH));
         var qrSize = Math.round(qrRefSize * scale);
-        var main = document.createElement('canvas');
-        main.width = tw;
-        main.height = th;
-        var ctx = main.getContext('2d');
-        ctx.drawImage(templateImg, 0, 0);
-        var qrCanvas = document.createElement('canvas');
-        window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 0 }, function(err) {
-          if (err) {
-            alert('Could not generate QR code. Please try again.');
-            return;
-          }
-          ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+        function drawAndDownload(qrImage) {
+          var main = document.createElement('canvas');
+          main.width = tw;
+          main.height = th;
+          var ctx = main.getContext('2d');
+          ctx.drawImage(templateImg, 0, 0);
+          ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
           try {
             var dataUrl = main.toDataURL('image/png');
             var a = document.createElement('a');
@@ -1674,9 +1664,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             a.href = dataUrl;
             a.click();
           } catch (e) {
-            alert('Could not create download. Please try again.');
+            alert('Could not create download. If you use a strict browser or extensions, try allowing this site.');
           }
-        });
+        }
+        if (window.QRCode) {
+          var qrCanvas = document.createElement('canvas');
+          window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 0 }, function(err) {
+            if (err) {
+              loadQrFromApi();
+              return;
+            }
+            drawAndDownload(qrCanvas);
+          });
+        } else {
+          loadQrFromApi();
+        }
+        function loadQrFromApi() {
+          var qrImg = new Image();
+          qrImg.crossOrigin = 'anonymous';
+          qrImg.onerror = function() {
+            alert('Could not generate QR code. Please check your connection and try again.');
+          };
+          qrImg.onload = function() {
+            drawAndDownload(qrImg);
+          };
+          qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + qrSize + 'x' + qrSize + '&margin=0&data=' + encodeURIComponent(data);
+        }
       };
       templateImg.src = baseUrl + encodeURIComponent('QR Template (Card).png');
     });
