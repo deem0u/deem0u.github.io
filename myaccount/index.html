@@ -1634,13 +1634,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     var templateBtn = document.getElementById('modal-qr-download-template');
     if (templateBtn) templateBtn.addEventListener('click', function() {
       if (!myAccountQrData || (!myAccountQrData.url && !myAccountQrData.vcard)) return;
-      if (!window.QRCode) return;
+      if (!window.QRCode) {
+        alert('QR code library did not load. Please refresh the page and try again.');
+        return;
+      }
       var useUrl = !document.getElementById('modal-qr-action-url').classList.contains('hidden');
       var data = useUrl ? myAccountQrData.url : (myAccountQrData.vcard || '');
       if (!data) return;
       var templateImg = new Image();
+      var baseUrl = new URL('.', window.location.href).href;
       templateImg.onerror = function() {
-        console.warn('QR template image failed to load');
+        alert('Could not load the card template image. Please check your connection and try again.');
       };
       templateImg.onload = function() {
         var tw = templateImg.naturalWidth;
@@ -1658,15 +1662,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.drawImage(templateImg, 0, 0);
         var qrCanvas = document.createElement('canvas');
         window.QRCode.toCanvas(qrCanvas, data, { width: qrSize, margin: 0 }, function(err) {
-          if (err) return;
+          if (err) {
+            alert('Could not generate QR code. Please try again.');
+            return;
+          }
           ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
-          var a = document.createElement('a');
-          a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '-template.png';
-          a.href = main.toDataURL('image/png');
-          a.click();
+          try {
+            var dataUrl = main.toDataURL('image/png');
+            var a = document.createElement('a');
+            a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '-template.png';
+            a.href = dataUrl;
+            a.click();
+          } catch (e) {
+            alert('Could not create download. Please try again.');
+          }
         });
       };
-      templateImg.src = 'QR Template (Card).png';
+      templateImg.src = baseUrl + encodeURIComponent('QR Template (Card).png');
     });
   })();
   document.addEventListener('click', (e) => {
