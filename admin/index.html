@@ -519,6 +519,7 @@
               <span class="card-title" id="admin-editor-card-title">Edit Contact Information</span>
               <div class="admin-editor-header-actions">
                 <a id="admin-view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm">View Page</a>
+                <button type="button" class="btn btn-primary btn-sm" id="admin-view-qr-codes-btn" onclick="adminShowQrModalFromView()">QR Codes</button>
                 <button type="button" class="btn btn-primary btn-sm" id="admin-edit-contact-btn" onclick="adminEnterEditMode()">Edit</button>
               </div>
             </div>
@@ -5183,7 +5184,14 @@ function parseContactFromHtml(html, folder) {
   return { givenName: given, familyName: family, contactEmail: email, tel: tel, country: country, fn: fn, url: url, text: text, vcard: vcard };
 }
 
-async function showQrModal(folder) {
+function adminShowQrModalFromView() {
+  var username = document.getElementById('page-select') && document.getElementById('page-select').value;
+  var slug = document.getElementById('edit-contact-page-value') && document.getElementById('edit-contact-page-value').value;
+  if (!username) return;
+  showQrModal(username, slug || 'index');
+}
+
+async function showQrModal(folder, contactPageSlug) {
   var overlay = document.getElementById('modal-qr');
   var loading = document.getElementById('modal-qr-loading');
   var content = document.getElementById('modal-qr-content');
@@ -5198,9 +5206,11 @@ async function showQrModal(folder) {
     errEl.classList.remove('hidden');
     return;
   }
-  var card = document.getElementById('user-card-' + folder);
-  var trigger = card && document.getElementById('contact-pages-trigger-' + folder);
-  var contactPage = (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
+  var contactPage = (contactPageSlug !== undefined && contactPageSlug !== null) ? (contactPageSlug || 'index') : (function() {
+    var card = document.getElementById('user-card-' + folder);
+    var trigger = card && document.getElementById('contact-pages-trigger-' + folder);
+    return (trigger && trigger.getAttribute('data-selected-contact')) || 'index';
+  })();
 
   loading.classList.remove('hidden');
   content.classList.add('hidden');
