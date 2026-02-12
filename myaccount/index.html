@@ -1645,7 +1645,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         var tw = templateImg.naturalWidth;
         var th = templateImg.naturalHeight;
         var refW = 732, refH = 968;
-        var qrRefX = 226, qrRefY = 213, qrRefSize = 280;
+        var qrRefX = 170, qrRefY = 274;
+        var qrRefW = 281, qrRefH = 279;
+        var qrRefSize = Math.min(qrRefW, qrRefH);
         var scale = Math.min(tw / refW, th / refH);
         var qrX = Math.round(qrRefX * (tw / refW));
         var qrY = Math.round(qrRefY * (th / refH));
