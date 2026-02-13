@@ -485,29 +485,44 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Destination Details</label>
-                  <div class="form-section">
-                    <div class="form-group">
-                      <label class="form-label" for="step2-dest-name">Destination Name</label>
-                      <input type="text" id="step2-dest-name" class="form-input" placeholder="Name" maxlength="64" autocomplete="off">
+                  <span class="form-hint step2-hint" id="step2-hint-destination-details"></span>
+                  <div class="form-section destination-block" data-dest-index="0">
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-name">Destination Name</label>
+                        <input type="text" id="step2-dest-name" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-from-date">From Date</label>
+                        <input type="text" id="step2-dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-to-date">To Date</label>
+                        <input type="text" id="step2-dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                      </div>
                     </div>
                     <div class="form-group">
                       <label class="form-label" for="step2-dest-address">Destination Address</label>
-                      <input type="text" id="step2-dest-address" class="form-input" placeholder="Address" maxlength="128" autocomplete="off">
+                      <input type="text" id="step2-dest-address" class="form-input dest-address" placeholder="Address" maxlength="200" autocomplete="off">
                     </div>
                     <div class="form-row">
                       <div class="form-group">
                         <label class="form-label" for="step2-dest-phone">Destination Contact Number</label>
-                        <input type="text" id="step2-dest-phone" class="form-input" placeholder="Contact number" maxlength="32" autocomplete="tel">
+                        <input type="tel" id="step2-dest-phone" class="form-input dest-phone contact-number-mask" placeholder="Contact number" maxlength="21" autocomplete="tel">
                         <span class="form-error" id="error-step2-dest-phone" role="alert"></span>
                       </div>
                       <div class="form-group">
                         <label class="form-label" for="step2-dest-email">Destination Email</label>
-                        <input type="email" id="step2-dest-email" class="form-input" placeholder="Email" maxlength="64" autocomplete="email">
+                        <input type="email" id="step2-dest-email" class="form-input dest-email" placeholder="Email" maxlength="64" autocomplete="email">
                         <span class="form-error" id="error-step2-dest-email" role="alert"></span>
                       </div>
                     </div>
+                    <div class="destination-block-actions">
+                      <button type="button" class="btn btn-ghost btn-sm destination-delete-btn" aria-label="Delete destination" title="Delete destination"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                    </div>
                   </div>
-                  <span class="form-hint step2-hint">Where you will be staying (e.g. hotel name, address, phone, email).</span>
+                  <div id="step2-destination-blocks-container"></div>
+                  <button type="button" class="btn btn-primary btn-sm" id="step2-add-destination-btn">Add Destination</button>
                   <span class="form-error" id="error-step2-dest" role="alert"></span>
                 </div>
                 <div class="form-group">
@@ -903,6 +918,8 @@
     if (toggleBtn) { toggleBtn.textContent = 'Show hints'; toggleBtn.setAttribute('aria-pressed', 'false'); }
     document.getElementById('step2-contact-page-url-username').textContent = username;
     document.getElementById('step2-contact-form').reset();
+    var destContainer = document.getElementById('step2-destination-blocks-container');
+    if (destContainer) destContainer.innerHTML = '';
     document.getElementById('step2-contact-form').style.display = '';
     document.getElementById('step2-skip-msg').classList.add('hidden');
     var errIds = ['error-step2-contact-page-name','error-step2-contact-page-url-slug','error-step2-first-name','error-step2-surname','error-step2-email','error-step2-mobile'];
@@ -925,6 +942,127 @@
     sel.appendChild(frag);
   }
 
+  function getDestinationBlocksDataStep2() {
+    var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
+    var out = [];
+    blocks.forEach(function(block) {
+      var nameEl = block.querySelector('.dest-name');
+      var fromEl = block.querySelector('.dest-from-date');
+      var toEl = block.querySelector('.dest-to-date');
+      var addrEl = block.querySelector('.dest-address');
+      var phoneEl = block.querySelector('.dest-phone');
+      var emailEl = block.querySelector('.dest-email');
+      out.push({
+        name: nameEl ? nameEl.value.trim() : '',
+        fromDate: fromEl ? fromEl.value.trim() : '',
+        toDate: toEl ? toEl.value.trim() : '',
+        address: addrEl ? addrEl.value.trim() : '',
+        phone: phoneEl ? phoneEl.value.trim() : '',
+        email: emailEl ? emailEl.value.trim() : ''
+      });
+    });
+    return out;
+  }
+
+  function createAdditionalDestinationBlockStep2(index, data) {
+    data = data || {};
+    var hr = document.createElement('hr');
+    hr.className = 'dest-sep-form';
+    var block = document.createElement('div');
+    block.className = 'form-section destination-block';
+    block.setAttribute('data-dest-index', String(index));
+    block.innerHTML = '<div class="form-row">' +
+      '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off"></div>' +
+      '<div class="form-group"><label class="form-label">From Date</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+      '<div class="form-group"><label class="form-label">To Date</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+      '</div>' +
+      '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" placeholder="Address" maxlength="200" autocomplete="off"></div>' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" class="form-input dest-phone contact-number-mask" placeholder="Contact number" maxlength="21" autocomplete="tel"></div>' +
+      '<div class="form-group"><label class="form-label">Destination Email</label><input type="email" class="form-input dest-email" placeholder="Email" maxlength="64" autocomplete="email"></div>' +
+      '</div>' +
+      '<div class="destination-block-actions">' +
+      '<button type="button" class="btn btn-ghost btn-sm destination-delete-btn" aria-label="Delete destination" title="Delete destination"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>' +
+      '</div>';
+    var nameInp = block.querySelector('.dest-name');
+    var fromInp = block.querySelector('.dest-from-date');
+    var toInp = block.querySelector('.dest-to-date');
+    var addrInp = block.querySelector('.dest-address');
+    var phoneInp = block.querySelector('.dest-phone');
+    var emailInp = block.querySelector('.dest-email');
+    if (nameInp) nameInp.value = data.name || '';
+    if (fromInp) fromInp.value = data.fromDate || '';
+    if (toInp) toInp.value = data.toDate || '';
+    if (addrInp) addrInp.value = data.address || '';
+    if (phoneInp) phoneInp.value = data.phone || '';
+    if (emailInp) emailInp.value = data.email || '';
+    var frag = document.createDocumentFragment();
+    frag.appendChild(hr);
+    frag.appendChild(block);
+    return frag;
+  }
+
+  function initDestinationRepeaterStep2() {
+    var hintEl = document.getElementById('step2-hint-destination-details');
+    if (hintEl && window.FORM_DESCRIPTIONS && window.FORM_DESCRIPTIONS['destination-details'] && window.FORM_DESCRIPTIONS['destination-details'].hint) {
+      hintEl.innerHTML = window.FORM_DESCRIPTIONS['destination-details'].hint;
+    }
+    var addBtn = document.getElementById('step2-add-destination-btn');
+    var container = document.getElementById('step2-destination-blocks-container');
+    if (addBtn && container) {
+      addBtn.addEventListener('click', function() {
+        var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
+        var nextIndex = blocks.length;
+        container.appendChild(createAdditionalDestinationBlockStep2(nextIndex, {}));
+        attachDobMask();
+      });
+    }
+    var form = document.getElementById('step2-contact-form');
+    if (form) {
+      form.addEventListener('click', function(e) {
+        var delBtn = e.target.closest('.destination-delete-btn');
+        if (!delBtn) return;
+        var block = delBtn.closest('.destination-block');
+        if (!block) return;
+        var allBlocks = document.querySelectorAll('#step2-contact-form .destination-block');
+        if (allBlocks.length === 1) {
+          var nameInp = block.querySelector('.dest-name');
+          var fromInp = block.querySelector('.dest-from-date');
+          var toInp = block.querySelector('.dest-to-date');
+          var addrInp = block.querySelector('.dest-address');
+          var phoneInp = block.querySelector('.dest-phone');
+          var emailInp = block.querySelector('.dest-email');
+          if (nameInp) nameInp.value = '';
+          if (fromInp) fromInp.value = '';
+          if (toInp) toInp.value = '';
+          if (addrInp) addrInp.value = '';
+          if (phoneInp) phoneInp.value = '';
+          if (emailInp) emailInp.value = '';
+          return;
+        }
+        var isFirst = block.getAttribute('data-dest-index') === '0';
+        if (isFirst && container && container.children.length > 0) {
+          var secondBlock = container.querySelector('.destination-block');
+          if (secondBlock) {
+            ['dest-name','dest-from-date','dest-to-date','dest-address','dest-phone','dest-email'].forEach(function(cls) {
+              var src = secondBlock.querySelector('.' + cls);
+              var dest = document.getElementById('step2-' + cls);
+              if (src && dest) dest.value = src.value;
+            });
+            var hr = secondBlock.previousElementSibling;
+            if (hr && hr.classList.contains('dest-sep-form')) hr.remove();
+            secondBlock.remove();
+          }
+        } else {
+          var prev = block.previousElementSibling;
+          if (prev && prev.classList.contains('dest-sep-form')) prev.remove();
+          block.remove();
+        }
+        attachDobMask();
+      });
+    }
+  }
+
   function step2BuildContent() {
     var f = function(id) { var el = document.getElementById(id); return el && el.value ? el.value.trim() : ''; };
     var firstName = f('step2-first-name');
@@ -932,21 +1070,22 @@
     var email = f('step2-email');
     var mobile = f('step2-mobile');
     var homeCountry = f('step2-home-country');
-    var destName = f('step2-dest-name');
-    var destAddress = f('step2-dest-address');
-    var destPhone = f('step2-dest-phone');
-    var destEmail = f('step2-dest-email');
     var additionalInfo = f('step2-additional-info');
     var escapeHtml = function(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
     var formatMultiline = function(s) { var text = (s ?? '').toString().trim(); if (!text) return ''; return escapeHtml(text).replace(/\r?\n/g, '<br>'); };
-    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{font-family:\'Quicksand\',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}@media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}@media(min-width:640px){.container{padding:48px 40px;max-width:760px}}.last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}';
-    var dName = (destName || '').trim();
-    var dAddr = (destAddress || '').trim();
-    var dPhone = (destPhone || '').trim();
-    var dEmail = (destEmail || '').trim();
-    var hasDest = !!(dName || dAddr || dPhone || dEmail);
-    var destParts = [dName, dAddr, dPhone, dEmail].map(function(t) { return '<span>' + (t ? escapeHtml(t) : '') + '</span>'; });
-    var destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
+    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{font-family:\'Quicksand\',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}@media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}@media(min-width:640px){.container{padding:48px 40px;max-width:760px}}.last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}.dest-details .dest-name,.dest-details .dest-from,.dest-details .dest-to{display:inline}.dest-details .dest-from:not(:empty)::before{content:" \u00b7 "}.dest-details .dest-to:not(:empty)::before{content:" \u2013 "}hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}';
+    var destList = getDestinationBlocksDataStep2();
+    var destHtml = destList.length === 0 ? '<span class="value">—</span>' : destList.map(function(d) {
+      var parts = [
+        '<span class="dest-name">' + escapeHtml(d.name || '') + '</span>',
+        '<span class="dest-from">' + escapeHtml(d.fromDate || '') + '</span>',
+        '<span class="dest-to">' + escapeHtml(d.toDate || '') + '</span>',
+        '<span>' + escapeHtml(d.address || '') + '</span>',
+        '<span>' + escapeHtml(d.phone || '') + '</span>',
+        '<span>' + escapeHtml(d.email || '') + '</span>'
+      ];
+      return '<div class="dest-details">' + parts.join('') + '</div>';
+    }).join('<hr class="dest-sep">');
     var additionalHtml = additionalInfo ? '<span class="value">' + formatMultiline(additionalInfo) + '</span>' : '<span class="value">—</span>';
     var ml = (mobile || '').replace(/\s/g, '');
     var mobileHtml = (mobile && mobile.trim()) ? '<a href="tel:' + escapeHtml(ml) + '">' + escapeHtml(String(mobile).trim()) + '</a>' : '—';
@@ -1375,6 +1514,7 @@
   initStep1Validations();
   attachDobMask();
   attachUsernameMask();
+  initDestinationRepeaterStep2();
 
   function showAlert(id, msg, type) {
     const el = document.getElementById(id);

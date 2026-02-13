@@ -1358,6 +1358,13 @@ body {
   margin-top: var(--space-3);
 }
 
+/* Separator between repeated Destination Details sections */
+hr.dest-sep-form {
+  margin: var(--space-4) 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
 .form-actions {
   display: flex;
   flex-wrap: nowrap;

@@ -11,7 +11,10 @@ EMAIL_RELAY_URL = "https://deem0u-github-io.vercel.app/api/send"
 
 # Required secrets (set via Cloudflare dashboard):
 # GITHUB_TOKEN - Your GitHub Personal Access Token with 'repo' scope
-# JWT_SECRET - Long random string (32+ chars) for signing user JWTs. Use this name; SESSION_SECRET is a fallback for backwards compatibility.
+# JWT_SECRET - Long random string (32+ chars) for signing user JWTs. Required for user sign-in; no other secret name is used.
+# Optional (internal setup endpoint - enable only when needed):
+# ADMIN_SETUP_SECRET - Long random string (32+ chars). Required to call POST /api/internal/set-admin-credentials.
+# SETUP_ROUTE_ENABLED - Set to 'true' to enable the setup endpoint; when unset or not 'true', the route returns 404. See SETUP-GUIDE.md.
 # Optional (for automated email):
 # EMAIL_RELAY_URL - Vercel relay URL, e.g. https://your-project.vercel.app/api/send
 # EMAIL_RELAY_SECRET - Same value as RELAY_SECRET in Vercel

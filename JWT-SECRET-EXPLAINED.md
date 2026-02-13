@@ -10,7 +10,7 @@ When a **user** (not an admin) signs in to **My Account** with their email and p
 
 That token is a **JWT** (JSON Web Token). It’s like a signed slip: it contains the username and an expiry time, and it’s **signed** with a secret that only the Worker knows. Signing means: only someone who has that secret can create a valid token or change what’s inside it without the Worker noticing.
 
-The **JWT secret** is that secret. In your project it’s the value you set in Cloudflare under the name **JWT_SECRET** (or, for backwards compatibility, **SESSION_SECRET**). The Worker uses it to:
+The **JWT secret** is that secret. In your project it’s the value you set in Cloudflare under the name **JWT_SECRET**. The Worker uses it to:
 
 - **Sign** the token when the user logs in (so the token can’t be forged by someone who doesn’t have the secret).
 - **Verify** the token on every later request (so it knows the token wasn’t tampered with and was issued by this Worker).
@@ -31,12 +31,12 @@ So: **JWT secret = the key the Worker uses to create and validate user login tok
 
 1. **Set it in Cloudflare**  
    Workers & Pages → your Worker → **Settings** → **Variables and Secrets** → **Add** → **Secret**  
-   - **Name:** `JWT_SECRET` (preferred; the code also accepts `SESSION_SECRET` if you already use that).  
+   - **Name:** `JWT_SECRET` (this is the only name the Worker uses).  
    - **Value:** A **long, random** string (e.g. at least 32 characters). Use a password generator or something like `openssl rand -base64 32` and paste the result.  
    - Save. Never put this value in your repo or in `wrangler.toml` as plain text.
 
-2. **Use one name**  
-   Prefer **JWT_SECRET**. If you have both **JWT_SECRET** and **SESSION_SECRET** set, the Worker uses **JWT_SECRET** first. You can keep **SESSION_SECRET** for backwards compatibility or remove it and use only **JWT_SECRET**.
+2. **If you previously used SESSION_SECRET**  
+   The Worker now uses only **JWT_SECRET**. If you had **SESSION_SECRET** set, add **JWT_SECRET** in Cloudflare with the **same value** (or a new value if you prefer to rotate), then redeploy. After that you can remove **SESSION_SECRET** if you like.
 
 3. **Keep it strong**  
    No short or guessable values (e.g. `"secret"`, `"myjwtkey"`). Long and random is the rule.
@@ -48,7 +48,7 @@ So: **JWT secret = the key the Worker uses to create and validate user login tok
 
 ## Where it’s used in this project
 
-- **Worker** (`worker.js`): When a user signs in (email + password or OTP), the Worker calls `signJwt({ username, exp }, secret)` and returns that token to the browser. On every later request that needs “who is this user?”, it reads the `Authorization: Bearer <token>` header and calls `verifyJwt(token, secret)`. The `secret` comes from `env.JWT_SECRET || env.SESSION_SECRET`.
+- **Worker** (`worker.js`): When a user signs in (email + password or OTP), the Worker calls `signJwt({ username, exp }, secret)` and returns that token to the browser. On every later request that needs “who is this user?”, it reads the `Authorization: Bearer <token>` header and calls `verifyJwt(token, secret)`. The `secret` comes from `env.JWT_SECRET`.
 - **My Account** (`myaccount/index.html`): After sign-in, the token is stored in `sessionStorage` and sent with API requests. The Worker uses the JWT secret only on the server; the browser never sees the secret.
 
 ---
@@ -57,7 +57,7 @@ So: **JWT secret = the key the Worker uses to create and validate user login tok
 
 | Do | Don’t |
 |----|--------|
-| Set **JWT_SECRET** (or **SESSION_SECRET**) in Cloudflare as a **Secret** | Put the value in code or in a file you commit |
+| Set **JWT_SECRET** in Cloudflare as a **Secret** | Put the value in code or in a file you commit |
 | Use a long, random value (32+ characters) | Use short or guessable values like `"secret"` |
 | Use the same secret for all requests in one environment | Use different secrets in different places without reason |
 | Rotate the secret (set a new value) if you suspect it was leaked | Share the secret or store it in plain text |

@@ -572,14 +572,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Destination Details</label>
-                <div class="form-section">
-                  <div class="form-group"><label class="form-label">Destination Name</label><span class="editor-view-value" id="view-dest-name"></span></div>
-                  <div class="form-group"><label class="form-label">Destination Address</label><span class="editor-view-value" id="view-dest-address"></span></div>
-                  <div class="form-row">
-                    <div class="form-group"><label class="form-label">Destination Contact Number</label><span class="editor-view-value" id="view-dest-phone"></span></div>
-                    <div class="form-group"><label class="form-label">Destination Email</label><span class="editor-view-value" id="view-dest-email"></span></div>
-                  </div>
-                </div>
+                <div id="view-destination-blocks" class="form-section"></div>
               </div>
               <div class="form-group">
                 <label class="form-label">Additional Information</label>
@@ -647,15 +640,24 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Destination Details</label>
-                <div class="form-section">
-                  <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input" maxlength="200" autocomplete="off"></div>
-                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input" maxlength="200" autocomplete="off"></div>
+                <span class="form-hint" id="hint-destination-details"></span>
+                <div class="form-section destination-block" data-dest-index="0">
                   <div class="form-row">
-                    <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-dest-phone" role="alert"></span></div>
-                    <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input" autocomplete="off"><span class="form-error" id="error-dest-email" role="alert"></span></div>
+                    <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input dest-name" maxlength="200" autocomplete="off"></div>
+                    <div class="form-group"><label class="form-label">From Date</label><input type="text" id="dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
+                    <div class="form-group"><label class="form-label">To Date</label><input type="text" id="dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
+                  </div>
+                  <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input dest-address" maxlength="200" autocomplete="off"></div>
+                  <div class="form-row">
+                    <div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" id="dest-phone" class="form-input dest-phone contact-number-mask" pattern="\+[0-9]{8,20}" maxlength="21" inputmode="tel"><span class="form-error" id="error-dest-phone" role="alert"></span></div>
+                    <div class="form-group"><label class="form-label">Destination Email</label><input type="email" id="dest-email" class="form-input dest-email" autocomplete="off"><span class="form-error" id="error-dest-email" role="alert"></span></div>
+                  </div>
+                  <div class="destination-block-actions">
+                    <button type="button" class="btn btn-ghost btn-sm destination-delete-btn" aria-label="Delete destination" title="Delete destination"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
                   </div>
                 </div>
-                <span class="form-hint" id="hint-destination-details"></span>
+                <div id="destination-blocks-container"></div>
+                <button type="button" class="btn btn-primary btn-sm" id="add-destination-btn">Add Destination</button>
               </div>
               <div class="form-group">
                 <label class="form-label">Additional Information</label>
@@ -1523,6 +1525,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('contact-form').addEventListener('submit', handleSave);
   document.getElementById('contact-form').addEventListener('input', updateFormDirtyState);
   document.getElementById('contact-form').addEventListener('change', updateFormDirtyState);
+  initDestinationRepeater();
   document.getElementById('contact-page-name').addEventListener('input', updateFormDirtyState);
   document.getElementById('contact-page-url-slug').addEventListener('input', updateFormDirtyState);
   var contactPageNameInp = document.getElementById('contact-page-name');
@@ -1765,10 +1768,24 @@ function refreshViewModeDisplay() {
   setView('view-mobile', el('mobile'));
   var countryEl = document.getElementById('home-country-edit-text');
   setView('view-home-country', countryEl && countryEl.textContent && countryEl.textContent !== 'Select country' ? countryEl.textContent : '');
-  setView('view-dest-name', el('dest-name'));
-  setView('view-dest-address', el('dest-address'));
-  setView('view-dest-phone', el('dest-phone'));
-  setView('view-dest-email', el('dest-email'));
+  var viewDestContainer = document.getElementById('view-destination-blocks');
+  if (viewDestContainer && typeof getDestinationBlocksData === 'function') {
+    var dests = getDestinationBlocksData();
+    var parts = [];
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    dests.forEach(function(d, i) {
+      if (i > 0) parts.push('<hr class="dest-sep-form">');
+      var nameLine = (d.name || '').trim();
+      if ((d.fromDate || '').trim() || (d.toDate || '').trim()) nameLine += (nameLine ? ' · ' : '') + (d.fromDate || '').trim() + (d.fromDate && d.toDate ? ' – ' : '') + (d.toDate || '').trim();
+      parts.push('<div class="view-dest-block">');
+      parts.push('<div class="form-group"><label class="form-label">Destination</label><span class="editor-view-value">' + esc(nameLine || '—') + '</span></div>');
+      parts.push('<div class="form-group"><label class="form-label">Address</label><span class="editor-view-value">' + esc((d.address || '').trim() || '—') + '</span></div>');
+      parts.push('<div class="form-group"><label class="form-label">Contact Number</label><span class="editor-view-value">' + esc((d.phone || '').trim() || '—') + '</span></div>');
+      parts.push('<div class="form-group"><label class="form-label">Email</label><span class="editor-view-value">' + esc((d.email || '').trim() || '—') + '</span></div>');
+      parts.push('</div>');
+    });
+    viewDestContainer.innerHTML = parts.length ? parts.join('') : '<div class="form-group"><label class="form-label">Destination Details</label><span class="editor-view-value">—</span></div>';
+  }
   setView('view-additional-info', el('additional-info'));
 }
 
@@ -1814,10 +1831,7 @@ function getFormSnapshot() {
     'mobile': v('mobile'),
     'home-country': v('home-country'),
     'home-country-text': (function() { var e = document.getElementById('home-country-edit-text'); return e && e.textContent !== 'Select country' ? e.textContent.trim() : ''; })(),
-    'dest-name': v('dest-name'),
-    'dest-address': v('dest-address'),
-    'dest-phone': v('dest-phone'),
-    'dest-email': v('dest-email'),
+    'destinations': JSON.stringify(typeof getDestinationBlocksData === 'function' ? getDestinationBlocksData() : []),
     'additional-info': v('additional-info')
   };
 }
@@ -2311,7 +2325,7 @@ function selectContactPage(contactpagename) {
     .catch(function() { showStatusBanner('Failed to load page', 'error'); return undefined; });
 }
 function getMinimalContactPageHTML() {
-  var ids = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
+  var ids = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','dest-from-date','dest-to-date','additional-info'];
   var saved = {};
   ids.forEach(function(id) { var el = document.getElementById(id); if (el) { saved[id] = el.value; el.value = ''; } });
   var countryTextEl = document.getElementById('home-country-edit-text');
@@ -2327,12 +2341,14 @@ function getMinimalContactPageHTML() {
   return html;
 }
 function clearFormToBlank() {
-  var ids = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','additional-info'];
+  var ids = ['first-name','surname','email','mobile','home-country','dest-name','dest-address','dest-phone','dest-email','dest-from-date','dest-to-date','additional-info'];
   ids.forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
   var countryTextEl = document.getElementById('home-country-edit-text');
   if (countryTextEl) countryTextEl.textContent = 'Select country';
   var homeCountryHidden = document.getElementById('home-country');
   if (homeCountryHidden) homeCountryHidden.value = '';
+  var container = document.getElementById('destination-blocks-container');
+  if (container) container.innerHTML = '';
   document.querySelectorAll('.form-error').forEach(function(el) { el.textContent = ''; el.classList.add('hidden'); });
 }
 async function authenticateWithStoredSession() {
@@ -3378,27 +3394,28 @@ function fillForm(h) {
   if (hc && (hc.length > 80 || /[\r\n]/.test(hc))) hc = '';
   setCountryDropdownEdit(hc || null);
   
-  // Destination details: 4-span (name, address, phone, email) or 3-span legacy (name, phone, email)
-  const dm4 = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
-  const dm3 = h.match(/<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/);
-  if (dm4) {
-    document.getElementById('dest-name').value = dm4[1].trim();
-    document.getElementById('dest-address').value = dm4[2].trim();
-    var dp = dm4[3].trim();
-    document.getElementById('dest-phone').value = dp ? formatContactNumber(dp) : '';
-    document.getElementById('dest-email').value = dm4[4].trim();
-  } else if (dm3) {
-    document.getElementById('dest-name').value = dm3[1].trim();
-    document.getElementById('dest-address').value = '';
-    var dp = dm3[2].trim();
-    document.getElementById('dest-phone').value = dp ? formatContactNumber(dp) : '';
-    document.getElementById('dest-email').value = dm3[3].trim();
-  } else {
-    document.getElementById('dest-name').value = '';
-    document.getElementById('dest-address').value = '';
-    document.getElementById('dest-phone').value = '';
-    document.getElementById('dest-email').value = '';
+  // Destination details: 6-span (name, from, to, address, phone, email), 4-span or 3-span legacy; multiple blocks allowed
+  var dests = [];
+  var re6 = /<div class="dest-details"><span class="dest-name">([^<]*)<\/span><span class="dest-from">([^<]*)<\/span><span class="dest-to">([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
+  var m6;
+  while ((m6 = re6.exec(h)) !== null) {
+    dests.push({ name: m6[1].trim(), fromDate: m6[2].trim(), toDate: m6[3].trim(), address: m6[4].trim(), phone: m6[5].trim(), email: m6[6].trim() });
   }
+  if (dests.length === 0) {
+    var re4 = /<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
+    var m4;
+    while ((m4 = re4.exec(h)) !== null) {
+      dests.push({ name: m4[1].trim(), fromDate: '', toDate: '', address: m4[2].trim(), phone: m4[3].trim(), email: m4[4].trim() });
+    }
+  }
+  if (dests.length === 0) {
+    var re3 = /<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
+    var m3;
+    while ((m3 = re3.exec(h)) !== null) {
+      dests.push({ name: m3[1].trim(), fromDate: '', toDate: '', address: '', phone: m3[2].trim(), email: m3[3].trim() });
+    }
+  }
+  setDestinationBlocksFromData(dests);
 
   document.getElementById('additional-info').value = gMulti('Additional Information');
   refreshViewModeDisplay();
@@ -3700,6 +3717,170 @@ async function handleSave(e) {
   }
 }
 
+function getDestinationBlocksData() {
+  var blocks = document.querySelectorAll('#editor-contact-edit .destination-block');
+  var out = [];
+  blocks.forEach(function(block) {
+    var nameEl = block.querySelector('.dest-name');
+    var fromEl = block.querySelector('.dest-from-date');
+    var toEl = block.querySelector('.dest-to-date');
+    var addrEl = block.querySelector('.dest-address');
+    var phoneEl = block.querySelector('.dest-phone');
+    var emailEl = block.querySelector('.dest-email');
+    out.push({
+      name: nameEl ? nameEl.value.trim() : '',
+      fromDate: fromEl ? fromEl.value.trim() : '',
+      toDate: toEl ? toEl.value.trim() : '',
+      address: addrEl ? addrEl.value.trim() : '',
+      phone: phoneEl ? phoneEl.value.trim() : '',
+      email: emailEl ? emailEl.value.trim() : ''
+    });
+  });
+  return out;
+}
+
+function createAdditionalDestinationBlock(index, data) {
+  data = data || {};
+  var hr = document.createElement('hr');
+  hr.className = 'dest-sep-form';
+  var block = document.createElement('div');
+  block.className = 'form-section destination-block';
+  block.setAttribute('data-dest-index', String(index));
+  block.innerHTML = '<div class="form-row">' +
+    '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" maxlength="200" autocomplete="off"></div>' +
+    '<div class="form-group"><label class="form-label">From Date</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+    '<div class="form-group"><label class="form-label">To Date</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+    '</div>' +
+    '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" maxlength="200" autocomplete="off"></div>' +
+    '<div class="form-row">' +
+    '<div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" class="form-input dest-phone contact-number-mask" pattern="\\+[0-9]{8,20}" maxlength="21" inputmode="tel"></div>' +
+    '<div class="form-group"><label class="form-label">Destination Email</label><input type="email" class="form-input dest-email" autocomplete="off"></div>' +
+    '</div>' +
+    '<div class="destination-block-actions">' +
+    '<button type="button" class="btn btn-ghost btn-sm destination-delete-btn" aria-label="Delete destination" title="Delete destination"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>' +
+    '</div>';
+  var nameInp = block.querySelector('.dest-name');
+  var fromInp = block.querySelector('.dest-from-date');
+  var toInp = block.querySelector('.dest-to-date');
+  var addrInp = block.querySelector('.dest-address');
+  var phoneInp = block.querySelector('.dest-phone');
+  var emailInp = block.querySelector('.dest-email');
+  if (nameInp) nameInp.value = data.name || '';
+  if (fromInp) fromInp.value = data.fromDate || '';
+  if (toInp) toInp.value = data.toDate || '';
+  if (addrInp) addrInp.value = data.address || '';
+  if (phoneInp) phoneInp.value = data.phone ? (typeof formatContactNumber === 'function' ? formatContactNumber(data.phone) : data.phone) : '';
+  if (emailInp) emailInp.value = data.email || '';
+  var frag = document.createDocumentFragment();
+  frag.appendChild(hr);
+  frag.appendChild(block);
+  return frag;
+}
+
+function setDestinationBlocksFromData(dests) {
+  var firstBlock = document.querySelector('#editor-contact-edit .destination-block[data-dest-index="0"]');
+  if (!firstBlock) return;
+  var nameInp = document.getElementById('dest-name');
+  var fromInp = document.getElementById('dest-from-date');
+  var toInp = document.getElementById('dest-to-date');
+  var addrInp = document.getElementById('dest-address');
+  var phoneInp = document.getElementById('dest-phone');
+  var emailInp = document.getElementById('dest-email');
+  var container = document.getElementById('destination-blocks-container');
+  if (!container) return;
+  if (dests.length === 0) {
+    if (nameInp) nameInp.value = '';
+    if (fromInp) fromInp.value = '';
+    if (toInp) toInp.value = '';
+    if (addrInp) addrInp.value = '';
+    if (phoneInp) phoneInp.value = '';
+    if (emailInp) emailInp.value = '';
+    container.innerHTML = '';
+    return;
+  }
+  var d0 = dests[0];
+  if (nameInp) nameInp.value = d0.name || '';
+  if (fromInp) fromInp.value = d0.fromDate || '';
+  if (toInp) toInp.value = d0.toDate || '';
+  if (addrInp) addrInp.value = d0.address || '';
+  if (phoneInp) phoneInp.value = d0.phone ? formatContactNumber(d0.phone) : '';
+  if (emailInp) emailInp.value = d0.email || '';
+  container.innerHTML = '';
+  for (var i = 1; i < dests.length; i++) {
+    container.appendChild(createAdditionalDestinationBlock(i, dests[i]));
+  }
+  attachDobMask();
+  if (typeof attachContactNumberMask === 'function') attachContactNumberMask();
+}
+
+function initDestinationRepeater() {
+  var addBtn = document.getElementById('add-destination-btn');
+  var container = document.getElementById('destination-blocks-container');
+  if (addBtn && container) {
+    addBtn.addEventListener('click', function() {
+      var blocks = document.querySelectorAll('#editor-contact-edit .destination-block');
+      var nextIndex = blocks.length;
+      container.appendChild(createAdditionalDestinationBlock(nextIndex, {}));
+      attachDobMask();
+      if (typeof attachContactNumberMask === 'function') attachContactNumberMask();
+      updateFormDirtyState();
+    });
+  }
+  var editForm = document.getElementById('editor-contact-edit');
+  if (editForm) {
+    editForm.addEventListener('click', function(e) {
+      var delBtn = e.target.closest('.destination-delete-btn');
+      if (!delBtn) return;
+      var block = delBtn.closest('.destination-block');
+      if (!block) return;
+      var allBlocks = document.querySelectorAll('#editor-contact-edit .destination-block');
+      if (allBlocks.length === 1) {
+        var nameInp = block.querySelector('.dest-name');
+        var fromInp = block.querySelector('.dest-from-date');
+        var toInp = block.querySelector('.dest-to-date');
+        var addrInp = block.querySelector('.dest-address');
+        var phoneInp = block.querySelector('.dest-phone');
+        var emailInp = block.querySelector('.dest-email');
+        if (nameInp) nameInp.value = '';
+        if (fromInp) fromInp.value = '';
+        if (toInp) toInp.value = '';
+        if (addrInp) addrInp.value = '';
+        if (phoneInp) phoneInp.value = '';
+        if (emailInp) emailInp.value = '';
+        updateFormDirtyState();
+        return;
+      }
+      var isFirst = block.getAttribute('data-dest-index') === '0';
+      if (isFirst && container && container.children.length > 0) {
+        var secondBlock = container.querySelector('.destination-block');
+        if (secondBlock) {
+          var copy = function(sel, id) {
+            var src = secondBlock.querySelector(sel);
+            var dest = document.getElementById(id);
+            if (src && dest) dest.value = src.value;
+          };
+          copy('.dest-name', 'dest-name');
+          copy('.dest-from-date', 'dest-from-date');
+          copy('.dest-to-date', 'dest-to-date');
+          copy('.dest-address', 'dest-address');
+          copy('.dest-phone', 'dest-phone');
+          copy('.dest-email', 'dest-email');
+          var hr = secondBlock.previousElementSibling;
+          if (hr && hr.classList.contains('dest-sep-form')) hr.remove();
+          secondBlock.remove();
+        }
+      } else {
+        var prev = block.previousElementSibling;
+        if (prev && prev.classList.contains('dest-sep-form')) prev.remove();
+        block.remove();
+      }
+      attachDobMask();
+      if (typeof attachContactNumberMask === 'function') attachContactNumberMask();
+      updateFormDirtyState();
+    });
+  }
+}
+
 function generateHTML() {
   const f = i => document.getElementById(i).value.trim();
   const firstName = f('first-name');
@@ -3707,10 +3888,6 @@ function generateHTML() {
   const email = f('email');
   const mobile = f('mobile');
   const homeCountry = f('home-country');
-  const destName = f('dest-name');
-  const destAddress = f('dest-address');
-  const destPhone = f('dest-phone');
-  const destEmail = f('dest-email');
   const additionalInfo = f('additional-info');
 
   const escapeHtml = (s) => (s ?? '')
@@ -3749,6 +3926,8 @@ function generateHTML() {
     a:hover{color:#1d4ed8;text-decoration:underline}
     a:active{color:#1e40af}
     .dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}
+    .dest-details .dest-name,.dest-details .dest-from,.dest-details .dest-to{display:inline}.dest-details .dest-from:not(:empty)::before{content:" · "}.dest-details .dest-to:not(:empty)::before{content:" – "}
+    hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}
     @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
   `.replace(/\n\s*/g, '');
   
@@ -3782,13 +3961,18 @@ function generateHTML() {
 })();
 </scr` + `ipt>`;
   
-  const dName = (destName == null ? '' : String(destName)).trim();
-  const dAddr = (destAddress == null ? '' : String(destAddress)).trim();
-  const dPhone = (destPhone == null ? '' : String(destPhone)).trim();
-  const dEmail = (destEmail == null ? '' : String(destEmail)).trim();
-  const hasDest = !!(dName || dAddr || dPhone || dEmail);
-  const destParts = [dName, dAddr, dPhone, dEmail].map(t => '<span>' + (t ? escapeHtml(t) : '') + '</span>');
-  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">—</span>';
+  const destList = getDestinationBlocksData();
+  const destHtml = destList.length === 0 ? '<span class="value">—</span>' : destList.map(function(d) {
+    const parts = [
+      '<span class="dest-name">' + escapeHtml(d.name || '') + '</span>',
+      '<span class="dest-from">' + escapeHtml(d.fromDate || '') + '</span>',
+      '<span class="dest-to">' + escapeHtml(d.toDate || '') + '</span>',
+      '<span>' + escapeHtml(d.address || '') + '</span>',
+      '<span>' + escapeHtml(d.phone || '') + '</span>',
+      '<span>' + escapeHtml(d.email || '') + '</span>'
+    ];
+    return '<div class="dest-details">' + parts.join('') + '</div>';
+  }).join('<hr class="dest-sep">');
 
   const additionalHtml = additionalInfo ? `<span class="value">${formatMultiline(additionalInfo)}</span>` : '<span class="value">—</span>';
   const hasMobile = mobile != null && String(mobile).trim() !== '';

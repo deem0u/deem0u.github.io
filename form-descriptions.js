@@ -35,6 +35,8 @@ window.FORM_DESCRIPTIONS = {
     hint: 'Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.'
   },
   'dest-name': { label: 'Destination Name' },
+  'dest-from-date': { label: 'From Date' },
+  'dest-to-date': { label: 'To Date' },
   'dest-address': { label: 'Destination Address' },
   'dest-phone': { label: 'Destination Contact Number' },
   'dest-email': { label: 'Destination Email' },

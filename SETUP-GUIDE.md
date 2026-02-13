@@ -427,12 +427,41 @@ The Worker includes a `sendEmail()` helper. Workflow integrations (signup, recov
 
 You can set or change the **admin email** and **password** (and optionally the **admin key**) without knowing the current admin key, via an endpoint that is **not exposed on the site** and is protected by a secret.
 
-1. **Set the secret in the Worker**  
+**The setup route is disabled by default.** You must enable it (see below) before calling it, then disable it again after use if you want to reduce exposure.
+
+### Enable or disable the setup route
+
+The route **POST /api/internal/set-admin-credentials** only responds when the Worker has the secret **SETUP_ROUTE_ENABLED** set to the exact value **`true`**. If that secret is missing or not `true`, the route returns **404** (as if it does not exist).
+
+| Goal | What to do |
+|------|------------|
+| **Enable** (so you can call the endpoint) | Set the Worker secret `SETUP_ROUTE_ENABLED` = `true`, then redeploy the Worker. |
+| **Disable** (default; route returns 404) | Remove the secret `SETUP_ROUTE_ENABLED`, or set it to anything other than `true` (e.g. `false`), then redeploy. |
+
+**Re-enable from Cursor (or any machine with the repo and Wrangler):**
+
+1. Open a terminal in the project.
+2. Go to the Worker folder:  
+   `cd cloudflare-worker`
+3. Set the secret (you will be prompted to enter the value):  
+   `npx wrangler secret put SETUP_ROUTE_ENABLED`  
+   When prompted, type: **true**
+4. Redeploy the Worker:  
+   `npx wrangler deploy`
+5. Call the endpoint (curl or script) as in step 2 below. When finished, disable again:  
+   `npx wrangler secret delete SETUP_ROUTE_ENABLED`  
+   then **Redeploy** in the Cloudflare dashboard (or run `npx wrangler deploy` again). After deletion, the route is disabled.
+
+**Using the Cloudflare dashboard:** Workers & Pages → your Worker → **Settings** → **Variables and Secrets** → add or edit **SETUP_ROUTE_ENABLED** (value `true` to enable). Remove it or set to `false` to disable. Redeploy after changing.
+
+---
+
+1. **Set the setup secret in the Worker**  
    Cloudflare Worker → **Settings** → **Variables and Secrets** → add a **Secret**:  
    Name: `ADMIN_SETUP_SECRET`  
    Value: a long random string (e.g. `openssl rand -hex 32`). Keep this private; do not use it in frontend or public docs.
 
-2. **Call the endpoint from your machine or scripts** (e.g. curl), **not from the dashboard or any page**:
+2. **Enable the route** (see “Enable or disable the setup route” above), then **call the endpoint from your machine or scripts** (e.g. curl), **not from the dashboard or any page**:
 
    ```bash
    curl -X POST "https://YOUR-WORKER-URL/api/internal/set-admin-credentials" \
@@ -456,7 +485,7 @@ You can set or change the **admin email** and **password** (and optionally the *
    You can also use `Authorization: Bearer YOUR_ADMIN_SETUP_SECRET` instead of `X-Setup-Secret`.
 
 3. **Security**  
-   Do not link or document this URL on the public site. Only call it from a secure environment (your machine, CI, or a backend you control). If `ADMIN_SETUP_SECRET` is not set in the Worker, the endpoint returns 501 and does nothing.
+   Do not link or document this URL on the public site. Only call it from a secure environment (your machine, CI, or a backend you control). If `SETUP_ROUTE_ENABLED` is not set to `true`, the endpoint returns **404**. If `ADMIN_SETUP_SECRET` is not set, the endpoint returns **501**.
 
 ---
 
@@ -487,6 +516,7 @@ Use this when you cannot sign in to the admin dashboard (lost key, lost password
 
 4. **Check the response**  
    You should see something like: `{"success":true,"updated":["email","password","adminKey"]}`.  
+   If you see **404**, enable the setup route first (set Worker secret `SETUP_ROUTE_ENABLED` = `true` and redeploy; see “Enable or disable the setup route” above).  
    If you see `401 Unauthorized`, the secret is wrong. If you see `501`, the Worker does not have `ADMIN_SETUP_SECRET` set.
 
 5. **Sign in to the admin dashboard**  
