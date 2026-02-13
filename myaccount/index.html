@@ -1880,15 +1880,22 @@ function enterEditMode() {
 }
 
 function enterViewMode() {
-  refreshViewModeDisplay();
+  try {
+    refreshViewModeDisplay();
+  } catch (e) {
+    console.error('refreshViewModeDisplay', e);
+  }
   var vpl = document.getElementById('view-page-link');
   if (vpl) { vpl.href = viewPageHref(); vpl.style.pointerEvents = isCreateMode ? 'none' : ''; }
   var qrBtn = document.getElementById('view-qr-codes-btn');
   if (qrBtn) qrBtn.disabled = isCreateMode;
-  document.getElementById('editor-contact-edit').classList.remove('show');
-  document.getElementById('editor-contact-view').classList.remove('hidden');
+  var editPanel = document.getElementById('editor-contact-edit');
+  var viewPanel = document.getElementById('editor-contact-view');
+  if (editPanel) editPanel.classList.remove('show');
+  if (viewPanel) viewPanel.classList.remove('hidden');
   var delBtn = document.getElementById('form-delete-page-btn');
   if (delBtn) delBtn.style.display = 'none';
+  if (typeof updateMainContentVisibility === 'function') updateMainContentVisibility();
 }
 
 var myAccountQrData = { url: '', vcard: '', fn: '' };
