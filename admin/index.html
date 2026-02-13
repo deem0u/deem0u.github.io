@@ -3431,7 +3431,7 @@ function generatePageHTML(givenName, familyName, contactEmail, mobile, mobileLin
     .dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0;padding-right:0.5em}
     .dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre;margin:0 0.35em}
     .dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}
-    @media (max-width:560px){.dest-details .dest-name-dates-row .dest-sep{display:none}}
+    @media (max-width:560px){.dest-details .dest-name-dates-row{flex-direction:column;align-items:flex-start}.dest-details .dest-name-dates-row .dest-sep{display:none}}
     hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}
     @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
   `.replace(/\n\s*/g, '');
@@ -3486,7 +3486,7 @@ function generatePageHTML(givenName, familyName, contactEmail, mobile, mobileLin
   const lastUpdatedEn = 'Last updated';
   const lastUpdatedFr = 'Derni\u00e8re mise \u00e0 jour';
   const lastUpdatedZh = '\u6700\u540e\u66f4\u65b0';
-  const lastUpdatedTitles = lastUpdatedEn + ' \u00b7 ' + lastUpdatedFr + ' \u00b7 ' + lastUpdatedZh;
+  const lastUpdatedTitles = lastUpdatedEn + '<wbr> \u00b7 ' + lastUpdatedFr + ' \u00b7 ' + lastUpdatedZh;
   const lastUpdatedBlockHtml = lastUpdated ? `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>?</span></div>` : '';
   const hasMobile = mobile != null && String(mobile).trim() !== '';
   const mobileHtml = hasMobile
@@ -3499,7 +3499,7 @@ function generatePageHTML(givenName, familyName, contactEmail, mobile, mobileLin
   var fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
   var zh = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
   var titleEn = 'Contact Information';
-  var lblBoth = function(k) { var e = k === 'section-title' ? titleEn : lbl(k); return e + ' \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
+  var lblBoth = function(k) { var e = k === 'section-title' ? titleEn : lbl(k); return e + '<wbr> \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
 
   return `<!DOCTYPE html>
 <html lang="en">

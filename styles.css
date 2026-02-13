@@ -2952,7 +2952,7 @@ hr.dest-sep-form {
     position: fixed;
     top: 0;
     right: 0;
-    width: min(280px, 85vw);
+    width: min(220px, 65vw);
     max-width: 100%;
     height: 100%;
     flex-direction: column;
@@ -2997,6 +2997,8 @@ hr.dest-sep-form {
     margin: 0;
     padding: 0 0 0.5rem 0;
     display: none;
+    overflow: visible;
+    visibility: visible;
   }
   .app-header-actions .nav-dropdown.open .nav-dropdown-panel,
   .app-header-actions .nav-dropdown:focus-within .nav-dropdown-panel {

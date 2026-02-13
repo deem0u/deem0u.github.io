@@ -201,6 +201,56 @@
     .home-left-col { min-height: auto; padding: 1rem 0; }
     .home-right-col { max-width: none; min-height: auto; justify-content: flex-start; }
   }
+  /* Signup: mobile-optimised step badges, cards and form */
+  @media (max-width: 640px) {
+    #signup-step0-section,
+    #signup-steps-section { width: 100%; max-width: none; }
+    .signup-progress {
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+      padding: 0.35rem 0;
+    }
+    .signup-progress .step-pill {
+      min-width: 0;
+      flex: 1 1 calc(50% - 0.2rem);
+      font-size: 0.75rem;
+      padding: 0.4rem 0.35rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .signup-form-card .card-body,
+    .signup-step0-card .card-body { padding: var(--space-4) var(--space-3); }
+    .signup-form-card .card-title { font-size: 1.35rem; }
+    .signup-step1-card .card-body { padding: var(--space-3) var(--space-3); }
+    .signup-step1-card .form-group { margin-bottom: var(--space-2); }
+    .signup-step1-card .secret-q-row { margin-bottom: 0.5rem; }
+    .signup-step1-card .form-actions { flex-direction: column; gap: 0.5rem; }
+    .signup-step1-card .form-actions .btn { width: 100%; }
+    .signup-step2-card .card-header.signup-step2-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+      padding: var(--space-3) var(--space-3);
+      text-align: center;
+    }
+    .signup-step2-card .card-header .card-title { text-align: center; }
+    .signup-step2-card .step2-toggle-hints-wrap { margin-left: 0; justify-content: center; }
+    .signup-step2-card .card-body { padding: var(--space-3) var(--space-3); }
+    .signup-step2-card .form-row { grid-template-columns: 1fr; }
+    .signup-step2-card .form-actions { flex-direction: column; gap: 0.5rem; }
+    .signup-step2-card .form-actions .btn { width: 100%; }
+    #signup-otp-card .card-body { padding: var(--space-3) var(--space-3); }
+    .signup-otp-actions { flex-direction: column; gap: 0.5rem; align-items: stretch; }
+    .signup-otp-actions .btn { width: 100%; }
+    .signup-otp-skip { margin-left: 0; margin-top: 0.25rem; }
+    #signup-step3-card .card-body,
+    #signup-step4-card .card-body { padding: var(--space-3) var(--space-3); }
+    .home-success-buttons { flex-direction: column; gap: 0.5rem; }
+    .home-success-buttons .btn { width: 100%; }
+    .home-success-buttons .btn-right { margin-left: 0; }
+  }
   </style>
   <script src="/account-details-content.js"></script>
   <script src="/form-descriptions.js"></script>
@@ -1158,7 +1208,7 @@
     var additionalInfo = f('step2-additional-info');
     var escapeHtml = function(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
     var formatMultiline = function(s) { var text = (s ?? '').toString().trim(); if (!text) return ''; return escapeHtml(text).replace(/\r?\n/g, '<br>'); };
-    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{font-family:\'Quicksand\',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}@media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}@media(min-width:640px){.container{padding:48px 40px;max-width:760px}}.last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}.dest-details .dest-name-dates-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0;min-width:0}.dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0;padding-right:0.5em}.dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre;margin:0 0.35em}.dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}@media(max-width:560px){.dest-details .dest-name-dates-row .dest-sep{display:none}}hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}';
+    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{font-family:\'Quicksand\',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}@media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}@media(min-width:640px){.container{padding:48px 40px;max-width:760px}}.last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}.dest-details .dest-name-dates-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0;min-width:0}.dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0;padding-right:0.5em}.dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre;margin:0 0.35em}.dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}@media(max-width:560px){.dest-details .dest-name-dates-row{flex-direction:column;align-items:flex-start}.dest-details .dest-name-dates-row .dest-sep{display:none}}hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}';
     var destList = getDestinationBlocksDataStep2();
     var destHtml = destList.length === 0 ? '<span class="value">—</span>' : destList.map(function(d) {
       var name = escapeHtml((d.name || '').trim());
@@ -1178,7 +1228,7 @@
     var lbl = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
     var fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
     var zh = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
-    var lblBoth = function(k) { var e = k === 'section-title' ? 'Contact Information' : lbl(k); return e + ' \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
+    var lblBoth = function(k) { var e = k === 'section-title' ? 'Contact Information' : lbl(k); return e + '<wbr> \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
     var lastUpdatedBlockHtml = '<div class="last-updated-block"><span class="last-updated-titles">Last updated</span><span class="last-updated-display" ' + lastUpdatedData + '>—</span></div>';
     var formatTimestampScript = '<script>(function(){function formatTimestamp(isoString,updatedBy){if(!isoString)return "";var d=new Date(isoString);var days=[\'Sunday\',\'Monday\',\'Tuesday\',\'Wednesday\',\'Thursday\',\'Friday\',\'Saturday\'];var months=[\'January\',\'February\',\'March\',\'April\',\'May\',\'June\',\'July\',\'August\',\'September\',\'October\',\'November\',\'December\'];return days[d.getDay()]+\', \'+d.getDate()+\' \'+months[d.getMonth()]+\' \'+d.getFullYear()+\' by \'+(updatedBy===\'admin\'?\'Admin\':\'User\');}document.querySelectorAll(\'.last-updated-display\').forEach(function(el){var ts=el.getAttribute(\'data-timestamp\');var ub=el.getAttribute(\'data-updated-by\');if(ts)el.textContent=formatTimestamp(ts,ub);});})();<\/script>';
     return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + escapeHtml(firstName + ' ' + surname) + '</title><style>' + css + '</style></head><body><div class="container">' + lastUpdatedBlockHtml + '<h1>' + lblBoth('section-title') + '</h1><div class="info"><span class="label">' + lblBoth('first-name') + '</span><span class="value">' + escapeHtml(firstName) + '</span></div><div class="info"><span class="label">' + lblBoth('surname') + '</span><span class="value">' + escapeHtml(surname) + '</span></div><div class="info"><span class="label">' + lblBoth('email') + '</span><span class="value"><a href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a></span></div><div class="info"><span class="label">' + lblBoth('mobile') + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblBoth('home-country') + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblBoth('destination-details') + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblBoth('additional-info') + '</span>' + additionalHtml + '</div></div>' + formatTimestampScript + '</body></html>';

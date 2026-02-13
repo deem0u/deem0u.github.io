@@ -40,7 +40,7 @@
   #recovery-card #recovery-form-step2 .form-group { margin-bottom: var(--space-4); }
   #recovery-card #recovery-form-step2 .recovery-actions { margin-top: var(--space-6, 1.5rem); }
 
-  .editor-layout { display: flex; gap: 1.5rem; align-items: flex-start; }
+  .editor-layout { display: flex; gap: 1.5rem; align-items: flex-start; font-size: 0.85rem; }
   .editor-profile-strip { width: 100%; max-width: 100%; flex-shrink: 0; background: var(--white, #fff); border-radius: var(--radius-md, 6px); padding: 1rem; border: 1px solid var(--color-border, #eee); }
   .editor-profile-strip .profile-title { font-weight: 600; margin-bottom: 0.75rem; font-size: 0.9rem; }
   .editor-profile-strip .profile-row { margin-bottom: 0.5rem; font-size: 0.85rem; }
@@ -262,10 +262,23 @@
     100% { left: 8%;  top: 18%; transform: rotate(360deg) translateY(0); }
   }
   @media (max-width: 768px) {
-    .editor-layout { flex-direction: column; }
-    .editor-main { order: -1; }
-    .editor-sidebar { order: 0; width: 100%; }
+    .editor-layout { flex-direction: column; display: flex; }
+    .editor-main, .editor-sidebar { display: contents; }
     .editor-profile-strip, .contact-pages-container { width: 100%; }
+    /* Section order: 1 Banners, 2 Account Profile, 3 Contact selector, 4 Contact form */
+    .editor-layout .card-welcome { order: 1; }
+    .editor-layout #push-message-banner { order: 2; }
+    .editor-layout #secrets-banner { order: 3; }
+    .editor-layout #unverified-banner { order: 4; }
+    .editor-layout #status-banner { order: 5; }
+    .editor-layout .no-contact-pages-placeholder { order: 6; }
+    .editor-layout .editor-profile-strip { order: 7; }
+    .editor-layout #contact-pages-section { order: 8; }
+    .editor-layout #editor-contact-card { order: 9; }
+    /* Keep form and inputs at 0.85rem so font size does not glitch with global mobile rules */
+    #screen-editor .editor-layout .form-input,
+    #screen-editor .editor-layout select.form-input,
+    #screen-editor .editor-layout .form-textarea { font-size: 0.85rem; }
     /* View mode: buttons above contact page heading, right-aligned */
     .editor-view-header-row { flex-direction: column; align-items: flex-end; }
     .editor-view-actions { order: -1; }
@@ -4053,7 +4066,7 @@ function generateHTML() {
     .dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0;padding-right:0.5em}
     .dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre;margin:0 0.35em}
     .dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}
-    @media (max-width:560px){.dest-details .dest-name-dates-row .dest-sep{display:none}}
+    @media (max-width:560px){.dest-details .dest-name-dates-row{flex-direction:column;align-items:flex-start}.dest-details .dest-name-dates-row .dest-sep{display:none}}
     hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}
     @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
   `.replace(/\n\s*/g, '');
@@ -4111,14 +4124,14 @@ function generateHTML() {
   const lastUpdatedEn = 'Last updated';
   const lastUpdatedFr = 'Derni\u00e8re mise \u00e0 jour';
   const lastUpdatedZh = '\u6700\u540e\u66f4\u65b0';
-  const lastUpdatedTitles = lastUpdatedEn + ' \u00b7 ' + lastUpdatedFr + ' \u00b7 ' + lastUpdatedZh;
+  const lastUpdatedTitles = lastUpdatedEn + '<wbr> \u00b7 ' + lastUpdatedFr + ' \u00b7 ' + lastUpdatedZh;
   const lastUpdatedBlockHtml = `<div class="last-updated-block"><span class="last-updated-titles">${lastUpdatedTitles}</span><span class="last-updated-display" ${lastUpdatedData}>—</span></div>`;
   const D = window.FORM_DESCRIPTIONS || {};
   const lbl = (k) => (D[k] && D[k].label) ? D[k].label : k;
   const fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
   const zh = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
   const titleEn = 'Contact Information';
-  const lblBoth = (k) => { const e = k === 'section-title' ? titleEn : lbl(k); return e + ' \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
+  const lblBoth = (k) => { const e = k === 'section-title' ? titleEn : lbl(k); return e + '<wbr> \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
 
   return `<!DOCTYPE html>
 <html lang="en">
