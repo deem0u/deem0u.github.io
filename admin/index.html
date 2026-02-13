@@ -2626,10 +2626,12 @@ function adminRefreshViewFromForm() {
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     dests.forEach(function(d, i) {
       if (i > 0) parts.push('<hr class="dest-sep-form">');
-      var nameLine = (d.name || '').trim();
-      if ((d.fromDate || '').trim() || (d.toDate || '').trim()) nameLine += (nameLine ? ' \u00b7 ' : '') + (d.fromDate || '').trim() + (d.fromDate && d.toDate ? ' \u2013 ' : '') + (d.toDate || '').trim();
       parts.push('<div class="view-dest-block">');
-      parts.push('<div class="form-group"><label class="form-label">Destination</label><span class="editor-view-value">' + esc(nameLine || '\u2014') + '</span></div>');
+      parts.push('<div class="view-dest-name-dates-row">');
+      parts.push('<div class="form-group view-dest-name-wrap"><label class="form-label">Destination Name</label><span class="editor-view-value">' + esc((d.name || '').trim() || '\u2014') + '</span></div>');
+      parts.push('<div class="form-group"><label class="form-label">From</label><span class="editor-view-value">' + esc((d.fromDate || '').trim() || '\u2014') + '</span></div>');
+      parts.push('<div class="form-group"><label class="form-label">Till</label><span class="editor-view-value">' + esc((d.toDate || '').trim() || '\u2014') + '</span></div>');
+      parts.push('</div>');
       parts.push('<div class="form-group"><label class="form-label">Address</label><span class="editor-view-value">' + esc((d.address || '').trim() || '\u2014') + '</span></div>');
       parts.push('<div class="form-group"><label class="form-label">Contact Number</label><span class="editor-view-value">' + esc((d.phone || '').trim() || '\u2014') + '</span></div>');
       parts.push('<div class="form-group"><label class="form-label">Email</label><span class="editor-view-value">' + esc((d.email || '').trim() || '\u2014') + '</span></div>');
@@ -3423,7 +3425,10 @@ function generatePageHTML(givenName, familyName, contactEmail, mobile, mobileLin
     a:hover{color:#1d4ed8;text-decoration:underline}
     a:active{color:#1e40af}
     .dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}
-    .dest-details .dest-name,.dest-details .dest-from,.dest-details .dest-to{display:inline}.dest-details .dest-from:not(:empty)::before{content:" \u00b7 "}.dest-details .dest-to:not(:empty)::before{content:" \u2013 "}
+    .dest-details .dest-name-dates-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0.25rem;min-width:0}
+    .dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0}
+    .dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre}
+    .dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}
     hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}
     @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
   `.replace(/\n\s*/g, '');
@@ -3577,12 +3582,19 @@ function fillForm(h) {
   var hc = resolveCountryDisplay(g('Home Country'));
   setCountryDropdown('edit', hc || null);
   
-  // Destination details: 6-span (name, from, to, address, phone, email), 4-span or 3-span legacy; multiple blocks allowed
+  // Destination details: new format (dest-name-dates-row), 6-span legacy, 4-span or 3-span legacy; multiple blocks allowed
   var dests = [];
-  var re6 = /<div class="dest-details"><span class="dest-name">([^<]*)<\/span><span class="dest-from">([^<]*)<\/span><span class="dest-to">([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
-  var m6;
-  while ((m6 = re6.exec(h)) !== null) {
-    dests.push({ name: m6[1].trim(), fromDate: m6[2].trim(), toDate: m6[3].trim(), address: m6[4].trim(), phone: m6[5].trim(), email: m6[6].trim() });
+  var reNew = /<div class="dest-details"><div class="dest-name-dates-row">[\s\S]*?<span class="dest-name">([^<]*)<\/span>[\s\S]*?<span class="dest-from">([^<]*)<\/span>[\s\S]*?<span class="dest-to">([^<]*)<\/span>[\s\S]*?<\/div><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
+  var mNew;
+  while ((mNew = reNew.exec(h)) !== null) {
+    dests.push({ name: mNew[1].trim(), fromDate: mNew[2].trim(), toDate: mNew[3].trim(), address: mNew[4].trim(), phone: mNew[5].trim(), email: mNew[6].trim() });
+  }
+  if (dests.length === 0) {
+    var re6 = /<div class="dest-details"><span class="dest-name">([^<]*)<\/span><span class="dest-from">([^<]*)<\/span><span class="dest-to">([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
+    var m6;
+    while ((m6 = re6.exec(h)) !== null) {
+      dests.push({ name: m6[1].trim(), fromDate: m6[2].trim(), toDate: m6[3].trim(), address: m6[4].trim(), phone: m6[5].trim(), email: m6[6].trim() });
+    }
   }
   if (dests.length === 0) {
     var re4 = /<div class="dest-details"><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
@@ -3641,6 +3653,7 @@ async function handleSave(e) {
         document.getElementById('contact-page-url-slug').disabled = true;
         var introEl = document.getElementById('admin-create-contact-page-intro');
         if (introEl) introEl.classList.add('hidden');
+        adminShowViewHeader();
         document.getElementById('admin-contact-edit').classList.add('hidden');
         document.getElementById('admin-contact-view').classList.remove('hidden');
         document.getElementById('admin-delete-page-btn').style.display = '';
@@ -3720,6 +3733,7 @@ async function handleSave(e) {
           populateUI();
           adminRefreshViewFromForm();
           document.getElementById('admin-view-page-link').href = currentContactPageName === 'index' ? (PAGES_URL + currentFolder + '/') : (PAGES_URL + currentFolder + '/' + currentContactPageName + '.html');
+          adminShowViewHeader();
           document.getElementById('admin-contact-edit').classList.add('hidden');
           document.getElementById('admin-contact-view').classList.remove('hidden');
           adminCaptureContactFormSnapshot();
@@ -3759,6 +3773,7 @@ async function handleSave(e) {
         }
         populateUI();
         adminRefreshViewFromForm();
+        adminShowViewHeader();
         document.getElementById('admin-contact-edit').classList.add('hidden');
         document.getElementById('admin-contact-view').classList.remove('hidden');
         adminCaptureContactFormSnapshot();
@@ -3860,15 +3875,12 @@ function getDestinationBlocksDataAdmin() {
 function buildDestHtmlAdmin(destList) {
   if (!destList || destList.length === 0) return '<span class="value">?</span>';
   return destList.map(function(d) {
-    var parts = [
-      '<span class="dest-name">' + escapeHtml(d.name || '') + '</span>',
-      '<span class="dest-from">' + escapeHtml(d.fromDate || '') + '</span>',
-      '<span class="dest-to">' + escapeHtml(d.toDate || '') + '</span>',
-      '<span>' + escapeHtml(d.address || '') + '</span>',
-      '<span>' + escapeHtml(d.phone || '') + '</span>',
-      '<span>' + escapeHtml(d.email || '') + '</span>'
-    ];
-    return '<div class="dest-details">' + parts.join('') + '</div>';
+    var name = escapeHtml((d.name || '').trim());
+    var from = escapeHtml((d.fromDate || '').trim());
+    var to = escapeHtml((d.toDate || '').trim());
+    var hasDates = from || to;
+    var nameDatesRow = '<div class="dest-name-dates-row"><span class="dest-name">' + name + '</span>' + (hasDates ? '<span class="dest-sep">   |   </span><span class="dest-from-till">From <span class="dest-from">' + from + '</span> till <span class="dest-to">' + to + '</span></span>' : '') + '</div>';
+    return '<div class="dest-details">' + nameDatesRow + '<span>' + escapeHtml(d.address || '') + '</span><span>' + escapeHtml(d.phone || '') + '</span><span>' + escapeHtml(d.email || '') + '</span></div>';
   }).join('<hr class="dest-sep">');
 }
 
