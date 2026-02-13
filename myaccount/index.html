@@ -3379,6 +3379,8 @@ function startSessionCheckInterval() {
 }
 
 function fillForm(h) {
+  if (!h || typeof h !== 'string') return;
+  h = h.replace(/<wbr\s*\/?>/gi, '');
   const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const g = l => { 
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
@@ -3414,13 +3416,13 @@ function fillForm(h) {
     return (v === '—' || !v) ? '' : v;
   };
   
-  document.getElementById('first-name').value = g('Given Names') || g('Name');
-  document.getElementById('surname').value = g('Family Name') || g('Surname');
-  document.getElementById('email').value = gl('Email');
+  document.getElementById('first-name').value = (g('Given Names') || g('Name') || g('first-name')).trim();
+  document.getElementById('surname').value = (g('Family Name') || g('Surname') || g('surname')).trim();
+  document.getElementById('email').value = (gl('Email') || g('Email')).trim();
   var mv = gl('Contact Number') || gl('Mobile');
   if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '—' || !plain) mv = ''; }
   document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
-  var hc = resolveCountryDisplayEdit(g('Home Country'));
+  var hc = resolveCountryDisplayEdit(g('Home Country') || g('home-country'));
   if (hc && (hc.length > 80 || /[\r\n]/.test(hc))) hc = '';
   setCountryDropdownEdit(hc || null);
   
@@ -3454,7 +3456,7 @@ function fillForm(h) {
   }
   setDestinationBlocksFromData(dests);
 
-  document.getElementById('additional-info').value = gMulti('Additional Information');
+  document.getElementById('additional-info').value = (gMulti('Additional Information') || gMulti('additional-info')).trim();
   refreshViewModeDisplay();
 }
 
@@ -3826,7 +3828,9 @@ function updateAddDestinationButtonState() {
 }
 
 function getDestinationBlocksData() {
-  var blocks = document.querySelectorAll('#editor-contact-edit .destination-block');
+  var form = document.getElementById('contact-form');
+  if (!form) return [];
+  var blocks = form.querySelectorAll('.destination-block');
   var out = [];
   blocks.forEach(function(block) {
     var nameEl = block.querySelector('.dest-name');
@@ -4016,12 +4020,16 @@ function initDestinationRepeater() {
 }
 
 function generateHTML() {
-  const f = i => document.getElementById(i).value.trim();
+  const f = i => { var el = document.getElementById(i); return el && el.value != null ? String(el.value).trim() : ''; };
   const firstName = f('first-name');
   const surname = f('surname');
   const email = f('email');
   const mobile = f('mobile');
-  const homeCountry = f('home-country');
+  var homeCountry = f('home-country');
+  if (!homeCountry) {
+    var countryDisplay = document.getElementById('home-country-edit-text');
+    if (countryDisplay && countryDisplay.textContent && countryDisplay.textContent.trim() !== 'Select country') homeCountry = countryDisplay.textContent.trim();
+  }
   const additionalInfo = f('additional-info');
 
   const escapeHtml = (s) => (s ?? '')
