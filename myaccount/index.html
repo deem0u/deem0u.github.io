@@ -279,9 +279,10 @@
     #screen-editor .editor-layout .form-input,
     #screen-editor .editor-layout select.form-input,
     #screen-editor .editor-layout .form-textarea { font-size: 0.85rem; }
-    /* View mode: buttons above contact page heading, right-aligned */
-    .editor-view-header-row { flex-direction: column; align-items: flex-end; }
-    .editor-view-actions { order: -1; }
+    /* View mode: buttons above contact page heading (right); Page name left-aligned */
+    .editor-view-header-row { flex-direction: column; align-items: flex-start; }
+    .editor-view-actions { order: -1; align-self: flex-end; }
+    #editor-contact-edit .form-label { text-align: left; }
   }
     </style>
 </head>

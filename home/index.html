@@ -184,6 +184,11 @@
   .signup-step2-card .step2-skip-wrap { margin-left: 0.5rem; }
   .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-text-secondary, #6b7280); font-size: 0.875rem; }
   .signup-step2-card .step2-skip-link:hover { color: var(--color-text, #111); text-decoration: underline; }
+  /* Destination Name + From/Till: name takes space, From/Till in one block */
+  .signup-step2-card .form-row.form-row-dest-name-dates { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
+  .signup-step2-card .dest-from-till-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .signup-step2-card .dest-from-till-row .dest-from-date,
+  .signup-step2-card .dest-from-till-row .dest-to-date { min-width: 10ch; }
   @media (max-width: 768px) {
     .signup-step2-card .form-row { grid-template-columns: 1fr; }
   }
@@ -239,6 +244,10 @@
     .signup-step2-card .step2-toggle-hints-wrap { margin-left: 0; justify-content: center; }
     .signup-step2-card .card-body { padding: var(--space-3) var(--space-3); }
     .signup-step2-card .form-row { grid-template-columns: 1fr; }
+    /* Step 2 Add Contact: Destination Name on its own row, From/Till block on next row */
+    .signup-step2-card .form-row.form-row-dest-name-dates { display: flex; flex-direction: column; gap: 0.5rem; }
+    .signup-step2-card .form-row.form-row-dest-name-dates .form-group-dest-name { margin-bottom: 0; }
+    .signup-step2-card .dest-from-till-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
     .signup-step2-card .form-actions { flex-direction: column; gap: 0.5rem; }
     .signup-step2-card .form-actions .btn { width: 100%; }
     #signup-otp-card .card-body { padding: var(--space-3) var(--space-3); }
@@ -247,6 +256,16 @@
     .signup-otp-skip { margin-left: 0; margin-top: 0.25rem; }
     #signup-step3-card .card-body,
     #signup-step4-card .card-body { padding: var(--space-3) var(--space-3); }
+    /* Step 4 Summary: mobile-optimised layout and readability */
+    #signup-step4-card .step4-intro { font-size: 0.9375rem; margin-bottom: 1rem; padding: 0 0.25rem; }
+    #signup-step4-card #step4-summary { margin-bottom: 1rem; overflow-wrap: break-word; word-break: break-word; }
+    #signup-step4-card #step4-summary .success-heading { font-size: 0.9375rem; margin: 0.85rem 0 0.35rem; }
+    #signup-step4-card #step4-summary .step4-detail-list { padding-left: 1.25rem; margin: 0.5rem 0; }
+    #signup-step4-card #step4-summary .step4-detail-list li { margin-bottom: 0.4rem; font-size: 0.875rem; line-height: 1.5; }
+    #signup-step4-card #step4-summary .step4-detail-list a { word-break: break-all; }
+    #signup-step4-card #step4-summary .text-secondary { font-size: 0.875rem; }
+    #signup-step4-card .form-actions { flex-direction: column; gap: 0.5rem; }
+    #signup-step4-card .form-actions .btn { width: 100%; }
     .home-success-buttons { flex-direction: column; gap: 0.5rem; }
     .home-success-buttons .btn { width: 100%; }
     .home-success-buttons .btn-right { margin-left: 0; }
@@ -540,18 +559,20 @@
                   <span class="form-hint step2-hint" id="step2-hint-destination-details"></span>
                   <div class="form-section destination-block" data-dest-index="0">
                     <div class="form-row form-row-dest-name-dates">
-                      <div class="form-group">
+                      <div class="form-group form-group-dest-name">
                         <label class="form-label" for="step2-dest-name">Destination Name</label>
                         <input type="text" id="step2-dest-name" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off">
                       </div>
-                      <div class="form-group">
-                        <label class="form-label" for="step2-dest-from-date">From</label>
-                        <input type="text" id="step2-dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
-                      </div>
-                      <div class="form-group">
-                        <label class="form-label" for="step2-dest-to-date">Till</label>
-                        <input type="text" id="step2-dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
-                        <span class="form-error error-dest-to-date" id="error-step2-dest-to-date" role="alert"></span>
+                      <div class="dest-from-till-row">
+                        <div class="form-group">
+                          <label class="form-label" for="step2-dest-from-date">From</label>
+                          <input type="text" id="step2-dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label" for="step2-dest-to-date">Till</label>
+                          <input type="text" id="step2-dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                          <span class="form-error error-dest-to-date" id="error-step2-dest-to-date" role="alert"></span>
+                        </div>
                       </div>
                     </div>
                     <div class="form-group">
@@ -1087,10 +1108,11 @@
     block.className = 'form-section destination-block';
     block.setAttribute('data-dest-index', String(index));
     block.innerHTML = '<div class="form-row form-row-dest-name-dates">' +
-      '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off"></div>' +
+      '<div class="form-group form-group-dest-name"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off"></div>' +
+      '<div class="dest-from-till-row">' +
       '<div class="form-group"><label class="form-label">From</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
       '<div class="form-group"><label class="form-label">Till</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
-      '</div>' +
+      '</div></div>' +
       '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" placeholder="Address" maxlength="200" autocomplete="off"></div>' +
       '<div class="form-row">' +
       '<div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" class="form-input dest-phone contact-number-mask" placeholder="Contact number" maxlength="21" autocomplete="tel"></div>' +
