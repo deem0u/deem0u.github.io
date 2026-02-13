@@ -2576,6 +2576,7 @@ async function loadPageForEditTab() {
       if (el) el.removeAttribute('required');
     });
     adminRefreshViewFromForm();
+    adminCaptureContactFormSnapshot();
     setAdminEditorCardTitle();
     document.getElementById('admin-view-page-link').href = currentContactPageName === 'index' ? (PAGES_URL + currentFolder + '/') : (PAGES_URL + currentFolder + '/' + currentContactPageName + '.html');
     adminShowViewHeader();
@@ -3558,12 +3559,14 @@ async function loadPage() {
 }
 
 function fillForm(h) {
+  if (!h || typeof h !== 'string') return;
+  h = h.replace(/<wbr\s*\/?>/gi, '');
   const esc = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const emptyVal = v => (v === '\u2014' || v === '—' || !v) ? '' : v;
   const g = l => { 
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([^<]+)</span>`)); 
     if (!m) return '';
-    const v = m[1].trim();
-    return (v === '?' || !v) ? '' : v;
+    return emptyVal(m[1].trim());
   };
   const gMulti = l => {
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value">([\\s\\S]*?)</span>`));
@@ -3572,17 +3575,16 @@ function fillForm(h) {
   const gl = l => { 
     const m = h.match(new RegExp(`<span class="label">${esc(l)}[^<]*</span><span class="value"><a[^>]*>([^<]+)</a></span>`)); 
     if (!m) return '';
-    const v = m[1].trim();
-    return (v === '?' || !v) ? '' : v;
+    return emptyVal(m[1].trim());
   };
   
-  document.getElementById('first-name').value = g('Given Names') || g('Name'); 
-  document.getElementById('surname').value = g('Family Name') || g('Surname');
-  document.getElementById('email').value = gl('Email'); 
+  document.getElementById('first-name').value = (g('Given Names') || g('Name') || g('first-name')).trim();
+  document.getElementById('surname').value = (g('Family Name') || g('Surname') || g('surname')).trim();
+  document.getElementById('email').value = (gl('Email') || g('Email')).trim();
   var mv = gl('Contact Number') || gl('Mobile');
-  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); if (plain === '?' || !plain) mv = ''; }
+  if (!mv) { var plain = (g('Contact Number') || g('Mobile')).trim(); mv = (plain && plain !== '\u2014' && plain !== '—') ? plain : ''; }
   document.getElementById('mobile').value = mv ? formatContactNumber(mv) : '';
-  var hc = resolveCountryDisplay(g('Home Country'));
+  var hc = resolveCountryDisplay(g('Home Country') || g('home-country'));
   setCountryDropdown('edit', hc || null);
   
   // Destination details: new format (dest-name-dates-row), 6-span legacy, 4-span or 3-span legacy; multiple blocks allowed
@@ -3615,7 +3617,7 @@ function fillForm(h) {
   }
   setDestinationBlocksFromDataAdmin(dests);
 
-  document.getElementById('additional-info').value = gMulti('Additional Information');
+  document.getElementById('additional-info').value = (gMulti('Additional Information') || gMulti('additional-info')).trim();
 }
 
 async function handleSave(e) {
