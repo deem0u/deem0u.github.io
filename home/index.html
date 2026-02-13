@@ -493,11 +493,11 @@
                         <input type="text" id="step2-dest-name" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off">
                       </div>
                       <div class="form-group">
-                        <label class="form-label" for="step2-dest-from-date">From Date</label>
+                        <label class="form-label" for="step2-dest-from-date">From</label>
                         <input type="text" id="step2-dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
                       </div>
                       <div class="form-group">
-                        <label class="form-label" for="step2-dest-to-date">To Date</label>
+                        <label class="form-label" for="step2-dest-to-date">Till</label>
                         <input type="text" id="step2-dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
                         <span class="form-error error-dest-to-date" id="error-step2-dest-to-date" role="alert"></span>
                       </div>
@@ -928,6 +928,7 @@
     hideAlert('step2-alert');
     populateStep2Countries();
     if (typeof updateAddDestinationButtonStateStep2 === 'function') updateAddDestinationButtonStateStep2();
+    if (typeof updateDestinationDeleteButtonsVisibilityStep2 === 'function') updateDestinationDeleteButtonsVisibilityStep2();
   }
 
   function populateStep2Countries() {
@@ -966,12 +967,10 @@
     var fromDate = parseDestDateStep2(fromStr);
     var toDate = parseDestDateStep2(toStr);
     if (!fromDate || !toDate) { if (errSpan) errSpan.textContent = ''; return true; }
-    if (toDate < fromDate) { if (errSpan) errSpan.textContent = 'To date cannot be earlier than from date.'; return false; }
+    if (toDate < fromDate) { if (errSpan) errSpan.textContent = 'Till cannot be earlier than From.'; return false; }
     if (errSpan) errSpan.textContent = ''; return true;
   }
   function isDestinationBlockCompleteStep2(block) {
-    var isFirst = block.getAttribute('data-dest-index') === '0';
-    if (isFirst) return true;
     var nameEl = block.querySelector('.dest-name');
     var fromEl = block.querySelector('.dest-from-date');
     var toEl = block.querySelector('.dest-to-date');
@@ -988,6 +987,14 @@
     if (!anyFilled) return false;
     if (!validateDestinationBlockDatesStep2(block)) return false;
     return true;
+  }
+  function updateDestinationDeleteButtonsVisibilityStep2() {
+    var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
+    var onlyOne = blocks.length === 1;
+    blocks.forEach(function(block) {
+      var btn = block.querySelector('.destination-delete-btn');
+      if (btn) btn.classList.toggle('hidden', onlyOne);
+    });
   }
   function hasIncompleteDestinationBlockStep2() {
     var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
@@ -1029,8 +1036,8 @@
     block.setAttribute('data-dest-index', String(index));
     block.innerHTML = '<div class="form-row form-row-dest-name-dates">' +
       '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off"></div>' +
-      '<div class="form-group"><label class="form-label">From Date</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
-      '<div class="form-group"><label class="form-label">To Date</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
+      '<div class="form-group"><label class="form-label">From</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+      '<div class="form-group"><label class="form-label">Till</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
       '</div>' +
       '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" placeholder="Address" maxlength="200" autocomplete="off"></div>' +
       '<div class="form-row">' +
@@ -1072,6 +1079,7 @@
         container.appendChild(createAdditionalDestinationBlockStep2(nextIndex, {}));
         attachDobMask();
         updateAddDestinationButtonStateStep2();
+        updateDestinationDeleteButtonsVisibilityStep2();
       });
     }
     var form = document.getElementById('step2-contact-form');
@@ -1108,6 +1116,7 @@
           if (phoneInp) phoneInp.value = '';
           if (emailInp) emailInp.value = '';
           updateAddDestinationButtonStateStep2();
+          updateDestinationDeleteButtonsVisibilityStep2();
           return;
         }
         var isFirst = block.getAttribute('data-dest-index') === '0';
@@ -1130,9 +1139,11 @@
         }
         attachDobMask();
         updateAddDestinationButtonStateStep2();
+        updateDestinationDeleteButtonsVisibilityStep2();
       });
     }
     updateAddDestinationButtonStateStep2();
+    updateDestinationDeleteButtonsVisibilityStep2();
   }
 
   function step2BuildContent() {

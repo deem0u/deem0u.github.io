@@ -1365,9 +1365,23 @@ hr.dest-sep-form {
   border-top: 1px solid var(--color-border);
 }
 
-/* Destination Name + From/To dates on one row (3 columns) */
+/* Destination Name + From/Till dates on one row – name gets remaining space, date fields just fit dd/mm/yyyy (10ch) */
 .form-row-dest-name-dates {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 10ch 10ch;
+  min-width: 0;
+}
+.form-row-dest-name-dates .form-group {
+  min-width: 0;
+}
+.form-row-dest-name-dates .dest-name {
+  min-width: 0;
+}
+.form-row-dest-name-dates .dest-from-date,
+.form-row-dest-name-dates .dest-to-date {
+  width: 100%;
+  max-width: 10ch;
+  min-width: 10ch;
+  box-sizing: border-box;
 }
 
 /* Trash/delete button aligned right within each destination block */
@@ -1382,6 +1396,28 @@ hr.dest-sep-form {
 #admin-add-destination-btn,
 #step2-add-destination-btn {
   margin-top: var(--space-4);
+}
+
+/* Sign up Step 2: match editor form width (640px) and keep From/To dates on one row with shorter fields */
+.home-right-col:has(#signup-step2-card:not(.hidden)) {
+  max-width: 640px;
+}
+#step2-contact-form .form-row.form-row-dest-name-dates {
+  grid-template-columns: 1fr 10ch 10ch;
+  min-width: 0;
+}
+#step2-contact-form .form-row-dest-name-dates .form-group {
+  min-width: 0;
+}
+#step2-contact-form .form-row-dest-name-dates .dest-name {
+  min-width: 0;
+}
+#step2-contact-form .form-row-dest-name-dates .dest-from-date,
+#step2-contact-form .form-row-dest-name-dates .dest-to-date {
+  width: 100%;
+  max-width: 10ch;
+  min-width: 10ch;
+  box-sizing: border-box;
 }
 
 .form-actions {
@@ -2710,6 +2746,20 @@ hr.dest-sep-form {
 #admin-contact-edit .form-hint-full-width { display: block; width: 100%; }
 #admin-contact-edit .form-row.form-row-with-hint { margin-bottom: 0; }
 #admin-contact-edit .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+/* Destination Name + From/Till on one row in admin (override 2-col default), date fields 10ch */
+#admin-contact-edit .form-row.form-row-dest-name-dates {
+  grid-template-columns: 1fr 10ch 10ch;
+  min-width: 0;
+}
+#admin-contact-edit .form-row-dest-name-dates .form-group { min-width: 0; }
+#admin-contact-edit .form-row-dest-name-dates .dest-name { min-width: 0; }
+#admin-contact-edit .form-row-dest-name-dates .dest-from-date,
+#admin-contact-edit .form-row-dest-name-dates .dest-to-date {
+  width: 100%;
+  max-width: 10ch;
+  min-width: 10ch;
+  box-sizing: border-box;
+}
 #admin-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0; }
 #admin-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
 #admin-contact-edit .form-section .form-group:last-child { margin-bottom: 0; }
@@ -2876,7 +2926,20 @@ hr.dest-sep-form {
   .form-row-dest-name-dates {
     grid-template-columns: 1fr;
   }
-  
+  .form-row-dest-name-dates .dest-from-date,
+  .form-row-dest-name-dates .dest-to-date {
+    max-width: none;
+    min-width: 0;
+  }
+  #step2-contact-form .form-row.form-row-dest-name-dates {
+    grid-template-columns: 1fr 10ch 10ch;
+  }
+  #step2-contact-form .form-row-dest-name-dates .dest-from-date,
+  #step2-contact-form .form-row-dest-name-dates .dest-to-date {
+    max-width: 10ch;
+    min-width: 10ch;
+  }
+
   #admin-contact-edit .form-row {
     grid-template-columns: 1fr;
   }

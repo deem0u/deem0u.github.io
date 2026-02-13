@@ -622,8 +622,8 @@
                       <div class="form-section destination-block" data-dest-index="0">
                         <div class="form-row form-row-dest-name-dates">
                           <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input dest-name" maxlength="200" autocomplete="off"></div>
-                          <div class="form-group"><label class="form-label">From Date</label><input type="text" id="dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
-                          <div class="form-group"><label class="form-label">To Date</label><input type="text" id="dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" id="error-dest-to-date" role="alert"></span></div>
+                          <div class="form-group"><label class="form-label">From</label><input type="text" id="dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
+                          <div class="form-group"><label class="form-label">Till</label><input type="text" id="dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" id="error-dest-to-date" role="alert"></span></div>
                         </div>
                         <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input dest-address" maxlength="200" autocomplete="off"></div>
                         <div class="form-row">
@@ -2470,6 +2470,7 @@ async function adminEnterCreateContactPage() {
   document.getElementById('contact-page-url-slug').removeAttribute('minlength');
   document.getElementById('contact-page-url-slug').placeholder = 'e.g. mypage or leave blank for random';
   clearAdminContactForm();
+  if (typeof setDestinationBlocksFromDataAdmin === 'function') setDestinationBlocksFromDataAdmin([]);
   ['first-name', 'surname', 'email'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.setAttribute('required', '');
@@ -2494,6 +2495,8 @@ async function adminEnterCreateContactPage() {
   adminCaptureContactFormSnapshot();
   document.getElementById('save-btn').disabled = true;
   document.getElementById('save-btn').textContent = 'Save Changes';
+  if (typeof updateAddDestinationButtonStateAdmin === 'function') updateAddDestinationButtonStateAdmin();
+  if (typeof updateDestinationDeleteButtonsVisibilityAdmin === 'function') updateDestinationDeleteButtonsVisibilityAdmin();
 }
 
 function clearAdminContactForm() {
@@ -2654,6 +2657,7 @@ function adminEnterEditMode() {
   adminCaptureContactFormSnapshot();
   document.getElementById('save-btn').disabled = true;
   if (typeof updateAddDestinationButtonStateAdmin === 'function') updateAddDestinationButtonStateAdmin();
+  if (typeof updateDestinationDeleteButtonsVisibilityAdmin === 'function') updateDestinationDeleteButtonsVisibilityAdmin();
 }
 
 function adminBackToViewMode() {
@@ -3793,12 +3797,10 @@ function validateDestinationBlockDatesAdmin(block) {
   var fromDate = parseDestDateAdmin(fromStr);
   var toDate = parseDestDateAdmin(toStr);
   if (!fromDate || !toDate) { if (errSpan) errSpan.textContent = ''; return true; }
-  if (toDate < fromDate) { if (errSpan) errSpan.textContent = 'To date cannot be earlier than from date.'; return false; }
+  if (toDate < fromDate) { if (errSpan) errSpan.textContent = 'Till cannot be earlier than From.'; return false; }
   if (errSpan) errSpan.textContent = ''; return true;
 }
 function isDestinationBlockCompleteAdmin(block) {
-  var isFirst = block.getAttribute('data-dest-index') === '0';
-  if (isFirst) return true;
   var nameEl = block.querySelector('.dest-name');
   var fromEl = block.querySelector('.dest-from-date');
   var toEl = block.querySelector('.dest-to-date');
@@ -3815,6 +3817,14 @@ function isDestinationBlockCompleteAdmin(block) {
   if (!anyFilled) return false;
   if (!validateDestinationBlockDatesAdmin(block)) return false;
   return true;
+}
+function updateDestinationDeleteButtonsVisibilityAdmin() {
+  var blocks = document.querySelectorAll('#admin-contact-edit .destination-block');
+  var onlyOne = blocks.length === 1;
+  blocks.forEach(function(block) {
+    var btn = block.querySelector('.destination-delete-btn');
+    if (btn) btn.classList.toggle('hidden', onlyOne);
+  });
 }
 function hasIncompleteDestinationBlockAdmin() {
   var blocks = document.querySelectorAll('#admin-contact-edit .destination-block');
@@ -3871,8 +3881,8 @@ function createAdditionalDestinationBlockAdmin(index, data) {
   block.setAttribute('data-dest-index', String(index));
   block.innerHTML = '<div class="form-row form-row-dest-name-dates">' +
     '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" maxlength="200" autocomplete="off"></div>' +
-    '<div class="form-group"><label class="form-label">From Date</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
-    '<div class="form-group"><label class="form-label">To Date</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
+    '<div class="form-group"><label class="form-label">From</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+    '<div class="form-group"><label class="form-label">Till</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
     '</div>' +
     '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" maxlength="200" autocomplete="off"></div>' +
     '<div class="form-row">' +
@@ -3919,6 +3929,8 @@ function setDestinationBlocksFromDataAdmin(dests) {
     if (phoneInp) phoneInp.value = '';
     if (emailInp) emailInp.value = '';
     container.innerHTML = '';
+    if (typeof updateDestinationDeleteButtonsVisibilityAdmin === 'function') updateDestinationDeleteButtonsVisibilityAdmin();
+    if (typeof updateAddDestinationButtonStateAdmin === 'function') updateAddDestinationButtonStateAdmin();
     return;
   }
   var d0 = dests[0];
@@ -3934,6 +3946,8 @@ function setDestinationBlocksFromDataAdmin(dests) {
   }
   if (typeof attachDobMask === 'function') attachDobMask();
   if (typeof attachContactNumberMask === 'function') attachContactNumberMask();
+  if (typeof updateDestinationDeleteButtonsVisibilityAdmin === 'function') updateDestinationDeleteButtonsVisibilityAdmin();
+  if (typeof updateAddDestinationButtonStateAdmin === 'function') updateAddDestinationButtonStateAdmin();
 }
 
 function initDestinationRepeaterAdmin() {
@@ -3947,6 +3961,7 @@ function initDestinationRepeaterAdmin() {
       if (typeof attachDobMask === 'function') attachDobMask();
       if (typeof attachContactNumberMask === 'function') attachContactNumberMask();
       updateAddDestinationButtonStateAdmin();
+      if (typeof updateDestinationDeleteButtonsVisibilityAdmin === 'function') updateDestinationDeleteButtonsVisibilityAdmin();
       adminCheckContactFormDirty();
     });
   }
@@ -3986,6 +4001,7 @@ function initDestinationRepeaterAdmin() {
         if (phoneInp) phoneInp.value = '';
         if (emailInp) emailInp.value = '';
         updateAddDestinationButtonStateAdmin();
+        if (typeof updateDestinationDeleteButtonsVisibilityAdmin === 'function') updateDestinationDeleteButtonsVisibilityAdmin();
         return;
       }
       var isFirst = block.getAttribute('data-dest-index') === '0';
@@ -4015,10 +4031,12 @@ function initDestinationRepeaterAdmin() {
       if (typeof attachDobMask === 'function') attachDobMask();
       if (typeof attachContactNumberMask === 'function') attachContactNumberMask();
       updateAddDestinationButtonStateAdmin();
+      if (typeof updateDestinationDeleteButtonsVisibilityAdmin === 'function') updateDestinationDeleteButtonsVisibilityAdmin();
       adminCheckContactFormDirty();
     });
   }
   updateAddDestinationButtonStateAdmin();
+  if (typeof updateDestinationDeleteButtonsVisibilityAdmin === 'function') updateDestinationDeleteButtonsVisibilityAdmin();
 }
 
 function generateHTML() {
