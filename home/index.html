@@ -227,6 +227,7 @@
           </span>
           <span class="app-logo-text-wrap"><span class="digicon-logo app-logo-text">DigiCon <span class="i-dot" aria-hidden="true">ı</span>D</span></span>
         </div>
+        <button type="button" class="header-nav-toggle" aria-label="Open menu" aria-expanded="false" id="header-nav-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="app-header-actions">
           <nav class="app-nav tabs">
             <a href="/home/" class="tab active">Home</a>
@@ -244,6 +245,7 @@
           <span class="header-signout-slot" aria-hidden="true"></span>
         </div>
       </div>
+      <div class="header-drawer-backdrop" id="header-drawer-backdrop" aria-hidden="true"></div>
     </header>
 
     <main class="app-main">
@@ -1156,14 +1158,14 @@
     var additionalInfo = f('step2-additional-info');
     var escapeHtml = function(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
     var formatMultiline = function(s) { var text = (s ?? '').toString().trim(); if (!text) return ''; return escapeHtml(text).replace(/\r?\n/g, '<br>'); };
-    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{font-family:\'Quicksand\',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}@media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}@media(min-width:640px){.container{padding:48px 40px;max-width:760px}}.last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}.dest-details .dest-name-dates-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0.25rem;min-width:0}.dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0}.dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre}.dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}';
+    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{font-family:\'Quicksand\',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}@media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}@media(min-width:640px){.container{padding:48px 40px;max-width:760px}}.last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}.dest-details .dest-name-dates-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0;min-width:0}.dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0;padding-right:0.5em}.dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre;margin:0 0.35em}.dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}@media(max-width:560px){.dest-details .dest-name-dates-row .dest-sep{display:none}}hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}';
     var destList = getDestinationBlocksDataStep2();
     var destHtml = destList.length === 0 ? '<span class="value">—</span>' : destList.map(function(d) {
       var name = escapeHtml((d.name || '').trim());
       var from = escapeHtml((d.fromDate || '').trim());
       var to = escapeHtml((d.toDate || '').trim());
       var hasDates = from || to;
-      var nameDatesRow = '<div class="dest-name-dates-row"><span class="dest-name">' + name + '</span>' + (hasDates ? '<span class="dest-sep">   |   </span><span class="dest-from-till">From <span class="dest-from">' + from + '</span> till <span class="dest-to">' + to + '</span></span>' : '') + '</div>';
+      var nameDatesRow = '<div class="dest-name-dates-row"><span class="dest-name">' + name + '</span>' + (hasDates ? '<span class="dest-sep">    |    </span><span class="dest-from-till">From <span class="dest-from">' + from + '</span> till <span class="dest-to">' + to + '</span></span>' : '') + '</div>';
       return '<div class="dest-details">' + nameDatesRow + '<span>' + escapeHtml(d.address || '') + '</span><span>' + escapeHtml(d.phone || '') + '</span><span>' + escapeHtml(d.email || '') + '</span></div>';
     }).join('<hr class="dest-sep">');
     var additionalHtml = additionalInfo ? '<span class="value">' + formatMultiline(additionalInfo) + '</span>' : '<span class="value">—</span>';
@@ -1759,5 +1761,6 @@
 
   if (window.location.hash === '#signup') showSignupForm();
   </script>
+  <script src="/nav-drawer.js"></script>
 </body>
 </html>

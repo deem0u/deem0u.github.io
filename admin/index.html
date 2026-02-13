@@ -41,6 +41,7 @@
           </span>
           <span class="app-logo-text-wrap"><span class="digicon-logo app-logo-text">DigiCon <span class="i-dot" aria-hidden="true">ı</span>D</span><span class="app-logo-text-suffix">Admin Dashboard</span></span>
         </div>
+        <button type="button" class="header-nav-toggle" aria-label="Open menu" aria-expanded="false" id="header-nav-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         <div class="app-header-actions">
           <nav class="app-nav tabs">
             <a href="/home/" class="tab">Home</a>
@@ -58,6 +59,7 @@
           <span class="header-signout-slot"><button id="logout-btn" class="btn btn-ghost btn-sm hidden" onclick="logout()">Sign Out</button></span>
         </div>
       </div>
+      <div class="header-drawer-backdrop" id="header-drawer-backdrop" aria-hidden="true"></div>
     </header>
 
     <main id="screen-loading" class="app-centered" aria-live="polite" style="padding:2rem;text-align:center;color:var(--color-text-secondary);">
@@ -3425,10 +3427,11 @@ function generatePageHTML(givenName, familyName, contactEmail, mobile, mobileLin
     a:hover{color:#1d4ed8;text-decoration:underline}
     a:active{color:#1e40af}
     .dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}
-    .dest-details .dest-name-dates-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0.25rem;min-width:0}
-    .dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0}
-    .dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre}
+    .dest-details .dest-name-dates-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0;min-width:0}
+    .dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0;padding-right:0.5em}
+    .dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre;margin:0 0.35em}
     .dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}
+    @media (max-width:560px){.dest-details .dest-name-dates-row .dest-sep{display:none}}
     hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}
     @media print{body{padding:0;background:#fff}.container{padding:20px;max-width:100%}a{color:#1a1a1a}h1{border-bottom-width:2px}}
   `.replace(/\n\s*/g, '');
@@ -3879,7 +3882,7 @@ function buildDestHtmlAdmin(destList) {
     var from = escapeHtml((d.fromDate || '').trim());
     var to = escapeHtml((d.toDate || '').trim());
     var hasDates = from || to;
-    var nameDatesRow = '<div class="dest-name-dates-row"><span class="dest-name">' + name + '</span>' + (hasDates ? '<span class="dest-sep">   |   </span><span class="dest-from-till">From <span class="dest-from">' + from + '</span> till <span class="dest-to">' + to + '</span></span>' : '') + '</div>';
+    var nameDatesRow = '<div class="dest-name-dates-row"><span class="dest-name">' + name + '</span>' + (hasDates ? '<span class="dest-sep">    |    </span><span class="dest-from-till">From <span class="dest-from">' + from + '</span> till <span class="dest-to">' + to + '</span></span>' : '') + '</div>';
     return '<div class="dest-details">' + nameDatesRow + '<span>' + escapeHtml(d.address || '') + '</span><span>' + escapeHtml(d.phone || '') + '</span><span>' + escapeHtml(d.email || '') + '</span></div>';
   }).join('<hr class="dest-sep">');
 }
@@ -5676,5 +5679,6 @@ document.querySelectorAll('.modal-qr-download-template-btn').forEach(function(bt
 function showAlert(id, msg, type, appendSafeHtml, allowHtml) { const e = document.getElementById(id); e.className = 'alert alert-' + type + ' show'; var content = (allowHtml ? msg : escapeHtml(msg)); if (appendSafeHtml) content += appendSafeHtml; e.innerHTML = '<div class="alert-content">' + content + '</div>'; }
 function hideAlert(id) { document.getElementById(id).className = 'alert'; }
 </script>
+<script src="/nav-drawer.js"></script>
 </body>
 </html>
