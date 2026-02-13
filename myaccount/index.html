@@ -642,10 +642,10 @@
                 <label class="form-label">Destination Details</label>
                 <span class="form-hint" id="hint-destination-details"></span>
                 <div class="form-section destination-block" data-dest-index="0">
-                  <div class="form-row">
+                  <div class="form-row form-row-dest-name-dates">
                     <div class="form-group"><label class="form-label">Destination Name</label><input type="text" id="dest-name" class="form-input dest-name" maxlength="200" autocomplete="off"></div>
                     <div class="form-group"><label class="form-label">From Date</label><input type="text" id="dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
-                    <div class="form-group"><label class="form-label">To Date</label><input type="text" id="dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>
+                    <div class="form-group"><label class="form-label">To Date</label><input type="text" id="dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" id="error-dest-to-date" role="alert"></span></div>
                   </div>
                   <div class="form-group"><label class="form-label">Destination Address</label><input type="text" id="dest-address" class="form-input dest-address" maxlength="200" autocomplete="off"></div>
                   <div class="form-row">
@@ -1875,6 +1875,7 @@ function enterEditMode() {
   formSnapshot = getFormSnapshot();
   updateSaveButtonLabel();
   updateFormDirtyState();
+  if (typeof updateAddDestinationButtonState === 'function') updateAddDestinationButtonState();
   setTimeout(scaleEditUrlToFit, 0);
 }
 
@@ -3717,6 +3718,70 @@ async function handleSave(e) {
   }
 }
 
+function parseDestDate(str) {
+  var s = (str || '').trim().replace(/\s/g, '');
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  var d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  var date = new Date(y, mo - 1, d);
+  if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
+  return date;
+}
+
+function validateDestinationBlockDates(block) {
+  var fromEl = block.querySelector('.dest-from-date');
+  var toEl = block.querySelector('.dest-to-date');
+  if (!toEl) return true;
+  var errSpan = block.querySelector('.error-dest-to-date');
+  var fromStr = fromEl ? fromEl.value.trim() : '';
+  var toStr = toEl.value.trim();
+  if (!fromStr || !toStr) { if (errSpan) errSpan.textContent = ''; return true; }
+  var fromDate = parseDestDate(fromStr);
+  var toDate = parseDestDate(toStr);
+  if (!fromDate || !toDate) { if (errSpan) errSpan.textContent = ''; return true; }
+  if (toDate < fromDate) {
+    if (errSpan) errSpan.textContent = 'To date cannot be earlier than from date.';
+    return false;
+  }
+  if (errSpan) errSpan.textContent = '';
+  return true;
+}
+
+function isDestinationBlockComplete(block) {
+  var isFirst = block.getAttribute('data-dest-index') === '0';
+  if (isFirst) return true;
+  var nameEl = block.querySelector('.dest-name');
+  var fromEl = block.querySelector('.dest-from-date');
+  var toEl = block.querySelector('.dest-to-date');
+  var addrEl = block.querySelector('.dest-address');
+  var phoneEl = block.querySelector('.dest-phone');
+  var emailEl = block.querySelector('.dest-email');
+  var name = nameEl ? nameEl.value.trim() : '';
+  var from = fromEl ? fromEl.value.trim() : '';
+  var to = toEl ? toEl.value.trim() : '';
+  var addr = addrEl ? addrEl.value.trim() : '';
+  var phone = phoneEl ? phoneEl.value.trim() : '';
+  var email = emailEl ? emailEl.value.trim() : '';
+  var anyFilled = !!(name || from || to || addr || phone || email);
+  if (!anyFilled) return false;
+  if (!validateDestinationBlockDates(block)) return false;
+  return true;
+}
+
+function hasIncompleteDestinationBlock() {
+  var blocks = document.querySelectorAll('#editor-contact-edit .destination-block');
+  for (var i = 0; i < blocks.length; i++) {
+    if (!isDestinationBlockComplete(blocks[i])) return true;
+  }
+  return false;
+}
+
+function updateAddDestinationButtonState() {
+  var addBtn = document.getElementById('add-destination-btn');
+  if (addBtn) addBtn.disabled = hasIncompleteDestinationBlock();
+}
+
 function getDestinationBlocksData() {
   var blocks = document.querySelectorAll('#editor-contact-edit .destination-block');
   var out = [];
@@ -3746,10 +3811,10 @@ function createAdditionalDestinationBlock(index, data) {
   var block = document.createElement('div');
   block.className = 'form-section destination-block';
   block.setAttribute('data-dest-index', String(index));
-  block.innerHTML = '<div class="form-row">' +
+  block.innerHTML = '<div class="form-row form-row-dest-name-dates">' +
     '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" maxlength="200" autocomplete="off"></div>' +
     '<div class="form-group"><label class="form-label">From Date</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
-    '<div class="form-group"><label class="form-label">To Date</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+    '<div class="form-group"><label class="form-label">To Date</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
     '</div>' +
     '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" maxlength="200" autocomplete="off"></div>' +
     '<div class="form-row">' +
@@ -3824,10 +3889,25 @@ function initDestinationRepeater() {
       attachDobMask();
       if (typeof attachContactNumberMask === 'function') attachContactNumberMask();
       updateFormDirtyState();
+      updateAddDestinationButtonState();
     });
   }
   var editForm = document.getElementById('editor-contact-edit');
   if (editForm) {
+    editForm.addEventListener('input', function(e) {
+      if (e.target.matches('.dest-name, .dest-from-date, .dest-to-date, .dest-address, .dest-phone, .dest-email')) {
+        var block = e.target.closest('.destination-block');
+        if (block) { validateDestinationBlockDates(block); updateAddDestinationButtonState(); }
+        updateFormDirtyState();
+      }
+    });
+    editForm.addEventListener('change', function(e) {
+      if (e.target.matches('.dest-name, .dest-from-date, .dest-to-date, .dest-address, .dest-phone, .dest-email')) {
+        var block = e.target.closest('.destination-block');
+        if (block) { validateDestinationBlockDates(block); updateAddDestinationButtonState(); }
+        updateFormDirtyState();
+      }
+    });
     editForm.addEventListener('click', function(e) {
       var delBtn = e.target.closest('.destination-delete-btn');
       if (!delBtn) return;
@@ -3848,6 +3928,7 @@ function initDestinationRepeater() {
         if (phoneInp) phoneInp.value = '';
         if (emailInp) emailInp.value = '';
         updateFormDirtyState();
+        updateAddDestinationButtonState();
         return;
       }
       var isFirst = block.getAttribute('data-dest-index') === '0';
@@ -3877,8 +3958,10 @@ function initDestinationRepeater() {
       attachDobMask();
       if (typeof attachContactNumberMask === 'function') attachContactNumberMask();
       updateFormDirtyState();
+      updateAddDestinationButtonState();
     });
   }
+  updateAddDestinationButtonState();
 }
 
 function generateHTML() {

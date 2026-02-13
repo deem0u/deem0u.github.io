@@ -487,7 +487,7 @@
                   <label class="form-label">Destination Details</label>
                   <span class="form-hint step2-hint" id="step2-hint-destination-details"></span>
                   <div class="form-section destination-block" data-dest-index="0">
-                    <div class="form-row">
+                    <div class="form-row form-row-dest-name-dates">
                       <div class="form-group">
                         <label class="form-label" for="step2-dest-name">Destination Name</label>
                         <input type="text" id="step2-dest-name" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off">
@@ -499,6 +499,7 @@
                       <div class="form-group">
                         <label class="form-label" for="step2-dest-to-date">To Date</label>
                         <input type="text" id="step2-dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                        <span class="form-error error-dest-to-date" id="error-step2-dest-to-date" role="alert"></span>
                       </div>
                     </div>
                     <div class="form-group">
@@ -926,6 +927,7 @@
     errIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
     hideAlert('step2-alert');
     populateStep2Countries();
+    if (typeof updateAddDestinationButtonStateStep2 === 'function') updateAddDestinationButtonStateStep2();
   }
 
   function populateStep2Countries() {
@@ -942,6 +944,60 @@
     sel.appendChild(frag);
   }
 
+  function parseDestDateStep2(str) {
+    var s = (str || '').trim().replace(/\s/g, '');
+    var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return null;
+    var d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    var date = new Date(y, mo - 1, d);
+    if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
+    return date;
+  }
+  function validateDestinationBlockDatesStep2(block) {
+    var fromEl = block.querySelector('.dest-from-date');
+    var toEl = block.querySelector('.dest-to-date');
+    if (!toEl) return true;
+    var errSpan = block.querySelector('.error-dest-to-date') || (block.getAttribute('data-dest-index') === '0' ? document.getElementById('error-step2-dest-to-date') : null);
+    if (!errSpan) errSpan = block.querySelector('.form-error');
+    var fromStr = fromEl ? fromEl.value.trim() : '';
+    var toStr = toEl.value.trim();
+    if (!fromStr || !toStr) { if (errSpan) errSpan.textContent = ''; return true; }
+    var fromDate = parseDestDateStep2(fromStr);
+    var toDate = parseDestDateStep2(toStr);
+    if (!fromDate || !toDate) { if (errSpan) errSpan.textContent = ''; return true; }
+    if (toDate < fromDate) { if (errSpan) errSpan.textContent = 'To date cannot be earlier than from date.'; return false; }
+    if (errSpan) errSpan.textContent = ''; return true;
+  }
+  function isDestinationBlockCompleteStep2(block) {
+    var isFirst = block.getAttribute('data-dest-index') === '0';
+    if (isFirst) return true;
+    var nameEl = block.querySelector('.dest-name');
+    var fromEl = block.querySelector('.dest-from-date');
+    var toEl = block.querySelector('.dest-to-date');
+    var addrEl = block.querySelector('.dest-address');
+    var phoneEl = block.querySelector('.dest-phone');
+    var emailEl = block.querySelector('.dest-email');
+    var name = nameEl ? nameEl.value.trim() : '';
+    var from = fromEl ? fromEl.value.trim() : '';
+    var to = toEl ? toEl.value.trim() : '';
+    var addr = addrEl ? addrEl.value.trim() : '';
+    var phone = phoneEl ? phoneEl.value.trim() : '';
+    var email = emailEl ? emailEl.value.trim() : '';
+    var anyFilled = !!(name || from || to || addr || phone || email);
+    if (!anyFilled) return false;
+    if (!validateDestinationBlockDatesStep2(block)) return false;
+    return true;
+  }
+  function hasIncompleteDestinationBlockStep2() {
+    var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
+    for (var i = 0; i < blocks.length; i++) { if (!isDestinationBlockCompleteStep2(blocks[i])) return true; }
+    return false;
+  }
+  function updateAddDestinationButtonStateStep2() {
+    var addBtn = document.getElementById('step2-add-destination-btn');
+    if (addBtn) addBtn.disabled = hasIncompleteDestinationBlockStep2();
+  }
   function getDestinationBlocksDataStep2() {
     var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
     var out = [];
@@ -971,10 +1027,10 @@
     var block = document.createElement('div');
     block.className = 'form-section destination-block';
     block.setAttribute('data-dest-index', String(index));
-    block.innerHTML = '<div class="form-row">' +
+    block.innerHTML = '<div class="form-row form-row-dest-name-dates">' +
       '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off"></div>' +
       '<div class="form-group"><label class="form-label">From Date</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
-      '<div class="form-group"><label class="form-label">To Date</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+      '<div class="form-group"><label class="form-label">To Date</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
       '</div>' +
       '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" placeholder="Address" maxlength="200" autocomplete="off"></div>' +
       '<div class="form-row">' +
@@ -1015,10 +1071,23 @@
         var nextIndex = blocks.length;
         container.appendChild(createAdditionalDestinationBlockStep2(nextIndex, {}));
         attachDobMask();
+        updateAddDestinationButtonStateStep2();
       });
     }
     var form = document.getElementById('step2-contact-form');
     if (form) {
+      form.addEventListener('input', function(e) {
+        if (e.target.matches('.dest-name, .dest-from-date, .dest-to-date, .dest-address, .dest-phone, .dest-email')) {
+          var block = e.target.closest('.destination-block');
+          if (block) { validateDestinationBlockDatesStep2(block); updateAddDestinationButtonStateStep2(); }
+        }
+      });
+      form.addEventListener('change', function(e) {
+        if (e.target.matches('.dest-name, .dest-from-date, .dest-to-date, .dest-address, .dest-phone, .dest-email')) {
+          var block = e.target.closest('.destination-block');
+          if (block) { validateDestinationBlockDatesStep2(block); updateAddDestinationButtonStateStep2(); }
+        }
+      });
       form.addEventListener('click', function(e) {
         var delBtn = e.target.closest('.destination-delete-btn');
         if (!delBtn) return;
@@ -1038,6 +1107,7 @@
           if (addrInp) addrInp.value = '';
           if (phoneInp) phoneInp.value = '';
           if (emailInp) emailInp.value = '';
+          updateAddDestinationButtonStateStep2();
           return;
         }
         var isFirst = block.getAttribute('data-dest-index') === '0';
@@ -1059,8 +1129,10 @@
           block.remove();
         }
         attachDobMask();
+        updateAddDestinationButtonStateStep2();
       });
     }
+    updateAddDestinationButtonStateStep2();
   }
 
   function step2BuildContent() {
