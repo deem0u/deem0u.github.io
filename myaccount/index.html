@@ -275,10 +275,7 @@
     .editor-layout .editor-profile-strip { order: 7; }
     .editor-layout #contact-pages-section { order: 8; }
     .editor-layout #editor-contact-card { order: 9; }
-    /* Keep form and inputs at 0.85rem so font size does not glitch with global mobile rules */
-    #screen-editor .editor-layout .form-input,
-    #screen-editor .editor-layout select.form-input,
-    #screen-editor .editor-layout .form-textarea { font-size: 0.85rem; }
+    /* Form inputs use global 1rem on mobile (styles.css) to prevent iOS zoom/scroll font glitch */
     /* View mode: buttons above contact page heading (right); Page name left-aligned */
     .editor-view-header-row { flex-direction: column; align-items: flex-start; }
     .editor-view-actions { order: -1; align-self: flex-end; }

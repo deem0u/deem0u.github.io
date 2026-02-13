@@ -2891,6 +2891,8 @@ hr.dest-sep-form {
 @media (max-width: 640px) {
   html {
     overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body, .app {
     overflow-x: hidden;
@@ -3036,10 +3038,30 @@ hr.dest-sep-form {
     display: inline-flex;
     align-items: center;
   }
+  /* 16px (1rem) prevents iOS zoom-on-focus and scroll font-size glitch */
   .form-input,
   select.form-input,
+  .form-textarea,
   .form-input-header {
     min-height: 2.75rem;
+    font-size: 1rem;
+  }
+  .searchable-select-trigger,
+  .searchable-select-search input {
+    font-size: 1rem;
+  }
+  #screen-editor .editor-layout .form-input,
+  #screen-editor .editor-layout select.form-input,
+  #screen-editor .editor-layout .form-textarea,
+  #screen-editor .editor-layout .searchable-select-trigger,
+  #screen-editor .editor-layout .searchable-select-search input {
+    font-size: 1rem;
+  }
+  html body .signup-step0-card .form-input,
+  html body .signup-step1-card .form-input,
+  html body .signup-step1-card select.form-input,
+  html body .signup-step2-card .form-input,
+  html body .signup-step2-card .form-textarea {
     font-size: 1rem;
   }
   .btn {
