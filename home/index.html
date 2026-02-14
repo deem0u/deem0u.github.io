@@ -101,6 +101,7 @@
   .step4-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 9999px; margin-left: 0.35rem; vertical-align: middle; }
   .step4-badge-verified { background: rgba(26, 197, 176, 0.2); color: var(--accent-teal, #0d9488); }
   .step4-badge-not-verified { background: rgba(212, 160, 23, 0.2); color: #b45309; }
+  #signup-step4-card .success-heading { font-weight: 700; color: var(--accent-purple, #9370db); }
   .step4-intro { text-align: center; margin-bottom: 1.25rem; }
   .home-success-details ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
   .home-success-details ol li { margin-bottom: 0.5rem; }
@@ -219,8 +220,6 @@
   /* Generate QR step: yellow NFC banner; footer back link like skip */
   .modal-qr-nfc-banner { margin-top: var(--space-4, 1rem); }
   .step3-qr-footer-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
-  .step3-back-link { background: none; border: none; padding: 0.25rem 0; font-size: inherit; text-decoration: underline; cursor: pointer; color: var(--color-text-secondary, #6b7280); }
-  .step3-back-link:hover { color: var(--accent-teal, #0d9488); }
   @media (max-width: 768px) {
     .home-two-col { flex-direction: column; }
     .home-left-col { min-height: auto; padding: 1rem 0; }
@@ -648,7 +647,8 @@
               <div id="step3-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
               <div id="step3-qr-content" class="modal-qr-content hidden">
                 <div class="modal-qr-desc">
-                  <p>Print and stick these QR codes as-is (or use our card template). Alternatively, scan them using your chosen NFC App to import and write them to an NFC tag. For more information refer to our guides in the Resources tab <a href="/resources/guide-to-qr-codes/">Guide to QR Codes &amp; NFC</a>. These QR&apos;s will be accessible by using the Contact Page selector from your MyAccount.</p>
+                  <p>Print and stick these QR codes as-is (or use our card template). Alternatively, scan them using your chosen NFC App to import and write them to an NFC tag - For more information on how to do this refer to our guides in the Resources tab <a href="/resources/guide-to-qr-codes/">Guide to QR Codes &amp; NFC</a>.</p>
+                <p>These QR&apos;s will be accessible by using the Contact Page selector from your MyAccount.</p>
                 </div>
                 <div class="modal-qr-tabs">
                   <button type="button" class="modal-qr-tab step3-qr-tab active" data-qr="url" aria-pressed="true">Contact Page URL</button>
@@ -673,8 +673,8 @@
               </div>
               <div id="step3-qr-error" class="modal-qr-error hidden"></div>
               <div class="form-actions mt-4 step3-qr-footer-actions">
-                <button type="button" class="btn btn-ghost btn-sm step3-back-link" onclick="goBackFromStep3()">← Back to</button>
-                <button type="button" class="btn btn-primary" onclick="continueToStep4()">Continue</button>
+                <button type="button" class="btn btn-secondary step3-back-btn" onclick="goBackFromStep3()">← Go Back to Add Contact Page</button>
+                <button type="button" class="btn btn-primary" onclick="continueToStep4()">Finish</button>
               </div>
             </div>
           </div>
@@ -686,7 +686,7 @@
               <p class="text-secondary mt-3">A copy of this information has been sent to your email.</p>
               <div class="form-actions mt-3">
                 <a id="step4-editor-link" href="#" class="btn btn-primary">Go to My Account</a>
-                <a href="/home/" class="btn btn-ghost">Back to Home</a>
+                <a href="/home/" class="btn btn-secondary">Back to Home</a>
               </div>
             </div>
           </div>
