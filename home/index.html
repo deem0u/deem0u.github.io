@@ -196,7 +196,7 @@
   .step2-help-toggle-on { right: 0.35rem; left: auto; justify-content: flex-end; }
   .step2-help-toggle[aria-checked="false"] .step2-help-toggle-on { opacity: 0; }
   .step2-help-toggle[aria-checked="true"] .step2-help-toggle-off { opacity: 0; }
-  .signup-step2-card .step2-skip-wrap { margin-left: 0.5rem; }
+  .signup-step2-card .step2-skip-wrap { margin-left: auto; display: flex; justify-content: flex-end; }
   .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-text-secondary, #6b7280); font-size: 0.875rem; }
   .signup-step2-card .step2-skip-link:hover { color: var(--color-text, #111); text-decoration: underline; }
   /* Destination Name + From/Till: name left, From/Till block right; no overlap */
@@ -636,7 +636,7 @@
                 <div id="step2-alert" class="alert"></div>
                 <div class="form-actions form-actions-editor">
                   <button type="submit" id="step2-save-btn" class="btn btn-primary">Save contact page</button>
-                  <span class="step2-skip-wrap"><button type="button" class="btn btn-ghost btn-sm step2-skip-link" id="step2-skip-btn">Skip Adding Contact Page →</button></span>
+                  <span class="step2-skip-wrap"><button type="button" class="btn btn-ghost btn-sm step2-skip-link" id="step2-skip-btn">Do this later from MyAccount -&gt;</button></span>
                 </div>
               </form>
             </div>
@@ -647,12 +647,7 @@
               <div id="step3-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
               <div id="step3-qr-content" class="modal-qr-content hidden">
                 <div class="modal-qr-desc">
-                  <p>Print and stick these QR codes as-is or use them to import to your chosen NFC app to write its contents to a tag. When the QR is scanned or NFC is tapped it will redirect to your Contact Page URL or present you with a vCard populated with the same details on your Contact Page.</p>
-                  <div class="banner-reminder modal-qr-nfc-banner">
-                    <div class="banner-reminder-content">
-                      <p class="banner-reminder-message" style="margin:0;"><strong>Putting both on one NFC tag:</strong> You can store both a URL and a vCard on the same NFC tag. How a phone reacts depends on the device: Android usually offers to save the contact if the vCard is first; iPhones often work better with URL&apos;s (e.g. a link to download the Contact Card) and may not handle the vCards that are directly embedded. If you put both on one tag, expect that some phones will prefer one or the other.</p>
-                    </div>
-                  </div>
+                  <p>Print and stick these QR codes as-is (or use our card template). Alternatively, scan them using your chosen NFC App to import and write them to an NFC tag. For more information refer to our guides in the Resources tab <a href="/resources/guide-to-qr-codes/">Guide to QR Codes &amp; NFC</a>. These QR&apos;s will be accessible by using the Contact Page selector from your MyAccount.</p>
                 </div>
                 <div class="modal-qr-tabs">
                   <button type="button" class="modal-qr-tab step3-qr-tab active" data-qr="url" aria-pressed="true">Contact Page URL</button>
@@ -663,14 +658,15 @@
                   <div id="step3-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="step3-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
                 </div>
                 <div class="modal-qr-actions">
-                  <p class="modal-qr-action-desc modal-qr-action-desc-top">Embed the visible QR on a printable card template and download as PNG.</p>
                   <div id="step3-qr-action-url" class="modal-qr-action active">
                     <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-url">Copy Contact Page URL</button>
-                    <button type="button" class="btn btn-primary btn-sm step3-qr-download-template-btn">Download to Template</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-qr-url">Copy QR Code</button>
+                    <button type="button" class="btn btn-primary btn-sm step3-qr-download-template-btn">Download QR to Template</button>
                   </div>
                   <div id="step3-qr-action-vcard" class="modal-qr-action hidden">
                     <a id="step3-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
-                    <button type="button" class="btn btn-primary btn-sm step3-qr-download-template-btn">Download to Template</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-qr-vcard">Copy QR Code</button>
+                    <button type="button" class="btn btn-primary btn-sm step3-qr-download-template-btn">Download QR to Template</button>
                   </div>
                 </div>
               </div>
@@ -1589,6 +1585,18 @@
     templateImg.src = templateSrc;
   }
 
+  function copyStep3QrImageToClipboard(data, btn) {
+    if (!data || !navigator.clipboard || !navigator.clipboard.write) return;
+    var apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&format=png&data=' + encodeURIComponent(data);
+    fetch(apiUrl).then(function(r) { return r.blob(); }).then(function(blob) {
+      return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    }).then(function() {
+      var orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = orig; }, 2000);
+    }).catch(function() {});
+  }
+
   (function initStep3QrListeners() {
     document.querySelectorAll('.step3-qr-tab').forEach(function(tab) {
       tab.addEventListener('click', function() { switchStep3QrTab(this.getAttribute('data-qr')); });
@@ -1601,6 +1609,14 @@
         copyUrlBtn.textContent = 'Copied!';
         setTimeout(function() { copyUrlBtn.textContent = orig; }, 2000);
       });
+    });
+    var copyQrUrlBtn = document.getElementById('step3-qr-copy-qr-url');
+    if (copyQrUrlBtn) copyQrUrlBtn.addEventListener('click', function() {
+      copyStep3QrImageToClipboard(step3QrData.url, copyQrUrlBtn);
+    });
+    var copyQrVcardBtn = document.getElementById('step3-qr-copy-qr-vcard');
+    if (copyQrVcardBtn) copyQrVcardBtn.addEventListener('click', function() {
+      copyStep3QrImageToClipboard(step3QrData.vcard || '', copyQrVcardBtn);
     });
     document.querySelectorAll('.step3-qr-download-template-btn').forEach(function(templateBtn) {
       templateBtn.addEventListener('click', runStep3DownloadQrOnTemplate);
