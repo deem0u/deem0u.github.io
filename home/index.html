@@ -160,7 +160,9 @@
   /* Signup Step 2: match Add Contact Page form layout/formatting from myaccount editor */
   .signup-step2-card .card-header.signup-step2-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding: var(--space-4) var(--space-5); text-align: left; }
   .signup-step2-card .card-header .card-title { margin: 0; }
-  .signup-step2-card .card-body { padding: var(--space-4) var(--space-5); }
+  .signup-step2-card { width: 100%; min-width: 0; box-sizing: border-box; }
+  .signup-step2-card .card-body { padding: var(--space-4) var(--space-5); width: 100%; min-width: 0; box-sizing: border-box; overflow-wrap: break-word; }
+  .signup-step2-card .form-hint.step2-hint { overflow-wrap: break-word; word-break: break-word; max-width: 100%; }
   .signup-step2-card .form-group { margin-bottom: 0.5rem; }
   .signup-step2-card .form-group:last-child { margin-bottom: 0; }
   .signup-step2-card .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
@@ -177,18 +179,35 @@
   .signup-step2-card .form-input, .signup-step2-card .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
   .signup-step2-card .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
   .signup-step2-card .contact-page-url-anatomy .url-edit-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
-  .signup-step2-card .contact-page-url-anatomy .url-anatomy-row { flex-wrap: wrap; align-items: center; }
-  .signup-step2-card .contact-page-url-anatomy .url-slug-input { color: var(--accent-purple, #9370db); font-weight: 700; min-width: 0; max-width: 100%; flex: 1 1 12rem; box-sizing: border-box; }
+  .signup-step2-card .contact-page-url-anatomy .url-anatomy-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem; }
+  .signup-step2-card .contact-page-url-anatomy .url-slug-input { color: var(--accent-purple, #9370db); font-weight: 700; min-width: 10ch; width: auto; max-width: 100%; flex: 1 1 12rem; box-sizing: border-box; }
+  .signup-step2-card .contact-page-url-anatomy .url-anatomy-row.url-slug-wrapped .url-slug-input { flex: 1 1 100%; min-width: 10ch; }
   .signup-step2-card .step2-url-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
-  .signup-step2-card .step2-toggle-hints-wrap { margin-left: auto; }
+  .step2-help-toggle-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; margin-left: auto; }
+  .step2-help-toggle-label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary, #6b7280); }
+  .step2-help-toggle { display: block; padding: 0; border: none; background: none; cursor: pointer; font-size: inherit; }
+  .step2-help-toggle-track { display: flex; align-items: center; width: 3.5rem; height: 1.5rem; border-radius: 9999px; background: var(--color-bg-muted, #e5e7eb); padding: 0.2rem; box-sizing: border-box; position: relative; transition: background 0.2s; }
+  .step2-help-toggle[aria-checked="true"] .step2-help-toggle-track { background: #22c55e; }
+  .step2-help-toggle-thumb { width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; flex-shrink: 0; }
+  .step2-help-toggle[aria-checked="true"] .step2-help-toggle-thumb { transform: translateX(2rem); }
+  .step2-help-toggle-on,
+  .step2-help-toggle-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.9); pointer-events: none; }
+  .step2-help-toggle-off { left: 0.35rem; justify-content: flex-start; }
+  .step2-help-toggle-on { right: 0.35rem; left: auto; justify-content: flex-end; }
+  .step2-help-toggle[aria-checked="false"] .step2-help-toggle-on { opacity: 0; }
+  .step2-help-toggle[aria-checked="true"] .step2-help-toggle-off { opacity: 0; }
   .signup-step2-card .step2-skip-wrap { margin-left: 0.5rem; }
   .signup-step2-card .step2-skip-link { font-weight: 500; text-decoration: underline; padding: 0.25rem 0; background: none; border: none; cursor: pointer; color: var(--color-text-secondary, #6b7280); font-size: 0.875rem; }
   .signup-step2-card .step2-skip-link:hover { color: var(--color-text, #111); text-decoration: underline; }
-  /* Destination Name + From/Till: name takes space, From/Till in one block */
-  .signup-step2-card .form-row.form-row-dest-name-dates { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
-  .signup-step2-card .dest-from-till-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  /* Destination Name + From/Till: name left, From/Till block right; no overlap */
+  .signup-step2-card .form-row.form-row-dest-name-dates { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem 1rem; align-items: start; }
+  .signup-step2-card .form-row.form-row-dest-name-dates .form-group-dest-name { min-width: 0; }
+  .signup-step2-card .dest-from-till-row { display: grid; grid-template-columns: auto auto; gap: 0.5rem 0.75rem; justify-self: end; align-items: start; min-width: 0; }
+  .signup-step2-card .dest-from-till-row .form-group { margin-bottom: 0; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
   .signup-step2-card .dest-from-till-row .dest-from-date,
-  .signup-step2-card .dest-from-till-row .dest-to-date { min-width: 10ch; }
+  .signup-step2-card .dest-from-till-row .dest-to-date { min-width: 10ch; width: 100%; box-sizing: border-box; }
+  .signup-step2-card .btn-add-more { background: transparent; color: var(--color-text-secondary, #6b7280); border: 1px solid var(--color-border, #e5e7eb); font-weight: 500; }
+  .signup-step2-card .btn-add-more:hover { background: var(--color-bg-subtle, #f9fafb); border-color: var(--color-text-secondary, #9ca3af); color: var(--color-text, #111); }
   @media (max-width: 768px) {
     .signup-step2-card .form-row { grid-template-columns: 1fr; }
   }
@@ -242,11 +261,13 @@
     }
     .signup-step2-card .card-header .card-title { text-align: center; }
     .signup-step2-card .step2-toggle-hints-wrap { margin-left: 0; justify-content: center; }
-    .signup-step2-card .card-body { padding: var(--space-3) var(--space-3); }
+    .signup-step2-card .step2-help-toggle-wrap { margin-left: 0; align-items: center; }
+    .signup-step2-card .card-body { padding: var(--space-3) var(--space-3); width: 100%; min-width: 0; box-sizing: border-box; }
     .signup-step2-card .form-row { grid-template-columns: 1fr; }
     /* Step 2 Add Contact: Destination Name on its own row, From/Till block on next row */
     .signup-step2-card .form-row.form-row-dest-name-dates { display: flex; flex-direction: column; gap: 0.5rem; }
     .signup-step2-card .form-row.form-row-dest-name-dates .form-group-dest-name { margin-bottom: 0; }
+    .signup-step2-card .form-row.form-row-dest-name-dates .dest-from-till-row { justify-self: stretch; }
     .signup-step2-card .dest-from-till-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
     .signup-step2-card .form-actions { flex-direction: column; gap: 0.5rem; }
     .signup-step2-card .form-actions .btn { width: 100%; }
@@ -497,8 +518,15 @@
           <div id="signup-step2-card" class="card signup-step2-card hidden step2-hints-hidden">
             <div class="card-header signup-step2-header">
               <span class="card-title">Add Contact Page</span>
-              <div class="step2-toggle-hints-wrap">
-                <button type="button" class="btn btn-ghost btn-sm step2-toggle-hints" id="step2-toggle-hints" aria-pressed="false">Show hints</button>
+              <div class="step2-help-toggle-wrap">
+                <span class="step2-help-toggle-label">Help</span>
+                <button type="button" role="switch" class="step2-help-toggle" id="step2-toggle-hints" aria-checked="false" aria-label="Toggle form hints on or off">
+                  <span class="step2-help-toggle-track">
+                    <span class="step2-help-toggle-thumb"></span>
+                    <span class="step2-help-toggle-on">On</span>
+                    <span class="step2-help-toggle-off">Off</span>
+                  </span>
+                </button>
               </div>
             </div>
             <div class="card-body">
@@ -596,7 +624,7 @@
                     </div>
                   </div>
                   <div id="step2-destination-blocks-container"></div>
-                  <button type="button" class="btn btn-primary btn-sm" id="step2-add-destination-btn">Add Destination</button>
+                  <button type="button" class="btn btn-add-more btn-sm" id="step2-add-destination-btn">+ Add More</button>
                   <span class="form-error" id="error-step2-dest" role="alert"></span>
                 </div>
                 <div class="form-group">
@@ -611,12 +639,6 @@
                   <span class="step2-skip-wrap"><button type="button" class="btn btn-ghost btn-sm step2-skip-link" id="step2-skip-btn">Skip Adding Contact Page →</button></span>
                 </div>
               </form>
-              <div id="step2-skip-msg" class="hidden">
-                <p class="text-secondary">You can add a contact page later from My Account.</p>
-                <div class="form-actions mt-3">
-                  <button type="button" class="btn btn-primary btn-lg" onclick="step2ContinueToStep3()">Continue to Step 3</button>
-                </div>
-              </div>
             </div>
           </div>
           <div id="signup-step3-card" class="card hidden">
@@ -977,7 +999,6 @@
     document.getElementById('signup-step3-card').classList.add('hidden');
     document.getElementById('signup-step2-card').classList.remove('hidden');
     document.getElementById('step2-contact-form').style.display = '';
-    document.getElementById('step2-skip-msg').classList.add('hidden');
     updateProgressBar(2);
   }
 
@@ -989,13 +1010,12 @@
     var card = document.getElementById('signup-step2-card');
     if (card) card.classList.add('step2-hints-hidden');
     var toggleBtn = document.getElementById('step2-toggle-hints');
-    if (toggleBtn) { toggleBtn.textContent = 'Show hints'; toggleBtn.setAttribute('aria-pressed', 'false'); }
+    if (toggleBtn) toggleBtn.setAttribute('aria-checked', 'false');
     document.getElementById('step2-contact-page-url-username').textContent = username;
     document.getElementById('step2-contact-form').reset();
     var destContainer = document.getElementById('step2-destination-blocks-container');
     if (destContainer) destContainer.innerHTML = '';
     document.getElementById('step2-contact-form').style.display = '';
-    document.getElementById('step2-skip-msg').classList.add('hidden');
     var errIds = ['error-step2-contact-page-name','error-step2-contact-page-url-slug','error-step2-first-name','error-step2-surname','error-step2-email','error-step2-mobile'];
     errIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
     hideAlert('step2-alert');
@@ -1258,8 +1278,26 @@
 
   function step2Skip() {
     sessionStorage.removeItem('signup_contact_slug');
-    document.getElementById('step2-contact-form').style.display = 'none';
-    document.getElementById('step2-skip-msg').classList.remove('hidden');
+    sessionStorage.removeItem('signup_contact_sha');
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.remove('hidden');
+    updateProgressBar(4);
+    var emailVerified = sessionStorage.getItem('signup_email_verified') === 'true';
+    buildStep4Summary(emailVerified);
+    document.getElementById('step4-editor-link').href = EDITOR_URL;
+    var username = sessionStorage.getItem('signup_username');
+    var email = sessionStorage.getItem('signup_email') || '';
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var dob = sessionStorage.getItem('signup_dob') || '';
+    try {
+      fetch(API + '/api/signup-success-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, accountEmail: email, firstName, lastName, dob, contactSlug: '' })
+      }).catch(function() {});
+    } catch (e) {}
   }
 
   function step2ContinueToStep3() {
@@ -1469,9 +1507,34 @@
         var card = document.getElementById('signup-step2-card');
         if (!card) return;
         var hidden = card.classList.toggle('step2-hints-hidden');
-        toggleHints.textContent = hidden ? 'Show hints' : 'Hide hints';
-        toggleHints.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+        toggleHints.setAttribute('aria-checked', hidden ? 'false' : 'true');
       });
+    }
+    var urlAnatomyRow = document.getElementById('step2-contact-page-url-anatomy');
+    var slugInput = document.getElementById('step2-contact-page-url-slug');
+    if (urlAnatomyRow && slugInput) {
+      var row = urlAnatomyRow.querySelector('.url-anatomy-row');
+      function fitSlugSize() {
+        var len = (slugInput.value || '').length;
+        slugInput.size = Math.max(10, Math.min(28, len || 1));
+      }
+      function checkSlugWrap() {
+        if (!row) return;
+        var prefix = row.querySelector('.url-edit-prefix');
+        if (!prefix) return;
+        var inputTop = slugInput.getBoundingClientRect().top;
+        var prefixTop = prefix.getBoundingClientRect().top;
+        row.classList.toggle('url-slug-wrapped', inputTop > prefixTop + 5);
+      }
+      slugInput.addEventListener('input', fitSlugSize);
+      slugInput.addEventListener('focus', fitSlugSize);
+      fitSlugSize();
+      if (typeof ResizeObserver !== 'undefined') {
+        var ro = new ResizeObserver(function() { checkSlugWrap(); });
+        ro.observe(urlAnatomyRow);
+      }
+      window.addEventListener('resize', checkSlugWrap);
+      checkSlugWrap();
     }
   })();
 
