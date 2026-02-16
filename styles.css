@@ -2960,20 +2960,20 @@ hr.dest-sep-form {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
     padding: 0;
     margin-bottom: var(--space-2);
     margin-left: auto;
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    background: var(--white);
-    color: var(--color-text);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-muted, rgba(0,0,0,0.04));
+    color: var(--color-text-secondary, #666);
     cursor: pointer;
     flex-shrink: 0;
   }
   .header-drawer-close-btn:hover {
-    background: var(--color-bg-muted, rgba(0,0,0,0.05));
+    background: var(--color-bg-muted, rgba(0,0,0,0.08));
     color: var(--accent-teal, #1ac5b0);
   }
   .header-drawer-close-btn:focus {
@@ -3035,6 +3035,9 @@ hr.dest-sep-form {
     display: none;
     overflow: visible;
     visibility: visible;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
   .app-header-actions .nav-dropdown.open .nav-dropdown-panel,
   .app-header-actions .nav-dropdown:focus-within .nav-dropdown-panel {
@@ -3043,6 +3046,9 @@ hr.dest-sep-form {
   }
   .app-header-actions .nav-dropdown-item {
     padding: var(--space-2) var(--space-4);
+    white-space: normal;
+    line-height: 1.35;
+    max-width: 100%;
   }
   .app-header-actions > .btn,
   .app-header-actions > button,
