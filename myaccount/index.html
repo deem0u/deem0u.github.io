@@ -189,8 +189,8 @@
   .help-toggle[aria-checked="true"] .help-toggle-thumb { transform: translateX(1.75rem); }
   .help-toggle-on,
   .help-toggle-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; pointer-events: none; }
-  .help-toggle-on { right: 0.35rem; left: auto; justify-content: flex-end; color: #166534; }
-  .help-toggle-off { left: 0.35rem; justify-content: flex-start; color: #374151; }
+  .help-toggle-on { left: 0.35rem; right: auto; justify-content: flex-start; color: #166534; }
+  .help-toggle-off { right: 0.35rem; left: auto; justify-content: flex-end; color: #374151; }
   .help-toggle[aria-checked="false"] .help-toggle-on { opacity: 0; }
   .help-toggle[aria-checked="true"] .help-toggle-off { opacity: 0; }
   .editor-edit-mode-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
@@ -620,12 +620,12 @@
           <div class="card-header">
             <div class="editor-edit-mode-actions">
               <div class="form-hints-toggle-wrap help-toggle-wrap">
-                <span class="help-toggle-label">Help <svg class="help-toggle-info-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                <span class="help-toggle-label">HELP <svg class="help-toggle-info-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
                 <button type="button" role="switch" id="form-hints-toggle-btn" class="help-toggle" aria-checked="true" aria-label="Toggle form hints on or off" onclick="toggleFormHints()">
                   <span class="help-toggle-track">
                     <span class="help-toggle-thumb"></span>
-                    <span class="help-toggle-on">On</span>
-                    <span class="help-toggle-off">Off</span>
+                    <span class="help-toggle-on">ON</span>
+                    <span class="help-toggle-off">OFF</span>
                   </span>
                 </button>
               </div>
