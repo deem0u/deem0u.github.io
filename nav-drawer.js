@@ -5,6 +5,7 @@
     var header = document.querySelector('.app-header');
     var toggle = document.getElementById('header-nav-toggle-btn');
     var backdrop = document.getElementById('header-drawer-backdrop');
+    var actions = header ? header.querySelector('.app-header-actions') : null;
     if (!header || !toggle) return;
     function open() {
       header.classList.add('nav-drawer-open');
@@ -30,6 +31,15 @@
       if (header.classList.contains('nav-drawer-open')) close(); else open();
     });
     if (backdrop) backdrop.addEventListener('click', close);
+    if (actions) {
+      var closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'header-drawer-close-btn';
+      closeBtn.setAttribute('aria-label', 'Close menu');
+      closeBtn.innerHTML = closeSvg;
+      closeBtn.addEventListener('click', close);
+      actions.insertBefore(closeBtn, actions.firstChild);
+    }
     var resourcesBtn = document.getElementById('nav-resources-btn');
     if (resourcesBtn) {
       var resourcesDropdown = resourcesBtn.closest('.nav-dropdown');
