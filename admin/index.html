@@ -521,9 +521,9 @@
             <div class="card-header admin-editor-card-header" id="admin-editor-view-header">
               <span class="card-title" id="admin-editor-card-title">Edit Contact Information</span>
               <div class="admin-editor-header-actions">
-                <a id="admin-view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm">View Page</a>
-                <button type="button" class="btn btn-primary btn-sm" id="admin-view-qr-codes-btn" onclick="adminShowQrModalFromView()">QR Codes</button>
-                <button type="button" class="btn btn-primary btn-sm" id="admin-edit-contact-btn" onclick="adminEnterEditMode()">Edit</button>
+                <a id="admin-view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm btn-icon" aria-label="View Page" title="View Page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
+                <button type="button" class="btn btn-primary btn-sm btn-icon" id="admin-view-qr-codes-btn" onclick="adminShowQrModalFromView()" aria-label="QR Codes" title="QR Codes"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="6" height="6" rx="0.5"/><rect x="10" y="13" width="6" height="6" rx="0.5"/><rect x="18" y="13" width="4" height="2"/><rect x="18" y="17" width="4" height="2"/></svg></button>
+                <button type="button" class="btn btn-primary btn-sm btn-icon" id="admin-edit-contact-btn" onclick="adminEnterEditMode()" aria-label="Edit" title="Edit"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
               </div>
             </div>
             <div class="card-body">
@@ -553,9 +553,16 @@
                     <label class="form-label">Home Country</label>
                     <span class="editor-view-value" id="admin-view-home-country"></span>
                   </div>
-                  <div class="form-group">
-                    <label class="form-label">Destination Details</label>
-                    <div id="admin-view-destination-blocks" class="form-section"></div>
+                  <div class="form-group view-destination-wrapper" id="admin-view-destination-wrapper">
+                    <div class="view-destination-label-row">
+                      <label class="form-label">Destination Details</label>
+                      <div class="view-destination-nav hidden" id="admin-view-destination-nav" aria-label="Destination carousel navigation">
+                        <button type="button" class="btn btn-ghost btn-sm view-dest-prev" id="admin-view-dest-prev" aria-label="Previous destination">‹</button>
+                        <button type="button" class="btn btn-ghost btn-sm view-dest-next" id="admin-view-dest-next" aria-label="Next destination">›</button>
+                      </div>
+                    </div>
+                    <div id="admin-view-destination-blocks" class="form-section view-destination-panels"></div>
+                    <div class="view-destination-footer hidden" id="admin-view-destination-footer" aria-label="Destination section indicator"></div>
                   </div>
                   <div class="form-group">
                     <label class="form-label">Additional Information</label>
@@ -573,7 +580,7 @@
                   <div class="card-header-fields">
                     <div class="form-group">
                       <label class="form-label" for="contact-page-name">Page Name <span class="form-required">*</span></label>
-                      <input type="text" id="contact-page-name" class="form-input" placeholder="Page Name" maxlength="28" autocomplete="off" title="Page Name">
+                      <input type="text" id="contact-page-name" class="form-input" placeholder="e.g. &quot;Work Travel&quot; or &quot;Bike - Aspero&quot;" maxlength="28" autocomplete="off" title="Page Name">
                       <span class="form-hint">A name to identify this page on your list of Contact Pages. Must be unique amongst this user's contact pages.</span>
                       <span class="form-error" id="error-contact-page-name" role="alert"></span>
                     </div>
@@ -2621,26 +2628,132 @@ function adminRefreshViewFromForm() {
   var countryEl = document.getElementById('home-country-edit-text');
   setView('admin-view-home-country', countryEl && countryEl.textContent && countryEl.textContent !== 'Select country' ? countryEl.textContent : '');
   var viewDestContainer = document.getElementById('admin-view-destination-blocks');
+  var viewDestWrapper = document.getElementById('admin-view-destination-wrapper');
+  var viewDestNav = document.getElementById('admin-view-destination-nav');
+  var viewDestFooter = document.getElementById('admin-view-destination-footer');
   if (viewDestContainer && typeof getDestinationBlocksDataAdmin === 'function') {
     var dests = getDestinationBlocksDataAdmin();
-    var parts = [];
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-    dests.forEach(function(d, i) {
-      if (i > 0) parts.push('<hr class="dest-sep-form">');
-      parts.push('<div class="view-dest-block">');
-      parts.push('<div class="view-dest-name-dates-row">');
-      parts.push('<div class="form-group view-dest-name-wrap"><label class="form-label">Destination Name</label><span class="editor-view-value">' + esc((d.name || '').trim() || '\u2014') + '</span></div>');
-      parts.push('<div class="form-group"><label class="form-label">From</label><span class="editor-view-value">' + esc((d.fromDate || '').trim() || '\u2014') + '</span></div>');
-      parts.push('<div class="form-group"><label class="form-label">Till</label><span class="editor-view-value">' + esc((d.toDate || '').trim() || '\u2014') + '</span></div>');
-      parts.push('</div>');
-      parts.push('<div class="form-group"><label class="form-label">Address</label><span class="editor-view-value">' + esc((d.address || '').trim() || '\u2014') + '</span></div>');
-      parts.push('<div class="form-group"><label class="form-label">Contact Number</label><span class="editor-view-value">' + esc((d.phone || '').trim() || '\u2014') + '</span></div>');
-      parts.push('<div class="form-group"><label class="form-label">Email</label><span class="editor-view-value">' + esc((d.email || '').trim() || '\u2014') + '</span></div>');
-      parts.push('</div>');
-    });
-    viewDestContainer.innerHTML = parts.length ? parts.join('') : '<div class="form-group"><label class="form-label">Destination Details</label><span class="editor-view-value">\u2014</span></div>';
+    if (dests.length === 0) {
+      viewDestContainer.innerHTML = '<div class="form-group"><label class="form-label">Destination Details</label><span class="editor-view-value">\u2014</span></div>';
+      if (viewDestWrapper) viewDestWrapper.classList.remove('view-destination-carousel-multi');
+      if (viewDestNav) viewDestNav.classList.add('hidden');
+      if (viewDestFooter) { viewDestFooter.classList.add('hidden'); viewDestFooter.innerHTML = ''; }
+    } else {
+      var parts = [];
+      dests.forEach(function(d, i) {
+        parts.push('<div class="view-dest-block' + (dests.length > 1 && i !== 0 ? '' : ' active') + '" data-dest-index="' + i + '" role="tabpanel" aria-label="Destination ' + (i + 1) + ' of ' + dests.length + '">');
+        parts.push('<div class="view-dest-name-dates-row">');
+        parts.push('<div class="form-group view-dest-name-wrap"><label class="form-label">Destination Name</label><span class="editor-view-value">' + esc((d.name || '').trim() || '\u2014') + '</span></div>');
+        parts.push('<div class="form-group"><label class="form-label">From</label><span class="editor-view-value">' + esc((d.fromDate || '').trim() || '\u2014') + '</span></div>');
+        parts.push('<div class="form-group"><label class="form-label">Till</label><span class="editor-view-value">' + esc((d.toDate || '').trim() || '\u2014') + '</span></div>');
+        parts.push('</div>');
+        parts.push('<div class="form-group"><label class="form-label">Address</label><span class="editor-view-value">' + esc((d.address || '').trim() || '\u2014') + '</span></div>');
+        parts.push('<div class="form-group"><label class="form-label">Contact Number</label><span class="editor-view-value">' + esc((d.phone || '').trim() || '\u2014') + '</span></div>');
+        parts.push('<div class="form-group"><label class="form-label">Email</label><span class="editor-view-value">' + esc((d.email || '').trim() || '\u2014') + '</span></div>');
+        parts.push('</div>');
+      });
+      viewDestContainer.innerHTML = parts.join('');
+      if (dests.length > 1) {
+        if (viewDestWrapper) viewDestWrapper.classList.add('view-destination-carousel-multi');
+        if (viewDestNav) viewDestNav.classList.remove('hidden');
+        if (viewDestFooter) {
+          viewDestFooter.classList.remove('hidden');
+          if (dests.length <= 5) {
+            viewDestFooter.innerHTML = '';
+            viewDestFooter.setAttribute('role', 'tablist');
+            viewDestFooter.setAttribute('aria-label', 'Destination section');
+            for (var j = 0; j < dests.length; j++) {
+              var dot = document.createElement('button');
+              dot.type = 'button';
+              dot.className = 'view-dest-dot' + (j === 0 ? ' active' : '');
+              dot.setAttribute('aria-label', 'Go to destination ' + (j + 1));
+              dot.setAttribute('aria-selected', j === 0 ? 'true' : 'false');
+              dot.dataset.index = String(j);
+              dot.textContent = '';
+              viewDestFooter.appendChild(dot);
+            }
+          } else {
+            viewDestFooter.innerHTML = '<span class="view-dest-n-of-m"><input type="text" inputmode="numeric" pattern="[0-9]*" class="view-dest-page-input" id="admin-view-dest-page-input" value="1" min="1" max="' + dests.length + '" aria-label="Current section number"> of ' + dests.length + '</span>';
+          }
+        }
+        initAdminViewDestinationCarousel(dests.length);
+      } else {
+        if (viewDestWrapper) viewDestWrapper.classList.remove('view-destination-carousel-multi');
+        if (viewDestNav) viewDestNav.classList.add('hidden');
+        if (viewDestFooter) { viewDestFooter.classList.add('hidden'); viewDestFooter.innerHTML = ''; }
+      }
+    }
   }
   setView('admin-view-additional-info', el('additional-info'));
+}
+
+var adminViewDestCarouselTotal = 0;
+var adminViewDestCarouselIndex = 0;
+
+function goToAdminViewDestination(index) {
+  var total = adminViewDestCarouselTotal;
+  if (total <= 0) return;
+  var i = Math.max(0, Math.min(index, total - 1));
+  adminViewDestCarouselIndex = i;
+  var panels = document.querySelectorAll('#admin-view-destination-blocks .view-dest-block');
+  panels.forEach(function(p, idx) {
+    p.classList.toggle('active', idx === i);
+    p.setAttribute('aria-hidden', idx !== i);
+  });
+  var dots = document.querySelectorAll('#admin-view-destination-footer .view-dest-dot');
+  dots.forEach(function(d, idx) {
+    d.classList.toggle('active', idx === i);
+    d.setAttribute('aria-selected', idx === i ? 'true' : 'false');
+  });
+  var pageInput = document.getElementById('admin-view-dest-page-input');
+  if (pageInput) {
+    pageInput.value = String(i + 1);
+    pageInput.setAttribute('max', String(total));
+  }
+}
+
+function initAdminViewDestinationCarousel(total) {
+  adminViewDestCarouselTotal = total;
+  adminViewDestCarouselIndex = 0;
+  var prevBtn = document.getElementById('admin-view-dest-prev');
+  var nextBtn = document.getElementById('admin-view-dest-next');
+  if (prevBtn) prevBtn.onclick = function() { goToAdminViewDestination(adminViewDestCarouselIndex - 1); };
+  if (nextBtn) nextBtn.onclick = function() { goToAdminViewDestination(adminViewDestCarouselIndex + 1); };
+  var footer = document.getElementById('admin-view-destination-footer');
+  if (footer) {
+    footer.querySelectorAll('.view-dest-dot').forEach(function(dot) {
+      dot.onclick = function() {
+        var idx = parseInt(dot.dataset.index, 10);
+        if (!isNaN(idx)) goToAdminViewDestination(idx);
+      };
+    });
+  }
+  var pageInput = document.getElementById('admin-view-dest-page-input');
+  if (pageInput && total > 5) {
+    pageInput.setAttribute('max', String(total));
+    pageInput.value = '1';
+    pageInput.onkeydown = function(e) {
+      var key = e.key;
+      if (key === 'ArrowUp' || key === 'ArrowRight') { e.preventDefault(); goToAdminViewDestination(adminViewDestCarouselIndex + 1); }
+      else if (key === 'ArrowDown' || key === 'ArrowLeft') { e.preventDefault(); goToAdminViewDestination(adminViewDestCarouselIndex - 1); }
+      else if (key === 'Backspace' || key === 'Delete' || key === 'Tab' || key === 'Enter') return;
+      else if (/^\d$/.test(key)) return;
+      else e.preventDefault();
+    };
+    pageInput.oninput = function() {
+      var raw = this.value.replace(/\D/g, '');
+      this.value = raw;
+      var n = parseInt(raw, 10);
+      if (raw === '' || isNaN(n)) return;
+      if (n >= 1 && n <= total) goToAdminViewDestination(n - 1);
+    };
+    pageInput.onblur = function() {
+      var n = parseInt(this.value, 10);
+      if (this.value === '' || isNaN(n) || n < 1 || n > total) this.value = String(adminViewDestCarouselIndex + 1);
+      else goToAdminViewDestination(n - 1);
+    };
+  }
 }
 
 function adminEnterEditMode() {
@@ -2974,9 +3087,9 @@ function renderList(t) {
                   <div class="searchable-select-options" id="contact-pages-options-${f}"></div>
                 </div>
               </div>
-              <a href="#" target="_blank" class="btn btn-primary btn-sm user-card-action-link" id="view-live-${f}" aria-disabled="true">View Live Page</a>
-              <button type="button" class="btn btn-primary btn-sm user-card-action-btn" id="edit-page-${f}" disabled onclick="editUser('${f}')">Edit Page</button>
-              <button type="button" class="btn btn-primary btn-sm user-card-action-btn" id="qr-codes-${f}" disabled onclick="showQrModal('${f}')">QR Codes</button>
+              <a href="#" target="_blank" class="btn btn-primary btn-sm btn-icon user-card-action-link" id="view-live-${f}" aria-label="View Live Page" aria-disabled="true" title="View Live Page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
+              <button type="button" class="btn btn-primary btn-sm btn-icon user-card-action-btn" id="edit-page-${f}" disabled onclick="editUser('${f}')" aria-label="Edit Page" title="Edit Page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button type="button" class="btn btn-primary btn-sm btn-icon user-card-action-btn" id="qr-codes-${f}" disabled onclick="showQrModal('${f}')" aria-label="QR Codes" title="QR Codes"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="6" height="6" rx="0.5"/><rect x="10" y="13" width="6" height="6" rx="0.5"/><rect x="18" y="13" width="4" height="2"/><rect x="18" y="17" width="4" height="2"/></svg></button>
             </div>
           </div>
         </div>
