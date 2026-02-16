@@ -2896,7 +2896,25 @@ hr.dest-sep-form {
 /* Admin dashboard: contact form matches MyAccount Contact Editor (compact layout, same sections and sizing) */
 #editor-card { max-width: 640px; }
 #editor-card .admin-editor-card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
-#editor-card .admin-editor-header-actions { display: flex; gap: 0.5rem; flex-shrink: 0; align-items: flex-end; margin-left: auto; justify-content: flex-end; }
+/* Title + icon buttons row: page name wraps if long, icons stay top-right */
+#admin-contact-view .admin-editor-title-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+  min-height: 0;
+}
+#admin-contact-view .admin-editor-page-name-wrap {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+#admin-contact-view .admin-editor-title-actions-row + .editor-view-url-block.editor-view-header {
+  margin-top: 0.35rem;
+}
+#editor-card .admin-editor-header-actions { display: flex; gap: 0.5rem; flex-shrink: 0; align-items: flex-end; justify-content: flex-end; }
 #editor-card .admin-editor-action-btn {
   display: inline-flex;
   flex-direction: column;
@@ -3041,6 +3059,7 @@ hr.dest-sep-form {
 #admin-contact-view .editor-contact-view-content .form-label { font-weight: 700; }
 #admin-contact-view .editor-contact-view-content .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
 #admin-contact-view .editor-view-header-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+#admin-contact-view .editor-view-header-row.admin-editor-title-actions-row { align-items: flex-start; margin-bottom: 0.25rem; }
 #admin-contact-view .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
 #admin-contact-view .editor-view-url-block.editor-view-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
 #admin-contact-view .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; }
