@@ -2612,9 +2612,18 @@ function setAdminEditorCardTitle() {
   var u = userInfo[currentFolder] || {};
   var first = (u.firstName || u.pageGivenName || '').trim();
   var last = (u.lastName || u.pageFamilyName || '').trim();
-  var name = [first, last].filter(Boolean).join(' ');
   var username = currentFolder || '';
-  var title = name ? (name + ' (<span class="card-title-username">' + escapeHtml(username) + '</span>)') : 'Edit Contact Information';
+  var hasName = first || last;
+  var title;
+  if (hasName) {
+    var parts = [];
+    if (first) parts.push('<span class="admin-editor-name-line">' + escapeHtml(first) + '</span>');
+    if (last) parts.push('<span class="admin-editor-name-line">' + escapeHtml(last) + '</span>');
+    parts.push('<span class="admin-editor-name-line card-title-username">(' + escapeHtml(username) + ')</span>');
+    title = parts.join('');
+  } else {
+    title = 'Edit Contact Information';
+  }
   var t1 = document.getElementById('admin-editor-card-title');
   var t2 = document.getElementById('admin-editor-edit-card-title');
   if (t1) t1.innerHTML = title;

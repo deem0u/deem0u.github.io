@@ -2916,25 +2916,24 @@ hr.dest-sep-form {
   word-break: break-word;
   text-align: left;
 }
+#editor-card .admin-editor-header-name .admin-editor-name-line,
+#editor-card #admin-editor-edit-card-title .admin-editor-name-line {
+  display: block;
+}
 #editor-card .admin-editor-header-actions {
   order: 2;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.35rem;
   flex-shrink: 0;
   align-items: flex-start;
   margin-left: auto;
 }
-/* When stacked: buttons on row 1 (order 1), name on row 2 full width (order 2) so buttons never move. */
-@container admin-editor-header (max-width: 640px) {
+/* Only stack when header is narrow: buttons row 1, name row 2. Above 480px name and buttons stay on one row (e.g. danielmounnarath). */
+@container admin-editor-header (max-width: 480px) {
   #editor-card .admin-editor-header-actions { order: 1; }
   #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
 }
-/* Viewport fallback so stacking works even without container-query support */
-@media (max-width: 640px) {
-  #editor-card .admin-editor-header-actions { order: 1; }
-  #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
-}
-@media (max-width: 560px) {
+@media (max-width: 480px) {
   #editor-card .admin-editor-header-actions { order: 1; }
   #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
 }
