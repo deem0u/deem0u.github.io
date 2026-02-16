@@ -3026,23 +3026,34 @@ hr.dest-sep-form {
     border-left: none;
     min-width: 0;
   }
+  .app-header-actions .nav-dropdown {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
   .app-header-actions .nav-dropdown-panel {
     position: static;
     box-shadow: none;
     border: none;
     margin: 0;
-    padding: 0 0 0.5rem 0;
+    padding: 0;
     display: none;
-    overflow: visible;
+    overflow: hidden;
     visibility: visible;
     width: 100%;
     min-width: 0;
     max-width: 100%;
+    min-height: 0;
+    max-height: 0;
+    flex-shrink: 0;
   }
   .app-header-actions .nav-dropdown.open .nav-dropdown-panel,
   .app-header-actions .nav-dropdown:focus-within .nav-dropdown-panel {
     display: flex;
     flex-direction: column;
+    max-height: none;
+    padding: 0 0 0.5rem 0;
   }
   .app-header-actions .nav-dropdown-item {
     padding: var(--space-2) var(--space-4);
