@@ -2896,7 +2896,7 @@ hr.dest-sep-form {
 /* Admin dashboard: contact form matches MyAccount Contact Editor (compact layout, same sections and sizing) */
 #editor-card { max-width: 640px; }
 #editor-card .admin-editor-card-header { display: block; }
-/* Header: FirstName LastName (Username) in line with icon buttons; when long, name wraps below buttons, left aligned */
+/* Header: buttons stay fixed at top; name on same row when short, or on next row when long (so buttons never shift down) */
 #editor-card .admin-editor-header-inner {
   display: flex;
   flex-wrap: wrap;
@@ -2905,9 +2905,6 @@ hr.dest-sep-form {
   min-height: 0;
   container-type: inline-size;
   container-name: admin-editor-header;
-}
-@container admin-editor-header (max-width: 280px) {
-  #editor-card .admin-editor-header-name { flex-basis: 100%; width: 100%; }
 }
 #editor-card .admin-editor-header-name {
   order: 1;
@@ -2926,8 +2923,11 @@ hr.dest-sep-form {
   align-items: flex-end;
   margin-left: auto;
 }
-/* When header is narrow, name drops to next line under the buttons, left aligned */
-@media (max-width: 520px) {
+/* Name drops to next row below buttons so buttons never move; name gets full width, left aligned. At card max-width 640px the header inner is always ≤640px, so name goes below and buttons stay fixed on row 1. */
+@container admin-editor-header (max-width: 640px) {
+  #editor-card .admin-editor-header-name { flex-basis: 100%; width: 100%; }
+}
+@media (max-width: 560px) {
   #editor-card .admin-editor-header-name { flex-basis: 100%; width: 100%; }
 }
 #editor-card .admin-editor-action-btn {
