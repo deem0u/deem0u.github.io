@@ -2620,7 +2620,7 @@ function setAdminEditorCardTitle() {
     if (first) parts.push('<span class="admin-editor-name-line">' + escapeHtml(first) + '</span>');
     if (last) parts.push('<span class="admin-editor-name-line">' + escapeHtml(last) + '</span>');
     parts.push('<span class="admin-editor-name-line card-title-username">(' + escapeHtml(username) + ')</span>');
-    title = parts.join('');
+    title = parts.join(' ');
   } else {
     title = 'Edit Contact Information';
   }

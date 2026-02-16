@@ -2916,9 +2916,10 @@ hr.dest-sep-form {
   word-break: break-word;
   text-align: left;
 }
+/* When name fits on one row: single line in alignment with icons */
 #editor-card .admin-editor-header-name .admin-editor-name-line,
 #editor-card #admin-editor-edit-card-title .admin-editor-name-line {
-  display: block;
+  display: inline;
 }
 #editor-card .admin-editor-header-actions {
   order: 2;
@@ -2928,14 +2929,18 @@ hr.dest-sep-form {
   align-items: flex-start;
   margin-left: auto;
 }
-/* Only stack when header is narrow: buttons row 1, name row 2. Above 480px name and buttons stay on one row (e.g. danielmounnarath). */
+/* When stacked (narrow): buttons row 1, name row 2 as 3 lines (first, last, username) */
 @container admin-editor-header (max-width: 480px) {
   #editor-card .admin-editor-header-actions { order: 1; }
   #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
+  #editor-card .admin-editor-header-name .admin-editor-name-line,
+  #editor-card #admin-editor-edit-card-title .admin-editor-name-line { display: block; }
 }
 @media (max-width: 480px) {
   #editor-card .admin-editor-header-actions { order: 1; }
   #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
+  #editor-card .admin-editor-header-name .admin-editor-name-line,
+  #editor-card #admin-editor-edit-card-title .admin-editor-name-line { display: block; }
 }
 #editor-card .admin-editor-action-btn {
   display: inline-flex;
