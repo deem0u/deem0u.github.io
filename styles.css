@@ -2901,7 +2901,7 @@ hr.dest-sep-form {
 #editor-card .admin-editor-header-inner {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.5rem 0.75rem;
   min-height: 0;
   container-type: inline-size;
@@ -2928,6 +2928,15 @@ hr.dest-sep-form {
   flex-shrink: 0;
   align-items: flex-start;
   margin-left: auto;
+}
+/* When name block is narrow (would wrap): use 3-line format even on one row */
+@container admin-editor-header (max-width: 560px) {
+  #editor-card .admin-editor-header-name .admin-editor-name-line,
+  #editor-card #admin-editor-edit-card-title .admin-editor-name-line { display: block; }
+}
+@media (max-width: 560px) {
+  #editor-card .admin-editor-header-name .admin-editor-name-line,
+  #editor-card #admin-editor-edit-card-title .admin-editor-name-line { display: block; }
 }
 /* When stacked (narrow): buttons row 1, name row 2 as 3 lines (first, last, username) */
 @container admin-editor-header (max-width: 480px) {
