@@ -2920,7 +2920,7 @@ hr.dest-sep-form {
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;
-  align-items: flex-end;
+  align-items: flex-start;
   margin-left: auto;
 }
 /* When stacked: buttons on row 1 (order 1), name on row 2 full width (order 2) so buttons never move. */
