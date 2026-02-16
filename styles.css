@@ -2923,12 +2923,19 @@ hr.dest-sep-form {
   align-items: flex-end;
   margin-left: auto;
 }
-/* Name drops to next row below buttons so buttons never move; name gets full width, left aligned. At card max-width 640px the header inner is always ≤640px, so name goes below and buttons stay fixed on row 1. */
+/* When stacked: buttons on row 1 (order 1), name on row 2 full width (order 2) so buttons never move. */
 @container admin-editor-header (max-width: 640px) {
-  #editor-card .admin-editor-header-name { flex-basis: 100%; width: 100%; }
+  #editor-card .admin-editor-header-actions { order: 1; }
+  #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
+}
+/* Viewport fallback so stacking works even without container-query support */
+@media (max-width: 640px) {
+  #editor-card .admin-editor-header-actions { order: 1; }
+  #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
 }
 @media (max-width: 560px) {
-  #editor-card .admin-editor-header-name { flex-basis: 100%; width: 100%; }
+  #editor-card .admin-editor-header-actions { order: 1; }
+  #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
 }
 #editor-card .admin-editor-action-btn {
   display: inline-flex;
