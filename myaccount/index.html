@@ -210,23 +210,23 @@
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
   .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.5; overflow: visible; padding: 2px 0; }
-  #view-contact-page-url-anatomy .editor-view-url-line { display: block; font-size: 0.85rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
-  .editor-view-url-line { display: block; font-size: 0.85rem; font-weight: 700; word-break: break-all; overflow-wrap: break-word; }
+  #view-contact-page-url-anatomy .editor-view-url-line { display: block; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
+  .editor-view-url-line { display: block; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
   .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
-  .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
+  .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; }
-  .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; word-break: break-all; text-decoration: none; }
-  /* View mode: teal text (username); purple text (slug); hover only on username/slug; labels unselectable */
-  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; }
+  .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
+  /* View mode: teal (username); purple (slug); reserve hover space so layout stable and slug hover works; no text wrap inside segments */
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.25rem; padding-right: 0.25rem; margin-left: 0.4rem; margin-right: 0.4rem; box-sizing: content-box; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.25rem; padding-right: 0.25rem; margin-left: 0.4rem; margin-right: 0.4rem; box-sizing: content-box; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; min-height: 2.8em; cursor: default; position: relative; }
+  .editor-view-url-line .url-segment-wrap { display: inline-block; vertical-align: top; min-height: 2.8em; cursor: default; position: relative; pointer-events: auto; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
-  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.55rem; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; }
-  /* Hover: ring, horizontal padding, margin for gap to adjacent "/" on both sides; label centered below */
-  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding-left: 0.25rem; padding-right: 0.25rem; margin-left: 0.4rem; margin-right: 0.4rem; }
-  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding-left: 0.25rem; padding-right: 0.25rem; margin-left: 0.4rem; margin-right: 0.4rem; }
+  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.55rem; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; pointer-events: none; }
+  /* Hover: ring only (space already reserved); label below */
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
@@ -234,9 +234,9 @@
   #editor-contact-edit .form-group:has(#edit-contact-page-url-anatomy) { width: 100%; }
   #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; display: flex; flex-direction: column; gap: 0.35rem 0; width: 100%; max-width: 100%; }
   .editor-edit-url-anatomy .editor-edit-url-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-height: 2.25rem; font-size: 0.85rem; width: 100%; max-width: 100%; }
-  .editor-edit-url-anatomy .editor-edit-url-row-line .url-edit-prefix { flex: none; white-space: nowrap; display: inline-flex; align-items: center; }
-  .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input { flex: 1 1 0%; min-width: 10ch; max-width: 100%; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
-  .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input[size] { width: auto; }
+  .editor-edit-url-anatomy .editor-edit-url-row-line .url-edit-prefix { flex: none; white-space: nowrap; display: inline-flex; align-items: center; min-width: 0; }
+  .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input { flex: 1 1 0%; min-width: 20ch; max-width: 100%; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
+  .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input[size] { max-width: 100%; }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input.is-invalid { color: var(--accent-purple, #9370db); }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
   .editor-edit-url-anatomy .contact-page-slug-warning-full-width { width: 100%; margin: 0; box-sizing: border-box; }

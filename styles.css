@@ -2838,7 +2838,7 @@ hr.dest-sep-form {
 #admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-height: 2.25rem; font-size: var(--text-sm, 0.875rem); width: 100%; max-width: 100%; }
 #admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-edit-prefix { flex: none; white-space: nowrap; display: inline-flex; align-items: center; font-size: inherit; color: var(--color-text-secondary, #666); }
 #admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-username-edit { display: inline; font-size: inherit; font-weight: 700; color: var(--accent-teal, #1ac5b0); border: none; background: none; padding: 0; margin: 0; }
-#admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input { flex: 1 1 0%; min-width: 10ch; max-width: 100%; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
+#admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input { flex: 1 1 0%; min-width: 20ch; max-width: 100%; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
 #admin-contact-edit .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input::placeholder { color: var(--color-text-muted, #999); font-weight: 400; }
 #admin-contact-edit .editor-edit-url-anatomy .contact-page-slug-warning-full-width { width: 100%; margin: 0; box-sizing: border-box; }
 #admin-contact-edit .editor-edit-url-anatomy .form-hint { width: 100%; max-width: 100%; box-sizing: border-box; margin-top: 0.25rem; margin-bottom: 0; }
