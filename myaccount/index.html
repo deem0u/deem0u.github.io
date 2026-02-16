@@ -2956,15 +2956,6 @@ async function saveProfileFromStrip() {
     var saveBtn = document.getElementById("profile-save-btn");
     if (newUn !== currentUn) {
       if (saveBtn) saveBtn.disabled = true;
-      showStatusBanner('Checking username...', 'saving');
-      var checkRes = await fetch(API + "/api/check-username/" + encodeURIComponent(newUn));
-      var checkData = await checkRes.json();
-      if (!checkData.available) {
-        document.getElementById("error-profile-username").textContent = checkData.error || "Username is taken or reserved.";
-        showStatusBanner(checkData.error || "Username is taken or reserved.", "error");
-        if (saveBtn) saveBtn.disabled = false;
-        return;
-      }
       showStatusBanner('Saving...', 'saving');
     }
     document.getElementById("error-profile-username").textContent = "";
@@ -3024,7 +3015,9 @@ async function saveProfileFromStrip() {
           showStatusBanner("User name updated. Your sign-in user name is now: " + username, "success");
         }
       } else {
+        document.getElementById("error-profile-username").textContent = dRename.error || "Could not change User Name";
         showStatusBanner(dRename.error || "Could not change User Name", "error");
+        if (saveBtn) saveBtn.disabled = false;
       }
     } catch (e) {
       showStatusBanner("Connection error", "error");
