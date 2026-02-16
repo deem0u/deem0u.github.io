@@ -175,10 +175,24 @@
   #editor-contact-edit .form-hint-full-width { display: block; width: 100%; }
   #editor-contact-edit .form-row.form-row-with-hint { margin-bottom: 0; }
   #editor-contact-edit.form-hints-hidden .form-row.form-row-with-hint { margin-bottom: 0.5rem; }
-  .form-hints-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+  .form-hints-toggle-wrap,
+  .help-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex-shrink: 0; }
   .form-hints-toggle-label { font-size: 0.8rem; color: var(--color-text-secondary, #666); white-space: nowrap; }
   .form-hints-toggle-btn { font-size: 0.8rem; padding: 0.25rem 0.5rem; border: 1px solid var(--color-border, #ddd); border-radius: var(--radius-sm, 4px); background: var(--color-bg, #fff); color: var(--color-text, #333); cursor: pointer; white-space: nowrap; }
   .form-hints-toggle-btn:hover { border-color: var(--accent-teal, #1ac5b0); color: var(--accent-teal, #1ac5b0); }
+  .help-toggle-label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary, #6b7280); display: inline-flex; align-items: center; gap: 0.25rem; }
+  .help-toggle-label .help-toggle-info-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em; flex-shrink: 0; }
+  .help-toggle { display: block; padding: 0; border: none; background: none; cursor: pointer; font-size: inherit; }
+  .help-toggle-track { display: flex; align-items: center; width: 3.5rem; height: 1.75rem; border-radius: 9999px; background: #9ca3af; padding: 0.2rem; box-sizing: border-box; position: relative; transition: background 0.2s; }
+  .help-toggle[aria-checked="true"] .help-toggle-track { background: #22c55e; }
+  .help-toggle-thumb { width: 1.35rem; height: 1.35rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; flex-shrink: 0; }
+  .help-toggle[aria-checked="true"] .help-toggle-thumb { transform: translateX(1.75rem); }
+  .help-toggle-on,
+  .help-toggle-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; pointer-events: none; }
+  .help-toggle-on { right: 0.35rem; left: auto; justify-content: flex-end; color: #166534; }
+  .help-toggle-off { left: 0.35rem; justify-content: flex-start; color: #374151; }
+  .help-toggle[aria-checked="false"] .help-toggle-on { opacity: 0; }
+  .help-toggle[aria-checked="true"] .help-toggle-off { opacity: 0; }
   .editor-edit-mode-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
   #editor-contact-edit .form-row { gap: 0.5rem; }
   #editor-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0; }
@@ -320,7 +334,8 @@
             <div class="nav-dropdown">
               <button type="button" class="nav-dropdown-trigger tab" aria-haspopup="true" aria-expanded="false" id="nav-resources-btn">Resources <span class="nav-dropdown-chevron" aria-hidden="true">▾</span></button>
               <div class="nav-dropdown-panel" id="nav-resources-menu" role="menu" aria-labelledby="nav-resources-btn">
-                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">Guide to QR Codes</a>
+                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">What are QR Codes and NFC Tags</a>
+                <a href="/resources/how-to-save-to-nfc-tag/" role="menuitem" class="nav-dropdown-item">How to save to an NFC Tag</a>
                 <a href="/resources/faq/" role="menuitem" class="nav-dropdown-item">FAQ</a>
               </div>
             </div>
@@ -604,9 +619,15 @@
           <div id="editor-contact-edit" class="editor-contact-edit">
           <div class="card-header">
             <div class="editor-edit-mode-actions">
-              <div class="form-hints-toggle-wrap">
-                <span class="form-hints-toggle-label">Form Hints:</span>
-                <button type="button" id="form-hints-toggle-btn" class="form-hints-toggle-btn" onclick="toggleFormHints()" aria-pressed="true" aria-label="Form hints visible. Click to hide.">Hide</button>
+              <div class="form-hints-toggle-wrap help-toggle-wrap">
+                <span class="help-toggle-label">Help <svg class="help-toggle-info-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                <button type="button" role="switch" id="form-hints-toggle-btn" class="help-toggle" aria-checked="true" aria-label="Toggle form hints on or off" onclick="toggleFormHints()">
+                  <span class="help-toggle-track">
+                    <span class="help-toggle-thumb"></span>
+                    <span class="help-toggle-on">On</span>
+                    <span class="help-toggle-off">Off</span>
+                  </span>
+                </button>
               </div>
               <button type="button" class="btn btn-primary btn-sm" id="view-mode-btn" onclick="backToViewMode()">Back to View Mode</button>
             </div>
@@ -809,12 +830,8 @@
         <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
         <div id="modal-qr-content" class="modal-qr-content hidden">
           <div class="modal-qr-desc">
-            <p>Print and stick these QR codes as-is or use them to import to your chosen NFC app to write its contents to a tag. When the QR is scanned or NFC is tapped it will redirect to your Contact Page URL or present you with a vCard populated with the same details on your Contact Page.</p>
-            <div class="banner-reminder modal-qr-nfc-banner">
-              <div class="banner-reminder-content">
-                <p class="banner-reminder-message" style="margin:0;"><strong>Putting both on one NFC tag:</strong> You can store both a URL and a vCard on the same NFC tag. How a phone reacts depends on the device: Android usually offers to save the contact if the vCard is first; iPhones often work better with URL&apos;s (e.g. a link to download the Contact Card) and may not handle the vCards that are directly embedded. If you put both on one tag, expect that some phones will prefer one or the other.</p>
-              </div>
-            </div>
+            <p>Print and stick these QR codes as-is (or use our card template). Alternatively, scan them using your chosen NFC App to import and write them to an NFC tag - For more information on how to do this refer to our guides in the Resources tab <a href="/resources/guide-to-qr-codes/">What are QR Codes and NFC Tags</a>.</p>
+            <p>These QR&apos;s will be accessible by using the Contact Page selector from your MyAccount.</p>
           </div>
           <div class="modal-qr-tabs">
             <button type="button" class="modal-qr-tab active" data-qr="url" aria-pressed="true">Contact Page URL</button>
@@ -825,14 +842,15 @@
             <div id="modal-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
           </div>
           <div class="modal-qr-actions">
-            <p class="modal-qr-action-desc modal-qr-action-desc-top">Embed the visible QR on a printable card template and download as PNG.</p>
             <div id="modal-qr-action-url" class="modal-qr-action active">
               <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy Contact Page URL</button>
-              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download to Template</button>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-qr-url">Copy QR Code</button>
+              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download QR to Template</button>
             </div>
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
-              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download to Template</button>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-qr-vcard">Copy QR Code</button>
+              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download QR to Template</button>
             </div>
           </div>
         </div>
@@ -1653,6 +1671,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 2000);
       });
     });
+    function copyQrImageToClipboard(data, btn) {
+      if (!data || !navigator.clipboard || !navigator.clipboard.write) return;
+      var apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&format=png&data=' + encodeURIComponent(data);
+      fetch(apiUrl).then(function(r) { return r.blob(); }).then(function(blob) {
+        return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      }).then(function() {
+        var orig = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = orig; }, 2000);
+      }).catch(function() {});
+    }
+    var copyQrUrlBtn = document.getElementById('modal-qr-copy-qr-url');
+    if (copyQrUrlBtn) copyQrUrlBtn.addEventListener('click', function() {
+      if (!myAccountQrData.url) return;
+      copyQrImageToClipboard(myAccountQrData.url, copyQrUrlBtn);
+    });
+    var copyQrVcardBtn = document.getElementById('modal-qr-copy-qr-vcard');
+    if (copyQrVcardBtn) copyQrVcardBtn.addEventListener('click', function() {
+      if (!myAccountQrData.vcard) return;
+      copyQrImageToClipboard(myAccountQrData.vcard || '', copyQrVcardBtn);
+    });
     document.querySelectorAll('.modal-qr-download-template-btn').forEach(function(templateBtn) {
       templateBtn.addEventListener('click', function() {
       if (!myAccountQrData || (!myAccountQrData.url && !myAccountQrData.vcard)) return;
@@ -2024,9 +2063,7 @@ function toggleFormHints() {
   var btn = document.getElementById('form-hints-toggle-btn');
   if (!panel || !btn) return;
   var hidden = panel.classList.toggle('form-hints-hidden');
-  btn.textContent = hidden ? 'Show' : 'Hide';
-  btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
-  btn.setAttribute('aria-label', hidden ? 'Form hints hidden. Click to show.' : 'Form hints visible. Click to hide.');
+  btn.setAttribute('aria-checked', hidden ? 'false' : 'true');
 }
 
 function backToViewMode() {

@@ -49,7 +49,8 @@
             <div class="nav-dropdown">
               <button type="button" class="nav-dropdown-trigger tab" aria-haspopup="true" aria-expanded="false" id="nav-resources-btn">Resources <span class="nav-dropdown-chevron" aria-hidden="true">▾</span></button>
               <div class="nav-dropdown-panel" id="nav-resources-menu" role="menu" aria-labelledby="nav-resources-btn">
-                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">Guide to QR Codes</a>
+                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">What are QR Codes and NFC Tags</a>
+                <a href="/resources/how-to-save-to-nfc-tag/" role="menuitem" class="nav-dropdown-item">How to save to an NFC Tag</a>
                 <a href="/resources/faq/" role="menuitem" class="nav-dropdown-item">FAQ</a>
               </div>
             </div>
@@ -761,12 +762,8 @@
         <div id="modal-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
         <div id="modal-qr-content" class="modal-qr-content hidden">
           <div class="modal-qr-desc">
-            <p>Print and stick these QR codes as-is or use them to import to your chosen NFC app to write its contents to a tag. When the QR is scanned or NFC is tapped it will redirect to your Contact Page URL or present you with a vCard populated with the same details on your Contact Page.</p>
-            <div class="banner-reminder modal-qr-nfc-banner">
-              <div class="banner-reminder-content">
-                <p class="banner-reminder-message" style="margin:0;"><strong>Putting both on one NFC tag:</strong> You can store both a URL and a vCard on the same NFC tag. How a phone reacts depends on the device: Android usually offers to save the contact if the vCard is first; iPhones often work better with URL&apos;s (e.g. a link to download the Contact Card) and may not handle the vCards that are directly embedded. If you put both on one tag, expect that some phones will prefer one or the other.</p>
-              </div>
-            </div>
+            <p>Print and stick these QR codes as-is (or use our card template). Alternatively, scan them using your chosen NFC App to import and write them to an NFC tag - For more information on how to do this refer to our guides in the Resources tab <a href="/resources/guide-to-qr-codes/">What are QR Codes and NFC Tags</a>.</p>
+            <p>These QR&apos;s will be accessible by using the Contact Page selector from your MyAccount.</p>
           </div>
           <div class="modal-qr-tabs">
             <button type="button" class="modal-qr-tab active" data-qr="url" aria-pressed="true">Contact Page URL</button>
@@ -777,14 +774,15 @@
             <div id="modal-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="modal-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
           </div>
           <div class="modal-qr-actions">
-            <p class="modal-qr-action-desc modal-qr-action-desc-top">Embed the visible QR on a printable card template and download as PNG.</p>
             <div id="modal-qr-action-url" class="modal-qr-action active">
               <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-url">Copy Contact Page URL</button>
-              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download to Template</button>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-qr-url">Copy QR Code</button>
+              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download QR to Template</button>
             </div>
             <div id="modal-qr-action-vcard" class="modal-qr-action hidden">
               <a id="modal-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
-              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download to Template</button>
+              <button type="button" class="btn btn-primary btn-sm" id="modal-qr-copy-qr-vcard">Copy QR Code</button>
+              <button type="button" class="btn btn-primary btn-sm modal-qr-download-template-btn">Download QR to Template</button>
             </div>
           </div>
         </div>
@@ -5621,6 +5619,26 @@ document.getElementById('modal-qr-copy-url').addEventListener('click', function(
       btn.classList.add('btn-primary');
     }, 2000);
   });
+});
+
+function copyQrImageToClipboard(data, btn) {
+  if (!data || !navigator.clipboard || !navigator.clipboard.write) return;
+  var apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&format=png&data=' + encodeURIComponent(data);
+  fetch(apiUrl).then(function(r) { return r.blob(); }).then(function(blob) {
+    return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+  }).then(function() {
+    var orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(function() { btn.textContent = orig; }, 2000);
+  }).catch(function() {});
+}
+document.getElementById('modal-qr-copy-qr-url').addEventListener('click', function() {
+  if (!qrModalData.url) return;
+  copyQrImageToClipboard(qrModalData.url, document.getElementById('modal-qr-copy-qr-url'));
+});
+document.getElementById('modal-qr-copy-qr-vcard').addEventListener('click', function() {
+  if (!qrModalData.vcard) return;
+  copyQrImageToClipboard(qrModalData.vcard, document.getElementById('modal-qr-copy-qr-vcard'));
 });
 
 function runDownloadQrOnTemplate() {

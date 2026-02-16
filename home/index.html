@@ -187,27 +187,24 @@
   .signup-step2-card .step2-url-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
   .step2-help-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-left: auto; }
   .step2-help-toggle-label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary, #6b7280); display: inline-flex; align-items: center; gap: 0.25rem; }
-  .step2-help-toggle-label .step2-help-toggle-info-icon { font-size: 0.875em; opacity: 0.9; }
+  .step2-help-toggle-label .step2-help-toggle-info-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em; flex-shrink: 0; }
   .step2-help-toggle { display: block; padding: 0; border: none; background: none; cursor: pointer; font-size: inherit; }
-  .step2-help-toggle-track { display: flex; align-items: center; width: 2.75rem; height: 1.75rem; border-radius: 9999px; background: var(--color-bg-muted, #e5e7eb); padding: 0.2rem; box-sizing: border-box; position: relative; transition: background 0.2s; }
+  .step2-help-toggle-track { display: flex; align-items: center; width: 3.5rem; height: 1.75rem; border-radius: 9999px; background: #9ca3af; padding: 0.2rem; box-sizing: border-box; position: relative; transition: background 0.2s; }
   .step2-help-toggle[aria-checked="true"] .step2-help-toggle-track { background: #22c55e; }
   .step2-help-toggle-thumb { width: 1.35rem; height: 1.35rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; flex-shrink: 0; }
-  .step2-help-toggle[aria-checked="true"] .step2-help-toggle-thumb { transform: translateX(1rem); }
+  .step2-help-toggle[aria-checked="true"] .step2-help-toggle-thumb { transform: translateX(1.75rem); }
   .step2-help-toggle-on,
   .step2-help-toggle-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; pointer-events: none; }
-  .step2-help-toggle-on { right: 0.35rem; left: auto; justify-content: flex-end; color: rgba(255,255,255,0.95); }
-  .step2-help-toggle-off { left: 0.35rem; justify-content: flex-start; color: #4b5563; }
+  .step2-help-toggle-on { right: 0.35rem; left: auto; justify-content: flex-end; color: #166534; }
+  .step2-help-toggle-off { left: 0.35rem; justify-content: flex-start; color: #374151; }
   .step2-help-toggle[aria-checked="false"] .step2-help-toggle-on { opacity: 0; }
   .step2-help-toggle[aria-checked="true"] .step2-help-toggle-off { opacity: 0; }
   .signup-step2-card .step2-skip-wrap { margin-left: auto; display: flex; justify-content: flex-end; }
-  /* Destination Name + From/Till: name left, From/Till block right; no overlap */
-  .signup-step2-card .form-row.form-row-dest-name-dates { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem 1rem; align-items: start; }
-  .signup-step2-card .form-row.form-row-dest-name-dates .form-group-dest-name { min-width: 0; }
-  .signup-step2-card .dest-from-till-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.5rem 0.75rem; justify-self: end; align-items: start; min-width: 0; width: max-content; max-width: 100%; }
-  .signup-step2-card .dest-from-till-row .form-group { margin-bottom: 0; min-width: 0; max-width: 100%; display: flex; flex-direction: column; gap: 0.2rem; }
-  .signup-step2-card .dest-from-till-row .form-group .form-label { white-space: nowrap; }
-  .signup-step2-card .dest-from-till-row .dest-from-date,
-  .signup-step2-card .dest-from-till-row .dest-to-date { min-width: 10ch; width: 100%; box-sizing: border-box; }
+  /* Destination Name + From/Till: same 3-column row as admin/myaccount (1fr 12ch 12ch) */
+  .signup-step2-card .form-row.form-row-dest-name-dates { display: grid; grid-template-columns: 1fr 12ch 12ch; gap: 0.5rem 0.75rem; align-items: start; min-width: 0; }
+  .signup-step2-card .form-row.form-row-dest-name-dates .form-group { min-width: 0; }
+  .signup-step2-card .form-row.form-row-dest-name-dates .dest-from-date,
+  .signup-step2-card .form-row.form-row-dest-name-dates .dest-to-date { width: 100%; max-width: 12ch; min-width: 0; box-sizing: border-box; }
   .signup-step2-card .btn-add-more { background: transparent; color: var(--color-text-secondary, #6b7280); border: 1px solid var(--color-border, #e5e7eb); font-weight: 500; }
   .signup-step2-card .btn-add-more:hover { background: var(--color-bg-subtle, #f9fafb); border-color: var(--color-text-secondary, #9ca3af); color: var(--color-text, #111); }
   @media (max-width: 768px) {
@@ -264,11 +261,10 @@
     .signup-step2-card .step2-help-toggle-wrap { margin-left: 0; align-items: center; }
     .signup-step2-card .card-body { padding: var(--space-3) var(--space-3); width: 100%; min-width: 0; box-sizing: border-box; }
     .signup-step2-card .form-row { grid-template-columns: 1fr; }
-    /* Step 2 Add Contact: Destination Name on its own row, From/Till block on next row */
-    .signup-step2-card .form-row.form-row-dest-name-dates { display: flex; flex-direction: column; gap: 0.5rem; }
-    .signup-step2-card .form-row.form-row-dest-name-dates .form-group-dest-name { margin-bottom: 0; }
-    .signup-step2-card .form-row.form-row-dest-name-dates .dest-from-till-row { justify-self: stretch; }
-    .signup-step2-card .dest-from-till-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+    /* Step 2 Add Contact: stack Destination Name, From, Till on narrow viewports */
+    .signup-step2-card .form-row.form-row-dest-name-dates { grid-template-columns: 1fr; }
+    .signup-step2-card .form-row.form-row-dest-name-dates .dest-from-date,
+    .signup-step2-card .form-row.form-row-dest-name-dates .dest-to-date { max-width: none; }
     .signup-step2-card .form-actions { flex-direction: column; gap: 0.5rem; }
     .signup-step2-card .form-actions .btn { width: 100%; }
     #signup-otp-card .card-body { padding: var(--space-3) var(--space-3); }
@@ -325,7 +321,8 @@
             <div class="nav-dropdown">
               <button type="button" class="nav-dropdown-trigger tab" aria-haspopup="true" aria-expanded="false" id="nav-resources-btn">Resources <span class="nav-dropdown-chevron" aria-hidden="true">▾</span></button>
               <div class="nav-dropdown-panel" id="nav-resources-menu" role="menu" aria-labelledby="nav-resources-btn">
-                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">Guide to QR Codes</a>
+                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">What are QR Codes and NFC Tags</a>
+                <a href="/resources/how-to-save-to-nfc-tag/" role="menuitem" class="nav-dropdown-item">How to save to an NFC Tag</a>
                 <a href="/resources/faq/" role="menuitem" class="nav-dropdown-item">FAQ</a>
               </div>
             </div>
@@ -519,7 +516,7 @@
             <div class="card-header signup-step2-header">
               <span class="card-title">Add Contact Page</span>
               <div class="step2-help-toggle-wrap">
-                <span class="step2-help-toggle-label">Help <span class="step2-help-toggle-info-icon" aria-hidden="true">&#8505;</span></span>
+                <span class="step2-help-toggle-label">Help <svg class="step2-help-toggle-info-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
                 <button type="button" role="switch" class="step2-help-toggle" id="step2-toggle-hints" aria-checked="false" aria-label="Toggle form hints on or off">
                   <span class="step2-help-toggle-track">
                     <span class="step2-help-toggle-thumb"></span>
@@ -587,20 +584,18 @@
                   <span class="form-hint step2-hint" id="step2-hint-destination-details"></span>
                   <div class="form-section destination-block" data-dest-index="0">
                     <div class="form-row form-row-dest-name-dates">
-                      <div class="form-group form-group-dest-name">
+                      <div class="form-group">
                         <label class="form-label" for="step2-dest-name">Destination Name</label>
                         <input type="text" id="step2-dest-name" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off">
                       </div>
-                      <div class="dest-from-till-row">
-                        <div class="form-group">
-                          <label class="form-label" for="step2-dest-from-date">From</label>
-                          <input type="text" id="step2-dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
-                        </div>
-                        <div class="form-group">
-                          <label class="form-label" for="step2-dest-to-date">Till</label>
-                          <input type="text" id="step2-dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
-                          <span class="form-error error-dest-to-date" id="error-step2-dest-to-date" role="alert"></span>
-                        </div>
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-from-date">From</label>
+                        <input type="text" id="step2-dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-to-date">Till</label>
+                        <input type="text" id="step2-dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                        <span class="form-error error-dest-to-date" id="error-step2-dest-to-date" role="alert"></span>
                       </div>
                     </div>
                     <div class="form-group">
@@ -647,7 +642,7 @@
               <div id="step3-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
               <div id="step3-qr-content" class="modal-qr-content hidden">
                 <div class="modal-qr-desc">
-                  <p>Print and stick these QR codes as-is (or use our card template). Alternatively, scan them using your chosen NFC App to import and write them to an NFC tag - For more information on how to do this refer to our guides in the Resources tab <a href="/resources/guide-to-qr-codes/">Guide to QR Codes &amp; NFC</a>.</p>
+                  <p>Print and stick these QR codes as-is (or use our card template). Alternatively, scan them using your chosen NFC App to import and write them to an NFC tag - For more information on how to do this refer to our guides in the Resources tab <a href="/resources/guide-to-qr-codes/">What are QR Codes and NFC Tags</a>.</p>
                 <p>These QR&apos;s will be accessible by using the Contact Page selector from your MyAccount.</p>
                 </div>
                 <div class="modal-qr-tabs">
@@ -1133,11 +1128,10 @@
     block.className = 'form-section destination-block';
     block.setAttribute('data-dest-index', String(index));
     block.innerHTML = '<div class="form-row form-row-dest-name-dates">' +
-      '<div class="form-group form-group-dest-name"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off"></div>' +
-      '<div class="dest-from-till-row">' +
+      '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off"></div>' +
       '<div class="form-group"><label class="form-label">From</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
       '<div class="form-group"><label class="form-label">Till</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
-      '</div></div>' +
+      '</div>' +
       '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" placeholder="Address" maxlength="200" autocomplete="off"></div>' +
       '<div class="form-row">' +
       '<div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" class="form-input dest-phone contact-number-mask" placeholder="Contact number" maxlength="21" autocomplete="tel"></div>' +
