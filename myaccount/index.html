@@ -129,8 +129,6 @@
   .editor-contact-view.hidden { display: none; }
   .editor-contact-edit { display: none; }
   .editor-contact-edit.show { display: block; }
-  .editor-view-header-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
-  .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
   .editor-contact-view-content { font-size: 0.85rem; line-height: 1.5; }
   .editor-contact-view-content .editor-view-value { font-weight: 500; }
   .editor-contact-view-content .editor-view-title { font-size: 1.25rem; font-weight: 700; text-transform: uppercase; color: #000; }
@@ -150,7 +148,6 @@
   .editor-view-url-row .form-label { margin-bottom: 0; flex-shrink: 0; }
   .editor-view-url-row .editor-view-value { flex: 0 1 auto; min-width: 0; color: var(--accent-purple, #9370db); }
   .editor-contact-view-content .editor-view-header { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border, #eee); }
-  .editor-contact-edit .card-header { display: flex; justify-content: flex-end; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
   .profile-edit.hidden { display: none; }
   .profile-edit .form-group { margin-bottom: 0.4rem; }
   .profile-edit .form-label { font-size: 0.8rem; font-weight: 700; margin-bottom: 0.2rem; }
@@ -165,9 +162,7 @@
   .contact-page-url-inline .form-input { flex: 1; min-width: 8ch; }
   .contact-page-url-inline .card-header-url-prefix { font-size: 0.8rem; color: var(--color-text-secondary, #666); }
   .contact-page-url-inline .card-header-url-suffix { font-size: 0.8rem; color: var(--color-text-secondary, #666); }
-  /* Compact form: edit only; consistent label/field/hint spacing; section gap 0.5rem */
-  #editor-contact-edit .card-header { padding: 0.5rem 0.75rem; }
-  #editor-contact-edit .card-body { padding: 0.5rem 0.75rem; }
+  /* Compact form: edit only; consistent label/field/hint spacing; section gap 0.5rem (card-body padding in styles.css) */
   #editor-contact-edit .form-group { margin-bottom: 0.5rem; }
   #editor-contact-edit .form-group:last-child { margin-bottom: 0; }
   #editor-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8rem; font-weight: 700; }
@@ -196,7 +191,6 @@
   .help-toggle-off { right: 0.35rem; left: auto; justify-content: flex-end; color: #374151; }
   .help-toggle[aria-checked="false"] .help-toggle-on { opacity: 0; }
   .help-toggle[aria-checked="true"] .help-toggle-off { opacity: 0; }
-  .editor-edit-mode-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex-shrink: 0; }
   #editor-contact-edit .form-row { gap: 0.5rem; }
   #editor-contact-edit .form-section { padding: 0.4rem 0.5rem; margin-top: 0; }
   #editor-contact-edit .form-section .form-group { margin-bottom: 0.35rem; }
@@ -296,9 +290,6 @@
     .editor-layout #contact-pages-section { order: 8; }
     .editor-layout #editor-contact-card { order: 9; }
     /* Form inputs use global 1rem on mobile (styles.css) to prevent iOS zoom/scroll font glitch */
-    /* View mode: buttons above contact page heading (right); Page name left-aligned */
-    .editor-view-header-row { flex-direction: column; align-items: flex-start; }
-    .editor-view-actions { order: -1; align-self: flex-end; }
     #editor-contact-edit .form-label { text-align: left; }
   }
     </style>
@@ -586,15 +577,28 @@
         <div id="no-contact-pages-placeholder" class="no-contact-pages-placeholder hidden" role="status">No Contact Pages</div>
         <div class="card" id="editor-contact-card">
           <div id="editor-contact-view" class="editor-contact-view">
-            <div class="editor-contact-view-content card-body" id="editor-contact-view-content">
-              <div class="editor-view-header-row">
-                <span class="editor-view-value editor-view-title" id="view-contact-page-name"></span>
-                <div class="editor-view-actions">
-                  <a id="view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm">View Page</a>
-                  <button type="button" class="btn btn-primary btn-sm" id="view-qr-codes-btn" onclick="showMyAccountQrModal()" disabled>QR Codes</button>
-                  <button type="button" class="btn btn-primary btn-sm" id="edit-contact-page-btn" onclick="enterEditMode()">Edit</button>
+            <div class="card-header admin-editor-card-header" id="myaccount-editor-view-header">
+              <div class="admin-editor-header-inner">
+                <div class="admin-editor-header-actions">
+                  <span class="admin-editor-action-btn">
+                    <span class="admin-editor-btn-label">View</span>
+                    <a id="view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" aria-label="View" title="View"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
+                  </span>
+                  <span class="admin-editor-action-btn">
+                    <span class="admin-editor-btn-label">QR's</span>
+                    <button type="button" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" id="view-qr-codes-btn" onclick="showMyAccountQrModal()" disabled aria-label="QR's" title="QR's"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="8" height="8"/><rect x="4" y="4" width="2" height="2"/><rect x="7" y="4" width="2" height="2"/><rect x="4" y="7" width="2" height="2"/><rect x="14" y="2" width="8" height="8"/><rect x="16" y="4" width="2" height="2"/><rect x="19" y="4" width="2" height="2"/><rect x="16" y="7" width="2" height="2"/><rect x="2" y="14" width="8" height="8"/><rect x="4" y="16" width="2" height="2"/><rect x="7" y="16" width="2" height="2"/><rect x="10" y="10" width="2" height="2"/><rect x="13" y="10" width="2" height="2"/><rect x="10" y="13" width="2" height="2"/><rect x="16" y="14" width="2" height="2"/><rect x="19" y="14" width="2" height="2"/><rect x="16" y="17" width="2" height="2"/></svg></button>
+                  </span>
+                  <span class="admin-editor-action-btn">
+                    <span class="admin-editor-btn-label">Edit</span>
+                    <button type="button" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" id="edit-contact-page-btn" onclick="enterEditMode()" aria-label="Edit" title="Edit"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  </span>
+                </div>
+                <div class="admin-editor-header-name-block">
+                  <span class="admin-editor-header-line admin-editor-name-full card-title" id="view-contact-page-name"></span>
                 </div>
               </div>
+            </div>
+            <div class="editor-contact-view-content card-body" id="editor-contact-view-content">
               <div class="editor-view-url-block editor-view-header">
                 <div class="form-label">Page URL</div>
                 <div class="editor-view-url-anatomy" id="view-contact-page-url-anatomy">
@@ -631,19 +635,27 @@
             </div>
           </div>
           <div id="editor-contact-edit" class="editor-contact-edit">
-          <div class="card-header">
-            <div class="editor-edit-mode-actions">
-              <div class="form-hints-toggle-wrap help-toggle-wrap">
-                <span class="help-toggle-label">HELP <svg class="help-toggle-info-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
-                <button type="button" role="switch" id="form-hints-toggle-btn" class="help-toggle" aria-checked="true" aria-label="Toggle form hints on or off" onclick="toggleFormHints()">
-                  <span class="help-toggle-track">
-                    <span class="help-toggle-thumb"></span>
-                    <span class="help-toggle-on">ON</span>
-                    <span class="help-toggle-off">OFF</span>
-                  </span>
-                </button>
+          <div class="card-header admin-editor-card-header" id="myaccount-editor-edit-header">
+            <div class="admin-editor-header-inner">
+              <div class="admin-editor-header-name-block">
+                <span class="admin-editor-header-line admin-editor-name-full card-title" id="myaccount-editor-edit-card-title">Edit Contact Information</span>
               </div>
-              <button type="button" class="btn btn-primary btn-sm" id="view-mode-btn" onclick="backToViewMode()">Back to View Mode</button>
+              <div class="admin-editor-header-actions">
+                <div class="form-hints-toggle-wrap help-toggle-wrap">
+                  <span class="help-toggle-label">HELP <svg class="help-toggle-info-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                  <button type="button" role="switch" id="form-hints-toggle-btn" class="help-toggle" aria-checked="true" aria-label="Toggle form hints on or off" onclick="toggleFormHints()">
+                    <span class="help-toggle-track">
+                      <span class="help-toggle-thumb"></span>
+                      <span class="help-toggle-on">ON</span>
+                      <span class="help-toggle-off">OFF</span>
+                    </span>
+                  </button>
+                </div>
+                <span class="admin-editor-action-btn">
+                  <span class="admin-editor-btn-label">Close</span>
+                  <button type="button" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" id="view-mode-btn" onclick="backToViewMode()" aria-label="Close" title="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </span>
+              </div>
             </div>
           </div>
           <div class="card-body" id="editor-contact-form-wrap">
