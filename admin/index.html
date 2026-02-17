@@ -3103,14 +3103,14 @@ function renderList(t) {
     if (isNew) nameBadges.push('<span class="badge badge-pink">New</span>');
     if (profileIncompleteStatus) nameBadges.push('<span class="badge badge-pink">Account Setup Incomplete</span>');
     if (emailBadge) nameBadges.push(emailBadge);
-    const badgesHtml = nameBadges.length ? '<div class="user-card-badges">' + nameBadges.join(' ') + '</div>' : '';
+    const badgesHtml = nameBadges.length ? '<div class="user-card-badges user-card-badges-narrow-only">' + nameBadges.join(' ') + '</div>' : '';
     return `<div class="user-card" id="user-card-${f}" data-username="${f}">
       <div class="user-card-header">
         <div class="user-card-header-main">
           <div class="user-avatar">${getInitials(u)}</div>
           <div class="user-details">
-            <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span></div>
-            <div class="user-meta">${escapeHtml(emailDisplay)}</div>
+            <div class="user-name-value-line"><span class="user-name-value">${escapeHtml(nameDisplay)}</span> <span class="user-name-username">(${escapeHtml(f)})</span>${isNew ? ' <span class="badge badge-pink">New</span>' : ''}${profileIncompleteStatus ? ' <span class="badge badge-pink">Account Setup Incomplete</span>' : ''}</div>
+            <div class="user-meta">${escapeHtml(emailDisplay)}${emailBadge ? ' ' + emailBadge : ''}</div>
             ${badgesHtml}
           </div>
         </div>

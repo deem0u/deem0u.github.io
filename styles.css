@@ -2152,20 +2152,17 @@ hr.dest-sep-form {
   min-width: 0;
 }
 
-.user-card-badges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.2rem;
+/* Narrow viewports only: badges move to their own row under email */
+.user-card-badges-narrow-only {
+  display: none;
 }
 
-.user-card-badges .badge-pink {
+.user-card-badges-narrow-only .badge-pink {
   background: var(--accent-pink);
   color: var(--white);
 }
 
-.user-card-badges .badge-cyan {
+.user-card-badges-narrow-only .badge-cyan {
   background: var(--accent-teal);
   color: var(--white);
 }
@@ -3902,7 +3899,17 @@ hr.dest-sep-form {
     white-space: nowrap;
     min-width: 0;
   }
-  .user-card .user-card-badges {
+  /* Narrow only: hide inline badges and show consolidated badge row under email */
+  .user-card .user-name-value-line .badge,
+  .user-card .user-meta .badge {
+    display: none;
+  }
+  .user-card .user-card-badges-narrow-only {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.2rem;
     flex-shrink: 0;
     min-width: 0;
     max-width: 100%;
