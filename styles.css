@@ -2160,6 +2160,16 @@ hr.dest-sep-form {
   margin-top: 0.2rem;
 }
 
+.user-card-badges .badge-pink {
+  background: var(--accent-pink);
+  color: var(--white);
+}
+
+.user-card-badges .badge-cyan {
+  background: var(--accent-teal);
+  color: var(--white);
+}
+
 .user-status {
   flex-shrink: 0;
 }
