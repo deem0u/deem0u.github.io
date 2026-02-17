@@ -3674,6 +3674,19 @@ hr.dest-sep-form {
     padding-left: var(--space-3);
     padding-right: var(--space-3);
   }
+  /* Manage Contact Pages tab and card: contain to viewport, no right-side cutoff */
+  #tab-edit.manage-contact-pages-tab {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .manage-contact-pages-bar.card {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
   .manage-contact-pages-bar,
   .manage-contact-pages-bar .card-body,
   .manage-contact-pages-bar .manage-contact-pages-stack,
@@ -3703,6 +3716,14 @@ hr.dest-sep-form {
     min-width: 0;
   }
   #page-select-dropdown.show {
+    left: var(--space-3) !important;
+    right: var(--space-3) !important;
+    width: auto !important;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  /* Contact Page dropdown in bar (edit-contact-page): keep inside viewport on mobile */
+  #edit-contact-page-dropdown.show {
     left: var(--space-3) !important;
     right: var(--space-3) !important;
     width: auto !important;
