@@ -545,9 +545,12 @@ body {
 #screen-dashboard .dashboard-content {
   flex: 1;
   min-width: 0;
+  overflow-x: hidden;
 }
 #screen-dashboard .dashboard-content .tab-content {
   margin-bottom: 0;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Centered layout for auth screens (login, recovery, reset, setup) */
@@ -1992,6 +1995,8 @@ hr.dest-sep-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* User Card - New Layout */
@@ -2001,6 +2006,8 @@ hr.dest-sep-form {
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .user-card-header {
@@ -2100,6 +2107,10 @@ hr.dest-sep-form {
 .user-name-value-line {
   display: block;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .user-name-value {
@@ -2130,6 +2141,10 @@ hr.dest-sep-form {
   color: var(--color-text-secondary);
   display: block;
   line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .user-status {
@@ -2959,6 +2974,10 @@ hr.dest-sep-form {
   word-break: break-word;
   text-align: left;
   line-height: 1.3;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #editor-card .admin-editor-header-name-block .admin-editor-name-full { font-weight: 600; }
 #editor-card .admin-editor-header-name-block .admin-editor-name-username:empty { display: none; }
