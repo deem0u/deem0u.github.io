@@ -3753,12 +3753,12 @@ function fillForm(h) {
   var hc = resolveCountryDisplay(g('Home Country') || g('home-country'));
   setCountryDropdown('edit', hc || null);
   
-  // Destination details: new format (dest-name-dates-row), 6-span legacy, 4-span or 3-span legacy; multiple blocks allowed
+  // Destination details: new format (dest-name-dates-row), with or without From/Till; 6-span legacy, 4-span or 3-span legacy; multiple blocks allowed
   var dests = [];
-  var reNew = /<div class="dest-details"><div class="dest-name-dates-row">[\s\S]*?<span class="dest-name">([^<]*)<\/span>[\s\S]*?<span class="dest-from">([^<]*)<\/span>[\s\S]*?<span class="dest-to">([^<]*)<\/span>[\s\S]*?<\/div><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
+  var reNew = /<div class="dest-details"><div class="dest-name-dates-row">[\s\S]*?<span class="dest-name">([^<]*)<\/span>(?:[\s\S]*?<span class="dest-from">([^<]*)<\/span>[\s\S]*?<span class="dest-to">([^<]*)<\/span>)?[\s\S]*?<\/div><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;
   var mNew;
   while ((mNew = reNew.exec(h)) !== null) {
-    dests.push({ name: mNew[1].trim(), fromDate: mNew[2].trim(), toDate: mNew[3].trim(), address: mNew[4].trim(), phone: mNew[5].trim(), email: mNew[6].trim() });
+    dests.push({ name: mNew[1].trim(), fromDate: (mNew[2] || '').trim(), toDate: (mNew[3] || '').trim(), address: mNew[4].trim(), phone: mNew[5].trim(), email: mNew[6].trim() });
   }
   if (dests.length === 0) {
     var re6 = /<div class="dest-details"><span class="dest-name">([^<]*)<\/span><span class="dest-from">([^<]*)<\/span><span class="dest-to">([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><span>([^<]*)<\/span><\/div>/g;

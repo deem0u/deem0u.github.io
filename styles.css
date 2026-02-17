@@ -1443,6 +1443,15 @@ hr.dest-sep-form {
 .view-dest-name-dates-row .form-group .editor-view-value { display: block; line-height: 1.4; }
 .view-dest-name-dates-row .form-group .form-label { margin-bottom: 0.15rem; }
 
+/* View mode: Destination Name, Address, Email wrap to avoid clashing/overflow */
+#admin-contact-view .view-dest-block .form-group,
+#admin-contact-view .view-dest-block .view-dest-email-phone-row .form-group { min-width: 0; }
+#admin-contact-view .view-dest-block .form-label,
+#admin-contact-view .view-dest-block .editor-view-value {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 /* View mode: Destination Details carousel (multiple sections) */
 .view-destination-wrapper { margin-bottom: var(--space-3); }
 .view-destination-label-row {
@@ -3051,7 +3060,11 @@ hr.dest-sep-form {
   min-width: 0;
 }
 #admin-contact-edit .form-row-dest-name-dates .form-group { min-width: 0; }
-#admin-contact-edit .form-row-dest-name-dates .dest-name { min-width: 0; }
+#admin-contact-edit .form-row-dest-name-dates .dest-name { min-width: 0; max-width: 100%; box-sizing: border-box; }
+#admin-contact-edit .destination-block .form-group .form-label { overflow-wrap: break-word; word-break: break-word; }
+#admin-contact-edit .destination-block .form-group .dest-address,
+#admin-contact-edit .destination-block .form-group .dest-email { min-width: 0; max-width: 100%; box-sizing: border-box; }
+#admin-contact-edit .destination-block .form-row .form-group { min-width: 0; }
 #admin-contact-edit .form-row-dest-name-dates .dest-from-date,
 #admin-contact-edit .form-row-dest-name-dates .dest-to-date {
   width: 100%;
