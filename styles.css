@@ -1469,10 +1469,13 @@ hr.dest-sep-form {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 1.5rem !important;
-  line-height: 1;
+  font-size: 1.65rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
   box-sizing: border-box;
 }
+.view-destination-nav button.view-dest-prev { padding-left: 0.05rem !important; }
+.view-destination-nav button.view-dest-next { padding-right: 0.05rem !important; }
 .view-destination-panels.view-destination-carousel-multi { position: relative; min-height: 1px; }
 .view-destination-carousel-multi .view-destination-panels .view-dest-block {
   display: none;
@@ -1504,6 +1507,8 @@ hr.dest-sep-form {
 .view-dest-dot.active { background: var(--accent-teal, #0d9488); border-color: var(--accent-teal); transform: scale(1.15); }
 .view-dest-n-of-m {
   font-size: var(--text-sm);
+  font-weight: 600;
+  font-family: inherit;
   color: var(--color-text-secondary);
   display: inline-flex;
   align-items: center;
@@ -1515,6 +1520,7 @@ hr.dest-sep-form {
   max-width: 4ch;
   font-size: inherit;
   font-weight: 600;
+  font-family: inherit;
   text-align: center;
   padding: 0.15rem 0.25rem;
   border: 1px solid var(--color-border);

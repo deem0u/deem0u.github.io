@@ -2751,25 +2751,44 @@ function initAdminViewDestinationCarousel(total) {
   if (pageInput && total > 5) {
     pageInput.setAttribute('max', String(total));
     pageInput.value = '1';
+    var lastDigitTime = 0;
+    var REPLACE_DELAY_MS = 2000;
     pageInput.onkeydown = function(e) {
       var key = e.key;
-      if (key === 'ArrowUp' || key === 'ArrowRight') { e.preventDefault(); goToAdminViewDestination(adminViewDestCarouselIndex + 1); }
-      else if (key === 'ArrowDown' || key === 'ArrowLeft') { e.preventDefault(); goToAdminViewDestination(adminViewDestCarouselIndex - 1); }
-      else if (key === 'Backspace' || key === 'Delete' || key === 'Tab' || key === 'Enter') return;
-      else if (/^\d$/.test(key)) return;
-      else e.preventDefault();
+      if (key === 'ArrowUp' || key === 'ArrowRight') { e.preventDefault(); goToAdminViewDestination(adminViewDestCarouselIndex + 1); return; }
+      if (key === 'ArrowDown' || key === 'ArrowLeft') { e.preventDefault(); goToAdminViewDestination(adminViewDestCarouselIndex - 1); return; }
+      if (key === 'Backspace' || key === 'Delete' || key === 'Tab' || key === 'Enter') return;
+      if (/^\d$/.test(key)) {
+        e.preventDefault();
+        var now = Date.now();
+        var next = (now - lastDigitTime <= REPLACE_DELAY_MS)
+          ? (this.value.replace(/\D/g, '') + key).slice(-2)
+          : key;
+        next = next.replace(/\D/g, '') || '1';
+        var n = parseInt(next, 10);
+        if (n < 1) next = '1';
+        else if (n > total) next = String(total);
+        this.value = next;
+        lastDigitTime = now;
+        n = parseInt(next, 10);
+        if (n >= 1 && n <= total) goToAdminViewDestination(n - 1);
+        return;
+      }
+      e.preventDefault();
     };
     pageInput.oninput = function() {
       var raw = this.value.replace(/\D/g, '');
       this.value = raw;
       var n = parseInt(raw, 10);
       if (raw === '' || isNaN(n)) return;
+      if (n > total) this.value = String(total);
+      n = Math.min(total, Math.max(1, isNaN(n) ? 1 : n));
       if (n >= 1 && n <= total) goToAdminViewDestination(n - 1);
     };
     pageInput.onblur = function() {
       var n = parseInt(this.value, 10);
       if (this.value === '' || isNaN(n) || n < 1 || n > total) this.value = String(adminViewDestCarouselIndex + 1);
-      else goToAdminViewDestination(n - 1);
+      else { this.value = String(Math.min(total, Math.max(1, n))); goToAdminViewDestination(parseInt(this.value, 10) - 1); }
     };
   }
 }
