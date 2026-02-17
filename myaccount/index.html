@@ -206,27 +206,29 @@
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
-  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.35; overflow: visible; padding: 1px 0; }
-  /* View mode URL: flex-wrap so slug section wraps to next line when long (no font shrink) */
-  #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.25rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; line-height: 1.35; }
-  .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.25rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
+  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.28; overflow: visible; padding: 0; }
+  /* View mode URL: tight spacing between segments and between wrapped lines */
+  #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; line-height: 1.28; }
+  .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
   .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
-  /* View mode: teal (username); purple (slug); slightly tighter padding so hover border sits closer */
-  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.2rem; padding-right: 0.2rem; margin-left: 0.3rem; margin-right: 0.3rem; box-sizing: content-box; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.2rem; padding-right: 0.2rem; margin-left: 0.3rem; margin-right: 0.3rem; box-sizing: content-box; }
+  /* View mode: teal (username); purple (slug); tight gap between /'s; on hover add padding so border + label don't clash */
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s, padding 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s, padding 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  .editor-view-url-line .url-segment-wrap { min-height: 2.8em; cursor: default; position: relative; pointer-events: auto; flex: 0 0 auto; }
-  .editor-view-url-line .url-username-wrap { flex: 0 0 auto; white-space: nowrap; }
-  .editor-view-url-line .url-slug-wrap { flex: 0 0 auto; }
+  .editor-view-url-line .url-segment-wrap { min-height: 2.6em; cursor: default; position: relative; pointer-events: auto; flex: 0 0 auto; transition: padding 0.15s; }
+  .editor-view-url-line .url-username-wrap { flex: 0 0 auto; white-space: nowrap; padding: 0; transition: padding 0.15s; }
+  .editor-view-url-line .url-slug-wrap { flex: 0 0 auto; padding: 0; transition: padding 0.15s; }
+  #view-contact-page-url-anatomy .url-username-wrap:hover,
+  #view-contact-page-url-anatomy .url-slug-wrap:hover { padding: 2px; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
-  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.55rem; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; pointer-events: none; }
-  /* Hover: ring only (space already reserved); label below */
-  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); }
-  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); }
+  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.5rem; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; pointer-events: none; }
+  /* Hover: ring + padding so border and label don't clash with slashes or next line */
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding-left: 0.2rem; padding-right: 0.2rem; }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding-left: 0.2rem; padding-right: 0.2rem; }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
