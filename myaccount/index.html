@@ -207,8 +207,8 @@
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
   .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.28; padding: 0; max-width: 100%; min-width: 0; overflow: visible; }
-  /* View mode URL: one line, shrink text to fit; fixed padding for border + label */
-  #view-contact-page-url-anatomy { container-type: inline-size; overflow: hidden; width: 100%; max-width: 100%; padding-bottom: 0.6rem; }
+  /* View mode URL: one line, shrink text to fit; padding so label sits above border */
+  #view-contact-page-url-anatomy { container-type: inline-size; overflow: hidden; width: 100%; max-width: 100%; padding-bottom: 1.25rem; }
   .editor-view-url-block { margin-bottom: 0.35rem; }
   #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; line-height: 1.28; width: 100%; min-width: 0; }
   .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
@@ -230,14 +230,15 @@
   .editor-view-url-line .url-slug-wrap { flex: 0 0 auto; padding: 2px; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
-  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; top: 100%; margin: 0; margin-top: 0.35rem; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; pointer-events: none; }
-  /* Hover: ring and label only; spacing already reserved so no shift */
+  .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; top: 100%; margin: 0; margin-top: 0.35rem; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; pointer-events: none; z-index: 1; background: var(--white, #fff); }
+  /* Hover: ring and label only; label on top so not covered by border/HR */
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
-  #view-contact-page-url-anatomy .url-slug-wrap .url-slug-label { text-align: right; }
+  /* Slug label: width set by JS to match slug text so right edge aligns with last character */
+  #view-contact-page-url-anatomy .url-slug-wrap .url-slug-label { text-align: right; right: 0; left: auto; }
   /* View mode: destination block row spacing (same as under name-dates row) */
   .editor-contact-view-content #view-destination-blocks .view-dest-block > .form-group { margin-bottom: 0.75rem; }
   .editor-contact-view-content #view-destination-blocks .view-dest-block .view-dest-email-phone-row { margin-top: 0; }
@@ -1655,6 +1656,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
       }
     });
+    var slugWrap = viewUrlAnatomy.querySelector('.url-slug-wrap');
+    if (slugWrap) slugWrap.addEventListener('mouseenter', syncViewUrlSlugLabelWidth);
   }
   var editProfileBtn = document.getElementById('edit-profile-btn');
   if (editProfileBtn) editProfileBtn.addEventListener('click', enterProfileEditMode);
@@ -2016,6 +2019,19 @@ function initViewDestinationCarousel(total) {
   }
 }
 
+function syncViewUrlSlugLabelWidth() {
+  var slugPartEl = document.getElementById('view-contact-page-url-slug-part');
+  var slugLabel = document.querySelector('#view-contact-page-url-anatomy .url-slug-label');
+  var slugWrap = document.querySelector('#view-contact-page-url-anatomy .url-slug-wrap');
+  if (slugPartEl && slugLabel && slugWrap) {
+    var w = slugPartEl.offsetWidth;
+    var left = slugPartEl.offsetLeft;
+    slugLabel.style.width = w + 'px';
+    slugLabel.style.left = left + 'px';
+    slugLabel.style.right = 'auto';
+  }
+}
+
 function scaleViewUrlToFit() {
   var container = document.getElementById('view-contact-page-url-anatomy');
   var line = document.getElementById('view-contact-page-url-line');
@@ -2031,6 +2047,7 @@ function scaleViewUrlToFit() {
     if (rem < minRem) rem = minRem;
     line.style.fontSize = rem + 'rem';
   }
+  syncViewUrlSlugLabelWidth();
 }
 
 function scaleEditUrlToFit() {
