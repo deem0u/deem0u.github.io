@@ -206,17 +206,17 @@
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
-  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.5; overflow: visible; padding: 2px 0; }
+  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.35; overflow: visible; padding: 1px 0; }
   /* View mode URL: flex-wrap so slug section wraps to next line when long (no font shrink) */
-  #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.25rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
+  #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.25rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; line-height: 1.35; }
   .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.25rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
   .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
-  /* View mode: teal (username); purple (slug); username stays one line; slug section wraps to next line when needed */
-  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.25rem; padding-right: 0.25rem; margin-left: 0.4rem; margin-right: 0.4rem; box-sizing: content-box; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.25rem; padding-right: 0.25rem; margin-left: 0.4rem; margin-right: 0.4rem; box-sizing: content-box; }
+  /* View mode: teal (username); purple (slug); slightly tighter padding so hover border sits closer */
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.2rem; padding-right: 0.2rem; margin-left: 0.3rem; margin-right: 0.3rem; box-sizing: content-box; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.2rem; padding-right: 0.2rem; margin-left: 0.3rem; margin-right: 0.3rem; box-sizing: content-box; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
   .editor-view-url-line .url-segment-wrap { min-height: 2.8em; cursor: default; position: relative; pointer-events: auto; flex: 0 0 auto; }
   .editor-view-url-line .url-username-wrap { flex: 0 0 auto; white-space: nowrap; }
@@ -232,7 +232,7 @@
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
   /* Edit mode: URL row extends to form edge; prefix then slug fills rest; slug wraps to own line when too long; warning full width */
   #editor-contact-edit .form-group:has(#edit-contact-page-url-anatomy) { width: 100%; }
-  #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; display: flex; flex-direction: column; gap: 0.35rem 0; width: 100%; max-width: 100%; }
+  #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; display: flex; flex-direction: column; gap: 0.2rem 0; width: 100%; max-width: 100%; }
   .editor-edit-url-anatomy .editor-edit-url-row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-height: 2.25rem; font-size: 0.85rem; width: 100%; max-width: 100%; }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-edit-prefix { flex: none; white-space: nowrap; display: inline-flex; align-items: center; min-width: 0; }
   .editor-edit-url-anatomy .editor-edit-url-row-line .url-slug-input { flex: 1 1 0%; min-width: 20ch; max-width: 100%; box-sizing: border-box; font-size: inherit; color: var(--accent-purple, #9370db); font-weight: 700; }
@@ -594,11 +594,14 @@
                   </span>
                 </div>
                 <div class="admin-editor-header-name-block">
-                  <span class="admin-editor-header-line admin-editor-name-full card-title" id="view-contact-page-name"></span>
+                  <span class="admin-editor-header-line admin-editor-name-full card-title">Contact Information</span>
                 </div>
               </div>
             </div>
             <div class="editor-contact-view-content card-body" id="editor-contact-view-content">
+              <div class="editor-view-header-row">
+                <span class="editor-view-value editor-view-title" id="view-contact-page-name"></span>
+              </div>
               <div class="editor-view-url-block editor-view-header">
                 <div class="form-label">Page URL</div>
                 <div class="editor-view-url-anatomy" id="view-contact-page-url-anatomy">
