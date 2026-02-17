@@ -2152,6 +2152,14 @@ hr.dest-sep-form {
   min-width: 0;
 }
 
+.user-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
 .user-status {
   flex-shrink: 0;
 }
@@ -2943,7 +2951,7 @@ hr.dest-sep-form {
 
 /* Admin dashboard: contact form matches MyAccount Contact Editor (compact layout, same sections and sizing) */
 #editor-card { max-width: 640px; }
-#editor-card .admin-editor-card-header { display: block; padding-bottom: 0.35rem; }
+#editor-card .admin-editor-card-header { display: block; padding-bottom: 0.35rem; border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg); }
 #editor-card .card-body { padding-top: 0.75rem; }
 /* Manage Contact Page header: Line 1 = First Last (left) + buttons (right). Line 2 = (Username). Labels above icons. */
 #editor-card .admin-editor-header-inner {
@@ -2986,6 +2994,7 @@ hr.dest-sep-form {
 }
 #editor-card .admin-editor-header-name-block .admin-editor-name-full { font-weight: 600; }
 #editor-card .admin-editor-header-name-block .admin-editor-name-username:empty { display: none; }
+#editor-card .admin-editor-header-name-block .card-title-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
 #editor-card .admin-editor-action-btn {
   display: inline-flex;
   flex-direction: column;
@@ -3124,12 +3133,12 @@ hr.dest-sep-form {
 /* Form heading username in teal (view and edit mode) */
 #editor-card .card-title .card-title-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
 #admin-contact-edit .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0.75rem; }
-#admin-contact-edit .card-header.admin-editor-card-header { display: block; padding-bottom: 0.35rem; }
+#admin-contact-edit .card-header.admin-editor-card-header { display: block; padding: var(--space-5) var(--space-6); padding-bottom: 0.35rem; }
 #admin-contact-edit .card-header.admin-editor-card-header .admin-editor-header-inner { margin-bottom: 0.5rem; }
 #admin-contact-edit .card-header.admin-editor-card-header .admin-editor-header-name-block .admin-editor-name-username:empty { display: none; }
 #admin-contact-edit .card-header.admin-editor-card-header .card-title-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
-#admin-contact-edit .card-header-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-#admin-contact-edit .card-body { padding: 0.5rem 0.75rem; }
+#admin-contact-edit .card-header-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; padding: 0 var(--space-6); }
+#admin-contact-edit .card-body { padding: var(--space-6); }
 #admin-contact-edit .form-group { margin-bottom: 0.5rem; }
 #admin-contact-edit .form-group:last-child { margin-bottom: 0; }
 #admin-contact-edit .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
@@ -3611,8 +3620,14 @@ hr.dest-sep-form {
     align-items: flex-end;
   }
   
+  .stats-chart-wrap {
+    display: none;
+  }
+  
   .user-list-stats {
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-2);
   }
   
   .search-filter-row {
@@ -3673,6 +3688,41 @@ hr.dest-sep-form {
   
   .form-actions .btn {
     width: 100%;
+  }
+  
+  /* Editor footer: one row when it fits — Save/Cancel left, Delete right; wrap only when needed */
+  #admin-contact-edit .admin-editor-form-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  #admin-contact-edit .admin-editor-form-actions .btn {
+    width: auto;
+  }
+  #admin-contact-edit .admin-editor-form-actions-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  #admin-contact-edit .admin-editor-delete-btn {
+    margin-left: auto;
+  }
+  
+  /* MyAccount editor footer: same row when it fits — Save/Cancel left, Delete right */
+  #editor-contact-edit .form-actions-editor {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  #editor-contact-edit .form-actions-editor .btn {
+    width: auto;
+  }
+  #editor-contact-edit .form-actions-editor #form-delete-page-btn {
+    margin-left: auto;
   }
   
   .modal {
@@ -3839,7 +3889,43 @@ hr.dest-sep-form {
   .user-card .user-meta {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
     min-width: 0;
+  }
+  .user-card .user-card-badges {
+    flex-shrink: 0;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Manage Users action rows: wrap headings, stack buttons with flex width */
+  .user-card .action-row-combo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+  .user-card .action-row-combo .action-combo-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+  .user-card .action-row-combo .action-row-label {
+    min-width: 0;
+    margin-right: 0;
+    white-space: normal;
+    word-break: break-word;
+  }
+  .user-card .action-row-combo .action-row-buttons {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .user-card .action-row-combo .action-combo-group-access .action-row-end {
+    margin-left: 0;
   }
 }
 
