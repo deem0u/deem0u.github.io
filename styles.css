@@ -3064,8 +3064,46 @@ hr.dest-sep-form {
 .manage-contact-pages-bar .manage-contact-pages-user-row { display: flex; align-items: flex-start; width: 100%; max-width: 640px; }
 .manage-contact-pages-bar .manage-contact-pages-cp-row { display: flex; align-items: center; gap: 0.5rem; width: 100%; max-width: 640px; flex-wrap: nowrap; }
 .manage-contact-pages-bar .manage-contact-pages-add-btn { flex-shrink: 0; width: 2.25rem; min-width: 2.25rem; height: 2.25rem; padding: 0; font-size: 1.25rem; line-height: 1; font-weight: 700; }
-.manage-contact-pages-bar .searchable-select-wide { width: 60ch; min-width: 60ch; max-width: 60ch; box-sizing: border-box; }
-.manage-contact-pages-bar .searchable-select-wide .searchable-select-trigger { min-height: 3.25rem; height: 3.25rem; align-items: flex-start; text-align: left; padding-top: 0.4rem; padding-bottom: 0.4rem; box-sizing: border-box; }
+/* Triggers run full width of container; truncate when necessary for narrow viewports */
+.manage-contact-pages-bar .searchable-select-wide {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.manage-contact-pages-bar .manage-contact-pages-cp-row .searchable-select-wide {
+  flex: 1 1 0%;
+  width: auto;
+}
+.manage-contact-pages-bar .searchable-select-wide .searchable-select-trigger {
+  min-height: 3.25rem;
+  height: 3.25rem;
+  align-items: flex-start;
+  text-align: left;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+}
+/* Trigger content wrapper fills space and shrinks */
+.manage-contact-pages-bar .searchable-select-trigger > *:first-child {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
+  display: block;
+}
+/* Truncate all trigger text (placeholder, value, line1, line2) so containers flex correctly */
+.manage-contact-pages-bar .searchable-select-trigger .select-trigger-line1,
+.manage-contact-pages-bar .searchable-select-trigger .select-trigger-line2,
+.manage-contact-pages-bar .searchable-select-trigger .searchable-select-placeholder,
+.manage-contact-pages-bar .searchable-select-trigger .searchable-select-value {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
 .manage-contact-pages-bar .searchable-select-trigger .select-trigger-line1 { display: block; }
 .manage-contact-pages-bar .searchable-select-trigger .select-trigger-line2 { display: block; font-size: 0.8125rem; color: var(--color-text-secondary, #666); margin-top: 0.15rem; }
 
