@@ -206,21 +206,23 @@
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
-  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.28; padding: 0; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
-  /* View mode URL: single scrolling line, no wrap; hover border stays on segment and scrolls with content */
-  #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; line-height: 1.28; min-width: min-content; }
+  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.28; padding: 0; max-width: 100%; min-width: 0; overflow: visible; }
+  /* View mode URL: one line, shrink text to fit; fixed padding for border + label */
+  #view-contact-page-url-anatomy { container-type: inline-size; overflow: hidden; }
+  #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 0 0.1rem; font-size: clamp(0.5rem, 2.5cqi, 0.85rem); font-weight: 700; line-height: 1.28; width: 100%; min-width: 0; }
   .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
   .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
-  /* View mode: teal (username); purple (slug). No wrap; reserved padding so hover ring never shifts layout. */
+  /* View mode: teal (username); purple (slug). One line; fixed padding for hover ring and label. */
   .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
   .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  /* Default: tight between lines; no min-height so line-height alone controls spacing */
+  /* Fixed padding for border (2px) and label space; min-height on hover only */
   .editor-view-url-line .url-segment-wrap { min-height: 0; cursor: default; position: relative; pointer-events: auto; flex: 0 0 auto; transition: min-height 0.15s; }
-  /* Reserved 2px padding so 2px hover ring fits without shifting static URL text */
+  #view-contact-page-url-anatomy .url-username-wrap { flex: 0 0 auto; white-space: nowrap; padding: 2px; }
+  #view-contact-page-url-anatomy .url-slug-wrap { flex: 1 1 0%; min-width: 0; padding: 2px; }
   .editor-view-url-line .url-username-wrap { flex: 0 0 auto; white-space: nowrap; padding: 2px; }
   .editor-view-url-line .url-slug-wrap { flex: 0 0 auto; padding: 2px; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
