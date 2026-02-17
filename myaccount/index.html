@@ -214,21 +214,20 @@
   .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
-  /* View mode: teal (username); purple (slug); tight gap between /'s; on hover add padding so border + label don't clash */
-  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s, padding 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s, padding 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
+  /* View mode: teal (username); purple (slug). Reserved padding so hover ring never shifts layout. */
+  .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; word-break: break-word; overflow-wrap: break-word; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  .editor-view-url-line .url-segment-wrap { min-height: 2.6em; cursor: default; position: relative; pointer-events: auto; flex: 0 0 auto; transition: padding 0.15s; }
-  .editor-view-url-line .url-username-wrap { flex: 0 0 auto; white-space: nowrap; padding: 0; transition: padding 0.15s; }
-  .editor-view-url-line .url-slug-wrap { flex: 0 0 auto; padding: 0; transition: padding 0.15s; }
-  #view-contact-page-url-anatomy .url-username-wrap:hover,
-  #view-contact-page-url-anatomy .url-slug-wrap:hover { padding: 2px; }
+  .editor-view-url-line .url-segment-wrap { min-height: 2.6em; cursor: default; position: relative; pointer-events: auto; flex: 0 0 auto; }
+  /* Reserved 2px padding so 2px hover ring fits without shifting static URL text */
+  .editor-view-url-line .url-username-wrap { flex: 0 0 auto; white-space: nowrap; padding: 2px; }
+  .editor-view-url-line .url-slug-wrap { flex: 0 0 auto; padding: 2px; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
   .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.5rem; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; pointer-events: none; }
-  /* Hover: ring + padding so border and label don't clash with slashes or next line */
-  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); padding-left: 0.2rem; padding-right: 0.2rem; }
-  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); padding-left: 0.2rem; padding-right: 0.2rem; }
+  /* Hover: ring only (no padding change) so static elements never move; label is absolute so no clash */
+  #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); }
+  #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
