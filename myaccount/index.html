@@ -208,7 +208,8 @@
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
   .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.28; padding: 0; max-width: 100%; min-width: 0; overflow: visible; }
   /* View mode URL: one line, shrink text to fit; fixed padding for border + label */
-  #view-contact-page-url-anatomy { container-type: inline-size; overflow: hidden; width: 100%; max-width: 100%; padding-bottom: 2rem; }
+  #view-contact-page-url-anatomy { container-type: inline-size; overflow: hidden; width: 100%; max-width: 100%; padding-bottom: 0.6rem; }
+  .editor-view-url-block { margin-bottom: 0.35rem; }
   #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; line-height: 1.28; width: 100%; min-width: 0; }
   .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
   .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
@@ -236,6 +237,10 @@
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-label { display: block; color: var(--accent-purple, #9370db); }
   #view-contact-page-url-anatomy .url-slug-wrap:has(.url-slug-view:empty) .url-slug-label { display: none !important; }
+  #view-contact-page-url-anatomy .url-slug-wrap .url-slug-label { text-align: right; }
+  /* View mode: destination block row spacing (same as under name-dates row) */
+  .editor-contact-view-content #view-destination-blocks .view-dest-block > .form-group { margin-bottom: 0.75rem; }
+  .editor-contact-view-content #view-destination-blocks .view-dest-block .view-dest-email-phone-row { margin-top: 0; }
   /* Edit mode: URL row extends to form edge; prefix then slug fills rest; slug wraps to own line when too long; warning full width */
   #editor-contact-edit .form-group:has(#edit-contact-page-url-anatomy) { width: 100%; }
   #edit-contact-page-url-anatomy { overflow: visible; min-height: 1.5em; display: flex; flex-direction: column; gap: 0.2rem 0; width: 100%; max-width: 100%; }
