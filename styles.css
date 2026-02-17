@@ -3476,10 +3476,14 @@ hr.dest-sep-form {
     grid-template-columns: 1fr;
   }
   
-  /* Keep Destination Name + From + Till on one row on mobile (date fields are short: 12ch for ddmmyyyy) */
+  /* Edit mode (mobile): Destination name on row 1, From + Till on row 2 below */
   .form-row-dest-name-dates {
-    grid-template-columns: 1fr 12ch 12ch;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
     min-width: 0;
+  }
+  .form-row-dest-name-dates .form-group:first-child {
+    grid-column: 1 / -1;
   }
   .form-row-dest-name-dates .dest-from-date,
   .form-row-dest-name-dates .dest-to-date {
@@ -3493,6 +3497,10 @@ hr.dest-sep-form {
   }
   #step2-contact-form .form-row.form-row-dest-name-dates {
     grid-template-columns: 1fr 12ch 12ch;
+    grid-template-rows: auto;
+  }
+  #step2-contact-form .form-row-dest-name-dates .form-group:first-child {
+    grid-column: auto;
   }
   #step2-contact-form .form-row-dest-name-dates .dest-from-date,
   #step2-contact-form .form-row-dest-name-dates .dest-to-date {
@@ -3504,7 +3512,11 @@ hr.dest-sep-form {
     grid-template-columns: 1fr;
   }
   #admin-contact-edit .form-row.form-row-dest-name-dates {
-    grid-template-columns: 1fr 12ch 12ch;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  #admin-contact-edit .form-row-dest-name-dates .form-group:first-child {
+    grid-column: 1 / -1;
   }
 
   /* MyAccount Manage Contact Pages: view mode – prevent form/card cutoff on mobile */
