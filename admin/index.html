@@ -586,10 +586,18 @@
               </div>
               <div id="admin-contact-edit" class="admin-contact-edit hidden">
                 <p id="admin-create-contact-page-intro" class="form-hint hidden" style="margin-bottom:0.5rem;"></p>
-                <div class="card-header">
-                  <div class="admin-edit-header-top">
-                    <span class="card-title" id="admin-editor-edit-card-title">Edit Contact Information</span>
-                    <div class="editor-edit-mode-actions" id="admin-back-to-view-wrap"><button type="button" class="btn btn-secondary btn-sm" id="admin-back-to-view-btn" onclick="adminBackToViewMode()">Back to View Mode</button></div>
+                <div class="card-header admin-editor-card-header">
+                  <div class="admin-editor-header-inner">
+                    <div class="admin-editor-header-name-block">
+                      <span class="admin-editor-header-line admin-editor-name-full card-title" id="admin-editor-edit-card-title">Edit Contact Information</span>
+                      <span class="admin-editor-header-line admin-editor-name-username card-title-username" id="admin-editor-edit-username"></span>
+                    </div>
+                    <div class="admin-editor-header-actions">
+                      <span class="admin-editor-action-btn">
+                        <span class="admin-editor-btn-label">Close</span>
+                        <button type="button" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" id="admin-edit-close-btn" onclick="adminBackToViewMode()" aria-label="Close" title="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                      </span>
+                    </div>
                   </div>
                   <div class="card-header-fields">
                     <div class="form-group">
@@ -2501,8 +2509,6 @@ async function adminEnterCreateContactPage() {
   if (viewHeader) viewHeader.classList.add('hidden');
   document.getElementById('admin-contact-view').classList.add('hidden');
   document.getElementById('admin-contact-edit').classList.remove('hidden');
-  var backWrap = document.getElementById('admin-back-to-view-wrap');
-  if (backWrap) backWrap.classList.add('hidden');
   var introEl = document.getElementById('admin-create-contact-page-intro');
   if (introEl) {
     introEl.textContent = 'Adding a new contact page for ' + username + '. Fill the form below (Page Name is required) and click Save when ready.';
@@ -2623,9 +2629,10 @@ function setAdminEditorCardTitle() {
   var usernameEl = document.getElementById('admin-editor-card-title-username');
   if (nameEl) nameEl.textContent = nameLine;
   if (usernameEl) usernameEl.textContent = usernameLine;
-  var editTitleHtml = hasName ? (escapeHtml(nameLine) + ' <span class="card-title-username">(' + escapeHtml(username) + ')</span>') : 'Edit Contact Information';
   var t2 = document.getElementById('admin-editor-edit-card-title');
-  if (t2) t2.innerHTML = editTitleHtml;
+  var editUsernameEl = document.getElementById('admin-editor-edit-username');
+  if (t2) t2.textContent = nameLine;
+  if (editUsernameEl) editUsernameEl.textContent = usernameLine;
 }
 
 function adminRefreshViewFromForm() {
@@ -2800,8 +2807,6 @@ function adminEnterEditMode() {
   if (viewHeader) viewHeader.classList.add('hidden');
   document.getElementById('admin-contact-view').classList.add('hidden');
   document.getElementById('admin-contact-edit').classList.remove('hidden');
-  var backWrap = document.getElementById('admin-back-to-view-wrap');
-  if (backWrap) backWrap.classList.remove('hidden');
   document.getElementById('admin-delete-page-btn').style.display = '';
   ['first-name', 'surname', 'email'].forEach(function(id) {
     var el = document.getElementById(id);
