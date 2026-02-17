@@ -206,26 +206,29 @@
   .editor-contact-view-content .editor-view-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
   .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; text-decoration: none; }
   .editor-view-url-block .form-label { display: block; margin-bottom: 0.5rem; }
-  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.28; overflow: visible; padding: 0; }
-  /* View mode URL: tight spacing between segments and between wrapped lines */
-  #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; line-height: 1.28; }
+  .editor-view-url-anatomy { margin-top: 0.15rem; margin-bottom: 0.35rem; min-height: 1.5em; line-height: 1.28; padding: 0; max-width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+  /* View mode URL: single scrolling line, no wrap; hover border stays on segment and scrolls with content */
+  #view-contact-page-url-anatomy .editor-view-url-line { display: flex; flex-wrap: nowrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; line-height: 1.28; min-width: min-content; }
   .editor-view-url-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.1rem; font-size: 0.85rem; font-weight: 700; word-break: break-word; overflow-wrap: break-word; }
   .editor-view-url-line .url-base { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-username { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
   .editor-view-url-line .url-slash { display: inline; font-size: inherit; color: var(--color-text-secondary, #666); text-decoration: none; flex: 0 0 auto; white-space: nowrap; }
   .editor-view-url-line .url-slug { display: inline-block; font-size: inherit; font-weight: 700; text-decoration: none; }
-  /* View mode: teal (username); purple (slug). Reserved padding so hover ring never shifts layout. */
+  /* View mode: teal (username); purple (slug). No wrap; reserved padding so hover ring never shifts layout. */
   .editor-view-url-line .url-username-view { color: var(--accent-teal, #1ac5b0); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
-  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; word-break: break-word; overflow-wrap: break-word; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
+  .editor-view-url-line .url-slug-view { color: var(--accent-purple, #9370db); vertical-align: baseline; transition: box-shadow 0.15s; white-space: nowrap; padding-left: 0.12rem; padding-right: 0.12rem; margin-left: 0.15rem; margin-right: 0.15rem; box-sizing: content-box; }
   .editor-view-url-line .url-slug-view:empty { display: none; }
-  .editor-view-url-line .url-segment-wrap { min-height: 2.6em; cursor: default; position: relative; pointer-events: auto; flex: 0 0 auto; }
+  /* Default: tight between lines; no min-height so line-height alone controls spacing */
+  .editor-view-url-line .url-segment-wrap { min-height: 0; cursor: default; position: relative; pointer-events: auto; flex: 0 0 auto; transition: min-height 0.15s; }
   /* Reserved 2px padding so 2px hover ring fits without shifting static URL text */
   .editor-view-url-line .url-username-wrap { flex: 0 0 auto; white-space: nowrap; padding: 2px; }
   .editor-view-url-line .url-slug-wrap { flex: 0 0 auto; padding: 2px; }
   .editor-view-url-line .url-segment-wrap .url-username-view,
   .editor-view-url-line .url-segment-wrap .url-slug-view { vertical-align: baseline; }
   .editor-view-url-line .url-anatomy-label { position: absolute; left: 0; right: 0; bottom: 0; display: none; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0; margin-top: 0.5rem; text-align: center; line-height: 1.2; user-select: none; -webkit-user-select: none; pointer-events: none; }
-  /* Hover: ring only (no padding change) so static elements never move; label is absolute so no clash */
+  /* Hover: ring + reserve space for label so it doesn't clash with next line */
+  #view-contact-page-url-anatomy .url-username-wrap:hover,
+  #view-contact-page-url-anatomy .url-slug-wrap:hover { min-height: 2.5em; }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-view { box-shadow: 0 0 0 2px var(--accent-teal, #1ac5b0); border-radius: var(--radius-sm, 4px); }
   #view-contact-page-url-anatomy .url-slug-wrap:hover .url-slug-view { box-shadow: 0 0 0 2px var(--accent-purple, #9370db); border-radius: var(--radius-sm, 4px); }
   #view-contact-page-url-anatomy .url-username-wrap:hover .url-username-label { display: block; color: var(--accent-teal, #1ac5b0); }
