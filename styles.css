@@ -2904,12 +2904,12 @@ hr.dest-sep-form {
 #editor-card { max-width: 640px; }
 #editor-card .admin-editor-card-header { display: block; padding-bottom: 0.35rem; }
 #editor-card .card-body { padding-top: 0.75rem; }
-/* Manage Contact Page header: Line 1 = buttons top right, Line 2 = First Last, Line 3 = (Username). Labels above icons. */
+/* Manage Contact Page header: Line 1 = First Last (left) + buttons (right). Line 2 = (Username). Labels above icons. */
 #editor-card .admin-editor-header-inner {
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto auto;
-  gap: 0.2rem 0.5rem;
+  grid-template-rows: auto auto;
+  gap: 0.15rem 0.5rem;
   align-items: start;
   min-width: 0;
 }
@@ -2917,13 +2917,14 @@ hr.dest-sep-form {
   grid-row: 1;
   grid-column: 2;
   justify-self: end;
+  align-self: center;
   display: flex;
   gap: 0.25rem;
   flex-shrink: 0;
   align-items: flex-start;
 }
 #editor-card .admin-editor-header-name-block {
-  grid-row: 2 / 4;
+  grid-row: 1 / 3;
   grid-column: 1;
   min-width: 0;
   display: flex;
