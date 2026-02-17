@@ -1458,6 +1458,11 @@ hr.dest-sep-form {
   overflow-wrap: break-word;
   word-break: break-word;
 }
+/* Destination Details view: consistent spacing after Destination Address row */
+#admin-contact-view .view-dest-block > .form-group,
+.editor-contact-view-content .view-dest-block > .form-group {
+  margin-bottom: var(--space-3);
+}
 
 /* View mode: Destination Details carousel (multiple sections) */
 .view-destination-wrapper { margin-bottom: var(--space-3); }
@@ -3308,6 +3313,12 @@ hr.dest-sep-form {
 #admin-contact-view .editor-contact-view-content .editor-view-value-block { display: block; margin-top: 0.2rem; white-space: pre-wrap; }
 #admin-contact-view .editor-view-header-row,
 .editor-contact-view-content .editor-view-header-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+/* MyAccount view: Given Names | Family Name and Email | Contact Number on same row */
+.editor-contact-view-content .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
 #admin-contact-view .editor-view-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
 #admin-contact-view .editor-view-url-block.editor-view-header { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border, #eee); }
 #admin-contact-view .editor-view-url-block { margin-top: 0.5rem; margin-bottom: 0.5rem; }
@@ -3597,6 +3608,10 @@ hr.dest-sep-form {
   
   .form-row {
     grid-template-columns: 1fr;
+  }
+  /* MyAccount view: keep Given Names|Family Name and Email|Contact Number on same row on narrow */
+  .editor-contact-view-content .form-row {
+    grid-template-columns: repeat(2, 1fr);
   }
   
   /* Edit mode (mobile): Destination name on row 1, From + Till on row 2 below */

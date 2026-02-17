@@ -535,7 +535,7 @@
                   </span>
                 </div>
                 <div class="admin-editor-header-name-block">
-                  <span class="admin-editor-header-line admin-editor-name-full card-title" id="admin-editor-card-title-name">Edit Contact Information</span>
+                  <span class="admin-editor-header-line admin-editor-name-full card-title" id="admin-editor-card-title-name"></span>
                   <span class="admin-editor-header-line admin-editor-name-username card-title-username" id="admin-editor-card-title-username"></span>
                 </div>
               </div>
@@ -589,7 +589,7 @@
                 <div class="card-header admin-editor-card-header">
                   <div class="admin-editor-header-inner">
                     <div class="admin-editor-header-name-block">
-                      <span class="admin-editor-header-line admin-editor-name-full card-title" id="admin-editor-edit-card-title">Edit Contact Information</span>
+                      <span class="admin-editor-header-line admin-editor-name-full card-title" id="admin-editor-edit-card-title"></span>
                       <span class="admin-editor-header-line admin-editor-name-username card-title-username" id="admin-editor-edit-username"></span>
                     </div>
                     <div class="admin-editor-header-actions">
@@ -2623,7 +2623,7 @@ function setAdminEditorCardTitle() {
   var last = (u.lastName || u.pageFamilyName || '').trim();
   var username = currentFolder || '';
   var hasName = first || last;
-  var nameLine = hasName ? [first, last].filter(Boolean).join(' ') : 'Edit Contact Information';
+  var nameLine = hasName ? [first, last].filter(Boolean).join(' ') : '';
   var usernameLine = hasName ? '(' + escapeHtml(username) + ')' : '';
   var nameEl = document.getElementById('admin-editor-card-title-name');
   var usernameEl = document.getElementById('admin-editor-card-title-username');
