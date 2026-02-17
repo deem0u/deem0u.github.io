@@ -3438,6 +3438,60 @@ hr.dest-sep-form {
   #admin-contact-edit .form-row {
     grid-template-columns: 1fr;
   }
+
+  /* MyAccount Manage Contact Pages: view mode – prevent form/card cutoff on mobile */
+  #screen-editor {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  #screen-editor .editor-layout,
+  #screen-editor .editor-main {
+    min-width: 0;
+    max-width: 100%;
+  }
+  #screen-editor #editor-contact-card {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+  #screen-editor #editor-contact-card .card-body {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  #screen-editor .editor-contact-view-content {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+  #screen-editor .editor-contact-view-content .editor-view-header-row {
+    min-width: 0;
+  }
+  #screen-editor .editor-contact-view-content .editor-view-value,
+  #screen-editor .editor-contact-view-content .form-group {
+    min-width: 0;
+    max-width: 100%;
+  }
+  #screen-editor .editor-contact-view-content .editor-view-value {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  #screen-editor #view-contact-page-url-anatomy .editor-view-url-line {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
+  }
+  #screen-editor .view-destination-wrapper,
+  #screen-editor #view-destination-blocks,
+  #screen-editor .view-dest-block {
+    max-width: 100%;
+    min-width: 0;
+  }
+  #screen-editor .view-dest-block .editor-view-value {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
   
   .form-row-inline {
     flex-direction: column;
