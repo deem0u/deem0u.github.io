@@ -1889,7 +1889,7 @@ function refreshViewModeDisplay() {
               viewDestFooter.appendChild(dot);
             }
           } else {
-            viewDestFooter.innerHTML = '<span class="view-dest-n-of-m"><input type="text" inputmode="numeric" pattern="[0-9]*" class="view-dest-page-input" id="view-dest-page-input" value="1" min="1" max="' + dests.length + '" aria-label="Current section number"> of ' + dests.length + '</span>';
+            viewDestFooter.innerHTML = '<span class="view-dest-n-of-m"><input type="text" inputmode="numeric" pattern="[0-9]*" class="view-dest-page-input" id="view-dest-page-input" value="1" min="1" max="' + dests.length + '" maxlength="2" aria-label="Current section number"> of ' + dests.length + '</span>';
           }
         }
         initViewDestinationCarousel(dests.length);
@@ -1949,7 +1949,7 @@ function initViewDestinationCarousel(total) {
     pageInput.setAttribute('max', String(total));
     pageInput.value = '1';
     var lastDigitTime = 0;
-    var REPLACE_DELAY_MS = 2000;
+    var REPLACE_DELAY_MS = 1000;
     pageInput.onkeydown = function(e) {
       var key = e.key;
       if (key === 'ArrowUp' || key === 'ArrowRight') { e.preventDefault(); goToViewDestination(viewDestCarouselIndex + 1); return; }
@@ -1958,9 +1958,9 @@ function initViewDestinationCarousel(total) {
       if (/^\d$/.test(key)) {
         e.preventDefault();
         var now = Date.now();
-        var next = (now - lastDigitTime <= REPLACE_DELAY_MS)
-          ? (this.value.replace(/\D/g, '') + key).slice(-2)
-          : key;
+        var cur = this.value.replace(/\D/g, '');
+        var append = (now - lastDigitTime <= REPLACE_DELAY_MS) && cur.length < 2;
+        var next = append ? (cur + key).slice(-2) : key;
         next = next.replace(/\D/g, '') || '1';
         var n = parseInt(next, 10);
         if (n < 1) next = '1';
@@ -1974,7 +1974,7 @@ function initViewDestinationCarousel(total) {
       e.preventDefault();
     };
     pageInput.oninput = function() {
-      var raw = this.value.replace(/\D/g, '');
+      var raw = this.value.replace(/\D/g, '').slice(0, 2);
       this.value = raw;
       var n = parseInt(raw, 10);
       if (raw === '' || isNaN(n)) return;
@@ -4002,9 +4002,13 @@ function hasIncompleteDestinationBlock() {
   return false;
 }
 
+var MAX_DESTINATION_SECTIONS = 99;
 function updateAddDestinationButtonState() {
   var addBtn = document.getElementById('add-destination-btn');
-  if (addBtn) addBtn.disabled = hasIncompleteDestinationBlock();
+  if (addBtn) {
+    var blocks = document.querySelectorAll('#editor-contact-edit .destination-block');
+    addBtn.disabled = hasIncompleteDestinationBlock() || blocks.length >= MAX_DESTINATION_SECTIONS;
+  }
 }
 
 function getDestinationBlocksData() {
@@ -4115,6 +4119,7 @@ function initDestinationRepeater() {
   if (addBtn && container) {
     addBtn.addEventListener('click', function() {
       var blocks = document.querySelectorAll('#editor-contact-edit .destination-block');
+      if (blocks.length >= MAX_DESTINATION_SECTIONS) return;
       var nextIndex = blocks.length;
       container.appendChild(createAdditionalDestinationBlock(nextIndex, {}));
       attachDobMask();

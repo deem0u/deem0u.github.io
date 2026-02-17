@@ -2694,7 +2694,7 @@ function adminRefreshViewFromForm() {
               viewDestFooter.appendChild(dot);
             }
           } else {
-            viewDestFooter.innerHTML = '<span class="view-dest-n-of-m"><input type="text" inputmode="numeric" pattern="[0-9]*" class="view-dest-page-input" id="admin-view-dest-page-input" value="1" min="1" max="' + dests.length + '" aria-label="Current section number"> of ' + dests.length + '</span>';
+            viewDestFooter.innerHTML = '<span class="view-dest-n-of-m"><input type="text" inputmode="numeric" pattern="[0-9]*" class="view-dest-page-input" id="admin-view-dest-page-input" value="1" min="1" max="' + dests.length + '" maxlength="2" aria-label="Current section number"> of ' + dests.length + '</span>';
           }
         }
         initAdminViewDestinationCarousel(dests.length);
@@ -2754,7 +2754,7 @@ function initAdminViewDestinationCarousel(total) {
     pageInput.setAttribute('max', String(total));
     pageInput.value = '1';
     var lastDigitTime = 0;
-    var REPLACE_DELAY_MS = 2000;
+    var REPLACE_DELAY_MS = 1000;
     pageInput.onkeydown = function(e) {
       var key = e.key;
       if (key === 'ArrowUp' || key === 'ArrowRight') { e.preventDefault(); goToAdminViewDestination(adminViewDestCarouselIndex + 1); return; }
@@ -2763,9 +2763,9 @@ function initAdminViewDestinationCarousel(total) {
       if (/^\d$/.test(key)) {
         e.preventDefault();
         var now = Date.now();
-        var next = (now - lastDigitTime <= REPLACE_DELAY_MS)
-          ? (this.value.replace(/\D/g, '') + key).slice(-2)
-          : key;
+        var cur = this.value.replace(/\D/g, '');
+        var append = (now - lastDigitTime <= REPLACE_DELAY_MS) && cur.length < 2;
+        var next = append ? (cur + key).slice(-2) : key;
         next = next.replace(/\D/g, '') || '1';
         var n = parseInt(next, 10);
         if (n < 1) next = '1';
@@ -2779,7 +2779,7 @@ function initAdminViewDestinationCarousel(total) {
       e.preventDefault();
     };
     pageInput.oninput = function() {
-      var raw = this.value.replace(/\D/g, '');
+      var raw = this.value.replace(/\D/g, '').slice(0, 2);
       this.value = raw;
       var n = parseInt(raw, 10);
       if (raw === '' || isNaN(n)) return;
@@ -4017,9 +4017,13 @@ function hasIncompleteDestinationBlockAdmin() {
   for (var i = 0; i < blocks.length; i++) { if (!isDestinationBlockCompleteAdmin(blocks[i])) return true; }
   return false;
 }
+var MAX_DESTINATION_SECTIONS = 99;
 function updateAddDestinationButtonStateAdmin() {
   var addBtn = document.getElementById('admin-add-destination-btn');
-  if (addBtn) addBtn.disabled = hasIncompleteDestinationBlockAdmin();
+  if (addBtn) {
+    var blocks = document.querySelectorAll('#admin-contact-edit .destination-block');
+    addBtn.disabled = hasIncompleteDestinationBlockAdmin() || blocks.length >= MAX_DESTINATION_SECTIONS;
+  }
 }
 function getDestinationBlocksDataAdmin() {
   var blocks = document.querySelectorAll('#admin-contact-edit .destination-block');
@@ -4139,6 +4143,7 @@ function initDestinationRepeaterAdmin() {
   if (addBtn && container) {
     addBtn.addEventListener('click', function() {
       var blocks = document.querySelectorAll('#admin-contact-edit .destination-block');
+      if (blocks.length >= MAX_DESTINATION_SECTIONS) return;
       var nextIndex = blocks.length;
       container.appendChild(createAdditionalDestinationBlockAdmin(nextIndex, {}));
       if (typeof attachDobMask === 'function') attachDobMask();

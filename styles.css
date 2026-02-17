@@ -1483,8 +1483,14 @@ hr.dest-sep-form {
   line-height: 1 !important;
   box-sizing: border-box;
 }
-.view-destination-nav button.view-dest-prev { padding-left: 0.05rem !important; }
-.view-destination-nav button.view-dest-next { padding-right: 0.05rem !important; }
+/* Optical centering: ‹ › often sit low and slightly off in many fonts */
+.view-destination-nav button.view-dest-prev,
+.view-destination-nav button.view-dest-next {
+  padding: 0 !important;
+  transform: translateY(-0.07em);
+}
+.view-destination-nav button.view-dest-prev { transform: translateY(-0.07em) translateX(0.03em); }
+.view-destination-nav button.view-dest-next { transform: translateY(-0.07em) translateX(-0.03em); }
 .view-destination-panels.view-destination-carousel-multi { position: relative; min-height: 1px; }
 .view-destination-carousel-multi .view-destination-panels .view-dest-block {
   display: none;
@@ -3507,6 +3513,86 @@ hr.dest-sep-form {
     width: 100%;
     min-width: 0;
     max-width: 100%;
+  }
+
+  /* Admin dashboard: prevent overflow, use full width on narrow viewports */
+  .app-centered {
+    overflow-x: hidden;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+  #screen-dashboard .app-centered {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+  .manage-contact-pages-bar,
+  .manage-contact-pages-bar .card-body,
+  .manage-contact-pages-bar .manage-contact-pages-stack,
+  .manage-contact-pages-bar .manage-contact-pages-field,
+  .manage-contact-pages-bar .manage-contact-pages-user-row,
+  .manage-contact-pages-bar .manage-contact-pages-cp-row {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .manage-contact-pages-bar .manage-contact-pages-cp-row {
+    flex-wrap: wrap;
+  }
+  /* User dropdown (page-select): full-width trigger; dropdown uses viewport */
+  .manage-contact-pages-bar #page-select-container {
+    width: 100%;
+    min-width: 0;
+  }
+  .manage-contact-pages-bar #page-select-trigger {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .manage-contact-pages-bar #page-select-trigger .select-trigger-line1,
+  .manage-contact-pages-bar #page-select-trigger .select-trigger-line2 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  #page-select-dropdown.show {
+    left: var(--space-3) !important;
+    right: var(--space-3) !important;
+    width: auto !important;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  /* Contact page selector in Manage Users: use available width; dropdown uses viewport */
+  .manage-contact-pages-bar .searchable-select-contact-pages-trigger {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 auto;
+  }
+  .manage-contact-pages-bar .searchable-select-dropdown-contact-pages.show,
+  .user-card .searchable-select-dropdown-contact-pages.show {
+    left: var(--space-3) !important;
+    right: var(--space-3) !important;
+    width: auto !important;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+  }
+  .user-card .searchable-select-contact-pages-trigger {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+  #editor-card {
+    max-width: 100%;
+  }
+  .user-card {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .user-card .user-name-value-line,
+  .user-card .user-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 }
 
