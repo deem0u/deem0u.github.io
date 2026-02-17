@@ -3476,17 +3476,20 @@ hr.dest-sep-form {
     grid-template-columns: 1fr;
   }
   
+  /* Keep Destination Name + From + Till on one row on mobile (date fields are short: 12ch for ddmmyyyy) */
   .form-row-dest-name-dates {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 12ch 12ch;
+    min-width: 0;
   }
   .form-row-dest-name-dates .dest-from-date,
   .form-row-dest-name-dates .dest-to-date {
-    max-width: none;
+    max-width: 12ch;
     min-width: 0;
   }
-  /* MyAccount view: Destination Name first, then From/Till stacked below */
+  /* MyAccount view: Name + From + Till on one row */
   .view-dest-name-dates-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr auto auto;
+    min-width: 0;
   }
   #step2-contact-form .form-row.form-row-dest-name-dates {
     grid-template-columns: 1fr 12ch 12ch;
@@ -3499,6 +3502,9 @@ hr.dest-sep-form {
 
   #admin-contact-edit .form-row {
     grid-template-columns: 1fr;
+  }
+  #admin-contact-edit .form-row.form-row-dest-name-dates {
+    grid-template-columns: 1fr 12ch 12ch;
   }
 
   /* MyAccount Manage Contact Pages: view mode – prevent form/card cutoff on mobile */
