@@ -1459,18 +1459,19 @@ hr.dest-sep-form {
   gap: 0.25rem;
   flex-shrink: 0;
 }
-.view-destination-nav .view-dest-prev,
-.view-destination-nav .view-dest-next {
-  width: 2rem;
-  height: 2rem;
-  min-width: 2rem;
-  min-height: 2rem;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
+.view-destination-nav button.view-dest-prev,
+.view-destination-nav button.view-dest-next {
+  width: 2rem !important;
+  height: 2rem !important;
+  min-width: 2rem !important;
+  min-height: 2rem !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.5rem !important;
   line-height: 1;
+  box-sizing: border-box;
 }
 .view-destination-panels.view-destination-carousel-multi { position: relative; min-height: 1px; }
 .view-destination-carousel-multi .view-destination-panels .view-dest-block {
@@ -2901,67 +2902,49 @@ hr.dest-sep-form {
 
 /* Admin dashboard: contact form matches MyAccount Contact Editor (compact layout, same sections and sizing) */
 #editor-card { max-width: 640px; }
-#editor-card .admin-editor-card-header { display: block; padding-bottom: 0.5rem; }
+#editor-card .admin-editor-card-header { display: block; padding-bottom: 0.35rem; }
 #editor-card .card-body { padding-top: 0.75rem; }
-/* Header: buttons stay fixed at top; name on same row when short, or on next row when long (so buttons never shift down) */
+/* Manage Contact Page header: Line 1 = buttons top right, Line 2 = First Last, Line 3 = (Username). Labels above icons. */
 #editor-card .admin-editor-header-inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  min-height: 0;
-  container-type: inline-size;
-  container-name: admin-editor-header;
-}
-#editor-card .admin-editor-header-name {
-  order: 1;
-  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto auto;
+  gap: 0.2rem 0.5rem;
+  align-items: start;
   min-width: 0;
-  margin: 0;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  text-align: left;
-}
-/* When name fits on one row: single line in alignment with icons */
-#editor-card .admin-editor-header-name .admin-editor-name-line,
-#editor-card #admin-editor-edit-card-title .admin-editor-name-line {
-  display: inline;
 }
 #editor-card .admin-editor-header-actions {
-  order: 2;
+  grid-row: 1;
+  grid-column: 2;
+  justify-self: end;
   display: flex;
   gap: 0.25rem;
   flex-shrink: 0;
   align-items: flex-start;
-  margin-left: auto;
 }
-/* When name block is narrow (would wrap): use 3-line format even on one row */
-@container admin-editor-header (max-width: 560px) {
-  #editor-card .admin-editor-header-name .admin-editor-name-line,
-  #editor-card #admin-editor-edit-card-title .admin-editor-name-line { display: block; }
+#editor-card .admin-editor-header-name-block {
+  grid-row: 2 / 4;
+  grid-column: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
 }
-@media (max-width: 560px) {
-  #editor-card .admin-editor-header-name .admin-editor-name-line,
-  #editor-card #admin-editor-edit-card-title .admin-editor-name-line { display: block; }
+#editor-card .admin-editor-header-name-block .admin-editor-header-line {
+  display: block;
+  margin: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  text-align: left;
+  line-height: 1.3;
 }
-/* When stacked (narrow): buttons row 1, name row 2 as 3 lines (first, last, username) */
-@container admin-editor-header (max-width: 480px) {
-  #editor-card .admin-editor-header-actions { order: 1; }
-  #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
-  #editor-card .admin-editor-header-name .admin-editor-name-line,
-  #editor-card #admin-editor-edit-card-title .admin-editor-name-line { display: block; }
-}
-@media (max-width: 480px) {
-  #editor-card .admin-editor-header-actions { order: 1; }
-  #editor-card .admin-editor-header-name { order: 2; flex-basis: 100%; width: 100%; }
-  #editor-card .admin-editor-header-name .admin-editor-name-line,
-  #editor-card #admin-editor-edit-card-title .admin-editor-name-line { display: block; }
-}
+#editor-card .admin-editor-header-name-block .admin-editor-name-full { font-weight: 600; }
+#editor-card .admin-editor-header-name-block .admin-editor-name-username:empty { display: none; }
 #editor-card .admin-editor-action-btn {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
 #editor-card .admin-editor-icon-btn {
   width: 2.5rem;

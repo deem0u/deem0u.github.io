@@ -522,19 +522,22 @@
               <div class="admin-editor-header-inner">
                 <div class="admin-editor-header-actions">
                   <span class="admin-editor-action-btn">
-                    <a id="admin-view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" aria-label="View Page" title="View Page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
                     <span class="admin-editor-btn-label">View Page</span>
+                    <a id="admin-view-page-link" href="#" target="_blank" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" aria-label="View Page" title="View Page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
                   </span>
                   <span class="admin-editor-action-btn">
-                    <button type="button" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" id="admin-view-qr-codes-btn" onclick="adminShowQrModalFromView()" aria-label="QR Codes" title="QR Codes"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="8" height="8"/><rect x="4" y="4" width="2" height="2"/><rect x="7" y="4" width="2" height="2"/><rect x="4" y="7" width="2" height="2"/><rect x="14" y="2" width="8" height="8"/><rect x="16" y="4" width="2" height="2"/><rect x="19" y="4" width="2" height="2"/><rect x="16" y="7" width="2" height="2"/><rect x="2" y="14" width="8" height="8"/><rect x="4" y="16" width="2" height="2"/><rect x="7" y="16" width="2" height="2"/><rect x="10" y="10" width="2" height="2"/><rect x="13" y="10" width="2" height="2"/><rect x="10" y="13" width="2" height="2"/><rect x="16" y="14" width="2" height="2"/><rect x="19" y="14" width="2" height="2"/><rect x="16" y="17" width="2" height="2"/></svg></button>
                     <span class="admin-editor-btn-label">QR Codes</span>
+                    <button type="button" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" id="admin-view-qr-codes-btn" onclick="adminShowQrModalFromView()" aria-label="QR Codes" title="QR Codes"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="8" height="8"/><rect x="4" y="4" width="2" height="2"/><rect x="7" y="4" width="2" height="2"/><rect x="4" y="7" width="2" height="2"/><rect x="14" y="2" width="8" height="8"/><rect x="16" y="4" width="2" height="2"/><rect x="19" y="4" width="2" height="2"/><rect x="16" y="7" width="2" height="2"/><rect x="2" y="14" width="8" height="8"/><rect x="4" y="16" width="2" height="2"/><rect x="7" y="16" width="2" height="2"/><rect x="10" y="10" width="2" height="2"/><rect x="13" y="10" width="2" height="2"/><rect x="10" y="13" width="2" height="2"/><rect x="16" y="14" width="2" height="2"/><rect x="19" y="14" width="2" height="2"/><rect x="16" y="17" width="2" height="2"/></svg></button>
                   </span>
                   <span class="admin-editor-action-btn">
-                    <button type="button" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" id="admin-edit-contact-btn" onclick="adminEnterEditMode()" aria-label="Edit Page" title="Edit Page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                     <span class="admin-editor-btn-label">Edit Page</span>
+                    <button type="button" class="btn btn-primary btn-sm btn-icon admin-editor-icon-btn" id="admin-edit-contact-btn" onclick="adminEnterEditMode()" aria-label="Edit Page" title="Edit Page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
                   </span>
                 </div>
-                <span class="card-title admin-editor-header-name" id="admin-editor-card-title">Edit Contact Information</span>
+                <div class="admin-editor-header-name-block">
+                  <span class="admin-editor-header-line admin-editor-name-full card-title" id="admin-editor-card-title-name">Edit Contact Information</span>
+                  <span class="admin-editor-header-line admin-editor-name-username card-title-username" id="admin-editor-card-title-username"></span>
+                </div>
               </div>
             </div>
             <div class="card-body">
@@ -2614,20 +2617,15 @@ function setAdminEditorCardTitle() {
   var last = (u.lastName || u.pageFamilyName || '').trim();
   var username = currentFolder || '';
   var hasName = first || last;
-  var title;
-  if (hasName) {
-    var parts = [];
-    if (first) parts.push('<span class="admin-editor-name-line">' + escapeHtml(first) + '</span>');
-    if (last) parts.push('<span class="admin-editor-name-line">' + escapeHtml(last) + '</span>');
-    parts.push('<span class="admin-editor-name-line card-title-username">(' + escapeHtml(username) + ')</span>');
-    title = parts.join(' ');
-  } else {
-    title = 'Edit Contact Information';
-  }
-  var t1 = document.getElementById('admin-editor-card-title');
+  var nameLine = hasName ? [first, last].filter(Boolean).join(' ') : 'Edit Contact Information';
+  var usernameLine = hasName ? '(' + escapeHtml(username) + ')' : '';
+  var nameEl = document.getElementById('admin-editor-card-title-name');
+  var usernameEl = document.getElementById('admin-editor-card-title-username');
+  if (nameEl) nameEl.textContent = nameLine;
+  if (usernameEl) usernameEl.textContent = usernameLine;
+  var editTitleHtml = hasName ? (escapeHtml(nameLine) + ' <span class="card-title-username">(' + escapeHtml(username) + ')</span>') : 'Edit Contact Information';
   var t2 = document.getElementById('admin-editor-edit-card-title');
-  if (t1) t1.innerHTML = title;
-  if (t2) t2.innerHTML = title;
+  if (t2) t2.innerHTML = editTitleHtml;
 }
 
 function adminRefreshViewFromForm() {
