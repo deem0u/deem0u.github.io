@@ -2462,8 +2462,18 @@ var adminCreateNewPage = false;
 var adminContactFormSnapshot = null;
 
 async function adminEnterCreateContactPage() {
-  const username = document.getElementById('page-select').value;
-  if (!username) return;
+  const username = (document.getElementById('page-select') && document.getElementById('page-select').value) || '';
+  if (!username) {
+    var editorCard = document.getElementById('editor-card');
+    editorCard.classList.remove('hidden');
+    showAlert('alert-editor', 'Please select a user first. Use the User dropdown above to choose who the new contact page belongs to.', 'warning');
+    editorCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    var trigger = document.getElementById('page-select-trigger');
+    if (trigger) trigger.focus();
+    var dropdown = document.getElementById('page-select-dropdown');
+    if (dropdown && !dropdown.classList.contains('show')) togglePageSelect();
+    return;
+  }
   try {
     const r = await fetch(API + '/api/contact-pages/' + encodeURIComponent(username), { headers: { 'X-Admin-Key': adminKey } });
     const d = await r.json();

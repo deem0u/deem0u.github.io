@@ -3498,11 +3498,40 @@ hr.dest-sep-form {
     border-left: none;
     min-width: 0;
   }
+  /* In drawer: only active tab and open Resources get highlight; no sticky hover on others */
+  .app-header-actions .app-nav.tabs .tab:not(.active):hover {
+    color: var(--color-text-secondary);
+    background: transparent;
+  }
+  .app-header-actions .nav-dropdown:not(.open) .nav-dropdown-trigger {
+    color: var(--color-text-secondary);
+    background: none;
+    box-shadow: none;
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+  .app-header-actions .nav-dropdown:not(.open) .nav-dropdown-trigger:hover {
+    color: var(--color-text-secondary);
+    background: transparent;
+  }
+  .app-header-actions .nav-dropdown.open .nav-dropdown-trigger {
+    color: var(--accent-teal, #1ac5b0);
+    font-weight: 500;
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+    border-bottom: 2px solid var(--accent-teal, #1ac5b0);
+    margin-bottom: -2px;
+  }
   .app-header-actions .nav-dropdown {
     align-self: stretch;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     min-height: 0;
+  }
+  .app-header-actions .nav-dropdown-trigger.tab {
+    width: 100%;
+    text-align: left;
   }
   .app-header-actions .nav-dropdown-panel {
     position: static;

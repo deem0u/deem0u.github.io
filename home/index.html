@@ -261,10 +261,14 @@
     .signup-step2-card .step2-help-toggle-wrap { margin-left: 0; align-items: center; }
     .signup-step2-card .card-body { padding: var(--space-3) var(--space-3); width: 100%; min-width: 0; box-sizing: border-box; }
     .signup-step2-card .form-row { grid-template-columns: 1fr; }
-    /* Step 2 Add Contact: stack Destination Name, From, Till on narrow viewports */
-    .signup-step2-card .form-row.form-row-dest-name-dates { grid-template-columns: 1fr; }
+    /* Step 2 Destination: row 1 = Name, row 2 = From | Till, then Address, Email, Contact number */
+    .signup-step2-card .form-row.form-row-dest-name-dates { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+    .signup-step2-card .form-row.form-row-dest-name-dates .form-group:first-child { grid-column: 1 / -1; }
     .signup-step2-card .form-row.form-row-dest-name-dates .dest-from-date,
-    .signup-step2-card .form-row.form-row-dest-name-dates .dest-to-date { max-width: none; }
+    .signup-step2-card .form-row.form-row-dest-name-dates .dest-to-date { max-width: none; width: 100%; box-sizing: border-box; }
+    .signup-step2-card .destination-block .form-row:has(.dest-phone) { display: flex; flex-direction: column; }
+    .signup-step2-card .destination-block .form-row:has(.dest-phone) .form-group:first-child { order: 2; }
+    .signup-step2-card .destination-block .form-row:has(.dest-phone) .form-group:last-child { order: 1; }
     .signup-step2-card .form-actions { flex-direction: column; gap: 0.5rem; }
     .signup-step2-card .form-actions .btn { width: 100%; }
     #signup-otp-card .card-body { padding: var(--space-3) var(--space-3); }
