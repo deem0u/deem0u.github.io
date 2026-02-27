@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marama – Guest information</title>
+  <style>
+    /* ---- Reset & base ---- */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: #f8f8f8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Skip link (a11y) ---- */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #1a1a1a;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 100;
+      border-radius: 0.25rem;
+      transition: top 0.2s;
+    }
+    .skip-link:focus {
+      top: 0.5rem;
+      outline: 2px solid #1a1a1a;
+      outline-offset: 2px;
+    }
+
+    /* ---- Layout ---- */
+    .page {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 0 1rem 3rem;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      padding: 1.25rem 0;
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* ---- Navigation (mobile-first) ---- */
+    .nav {
+      padding: 0.75rem 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .nav-list {
+      display: flex;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      min-width: min-content;
+    }
+    .nav-list a {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      min-height: 2.75rem;
+      line-height: 1.75rem;
+      color: #1a1a1a;
+      text-decoration: none;
+      background: #eee;
+      border-radius: 2rem;
+      white-space: nowrap;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-list a:hover,
+    .nav-list a:focus {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .nav-list a:focus {
+      outline: 2px solid #1a1a1a;
+      outline-offset: 2px;
+    }
+
+    /* ---- Main content ---- */
+    main {
+      padding-top: 1rem;
+    }
+    section {
+      margin-bottom: 2rem;
+      background: #fff;
+      border-radius: 0.5rem;
+      padding: 1.25rem 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    section:target {
+      scroll-margin-top: 5rem;
+    }
+    section h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    section p {
+      margin: 0 0 0.75rem;
+    }
+    section p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ---- Images ---- */
+    .figure {
+      margin: 1rem 0;
+    }
+    .figure img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 0.375rem;
+      background: #eee;
+    }
+    .figure .caption {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: #555;
+    }
+    .figure .caption code {
+      font-size: 0.8125rem;
+      background: #eee;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.2rem;
+    }
+
+    /* ---- FAQ-style blocks (optional) ---- */
+    .faq-item {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid #eee;
+    }
+    .faq-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .faq-item h3 {
+      margin: 0 0 0.35rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .faq-item p {
+      margin: 0;
+      font-size: 0.9375rem;
+    }
+
+    /* ---- Lists ---- */
+    ul, ol {
+      margin: 0 0 0.75rem;
+      padding-left: 1.25rem;
+    }
+    li {
+      margin-bottom: 0.25rem;
+    }
+
+    /* ---- Strong emphasis ---- */
+    .highlight {
+      background: #fef3c7;
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.2rem;
+    }
+
+    /* ---- Wider viewport ---- */
+    @media (min-width: 640px) {
+      .page { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .header h1 { font-size: 1.75rem; }
+      section { padding: 1.5rem 1.25rem; }
+      section h2 { font-size: 1.375rem; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <div class="page">
+    <header class="header">
+      <h1>Marama – Guest information</h1>
+      <nav class="nav" aria-label="Page sections">
+        <ul class="nav-list">
+          <li><a href="#wifi">Wi‑Fi</a></li>
+          <li><a href="#appliances">Appliances</a></li>
+          <li><a href="#cats">Cats</a></li>
+          <li><a href="#access">Access</a></li>
+          <li><a href="#doors">Doors</a></li>
+          <li><a href="#getting-around">Getting around</a></li>
+          <li><a href="#emergency">Emergency</a></li>
+          <li><a href="#house-info">House info</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section id="wifi" aria-labelledby="wifi-heading">
+        <h2 id="wifi-heading">Wi‑Fi</h2>
+        <p><strong>Network:</strong> <span class="highlight">YourNetworkName</span></p>
+        <p><strong>Password:</strong> <span class="highlight">YourPassword</span></p>
+        <div class="figure">
+          <img src="assets/wifi.jpg" alt="Wi‑Fi details card" width="400" height="200">
+          <p class="caption">Add a photo of your Wi‑Fi card if you have one. Save as <code>assets/wifi.jpg</code>.</p>
+        </div>
+      </section>
+
+      <section id="appliances" aria-labelledby="appliances-heading">
+        <h2 id="appliances-heading">Appliances</h2>
+        <div class="faq-item">
+          <h3>Kitchen / oven</h3>
+          <p>Add instructions for operating the oven and hob. Include any quirks or safety notes.</p>
+          <div class="figure">
+            <img src="assets/oven.jpg" alt="Oven controls" width="400" height="300">
+            <p class="caption">Photo of controls helps guests find the right buttons. Save as <code>assets/oven.jpg</code>.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <h3>Washing machine</h3>
+          <p>Which programme to use for everyday laundry, and where to find detergent.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Heating / thermostat</h3>
+          <p>How to adjust temperature and any schedules guests should know about.</p>
+        </div>
+      </section>
+
+      <section id="getting-around" aria-labelledby="getting-around-heading">
+        <h2 id="getting-around-heading">Getting around</h2>
+        <p>Parking, keys, public transport, and local tips.</p>
+        <ul>
+          <li>Where to park</li>
+          <li>Key collection / lockbox</li>
+          <li>Bus or train options</li>
+        </ul>
+        <div class="figure">
+          <img src="assets/map.jpg" alt="Map or directions" width="400" height="300">
+          <p class="caption">Optional: map or photo showing parking or entrance. Save as <code>assets/map.jpg</code>.</p>
+        </div>
+      </section>
+
+      <section id="cats" aria-labelledby="cats-heading">
+        <h2 id="cats-heading">Cats</h2>
+        <p>Information about the house cats: names, feeding, where they sleep, and any rules (e.g. indoor only, no human food).</p>
+        <div class="faq-item">
+          <h3>Feeding</h3>
+          <p>When and what to feed. Where food and bowls are kept.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Litter</h3>
+          <p>Litter tray location and how often to check or change.</p>
+        </div>
+        <div class="figure">
+          <img src="assets/cats.jpg" alt="House cats" width="400" height="300">
+          <p class="caption">Photo of the cats so guests can recognise them. Save as <code>assets/cats.jpg</code>.</p>
+        </div>
+      </section>
+
+      <section id="access" aria-labelledby="access-heading">
+        <h2 id="access-heading">Access</h2>
+        <p>How to get to the property: gate codes, driveway, steps, and any access restrictions.</p>
+        <ul>
+          <li>Gate or entry code</li>
+          <li>Driveway and parking on arrival</li>
+          <li>Steps or ramps; accessibility notes</li>
+        </ul>
+        <div class="figure">
+          <img src="assets/access.jpg" alt="Property access or entrance" width="400" height="300">
+          <p class="caption">Photo of the entrance or gate if helpful. Save as <code>assets/access.jpg</code>.</p>
+        </div>
+      </section>
+
+      <section id="doors" aria-labelledby="doors-heading">
+        <h2 id="doors-heading">Doors</h2>
+        <p>Which doors to use to enter and exit, how locks and keys work, and any doors that should stay closed (e.g. cat room, storage).</p>
+        <div class="faq-item">
+          <h3>Front / main entry</h3>
+          <p>Which key or code, and how the lock works.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Doors to keep closed</h3>
+          <p>Any rooms or external doors that must stay shut for safety or pets.</p>
+        </div>
+        <div class="figure">
+          <img src="assets/doors.jpg" alt="Main door or lock" width="400" height="300">
+          <p class="caption">Optional: photo of main door or lock. Save as <code>assets/doors.jpg</code>.</p>
+        </div>
+      </section>
+
+      <section id="emergency" aria-labelledby="emergency-heading">
+        <h2 id="emergency-heading">Emergency</h2>
+        <p><strong>Your contact:</strong> <span class="highlight">Your phone number</span></p>
+        <p>Fuse box location and how to reset trip switches. Nearest hospital or urgent care if useful.</p>
+        <ul>
+          <li>Emergency services: 111 (NZ)</li>
+          <li>Address for emergency call-outs</li>
+        </ul>
+      </section>
+
+      <section id="house-info" aria-labelledby="house-info-heading">
+        <h2 id="house-info-heading">House info</h2>
+        <p>Check-out time, rubbish days, recycling, and any house rules (e.g. shoes off, quiet hours).</p>
+        <div class="faq-item">
+          <h3>Rubbish & recycling</h3>
+          <p>Which day bins go out and what goes in each bin.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Check-out</h3>
+          <p>Time and what to do with keys and linen.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
