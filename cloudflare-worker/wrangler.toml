@@ -1,0 +1,25 @@
+name = "contact-page-editor"
+main = "./worker.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "EDIT_KEYS_KV"
+id = "6cb625208ddb4313b95972ca16693098"
+
+[vars]
+EMAIL_RELAY_URL = "https://deem0u-github-io.vercel.app/api/send"
+
+# Required secrets (set via Cloudflare dashboard):
+# GITHUB_TOKEN - Your GitHub Personal Access Token with 'repo' scope
+# JWT_SECRET - Long random string (32+ chars) for signing user JWTs. Required for user sign-in; no other secret name is used.
+# Optional (internal setup endpoint - enable only when needed):
+# ADMIN_SETUP_SECRET - Long random string (32+ chars). Required to call POST /api/internal/set-admin-credentials.
+# SETUP_ROUTE_ENABLED - Set to 'true' to enable the setup endpoint; when unset or not 'true', the route returns 404. See SETUP-GUIDE.md.
+# Optional (for automated email):
+# EMAIL_RELAY_URL - Vercel relay URL, e.g. https://your-project.vercel.app/api/send
+# EMAIL_RELAY_SECRET - Same value as RELAY_SECRET in Vercel
+# EMAIL_SEND_RESTRICTED - Set to 'true' or '1' to divert all emails to deem0u.github.io@gmail.com (unset or 'false' = send to real recipient)
+# Optional (security remediations):
+# ALLOWED_ORIGINS - Comma-separated CORS origins. Default includes production + localhost (3000, 8080, 5173). Set to override the full list.
+# RATE_LIMIT_DISABLED - Set to '1' to disable rate limiting (e.g. for local testing).
+# DEBUG - Set to '1' to expose real error.message in 500 responses (do not use in production).

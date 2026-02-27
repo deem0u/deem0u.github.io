@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <title>DigiCon iD - FAQ</title>
+  <meta name="description" content="Frequently asked questions about DigiCon iD: what it is, your data, QR codes, NFC, account and contact pages, uptime and support.">
+  <meta property="og:title" content="DigiCon iD - FAQ">
+  <meta property="og:description" content="Frequently asked questions about DigiCon iD: what it is, your data, QR codes, NFC, account and contact pages, uptime and support.">
+  <meta property="og:url" content="https://deem0u.github.io/resources/faq/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DigiCon iD">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="DigiCon iD - FAQ">
+  <meta name="twitter:description" content="Frequently asked questions about DigiCon iD: what it is, your data, QR codes, NFC, account and contact pages, uptime and support.">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .app-nav.tabs { margin-bottom: 0; }
+    .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
+    .resource-page main { padding: 2rem 1.5rem; max-width: 720px; margin: 0 auto; }
+    .resource-page h2 { font-size: 1.25rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border); }
+    .resource-page h3 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
+    .resource-page p { color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+    .resource-page code { font-family: ui-monospace, monospace; font-size: 0.9em; background: var(--grey-100, #eee); padding: 0.15rem 0.4rem; border-radius: 4px; }
+    .faq-image-placeholder { margin: 1.25rem 0; text-align: center; }
+    .faq-image-placeholder-inner { display: inline-block; min-width: 200px; min-height: 120px; background: var(--color-bg-muted, #f3f4f6); border: 1px dashed var(--color-border, #ccc); border-radius: var(--radius-md, 6px); color: var(--color-text-secondary, #6b7280); font-size: 0.875rem; line-height: 120px; }
+  </style>
+</head>
+<body class="resource-page">
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <span class="app-logo-icon app-logo-icon-mascot" aria-hidden="true">
+            <svg viewBox="0 0 80 80" width="96" height="96" fill="none" xmlns="http://www.w3.org/2000/svg" class="app-header-logo-svg">
+              <circle cx="40" cy="42" r="32" fill="none" stroke="#e455ae" stroke-width="1.5" opacity="0.2"/>
+              <rect x="20" y="12" width="40" height="56" rx="9" fill="#272932"/>
+              <rect x="25" y="18" width="30" height="44" rx="5" fill="#ffffff"/>
+              <ellipse cx="34" cy="32" rx="5" ry="6" fill="#e455ae"/>
+              <ellipse cx="46" cy="32" rx="5" ry="6" fill="#e455ae"/>
+              <ellipse cx="34" cy="32" rx="3.5" ry="4.5" fill="#ffffff"/>
+              <ellipse cx="46" cy="32" rx="3.5" ry="4.5" fill="#ffffff"/>
+              <circle cx="35" cy="33" r="2.5" fill="#272932"/>
+              <circle cx="47" cy="33" r="2.5" fill="#272932"/>
+              <path d="M 34 46 Q 40 52 46 46" stroke="#272932" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="app-logo-text-wrap"><span class="digicon-logo app-logo-text">DigiCon <span class="i-dot" aria-hidden="true">ı</span>D</span><span class="app-logo-text-suffix">FAQ</span></span>
+        </div>
+        <button type="button" class="header-nav-toggle" aria-label="Open menu" aria-expanded="false" id="header-nav-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="app-header-actions">
+          <nav class="app-nav tabs">
+            <a href="/home/" class="tab">Home</a>
+            <a href="/how-it-works/" class="tab">How It Works</a>
+            <div class="nav-dropdown">
+              <button type="button" class="nav-dropdown-trigger tab active" aria-haspopup="true" aria-expanded="false" id="nav-resources-btn">Resources <span class="nav-dropdown-chevron" aria-hidden="true">▾</span></button>
+              <div class="nav-dropdown-panel" id="nav-resources-menu" role="menu" aria-labelledby="nav-resources-btn">
+                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">What are QR Codes and NFC Tags</a>
+                <a href="/resources/how-to-save-to-nfc-tag/" role="menuitem" class="nav-dropdown-item">How to save to an NFC Tag</a>
+                <a href="/resources/faq/" role="menuitem" class="nav-dropdown-item">FAQ</a>
+              </div>
+            </div>
+            <a href="https://deem0u.github.io/myaccount/" class="tab">My Account</a>
+            <a href="/contact/" class="tab">Contact</a>
+          </nav>
+          <span class="header-signout-slot" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="header-drawer-backdrop" id="header-drawer-backdrop" aria-hidden="true"></div>
+    </header>
+
+    <main class="app-main">
+      <h1 style="font-size: 1.5rem; margin-bottom: 1rem;">Frequently Asked Questions</h1>
+
+      <h2>What is DigiCon iD?</h2>
+      <p><strong>DigiCon iD</strong> stands for <strong>Digital Contact and Identification</strong>. That’s literally what it is. Think of the old-school physical name tag or “If found, contact…” label—we take that idea and turn it into a digital version. One link, one QR code (or NFC tag), and whoever finds your stuff can reach you without your private details being plastered on the outside.</p>
+      <p>Digitising something as simple as contact info has its perks: you can <strong>update it anytime</strong> (new number? New trip? Just edit the page), <strong>reuse the same tag</strong> for different trips or purposes, and add <strong>extra context</strong>—destination, notes, whatever helps. No reprinting, no crossing things out with a biro. It’s still “contact me” and “who I am,” just in a format that doesn’t go out of date the moment you change your phone number.</p>
+      <figure class="faq-image-placeholder">
+        <img src="IMG_8898.JPG" alt="" width="720" height="auto" style="max-width:100%; height:auto; border-radius:8px; border:1px solid var(--color-border);">
+      </figure>
+
+      <h2>What information do you ask for?</h2>
+      <p>We ask for the <strong>minimum</strong> that anyone would typically want if they’re trying to figure out who you are and how to reach you—enough to identify you and get in touch, without asking for anything sensitive or confidential. You get a fixed set of typical fields (name, email, phone, destination details, extra notes, etc.). You can't add custom fields, but you can <strong>omit the optional ones</strong> if you want—at this stage only <strong>first name, last name, and email</strong> are mandatory on your contact page. So it's as much or as little as that set allows, and you can tweak it whenever.</p>
+
+      <h2>Why does this site have a GitHub Pages URL? Do you not have a proper domain?</h2>
+      <p>Short answer: <strong>I’m just one person, and this is a side project.</strong> I built DigiCon iD in my spare time and host it on GitHub Pages—hence the <code>deem0u.github.io</code> address instead of a snazzy custom domain. It’s the same tech that lots of devs and small projects use: free hosting, reliable, and it does the job. So yeah, the URL might look a bit “developer portfolio” rather than “big company,” but that’s because it’s genuinely a personal thing. No venture capital, no startup—just me and a project I thought was useful.</p>
+
+      <h2>What about uptime and service levels? Will the site always be available?</h2>
+      <p>DigiCon iD is aimed at a pretty niche problem—how visible and exposed your contact details are on luggage tags and name-tag stickers. It’s built and hosted on <strong>free, industry-recognised tools</strong> (e.g. GitHub Pages, Cloudflare Workers), which are reliable but come with <strong>limits on capacity</strong>. So the difference between, say, 50 people using the site occasionally (e.g. once a month) and 500 people hitting it every week is real. I’ve chosen the lowest-cost approach to serve a <strong>small number of users</strong> who find this approach right for them. There are <strong>no uptime guarantees or SLAs</strong>—the service is provided on a best-effort basis. If there’s significant enough demand in the future, I may look at things like proper domain registration and increasing the site’s ability to handle more traffic. For now, please be aware that availability and capacity are limited.</p>
+
+      <h2>How do you keep my data safe?</h2>
+      <p>I take it seriously. In practice that means: following <strong>sensible coding and security practices</strong> (the kind of stuff that’s standard when you build login systems and store user data), doing <strong>stress testing and risk audits</strong> so we spot weak points before they become problems, and using <strong>well-understood, battle-tested ways</strong> to build and host a site like this. I’m not reinventing the wheel—I’m leaning on the same approaches that are used elsewhere for handling accounts and sensitive info. Think “boring, careful, and by the book” rather than “experimental.” For the legal nitty-gritty, see the <a href="/terms-and-privacy/">Terms of Use &amp; Privacy Policy</a>.</p>
+
+      <h2>How do I get my contact page and QR code?</h2>
+      <p>Sign up or sign in via <a href="https://deem0u.github.io/myaccount/">My Account</a>. Create and edit your contact page there, and grab your QR code (or copy the link) to print, stick on a tag, or write to an NFC tag. You can do it during signup or anytime after.</p>
+
+      <h2>Who can see my contact information?</h2>
+      <p>Only people who open your unique link or scan your QR (or tap your NFC tag) see your contact page. There’s no public directory. You decide what’s on the page and you can change it whenever you like in My Account.</p>
+
+      <h2>How do I delete or deactivate my account?</h2>
+      <p>There’s no self-service “delete account” button—account removal is done manually. If you want your account deleted or deactivated (and your data removed), get in touch via the <a href="/contact/">Contact</a> page or email <a href="mailto:deem0u.github.io@gmail.com">deem0u.github.io@gmail.com</a> and say what you’d like done. I’ll process the request as soon as I can.</p>
+
+      <h2>Where can I learn more about QR codes and NFC?</h2>
+      <p>Check out our <a href="/resources/guide-to-qr-codes/">What are QR Codes and NFC Tags</a>—it walks you through using your QR, printing and sticking it on stuff, and using NFC tags. For step-by-step instructions on writing to a tag, see <a href="/resources/how-to-save-to-nfc-tag/">How to save to an NFC Tag</a>.’t </p>
+    </main>
+  </div>
+  <script src="/nav-drawer.js"></script>
+</body>
+</html>

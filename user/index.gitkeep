@@ -1,0 +1,1 @@
+# Keeps user/ in git. Per-user dirs use user/<username>/index.gitkeep; contact pages are user/<username>/<urlslug>.html

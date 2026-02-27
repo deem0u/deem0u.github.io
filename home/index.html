@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>DigiCon iD - Home</title>
+  <meta name="description" content="Your details. Your control. Create a digital contact page and QR code for luggage and tags—discreet, updatable, no ugly labels.">
+  <meta property="og:title" content="DigiCon iD - Home">
+  <meta property="og:description" content="Your details. Your control. Create a digital contact page and QR code for luggage and tags—discreet, updatable, no ugly labels.">
+  <meta property="og:url" content="https://deem0u.github.io/home/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DigiCon iD">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="DigiCon iD - Home">
+  <meta name="twitter:description" content="Your details. Your control. Create a digital contact page and QR code for luggage and tags—discreet, updatable, no ugly labels.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" integrity="sha384-Izc791esqyEy3BEIC42q7jbE0AaOkACziN+dyyXgYeDmpeMCLz0xA+xYN3aCd5zz" crossorigin="anonymous"></script>
+  <style>
+  /* DigiCon iD wordmark per DIGICON-ID-BRAND-TYPOGRAPHY.md – fits header (96px), slightly larger than 1/3 icon height */
+  .app-header .digicon-logo {
+    font-family: 'Inter', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: #000000;
+    letter-spacing: -0.02em;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+  .app-header .digicon-logo .i-dot {
+    position: relative;
+    display: inline-block;
+    margin-left: 0.2em; /* visible space after "DigiCon" for "DigiCon iD" */
+  }
+  .app-header .digicon-logo .i-dot::after {
+    content: '';
+    position: absolute;
+    width: 0.26em;
+    height: 0.26em;
+    background: #00c9b7;
+    border-radius: 50%;
+    top: -0.04em;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .app-header .app-logo-icon-mascot svg,
+  .app-header .app-header-logo-svg { width: 96px !important; height: 96px !important; min-width: 96px; min-height: 96px; }
+  @media (max-width: 640px) {
+    .app-header .app-logo-icon-mascot svg,
+    .app-header .app-header-logo-svg { width: 64px !important; height: 64px !important; min-width: 64px; min-height: 64px; }
+  }
+  .app-nav.tabs { margin-bottom: 0; }
+  .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
+  .consent-text { font-size: 0.9rem; line-height: 1.6; }
+  .consent-group { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
+  .consent-group input[type="checkbox"] { margin-top: 0.35em; flex-shrink: 0; width: 1.25rem; height: 1.25rem; }
+  .secret-q-row { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+  .secret-q-select { width: 100%; min-height: 3rem; }
+  .secret-q-answer { width: 100%; min-height: 2.5rem; }
+  .secret-q-select option:disabled { opacity: 0.25; color: #999; background: #f5f5f5; }
+  .home-two-col { display: flex; gap: 2rem; max-width: 1100px; margin: 0 auto; padding: 1rem; align-items: stretch; }
+  .home-left-col { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+  .home-right-col { flex: 1; max-width: 480px; min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .home-hero { text-align: center; max-width: 480px; }
+  .home-heading { font-size: 1.75rem; margin-bottom: 0.5rem; }
+  .home-heading .highlight {
+    color: var(--accent-teal, #1ac5b0);
+  }
+  .home-subheading { font-size: 1.1rem; color: var(--color-text-secondary, #6b7280); margin-bottom: 1.5rem; }
+  .home-blurb { font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+  .home-hero-mascot-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .home-hero-mascot {
+    width: 200px;
+    height: 200px;
+    animation: home-float 3s ease-in-out infinite;
+  }
+  @keyframes home-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  #home-mascot-col { display: none; }
+  .home-two-col.signup-steps-active #home-mascot-col { display: none; }
+  .home-actions { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+  .home-action-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; width: 165px; min-width: 165px; padding: var(--space-3) var(--space-4); font-size: var(--text-sm); }
+  .home-action-btn.btn-lg { padding: var(--space-3) var(--space-4); font-size: var(--text-sm); }
+  .home-action-btn .btn-main { font-size: 0.95rem; font-weight: 600; }
+  .home-action-btn .btn-sub { font-size: 0.7rem; opacity: 0.85; margin-top: 0.15rem; }
+  .home-success-banner { padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-weight: 500; }
+  .home-success-details { margin-bottom: 1.5rem; }
+  .home-success-details ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
+  .home-success-details ul li { margin-bottom: 0.5rem; }
+  .home-success-details .success-important { font-weight: bold; color: #C00000; margin: 1rem 0; }
+  .home-success-details .success-heading { font-weight: 600; margin: 1rem 0 0.5rem; }
+  .step4-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 9999px; margin-left: 0.35rem; vertical-align: middle; }
+  .step4-badge-verified { background: rgba(26, 197, 176, 0.2); color: var(--accent-teal, #0d9488); }
+  .step4-badge-not-verified { background: rgba(212, 160, 23, 0.2); color: #b45309; }
+  #signup-step4-card .success-heading { font-weight: 700; color: var(--accent-purple, #9370db); }
+  .step4-intro { text-align: center; margin-bottom: 1.25rem; }
+  .home-success-details ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
+  .home-success-details ol li { margin-bottom: 0.5rem; }
+  .home-success-action { margin-top: 1.5rem; }
+  .home-success-action p { margin-bottom: 1rem; }
+  .home-success-buttons { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; align-items: center; }
+  .home-success-buttons .btn-right { margin-left: auto; }
+  .home-success-active .home-left-col { display: none; }
+  .home-success-active .home-right-col { display: none; }
+  .home-success-active #success-section { flex: 1; max-width: 100%; }
+  .signup-progress { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; padding: 0.5rem 0; }
+  .signup-progress .step-pill { flex: 1; min-width: 9rem; padding: 0.5rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; text-align: center; background: var(--color-bg-muted, #f3f4f6); color: var(--color-text-secondary, #6b7280); white-space: nowrap; }
+  .signup-progress .step-pill.active { background: var(--accent-teal, #0d9488); color: white; }
+  .signup-progress .step-pill.done { background: var(--color-success, #16a34a); color: white; }
+  .signup-form-card { border-radius: 1rem; overflow: hidden; }
+  .signup-form-card .card-header { text-align: center; padding-bottom: 0.5rem; }
+  .signup-form-card .card-title { font-size: 1.75rem; font-weight: 700; }
+  .signup-form-card .form-actions .btn { width: 100%; }
+  .signup-form-card .form-actions { flex-direction: column; gap: 0.75rem; }
+  .signup-signin-prompt { text-align: center; margin-top: 1rem; font-size: 0.95rem; }
+  .signup-signin-prompt .signin-link { background: none; border: none; padding: 0; font-size: inherit; color: var(--color-text-secondary, #6b7280); text-decoration: underline; cursor: pointer; }
+  .signup-signin-prompt .signin-link:hover { color: var(--accent-teal, #0d9488); }
+  /* Step 0: larger bold labels, no hints, no * */
+  .signup-step0-card .form-label { font-weight: 700; }
+  .signup-step0-card .form-required { display: none; }
+  .signup-step0-card .form-hint { display: none; }
+  .signup-step0-card .password-input-wrap { position: relative; display: block; }
+  .signup-step0-card .password-input-wrap .form-input { padding-right: 4.5rem; }
+  .signup-step0-card .password-toggle { position: absolute; right: var(--space-2); top: 50%; transform: translateY(-50%); padding: var(--space-1) var(--space-2); margin: 0; background: none; border: none; border-radius: var(--radius-sm); cursor: pointer; color: var(--color-text-muted); display: inline-flex; align-items: center; justify-content: center; }
+  .signup-step0-card .password-toggle:hover { color: var(--color-text); }
+  .signup-step0-card .password-toggle:focus { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
+  .signup-step0-card .password-toggle-icon { display: inline-flex; line-height: 0; }
+  .signup-step0-card .password-toggle-icon.hidden { display: none; }
+  .signup-step0-card #signup-step0-btn { background: var(--accent-teal, #1ac5b0); color: var(--white, #fff); }
+  .signup-step0-card #signup-step0-btn:hover:not(:disabled) { background: var(--accent-teal-hover, #15a894); }
+  /* When Step 1+ is visible: hide hero, show only form; compact spacing to avoid scroll */
+  .home-two-col.signup-steps-active .home-left-col { display: none; }
+  .home-two-col.signup-steps-active .home-right-col { max-width: 560px; margin: 0 auto; }
+  .signup-step1-card .card-body { padding: var(--space-3) var(--space-4); }
+  .signup-step1-card .form-group { margin-bottom: var(--space-2); }
+  .signup-step1-card .form-group:last-of-type { margin-bottom: 0; }
+  .signup-step1-card .step1-account-email-row { margin-bottom: var(--space-3); margin-top: 0; }
+  .signup-step1-card .form-input-readonly { background: var(--color-bg-muted, #f3f4f6); color: var(--color-text); min-height: 2.5rem; display: flex; align-items: center; }
+  .signup-step1-card .form-label { margin-bottom: 0.35rem; }
+  .signup-step1-card .form-hint { margin-top: 0.25rem; margin-bottom: 0; }
+  .signup-step1-card .form-hint-sq { margin-bottom: 0.5rem; }
+  .signup-step1-card .secret-q-row { margin-bottom: 0.6rem; }
+  .signup-step1-card .secret-q-select { min-height: 2.5rem; }
+  .signup-step1-card .secret-q-answer { min-height: 2.25rem; }
+  .signup-steps-section .signup-progress { margin-bottom: var(--space-2); }
+  .signup-step1-card #secret-questions-container .secret-q-row:last-child { margin-bottom: 0; }
+  .signup-step1-card .form-actions { margin-top: var(--space-2); }
+  .signup-step1-card .consent-group { margin-top: 0; }
+  .signup-step1-card .form-actions .btn { padding: 0.5rem 1rem; }
+  .signup-step1-card #signup-step1-alert { margin-top: 0.5rem; margin-bottom: 0; }
+  .signup-step1-card .consent-text { font-size: 0.85rem; line-height: 1.5; }
+  /* Signup Step 2: match Add Contact Page form layout/formatting from myaccount editor */
+  .signup-step2-card .card-header.signup-step2-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding: var(--space-4) var(--space-5); text-align: left; }
+  .signup-step2-card .card-header .card-title { margin: 0; }
+  .signup-step2-card { width: 100%; min-width: 0; box-sizing: border-box; }
+  .signup-step2-card .card-body { padding: var(--space-4) var(--space-5); width: 100%; min-width: 0; box-sizing: border-box; overflow-wrap: break-word; }
+  .signup-step2-card .form-hint.step2-hint { overflow-wrap: break-word; word-break: break-word; max-width: 100%; }
+  .signup-step2-card .form-group { margin-bottom: 0.5rem; }
+  .signup-step2-card .form-group:last-child { margin-bottom: 0; }
+  .signup-step2-card .form-label { margin-bottom: 0.2rem; font-size: 0.8125rem; font-weight: 700; }
+  .signup-step2-card .form-hint { margin-top: 0.2rem; margin-bottom: 0.35rem; min-height: 0; line-height: 1.4; font-size: 0.8125rem; }
+  .signup-step2-card.step2-hints-hidden .form-hint.step2-hint { display: none !important; }
+  .signup-step2-card .form-hint-row { display: block; margin-top: 0.2rem; margin-bottom: 0.35rem; }
+  .signup-step2-card .form-hint-above { display: block; margin-top: 0.15rem; margin-bottom: 0.25rem; }
+  .signup-step2-card .form-row.form-row-with-hint { margin-bottom: 0; }
+  .signup-step2-card .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .signup-step2-card .form-section { padding: 0.4rem 0.5rem; margin-top: 0; background: var(--color-bg-subtle, #f9fafb); border: 1px solid var(--color-border, #eee); border-radius: var(--radius-md, 6px); }
+  .signup-step2-card .form-section .form-group { margin-bottom: 0.35rem; }
+  .signup-step2-card .form-section .form-group:last-child { margin-bottom: 0; }
+  .signup-step2-card .form-actions { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--color-border, #eee); }
+  .signup-step2-card .form-input, .signup-step2-card .form-textarea { padding: 0.35rem 0.5rem; font-size: 0.875rem; }
+  .signup-step2-card .form-textarea.form-textarea-additional { min-height: 4.5rem; resize: none; }
+  .signup-step2-card .contact-page-url-anatomy { width: 100%; min-width: 0; }
+  .signup-step2-card .contact-page-url-anatomy .url-edit-prefix { font-size: 0.875rem; color: var(--color-text-secondary, #666); white-space: nowrap; flex-shrink: 0; }
+  .signup-step2-card .contact-page-url-anatomy .url-anatomy-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem; width: 100%; min-width: 0; }
+  .signup-step2-card .contact-page-url-anatomy .url-slug-input { color: var(--accent-purple, #9370db); font-weight: 700; min-width: 14ch; flex: 1 0 14ch; max-width: 100%; box-sizing: border-box; }
+  .signup-step2-card .contact-page-url-anatomy .url-anatomy-row.url-slug-wrapped .url-slug-input { flex: 1 1 100%; min-width: 14ch; width: 100%; }
+  .signup-step2-card .step2-url-username { color: var(--accent-teal, #1ac5b0); font-weight: 700; }
+  .step2-help-toggle-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-left: auto; }
+  .step2-help-toggle-label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary, #6b7280); display: inline-flex; align-items: center; gap: 0.25rem; }
+  .step2-help-toggle-label .step2-help-toggle-info-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em; flex-shrink: 0; }
+  .step2-help-toggle { display: block; padding: 0; border: none; background: none; cursor: pointer; font-size: inherit; }
+  .step2-help-toggle-track { display: flex; align-items: center; width: 3.5rem; height: 1.75rem; border-radius: 9999px; background: #9ca3af; padding: 0.2rem; box-sizing: border-box; position: relative; transition: background 0.2s; }
+  .step2-help-toggle[aria-checked="true"] .step2-help-toggle-track { background: #22c55e; }
+  .step2-help-toggle-thumb { width: 1.35rem; height: 1.35rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; flex-shrink: 0; }
+  .step2-help-toggle[aria-checked="true"] .step2-help-toggle-thumb { transform: translateX(1.75rem); }
+  .step2-help-toggle-on,
+  .step2-help-toggle-off { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; pointer-events: none; }
+  .step2-help-toggle-on { left: 0.35rem; right: auto; justify-content: flex-start; color: #166534; }
+  .step2-help-toggle-off { right: 0.35rem; left: auto; justify-content: flex-end; color: #374151; }
+  .step2-help-toggle[aria-checked="false"] .step2-help-toggle-on { opacity: 0; }
+  .step2-help-toggle[aria-checked="true"] .step2-help-toggle-off { opacity: 0; }
+  .signup-step2-card .step2-skip-wrap { margin-left: auto; display: flex; justify-content: flex-end; }
+  /* Destination Name + From/Till: same 3-column row as admin/myaccount (1fr 12ch 12ch) */
+  .signup-step2-card .form-row.form-row-dest-name-dates { display: grid; grid-template-columns: 1fr 12ch 12ch; gap: 0.5rem 0.75rem; align-items: start; min-width: 0; }
+  .signup-step2-card .form-row.form-row-dest-name-dates .form-group { min-width: 0; }
+  .signup-step2-card .form-row.form-row-dest-name-dates .dest-from-date,
+  .signup-step2-card .form-row.form-row-dest-name-dates .dest-to-date { width: 100%; max-width: 12ch; min-width: 0; box-sizing: border-box; }
+  .signup-step2-card .btn-add-more { background: transparent; color: var(--color-text-secondary, #6b7280); border: 1px solid var(--color-border, #e5e7eb); font-weight: 500; }
+  .signup-step2-card .btn-add-more:hover { background: var(--color-bg-subtle, #f9fafb); border-color: var(--color-text-secondary, #9ca3af); color: var(--color-text, #111); }
+  @media (max-width: 768px) {
+    .signup-step2-card .form-row { grid-template-columns: 1fr; }
+  }
+  /* Signup OTP (verify email): spacing above yellow box; actions row with skip aligned */
+  .signup-otp-banner { margin-top: var(--space-4, 1rem); }
+  .signup-otp-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+  .signup-otp-skip { margin-left: auto; }
+  /* Generate QR step: yellow NFC banner; footer back link like skip */
+  .modal-qr-nfc-banner { margin-top: var(--space-4, 1rem); }
+  .step3-qr-footer-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  @media (max-width: 768px) {
+    .home-two-col { flex-direction: column; }
+    .home-left-col { min-height: auto; padding: 1rem 0; }
+    .home-right-col { max-width: none; min-height: auto; justify-content: flex-start; }
+  }
+  /* Signup: mobile-optimised step badges, cards and form */
+  @media (max-width: 640px) {
+    #signup-step0-section,
+    #signup-steps-section { width: 100%; max-width: none; }
+    .signup-progress {
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1rem;
+      padding: 0.35rem 0;
+    }
+    .signup-progress .step-pill {
+      min-width: 0;
+      flex: 1 1 calc(50% - 0.2rem);
+      font-size: 0.75rem;
+      padding: 0.4rem 0.35rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .signup-form-card .card-body,
+    .signup-step0-card .card-body { padding: var(--space-4) var(--space-3); }
+    .signup-form-card .card-title { font-size: 1.35rem; }
+    .signup-step1-card .card-body { padding: var(--space-3) var(--space-3); }
+    .signup-step1-card .form-group { margin-bottom: var(--space-2); }
+    .signup-step1-card .secret-q-row { margin-bottom: 0.5rem; }
+    .signup-step1-card .form-actions { flex-direction: column; gap: 0.5rem; }
+    .signup-step1-card .form-actions .btn { width: 100%; }
+    .signup-step2-card .card-header.signup-step2-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+      padding: var(--space-3) var(--space-3);
+      text-align: center;
+    }
+    .signup-step2-card .card-header .card-title { text-align: center; }
+    .signup-step2-card .step2-toggle-hints-wrap { margin-left: 0; justify-content: center; }
+    .signup-step2-card .step2-help-toggle-wrap { margin-left: 0; align-items: center; }
+    .signup-step2-card .card-body { padding: var(--space-3) var(--space-3); width: 100%; min-width: 0; box-sizing: border-box; }
+    .signup-step2-card .form-row { grid-template-columns: 1fr; }
+    /* Step 2 Destination: row 1 = Name, row 2 = From | Till, then Address, Email, Contact number */
+    .signup-step2-card .form-row.form-row-dest-name-dates { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+    .signup-step2-card .form-row.form-row-dest-name-dates .form-group:first-child { grid-column: 1 / -1; }
+    .signup-step2-card .form-row.form-row-dest-name-dates .dest-from-date,
+    .signup-step2-card .form-row.form-row-dest-name-dates .dest-to-date { max-width: none; width: 100%; box-sizing: border-box; }
+    .signup-step2-card .destination-block .form-row:has(.dest-phone) { display: flex; flex-direction: column; }
+    .signup-step2-card .destination-block .form-row:has(.dest-phone) .form-group:first-child { order: 2; }
+    .signup-step2-card .destination-block .form-row:has(.dest-phone) .form-group:last-child { order: 1; }
+    .signup-step2-card .form-actions { flex-direction: column; gap: 0.5rem; }
+    .signup-step2-card .form-actions .btn { width: 100%; }
+    #signup-otp-card .card-body { padding: var(--space-3) var(--space-3); }
+    .signup-otp-actions { flex-direction: column; gap: 0.5rem; align-items: stretch; }
+    .signup-otp-actions .btn { width: 100%; }
+    .signup-otp-skip { margin-left: 0; margin-top: 0.25rem; }
+    #signup-step3-card .card-body,
+    #signup-step4-card .card-body { padding: var(--space-3) var(--space-3); }
+    /* Step 4 Summary: mobile-optimised layout and readability */
+    #signup-step4-card .step4-intro { font-size: 0.9375rem; margin-bottom: 1rem; padding: 0 0.25rem; }
+    #signup-step4-card #step4-summary { margin-bottom: 1rem; overflow-wrap: break-word; word-break: break-word; }
+    #signup-step4-card #step4-summary .success-heading { font-size: 0.9375rem; margin: 0.85rem 0 0.35rem; }
+    #signup-step4-card #step4-summary .step4-detail-list { padding-left: 1.25rem; margin: 0.5rem 0; }
+    #signup-step4-card #step4-summary .step4-detail-list li { margin-bottom: 0.4rem; font-size: 0.875rem; line-height: 1.5; }
+    #signup-step4-card #step4-summary .step4-detail-list a { word-break: break-all; }
+    #signup-step4-card #step4-summary .text-secondary { font-size: 0.875rem; }
+    #signup-step4-card .form-actions { flex-direction: column; gap: 0.5rem; }
+    #signup-step4-card .form-actions .btn { width: 100%; }
+    .home-success-buttons { flex-direction: column; gap: 0.5rem; }
+    .home-success-buttons .btn { width: 100%; }
+    .home-success-buttons .btn-right { margin-left: 0; }
+  }
+  </style>
+  <script src="/account-details-content.js"></script>
+  <script src="/form-descriptions.js"></script>
+  <script src="/countries-data.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <!-- Mini Brand icon at 96px -->
+          <span class="app-logo-icon app-logo-icon-mascot" aria-hidden="true">
+            <svg viewBox="0 0 80 80" width="96" height="96" fill="none" xmlns="http://www.w3.org/2000/svg" class="app-header-logo-svg">
+              <rect x="20" y="12" width="40" height="56" rx="9" fill="#272932"/>
+              <rect x="25" y="18" width="30" height="44" rx="5" fill="#ffffff"/>
+              <ellipse cx="34" cy="32" rx="5" ry="6" fill="#1ac5b0"/>
+              <ellipse cx="46" cy="32" rx="5" ry="6" fill="#1ac5b0"/>
+              <ellipse cx="34" cy="32" rx="3.5" ry="4.5" fill="#ffffff"/>
+              <ellipse cx="46" cy="32" rx="3.5" ry="4.5" fill="#ffffff"/>
+              <circle cx="35" cy="33" r="2.5" fill="#272932"/>
+              <circle cx="47" cy="33" r="2.5" fill="#272932"/>
+              <path d="M 34 46 Q 40 52 46 46" stroke="#272932" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="app-logo-text-wrap"><span class="digicon-logo app-logo-text">DigiCon <span class="i-dot" aria-hidden="true">ı</span>D</span></span>
+        </div>
+        <button type="button" class="header-nav-toggle" aria-label="Open menu" aria-expanded="false" id="header-nav-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="app-header-actions">
+          <nav class="app-nav tabs">
+            <a href="/home/" class="tab active">Home</a>
+            <a href="/how-it-works/" class="tab">How It Works</a>
+            <div class="nav-dropdown">
+              <button type="button" class="nav-dropdown-trigger tab" aria-haspopup="true" aria-expanded="false" id="nav-resources-btn">Resources <span class="nav-dropdown-chevron" aria-hidden="true">▾</span></button>
+              <div class="nav-dropdown-panel" id="nav-resources-menu" role="menu" aria-labelledby="nav-resources-btn">
+                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">What are QR Codes and NFC Tags</a>
+                <a href="/resources/how-to-save-to-nfc-tag/" role="menuitem" class="nav-dropdown-item">How to save to an NFC Tag</a>
+                <a href="/resources/faq/" role="menuitem" class="nav-dropdown-item">FAQ</a>
+              </div>
+            </div>
+            <a href="https://deem0u.github.io/myaccount/" class="tab">My Account</a>
+            <a href="/contact/" class="tab">Contact</a>
+          </nav>
+          <span class="header-signout-slot" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="header-drawer-backdrop" id="header-drawer-backdrop" aria-hidden="true"></div>
+    </header>
+
+    <main class="app-main">
+      <div class="app-container home-two-col">
+        <div id="home-left-col" class="home-left-col">
+          <div class="home-hero">
+            <h1 class="home-heading">Your details. <span class="highlight">Your control.</span></h1>
+            <p class="home-subheading">Ditch ugly labels and tags. Go digital, stay discreet.</p>
+            <div class="home-hero-mascot-wrap" aria-hidden="true">
+              <svg class="home-hero-mascot" viewBox="0 0 160 160" focusable="false">
+                <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+                <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+                <ellipse cx="67" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+                <ellipse cx="93" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+                <ellipse cx="67" cy="62" rx="7" ry="9" fill="#ffffff"/>
+                <ellipse cx="93" cy="62" rx="7" ry="9" fill="#ffffff"/>
+                <circle cx="69" cy="64" r="5" fill="#272932"/>
+                <circle cx="95" cy="64" r="5" fill="#272932"/>
+                <circle cx="71" cy="62" r="2" fill="#ffffff"/>
+                <circle cx="97" cy="62" r="2" fill="#ffffff"/>
+                <ellipse cx="54" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                <ellipse cx="106" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+                <path d="M 65 85 Q 80 100 95 85" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+                <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+                <circle cx="18" cy="60" r="9" fill="#272932"/>
+                <circle cx="142" cy="60" r="9" fill="#272932"/>
+                <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+                <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+                <rect x="62" y="102" width="36" height="16" rx="4" fill="#1ac5b0" opacity="0.9"/>
+                <circle cx="72" cy="110" r="4" fill="#ffffff"/>
+                <rect x="79" y="107" width="14" height="2.5" rx="1" fill="#ffffff"/>
+                <rect x="79" y="112" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+              </svg>
+            </div>
+            <div class="home-actions">
+              <button type="button" class="btn btn-primary btn-lg home-action-btn" onclick="showSignupForm()">
+                <span class="btn-main">Get Started</span>
+              </button>
+              <a href="/how-it-works/" class="btn btn-secondary btn-lg home-action-btn">
+                <span class="btn-main">Learn More</span>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div id="home-mascot-col" class="home-right-col" aria-hidden="true">
+          <svg class="home-hero-mascot" viewBox="0 0 160 160" focusable="false">
+            <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+            <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+            <ellipse cx="67" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+            <ellipse cx="93" cy="62" rx="10" ry="12" fill="#1ac5b0"/>
+            <ellipse cx="67" cy="62" rx="7" ry="9" fill="#ffffff"/>
+            <ellipse cx="93" cy="62" rx="7" ry="9" fill="#ffffff"/>
+            <circle cx="69" cy="64" r="5" fill="#272932"/>
+            <circle cx="95" cy="64" r="5" fill="#272932"/>
+            <circle cx="71" cy="62" r="2" fill="#ffffff"/>
+            <circle cx="97" cy="62" r="2" fill="#ffffff"/>
+            <ellipse cx="54" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+            <ellipse cx="106" cy="78" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+            <path d="M 65 85 Q 80 100 95 85" stroke="#272932" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+            <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+            <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <circle cx="18" cy="60" r="9" fill="#272932"/>
+            <circle cx="142" cy="60" r="9" fill="#272932"/>
+            <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+            <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+            <rect x="62" y="102" width="36" height="16" rx="4" fill="#1ac5b0" opacity="0.9"/>
+            <circle cx="72" cy="110" r="4" fill="#ffffff"/>
+            <rect x="79" y="107" width="14" height="2.5" rx="1" fill="#ffffff"/>
+            <rect x="79" y="112" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6"/>
+          </svg>
+        </div>
+        <div id="signup-step0-section" class="home-right-col hidden">
+          <div class="card signup-form-card signup-step0-card">
+            <div class="card-header"><span class="card-title">Sign Up</span></div>
+            <div class="card-body">
+              <form id="signup-step0-form" autocomplete="off">
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input type="email" id="signup-email" class="form-input" required autocomplete="off" placeholder="">
+                  <span class="form-error" id="error-signup-email" role="alert"></span>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">First Name</label><input type="text" id="signup-step0-first-name" class="form-input" maxlength="32" required autocomplete="off"><span class="form-error" id="error-signup-step0-first-name" role="alert"></span></div>
+                  <div class="form-group"><label class="form-label">Last Name</label><input type="text" id="signup-step0-last-name" class="form-input" maxlength="32" required autocomplete="off"><span class="form-error" id="error-signup-step0-last-name" role="alert"></span></div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Password</label>
+                  <div class="password-input-wrap">
+                    <input type="password" id="signup-step0-password" class="form-input" required autocomplete="off" minlength="8">
+                    <button type="button" class="password-toggle" id="signup-step0-password-toggle" aria-label="Show password" title="Show password">
+                      <span class="password-toggle-icon password-toggle-icon-show" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                      <span class="password-toggle-icon password-toggle-icon-hide hidden" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span>
+                    </button>
+                  </div>
+                  <span class="form-error" id="error-signup-step0-password" role="alert"></span>
+                </div>
+                <div id="signup-step0-alert" class="alert"></div>
+                <div class="form-actions">
+                  <button type="submit" id="signup-step0-btn" class="btn btn-primary btn-lg">Sign Up</button>
+                </div>
+                <p class="signup-signin-prompt"><em>Already got an account? <a href="https://deem0u.github.io/myaccount/" class="signin-link">Sign In</a></em></p>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div id="signup-steps-section" class="home-right-col hidden" style="max-width: 560px;">
+          <div class="signup-progress" id="signup-progress">
+            <span class="step-pill" id="progress-step1">1. Create Account</span>
+            <span class="step-pill" id="progress-step2">2. Add Contact Page</span>
+            <span class="step-pill" id="progress-step3">3. Generate QR</span>
+            <span class="step-pill" id="progress-step4">4. Summary</span>
+          </div>
+          <div id="signup-step1-card" class="card signup-step1-card hidden">
+            <div class="card-body">
+              <div class="form-group step1-account-email-row">
+                <label class="form-label">Account Email</label>
+                <div class="form-input form-input-readonly" id="step1-email-display" aria-readonly="true">—</div>
+              </div>
+              <form id="signup-step1-form">
+                <div class="form-group">
+                  <label class="form-label">User Name <span class="form-required">*</span></label>
+                  <input type="text" id="signup-folder" class="form-input username-mask" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" required autocomplete="off">
+                  <span class="form-hint">Used in your contact page URL. Letters, numbers, hyphens, underscores (3–28 chars). Stored as lowercase, e.g. John-Smith → john-smith.</span>
+                  <span class="form-error" id="error-signup-folder" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Date of Birth <span class="form-required">*</span></label>
+                  <input type="text" id="signup-dob" class="form-input dob-mask" placeholder="dd/mm/yyyy" maxlength="10" required autocomplete="off" pattern="\d{1,2}/\d{1,2}/\d{4}">
+                  <span class="form-hint">Used for account recovery. Format: dd/mm/yyyy</span>
+                  <span class="form-error" id="error-signup-dob" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Security Questions <span class="form-required">*</span></label>
+                  <span class="form-hint form-hint-sq">Select 3 different questions and provide answers (4–30 characters each). Used for account recovery.</span>
+                  <div id="secret-questions-container">
+                    <div class="secret-q-row"><select id="sq1" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><input type="text" id="sq1-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq1-answer" role="alert"></span></div>
+                    <div class="secret-q-row"><select id="sq2" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><input type="text" id="sq2-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq2-answer" role="alert"></span></div>
+                    <div class="secret-q-row"><select id="sq3" class="form-input secret-q-select" required><option value="">— Select question —</option><option value="1">What is your mothers maiden name?</option><option value="2">What is the name of the educational institution which you have obtained your highest level of qualification?</option><option value="3">What is the name of your first pet?</option><option value="4">What is the make and model of your first car?</option><option value="5">What is a date that is most memorable to you?</option><option value="6">What suburb were you born in?</option><option value="7">What was the name of the business or company you first worked for?</option><option value="8">Where was your first major travel destination?</option><option value="9">What is your favourite sports team?</option><option value="10">What is a word that Chris cannot correctly pronounce? &#129370;</option></select><input type="text" id="sq3-answer" class="form-input secret-q-answer" maxlength="30" placeholder="Answer" required><span class="form-error" id="error-sq3-answer" role="alert"></span></div>
+                  </div>
+                  <span class="form-error" id="error-secret-questions" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label"><span class="consent-group"><input type="checkbox" id="signup-consent"><span class="consent-text">I agree to the <a href="/terms-and-privacy/#terms-of-use" target="_blank" rel="noopener">Terms of Use</a> and <a href="/terms-and-privacy/#privacy-policy" target="_blank" rel="noopener">Privacy Statement</a>. I understand this is a personal, non-commercial project. I confirm I own the rights to, or have permission to enter the information and by doing so I am choosing to make the information I enter public. I understand the site owner does not check this text for errors and it will appear exactly as I type it.</span></span></label>
+                  <span class="form-error" id="error-signup-consent" role="alert"></span>
+                </div>
+                <div id="signup-step1-alert" class="alert"></div>
+                <div class="form-actions">
+                  <button type="submit" id="signup-step1-btn" class="btn btn-primary">Create My Account</button>
+                  <button type="button" class="btn btn-secondary" onclick="signupStartOver()">Start Over</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="signup-otp-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Verify your email</span></div>
+            <div class="card-body">
+              <p class="text-secondary mb-3">We've sent a 6-digit code to <strong id="otp-email-display"></strong>. Enter it below. Check your spam/junk folder if you don't see it.</p>
+              <div class="banner-reminder mb-3 signup-otp-banner" style="padding: 0.75rem 1rem; border-radius: var(--radius-md, 8px);">
+                <div class="banner-reminder-content">
+                  <p class="banner-reminder-message" style="margin: 0;">You can do this later from your My Account; however you will not be able to add your Contact Page and generate your QR codes until you verify your email address.</p>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Verification code</label>
+                <input type="text" id="otp-code-input" class="form-input" maxlength="6" placeholder="000000" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code">
+                <span class="form-error" id="error-otp-code" role="alert"></span>
+              </div>
+              <div id="otp-alert" class="alert"></div>
+              <div class="form-actions signup-otp-actions">
+                <button type="button" class="btn btn-primary" id="otp-verify-btn" onclick="verifyOtp()">Verify</button>
+                <button type="button" class="btn btn-secondary" onclick="resendOtp()">Resend code</button>
+                <button type="button" class="btn btn-secondary signup-otp-skip" onclick="skipVerificationToAllSet()">Skip Verification →</button>
+              </div>
+            </div>
+          </div>
+          <div id="signup-step2-card" class="card signup-step2-card hidden step2-hints-hidden">
+            <div class="card-header signup-step2-header">
+              <span class="card-title">Add Contact Page</span>
+              <div class="step2-help-toggle-wrap">
+                <span class="step2-help-toggle-label">HELP <svg class="step2-help-toggle-info-icon" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                <button type="button" role="switch" class="step2-help-toggle" id="step2-toggle-hints" aria-checked="false" aria-label="Toggle form hints on or off">
+                  <span class="step2-help-toggle-track">
+                    <span class="step2-help-toggle-thumb"></span>
+                    <span class="step2-help-toggle-on">ON</span>
+                    <span class="step2-help-toggle-off">OFF</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <form id="step2-contact-form">
+                <div class="form-group">
+                  <label class="form-label" for="step2-contact-page-name">Page Name <span class="form-required">*</span></label>
+                  <input type="text" id="step2-contact-page-name" class="form-input" placeholder="e.g. &quot;Work Travel&quot; or &quot;Bike - Aspero&quot;" maxlength="28" autocomplete="off">
+                  <span class="form-hint step2-hint">A name to identify this page. Must be unique amongst your Contact Pages.</span>
+                  <span class="form-error" id="error-step2-contact-page-name" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="step2-contact-page-url-slug">Page URL <span class="form-required">*</span></label>
+                  <div class="contact-page-url-anatomy" id="step2-contact-page-url-anatomy">
+                    <div class="url-anatomy-row">
+                      <span class="url-edit-prefix">https://deem0u.github.io/user/<span id="step2-contact-page-url-username" class="step2-url-username">—</span>/</span>
+                      <input type="text" id="step2-contact-page-url-slug" class="form-input url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off">
+                    </div>
+                    <span class="form-hint step2-hint">3–28 characters: letters, numbers, hyphens, underscores. Must be unique amongst your Contact Pages.</span>
+                  </div>
+                  <span class="form-error" id="error-step2-contact-page-url-slug" role="alert"></span>
+                </div>
+                <div class="form-row form-row-with-hint">
+                  <div class="form-group">
+                    <label class="form-label" for="step2-first-name">Given Names <span class="form-required">*</span></label>
+                    <input type="text" id="step2-first-name" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off">
+                    <span class="form-error" id="error-step2-first-name" role="alert"></span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="step2-surname">Family Name <span class="form-required">*</span></label>
+                    <input type="text" id="step2-surname" class="form-input" pattern="^[a-zA-Z][a-zA-Z\s'\-.]*$" maxlength="32" required autocomplete="off">
+                    <span class="form-error" id="error-step2-surname" role="alert"></span>
+                  </div>
+                </div>
+                <span class="form-hint form-hint-row step2-hint">Usually First and Last Name. Consider whether this needs to exactly match any formal ID.</span>
+                <div class="form-row form-row-with-hint">
+                  <div class="form-group">
+                    <label class="form-label" for="step2-email">Email <span class="form-required">*</span></label>
+                    <input type="email" id="step2-email" class="form-input" required autocomplete="email">
+                    <span class="form-error" id="error-step2-email" role="alert"></span>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="step2-mobile">Contact Number</label>
+                    <input type="text" id="step2-mobile" class="form-input" maxlength="32" placeholder="e.g. +61432123456" autocomplete="tel">
+                    <span class="form-error" id="error-step2-mobile" role="alert"></span>
+                  </div>
+                </div>
+                <span class="form-hint form-hint-row step2-hint">A suitable email and contact number you have access to so that you can be reached.</span>
+                <div class="form-group">
+                  <label class="form-label" for="step2-home-country">Home Country</label>
+                  <span class="form-hint form-hint-above step2-hint">Your main country of residence. Helpful for identifying what language you might speak and any Consular services required.</span>
+                  <select id="step2-home-country" class="form-input" autocomplete="country-name">
+                    <option value="">— Select country —</option>
+                  </select>
+                  <span class="form-error" id="error-step2-home-country" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Destination Details</label>
+                  <span class="form-hint step2-hint" id="step2-hint-destination-details"></span>
+                  <div class="form-section destination-block" data-dest-index="0">
+                    <div class="form-row form-row-dest-name-dates">
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-name">Destination Name</label>
+                        <input type="text" id="step2-dest-name" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-from-date">From</label>
+                        <input type="text" id="step2-dest-from-date" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-to-date">Till</label>
+                        <input type="text" id="step2-dest-to-date" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off">
+                        <span class="form-error error-dest-to-date" id="error-step2-dest-to-date" role="alert"></span>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="step2-dest-address">Destination Address</label>
+                      <input type="text" id="step2-dest-address" class="form-input dest-address" placeholder="Address" maxlength="200" autocomplete="off">
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-phone">Destination Contact Number</label>
+                        <input type="tel" id="step2-dest-phone" class="form-input dest-phone contact-number-mask" placeholder="Contact number" maxlength="21" autocomplete="tel">
+                        <span class="form-error" id="error-step2-dest-phone" role="alert"></span>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="step2-dest-email">Destination Email</label>
+                        <input type="email" id="step2-dest-email" class="form-input dest-email" placeholder="Email" maxlength="64" autocomplete="email">
+                        <span class="form-error" id="error-step2-dest-email" role="alert"></span>
+                      </div>
+                    </div>
+                    <div class="destination-block-actions">
+                      <button type="button" class="btn btn-ghost btn-sm destination-delete-btn" aria-label="Delete destination" title="Delete destination"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+                    </div>
+                  </div>
+                  <div id="step2-destination-blocks-container"></div>
+                  <button type="button" class="btn btn-add-more btn-sm" id="step2-add-destination-btn">+ Add Destination</button>
+                  <span class="form-error" id="error-step2-dest" role="alert"></span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label form-label-optional" for="step2-additional-info">Additional Information</label>
+                  <textarea id="step2-additional-info" class="form-textarea form-textarea-additional" rows="4" maxlength="500" placeholder="Any extra notes for lost property or emergency contact" autocomplete="off"></textarea>
+                  <span class="form-hint step2-hint">Optional. e.g. emergency contact, special instructions.</span>
+                  <span class="form-error" id="error-step2-additional-info" role="alert"></span>
+                </div>
+                <div id="step2-alert" class="alert"></div>
+                <div class="form-actions form-actions-editor">
+                  <button type="submit" id="step2-save-btn" class="btn btn-primary">Save Contact Page</button>
+                  <span class="step2-skip-wrap"><button type="button" class="btn btn-secondary step2-skip-btn" id="step2-skip-btn">Do this later from MyAccount →</button></span>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="signup-step3-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Generate QR</span></div>
+            <div class="card-body">
+              <div id="step3-qr-loading" class="modal-qr-loading"><span class="spinner"></span> Loading…</div>
+              <div id="step3-qr-content" class="modal-qr-content hidden">
+                <div class="modal-qr-desc">
+                  <p>Print and stick these QR codes as-is (or use our card template). Alternatively, scan them using your chosen NFC App to import and write them to an NFC tag - For more information on how to do this refer to our guides in the Resources tab <a href="/resources/guide-to-qr-codes/">What are QR Codes and NFC Tags</a>.</p>
+                <p>These QR&apos;s will be accessible by using the Contact Page selector from your MyAccount.</p>
+                </div>
+                <div class="modal-qr-tabs">
+                  <button type="button" class="modal-qr-tab step3-qr-tab active" data-qr="url" aria-pressed="true">Contact Page URL</button>
+                  <button type="button" class="modal-qr-tab step3-qr-tab" data-qr="vcard" aria-pressed="false">vCard</button>
+                </div>
+                <div class="modal-qr-panels">
+                  <div id="step3-qr-panel-url" class="modal-qr-panel active"><div class="modal-qr-image-wrap"><img id="step3-qr-img-url" alt="QR code: Contact Page URL" class="modal-qr-img"></div></div>
+                  <div id="step3-qr-panel-vcard" class="modal-qr-panel hidden"><div class="modal-qr-image-wrap"><img id="step3-qr-img-vcard" alt="QR code: vCard" class="modal-qr-img"></div></div>
+                </div>
+                <div class="modal-qr-actions">
+                  <div id="step3-qr-action-url" class="modal-qr-action active">
+                    <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-url">Copy Contact Page URL</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-qr-url">Copy QR Code</button>
+                    <button type="button" class="btn btn-primary btn-sm step3-qr-download-template-btn">Download QR to Template</button>
+                  </div>
+                  <div id="step3-qr-action-vcard" class="modal-qr-action hidden">
+                    <a id="step3-qr-download-vcard" class="btn btn-primary btn-sm" download="contact.vcf">Download vCard</a>
+                    <button type="button" class="btn btn-primary btn-sm" id="step3-qr-copy-qr-vcard">Copy QR Code</button>
+                    <button type="button" class="btn btn-primary btn-sm step3-qr-download-template-btn">Download QR to Template</button>
+                  </div>
+                </div>
+              </div>
+              <div id="step3-qr-error" class="modal-qr-error hidden"></div>
+              <div class="form-actions mt-4 step3-qr-footer-actions">
+                <button type="button" class="btn btn-secondary step3-back-btn" onclick="goBackFromStep3()">← Go Back to Add Contact Page</button>
+                <button type="button" class="btn btn-primary" onclick="continueToStep4()">Finish</button>
+              </div>
+            </div>
+          </div>
+          <div id="signup-step4-card" class="card hidden">
+            <div class="card-header"><span class="card-title">Summary</span></div>
+            <div class="card-body">
+              <p class="step4-intro text-secondary">Below is a summary of your sign-up and contact page details. You can verify your email and change these details anytime from My Account.</p>
+              <div id="step4-summary" class="home-success-details"></div>
+              <p class="text-secondary mt-3">A copy of this information has been sent to your email.</p>
+              <div class="form-actions mt-3">
+                <a id="step4-editor-link" href="#" class="btn btn-primary">Go to My Account</a>
+                <a href="/home/" class="btn btn-secondary">Back to Home</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="success-section" class="hidden">
+          <div class="card">
+            <div class="card-body">
+              <div id="success-banner" class="home-success-banner banner-success"></div>
+              <div id="success-details" class="home-success-details"></div>
+              <div class="home-success-action">
+                <p>Don't worry — A copy of this will be emailed to you (once I get to it). You may wish to click the "Email Myself a Copy" button below and send yourself a copy now. You can continue and fill out the details for your Digital Contact Page now or you can choose to do it later via My Account.</p>
+                <div class="home-success-buttons">
+                  <a id="mailto-btn" href="#" class="btn btn-primary">Email Myself a Copy</a>
+                  <a id="complete-page-btn" href="#" class="btn btn-primary">Fill out My Digital Contact Page</a>
+                  <a href="https://deem0u.github.io/home/" class="btn btn-ghost btn-right">I'll do it later</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="app-footer">
+      <a href="/terms-and-privacy/">Terms of Use &amp; Privacy</a>
+    </footer>
+  </div>
+
+  <script>
+  const API = 'https://contact-page-editor.deem0u.workers.dev';
+  const PAGES_URL = 'https://deem0u.github.io/user/';
+  const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
+  const SQ_OPTIONS = [
+    {v:'',t:'— Select question —'},{v:'1',t:'What is your mothers maiden name?'},{v:'2',t:'What is the name of the educational institution which you have obtained your highest level of qualification?'},{v:'3',t:'What is the name of your first pet?'},{v:'4',t:'What is the make and model of your first car?'},{v:'5',t:'What is a date that is most memorable to you?'},{v:'6',t:'What suburb were you born in?'},{v:'7',t:'What was the name of the business or company you first worked for?'},{v:'8',t:'Where was your first major travel destination?'},{v:'9',t:'What is your favourite sports team?'},{v:'10',t:'What is a word that Chris cannot correctly pronounce? \uD83E\uDD5A'}
+  ];
+
+  function syncSecretQuestionOptions() {
+    var v1 = document.getElementById('sq1').value, v2 = document.getElementById('sq2').value, v3 = document.getElementById('sq3').value;
+    ['sq1','sq2','sq3'].forEach(function(id) {
+      var sel = document.getElementById(id);
+      var exclude = (id==='sq1' ? [v2,v3] : id==='sq2' ? [v1,v3] : [v1,v2]).filter(Boolean);
+      var cur = sel.value;
+      if (cur && exclude.indexOf(cur) >= 0) cur = '';
+      sel.innerHTML = SQ_OPTIONS.map(function(o) {
+        var dis = o.v && exclude.indexOf(o.v) >= 0 ? ' disabled' : '';
+        var sel_ = o.v === cur ? ' selected' : '';
+        return '<option value="'+o.v+'"'+dis+sel_+'>'+o.t+'</option>';
+      }).join('');
+    });
+    updateStep1SubmitButton();
+  }
+
+  function formatDob(val) {
+    var s = (val || '').replace(/\D/g, '');
+    if (s.length <= 2) return s;
+    if (s.length <= 4) return s.slice(0,2) + '/' + s.slice(2);
+    return s.slice(0,2) + '/' + s.slice(2,4) + '/' + s.slice(4,8);
+  }
+  function attachDobMask() {
+    document.querySelectorAll('.dob-mask').forEach(function(inp) {
+      if (inp.dataset.dobMaskAttached) return;
+      inp.dataset.dobMaskAttached = '1';
+      inp.addEventListener('input', function() { var v = this.value, f = formatDob(v); if (f !== v) this.value = f; });
+    });
+  }
+  function attachUsernameMask() {
+    document.querySelectorAll('.username-mask').forEach(function(inp) {
+      if (inp.dataset.usernameMaskAttached) return;
+      inp.dataset.usernameMaskAttached = '1';
+      var maxLen = parseInt(inp.getAttribute('maxlength'), 10) || 28;
+      inp.addEventListener('input', function() {
+        var raw = this.value;
+        var allowed = raw.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, maxLen);
+        if (allowed !== raw) this.value = allowed;
+      });
+    });
+  }
+  function normalizeDob(val) {
+    const s = (val || '').trim().replace(/\s+/g, '');
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return null;
+    const d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+    if (d < 1 || d > 31 || mo < 1 || mo > 12 || y < 1900 || y > 2100) return null;
+    return String(d).padStart(2, '0') + '/' + String(mo).padStart(2, '0') + '/' + y;
+  }
+
+  function validateDob(val) {
+    const norm = normalizeDob(val);
+    if (!norm) return { valid: false, message: 'Please enter a valid date in dd/mm/yyyy format (e.g. 25/01/1990).' };
+    return { valid: true, normalized: norm };
+  }
+
+  function validateFolder(val) {
+    var s = (val || '').trim().toLowerCase();
+    var msg = 'User name must be 3–28 characters, using only letters, numbers, hyphens and underscores.';
+    if (!s) return { valid: false, message: 'User name is required.' };
+    if (s.length < 3 || s.length > 28) return { valid: false, message: msg };
+    if (!/^[a-zA-Z0-9_-]+$/.test(s)) return { valid: false, message: msg };
+    return { valid: true };
+  }
+
+  function validateGivenNames(val, required) {
+    var s = (val || '').trim();
+    var msg = 'Given names must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
+    if (!s) return required ? { valid: false, message: 'Given names are required.' } : { valid: true };
+    if (s.length > 32) return { valid: false, message: msg };
+    if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
+    return { valid: true };
+  }
+
+  function validateFamilyName(val, required) {
+    var s = (val || '').trim();
+    var msg = 'Family name must be up to 32 characters. Use only letters, spaces, apostrophes, hyphens and periods, and start with a letter.';
+    if (!s) return required ? { valid: false, message: 'Family name is required.' } : { valid: true };
+    if (s.length > 32) return { valid: false, message: msg };
+    if (!/^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(s)) return { valid: false, message: msg };
+    return { valid: true };
+  }
+
+  function validateEmailInput(inp, required) {
+    var s = (inp.value || '').trim();
+    var msg = 'Please enter a valid email address (e.g. name@example.com).';
+    if (!s) return required ? { valid: false, message: 'Email is required.' } : { valid: true };
+    if (!inp.validity.valid) return { valid: false, message: msg };
+    return { valid: true };
+  }
+
+  function validateSecretAnswer(a) {
+    const t = (a || '').trim();
+    if (t.length < 4) return { valid: false, message: 'Answer must be at least 4 characters.' };
+    if (t.length > 30) return { valid: false, message: 'Answer must be 30 characters or fewer.' };
+    return { valid: true, normalized: t };
+  }
+
+  function showSignupForm() {
+    var mascotCol = document.getElementById('home-mascot-col');
+    if (mascotCol) mascotCol.classList.add('hidden');
+    document.getElementById('signup-step0-section').classList.remove('hidden');
+    document.getElementById('signup-email').focus();
+  }
+
+  (function() {
+    var toggle = document.getElementById('signup-step0-password-toggle');
+    var input = document.getElementById('signup-step0-password');
+    var iconShow = toggle && toggle.querySelector('.password-toggle-icon-show');
+    var iconHide = toggle && toggle.querySelector('.password-toggle-icon-hide');
+    if (toggle && input && iconShow && iconHide) {
+      toggle.addEventListener('click', function() {
+        var isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        iconShow.classList.toggle('hidden', !isPassword);
+        iconHide.classList.toggle('hidden', isPassword);
+        toggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+        toggle.setAttribute('title', isPassword ? 'Hide password' : 'Show password');
+      });
+    }
+  })();
+
+  function cancelSignupStep0() {
+    document.getElementById('signup-step0-form').reset();
+    var pwInput = document.getElementById('signup-step0-password');
+    var iconShow = document.querySelector('#signup-step0-password-toggle .password-toggle-icon-show');
+    var iconHide = document.querySelector('#signup-step0-password-toggle .password-toggle-icon-hide');
+    if (pwInput) pwInput.type = 'password';
+    if (iconShow) iconShow.classList.remove('hidden');
+    if (iconHide) iconHide.classList.add('hidden');
+    ['error-signup-email','error-signup-step0-first-name','error-signup-step0-last-name','error-signup-step0-password'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    hideAlert('signup-step0-alert');
+    document.getElementById('signup-step0-section').classList.add('hidden');
+  }
+
+  function signupStartOver() {
+    sessionStorage.removeItem('signup_email');
+    sessionStorage.removeItem('signup_username');
+    sessionStorage.removeItem('signup_token');
+    sessionStorage.removeItem('signup_first_name');
+    sessionStorage.removeItem('signup_last_name');
+    sessionStorage.removeItem('signup_password');
+    sessionStorage.removeItem('signup_dob');
+    sessionStorage.removeItem('signup_contact_slug');
+    sessionStorage.removeItem('signup_contact_sha');
+    sessionStorage.removeItem('signup_email_verified');
+    document.getElementById('signup-steps-section').classList.add('hidden');
+    document.getElementById('signup-step1-card').classList.add('hidden');
+    document.getElementById('signup-otp-card').classList.add('hidden');
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.add('hidden');
+    var twoCol = document.querySelector('.home-two-col');
+    if (twoCol) twoCol.classList.remove('signup-steps-active');
+    var mascotCol = document.getElementById('home-mascot-col');
+    if (mascotCol) mascotCol.classList.remove('hidden');
+    document.getElementById('signup-step0-section').classList.remove('hidden');
+    document.getElementById('signup-step0-form').reset();
+    var step1Form = document.getElementById('signup-step1-form');
+    if (step1Form) step1Form.reset();
+    document.getElementById('step1-email-display').textContent = '—';
+    ['error-signup-folder','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    var step1Card = document.getElementById('signup-step1-card');
+    if (step1Card) step1Card.querySelectorAll('.is-invalid').forEach(function(el) { el.classList.remove('is-invalid'); });
+    hideAlert('signup-step1-alert');
+    var pwInput = document.getElementById('signup-step0-password');
+    var iconShow = document.querySelector('#signup-step0-password-toggle .password-toggle-icon-show');
+    var iconHide = document.querySelector('#signup-step0-password-toggle .password-toggle-icon-hide');
+    if (pwInput) pwInput.type = 'password';
+    if (iconShow) iconShow.classList.remove('hidden');
+    if (iconHide) iconHide.classList.add('hidden');
+    ['error-signup-email','error-signup-step0-first-name','error-signup-step0-last-name','error-signup-step0-password'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    hideAlert('signup-step0-alert');
+    document.getElementById('signup-email').focus();
+  }
+
+  async function verifyOtp() {
+    var username = sessionStorage.getItem('signup_username');
+    var code = (document.getElementById('otp-code-input').value || '').trim().replace(/\D/g, '');
+    if (!code || code.length !== 6) {
+      document.getElementById('error-otp-code').textContent = 'Please enter the 6-digit code.';
+      return;
+    }
+    document.getElementById('error-otp-code').textContent = '';
+    hideAlert('otp-alert');
+    var btn = document.getElementById('otp-verify-btn');
+    btn.disabled = true;
+    try {
+      var res = await fetch(API + '/api/otp/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, code }) });
+      var d = await res.json();
+      if (res.ok && d.success) {
+        sessionStorage.setItem('signup_email_verified', 'true');
+        document.getElementById('signup-otp-card').classList.add('hidden');
+        continueToStep2();
+      } else {
+        showAlert('otp-alert', (d && d.error) || 'Invalid or expired code. Try resending.', 'error');
+      }
+    } catch (e) {
+      showAlert('otp-alert', 'Connection error. Please try again.', 'error');
+    }
+    btn.disabled = false;
+  }
+
+  async function resendOtp() {
+    var username = sessionStorage.getItem('signup_username');
+    if (!username) return;
+    hideAlert('otp-alert');
+    try {
+      var res = await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
+      var d = await res.json();
+      showAlert('otp-alert', d.sent ? 'Code sent. Check your email.' : (d.error || 'Could not resend.'), d.sent ? 'success' : 'error');
+    } catch (e) {
+      showAlert('otp-alert', 'Connection error. Please try again.', 'error');
+    }
+  }
+
+  var step3QrData = { url: '', vcard: '' };
+
+  function buildStep3QrData() {
+    var username = sessionStorage.getItem('signup_username') || '';
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var email = sessionStorage.getItem('signup_email') || '';
+    var contactSlug = sessionStorage.getItem('signup_contact_slug') || '';
+    var url = contactSlug ? (PAGES_URL + username + '/' + contactSlug + '.html') : (PAGES_URL + username + '/');
+    var fn = [firstName, lastName].filter(Boolean).join(' ').trim() || username;
+    var family = lastName || '';
+    var given = firstName || '';
+    var vcard = 'BEGIN:VCARD\r\nVERSION:3.0\r\nFN:' + fn + '\r\nN:' + family + ';' + given + ';;;\r\n';
+    if (email) vcard += 'EMAIL:' + email + '\r\n';
+    vcard += 'URL:' + url + '\r\n';
+    vcard += 'END:VCARD';
+    return { url: url, vcard: vcard, fn: fn };
+  }
+
+  function populateStep3Qr() {
+    var loading = document.getElementById('step3-qr-loading');
+    var content = document.getElementById('step3-qr-content');
+    var errEl = document.getElementById('step3-qr-error');
+    var downloadA = document.getElementById('step3-qr-download-vcard');
+    if (!loading || !content) return;
+    loading.classList.remove('hidden');
+    content.classList.add('hidden');
+    if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+    try {
+      var data = buildStep3QrData();
+      step3QrData = { url: data.url, vcard: data.vcard };
+      var base = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=';
+      var imgUrl = document.getElementById('step3-qr-img-url');
+      var imgVcard = document.getElementById('step3-qr-img-vcard');
+      if (imgUrl) imgUrl.setAttribute('src', base + encodeURIComponent(data.url));
+      if (imgVcard) imgVcard.setAttribute('src', base + encodeURIComponent(data.vcard || ''));
+      if (downloadA) {
+        downloadA.setAttribute('href', 'data:text/vcard;charset=utf-8,' + encodeURIComponent(data.vcard || ''));
+        downloadA.setAttribute('download', (data.fn || 'contact').replace(/\s+/g, '-').replace(/[^\w\-]/g, '') + '.vcf');
+      }
+      switchStep3QrTab('url');
+      loading.classList.add('hidden');
+      content.classList.remove('hidden');
+    } catch (e) {
+      loading.classList.add('hidden');
+      if (errEl) { errEl.textContent = (e && e.message) ? e.message : 'Could not generate QR codes.'; errEl.classList.remove('hidden'); }
+    }
+  }
+
+  function switchStep3QrTab(name) {
+    ['url', 'vcard'].forEach(function(n) {
+      var on = n === name;
+      var tab = document.querySelector('.step3-qr-tab[data-qr="' + n + '"]');
+      var panel = document.getElementById('step3-qr-panel-' + n);
+      var action = document.getElementById('step3-qr-action-' + n);
+      if (tab) { tab.classList.toggle('active', on); tab.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+      if (panel) panel.classList.toggle('hidden', !on);
+      if (action) { action.classList.toggle('hidden', !on); action.classList.toggle('active', on); }
+    });
+  }
+
+  function goBackFromStep3() {
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step2-card').classList.remove('hidden');
+    document.getElementById('step2-contact-form').style.display = '';
+    updateProgressBar(2);
+  }
+
+  function continueToStep2() {
+    document.getElementById('signup-otp-card').classList.add('hidden');
+    document.getElementById('signup-step2-card').classList.remove('hidden');
+    updateProgressBar(2);
+    var username = sessionStorage.getItem('signup_username') || '';
+    var card = document.getElementById('signup-step2-card');
+    if (card) card.classList.add('step2-hints-hidden');
+    var toggleBtn = document.getElementById('step2-toggle-hints');
+    if (toggleBtn) toggleBtn.setAttribute('aria-checked', 'false');
+    document.getElementById('step2-contact-page-url-username').textContent = username;
+    document.getElementById('step2-contact-form').reset();
+    var destContainer = document.getElementById('step2-destination-blocks-container');
+    if (destContainer) destContainer.innerHTML = '';
+    document.getElementById('step2-contact-form').style.display = '';
+    var errIds = ['error-step2-contact-page-name','error-step2-contact-page-url-slug','error-step2-first-name','error-step2-surname','error-step2-email','error-step2-mobile'];
+    errIds.forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    hideAlert('step2-alert');
+    populateStep2Countries();
+    if (typeof updateAddDestinationButtonStateStep2 === 'function') updateAddDestinationButtonStateStep2();
+    if (typeof updateDestinationDeleteButtonsVisibilityStep2 === 'function') updateDestinationDeleteButtonsVisibilityStep2();
+  }
+
+  function populateStep2Countries() {
+    var sel = document.getElementById('step2-home-country');
+    if (!sel || !window.COUNTRIES) return;
+    if (sel.options.length > 1) return;
+    var frag = document.createDocumentFragment();
+    window.COUNTRIES.forEach(function(pair) {
+      var opt = document.createElement('option');
+      opt.value = pair[0];
+      opt.textContent = pair[0];
+      frag.appendChild(opt);
+    });
+    sel.appendChild(frag);
+  }
+
+  function parseDestDateStep2(str) {
+    var s = (str || '').trim().replace(/\s/g, '');
+    var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return null;
+    var d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    var date = new Date(y, mo - 1, d);
+    if (date.getFullYear() !== y || date.getMonth() !== mo - 1 || date.getDate() !== d) return null;
+    return date;
+  }
+  function validateDestinationBlockDatesStep2(block) {
+    var fromEl = block.querySelector('.dest-from-date');
+    var toEl = block.querySelector('.dest-to-date');
+    if (!toEl) return true;
+    var errSpan = block.querySelector('.error-dest-to-date') || (block.getAttribute('data-dest-index') === '0' ? document.getElementById('error-step2-dest-to-date') : null);
+    if (!errSpan) errSpan = block.querySelector('.form-error');
+    var fromStr = fromEl ? fromEl.value.trim() : '';
+    var toStr = toEl.value.trim();
+    if (!fromStr || !toStr) { if (errSpan) errSpan.textContent = ''; return true; }
+    var fromDate = parseDestDateStep2(fromStr);
+    var toDate = parseDestDateStep2(toStr);
+    if (!fromDate || !toDate) { if (errSpan) errSpan.textContent = ''; return true; }
+    if (toDate < fromDate) { if (errSpan) errSpan.textContent = 'Till cannot be earlier than From.'; return false; }
+    if (errSpan) errSpan.textContent = ''; return true;
+  }
+  function isDestinationBlockCompleteStep2(block) {
+    var nameEl = block.querySelector('.dest-name');
+    var fromEl = block.querySelector('.dest-from-date');
+    var toEl = block.querySelector('.dest-to-date');
+    var addrEl = block.querySelector('.dest-address');
+    var phoneEl = block.querySelector('.dest-phone');
+    var emailEl = block.querySelector('.dest-email');
+    var name = nameEl ? nameEl.value.trim() : '';
+    var from = fromEl ? fromEl.value.trim() : '';
+    var to = toEl ? toEl.value.trim() : '';
+    var addr = addrEl ? addrEl.value.trim() : '';
+    var phone = phoneEl ? phoneEl.value.trim() : '';
+    var email = emailEl ? emailEl.value.trim() : '';
+    var anyFilled = !!(name || from || to || addr || phone || email);
+    if (!anyFilled) return false;
+    if (!validateDestinationBlockDatesStep2(block)) return false;
+    return true;
+  }
+  function updateDestinationDeleteButtonsVisibilityStep2() {
+    var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
+    var onlyOne = blocks.length === 1;
+    blocks.forEach(function(block) {
+      var btn = block.querySelector('.destination-delete-btn');
+      if (btn) btn.classList.toggle('hidden', onlyOne);
+    });
+  }
+  function hasIncompleteDestinationBlockStep2() {
+    var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
+    for (var i = 0; i < blocks.length; i++) { if (!isDestinationBlockCompleteStep2(blocks[i])) return true; }
+    return false;
+  }
+  function updateAddDestinationButtonStateStep2() {
+    var addBtn = document.getElementById('step2-add-destination-btn');
+    if (addBtn) addBtn.disabled = hasIncompleteDestinationBlockStep2();
+  }
+  function getDestinationBlocksDataStep2() {
+    var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
+    var out = [];
+    blocks.forEach(function(block) {
+      var nameEl = block.querySelector('.dest-name');
+      var fromEl = block.querySelector('.dest-from-date');
+      var toEl = block.querySelector('.dest-to-date');
+      var addrEl = block.querySelector('.dest-address');
+      var phoneEl = block.querySelector('.dest-phone');
+      var emailEl = block.querySelector('.dest-email');
+      out.push({
+        name: nameEl ? nameEl.value.trim() : '',
+        fromDate: fromEl ? fromEl.value.trim() : '',
+        toDate: toEl ? toEl.value.trim() : '',
+        address: addrEl ? addrEl.value.trim() : '',
+        phone: phoneEl ? phoneEl.value.trim() : '',
+        email: emailEl ? emailEl.value.trim() : ''
+      });
+    });
+    return out;
+  }
+
+  function createAdditionalDestinationBlockStep2(index, data) {
+    data = data || {};
+    var hr = document.createElement('hr');
+    hr.className = 'dest-sep-form';
+    var block = document.createElement('div');
+    block.className = 'form-section destination-block';
+    block.setAttribute('data-dest-index', String(index));
+    block.innerHTML = '<div class="form-row form-row-dest-name-dates">' +
+      '<div class="form-group"><label class="form-label">Destination Name</label><input type="text" class="form-input dest-name" placeholder="Name" maxlength="200" autocomplete="off"></div>' +
+      '<div class="form-group"><label class="form-label">From</label><input type="text" class="form-input dest-from-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"></div>' +
+      '<div class="form-group"><label class="form-label">Till</label><input type="text" class="form-input dest-to-date dob-mask" placeholder="dd/mm/yyyy" maxlength="10" autocomplete="off"><span class="form-error error-dest-to-date" role="alert"></span></div>' +
+      '</div>' +
+      '<div class="form-group"><label class="form-label">Destination Address</label><input type="text" class="form-input dest-address" placeholder="Address" maxlength="200" autocomplete="off"></div>' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label class="form-label">Destination Contact Number</label><input type="tel" class="form-input dest-phone contact-number-mask" placeholder="Contact number" maxlength="21" autocomplete="tel"></div>' +
+      '<div class="form-group"><label class="form-label">Destination Email</label><input type="email" class="form-input dest-email" placeholder="Email" maxlength="64" autocomplete="email"></div>' +
+      '</div>' +
+      '<div class="destination-block-actions">' +
+      '<button type="button" class="btn btn-ghost btn-sm destination-delete-btn" aria-label="Delete destination" title="Delete destination"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>' +
+      '</div>';
+    var nameInp = block.querySelector('.dest-name');
+    var fromInp = block.querySelector('.dest-from-date');
+    var toInp = block.querySelector('.dest-to-date');
+    var addrInp = block.querySelector('.dest-address');
+    var phoneInp = block.querySelector('.dest-phone');
+    var emailInp = block.querySelector('.dest-email');
+    if (nameInp) nameInp.value = data.name || '';
+    if (fromInp) fromInp.value = data.fromDate || '';
+    if (toInp) toInp.value = data.toDate || '';
+    if (addrInp) addrInp.value = data.address || '';
+    if (phoneInp) phoneInp.value = data.phone || '';
+    if (emailInp) emailInp.value = data.email || '';
+    var frag = document.createDocumentFragment();
+    frag.appendChild(hr);
+    frag.appendChild(block);
+    return frag;
+  }
+
+  function initDestinationRepeaterStep2() {
+    var hintEl = document.getElementById('step2-hint-destination-details');
+    if (hintEl && window.FORM_DESCRIPTIONS && window.FORM_DESCRIPTIONS['destination-details'] && window.FORM_DESCRIPTIONS['destination-details'].hint) {
+      hintEl.innerHTML = window.FORM_DESCRIPTIONS['destination-details'].hint;
+    }
+    var addBtn = document.getElementById('step2-add-destination-btn');
+    var container = document.getElementById('step2-destination-blocks-container');
+    if (addBtn && container) {
+      addBtn.addEventListener('click', function() {
+        var blocks = document.querySelectorAll('#step2-contact-form .destination-block');
+        var nextIndex = blocks.length;
+        container.appendChild(createAdditionalDestinationBlockStep2(nextIndex, {}));
+        attachDobMask();
+        updateAddDestinationButtonStateStep2();
+        updateDestinationDeleteButtonsVisibilityStep2();
+      });
+    }
+    var form = document.getElementById('step2-contact-form');
+    if (form) {
+      form.addEventListener('input', function(e) {
+        if (e.target.matches('.dest-name, .dest-from-date, .dest-to-date, .dest-address, .dest-phone, .dest-email')) {
+          var block = e.target.closest('.destination-block');
+          if (block) { validateDestinationBlockDatesStep2(block); updateAddDestinationButtonStateStep2(); }
+        }
+      });
+      form.addEventListener('change', function(e) {
+        if (e.target.matches('.dest-name, .dest-from-date, .dest-to-date, .dest-address, .dest-phone, .dest-email')) {
+          var block = e.target.closest('.destination-block');
+          if (block) { validateDestinationBlockDatesStep2(block); updateAddDestinationButtonStateStep2(); }
+        }
+      });
+      form.addEventListener('click', function(e) {
+        var delBtn = e.target.closest('.destination-delete-btn');
+        if (!delBtn) return;
+        var block = delBtn.closest('.destination-block');
+        if (!block) return;
+        var allBlocks = document.querySelectorAll('#step2-contact-form .destination-block');
+        if (allBlocks.length === 1) {
+          var nameInp = block.querySelector('.dest-name');
+          var fromInp = block.querySelector('.dest-from-date');
+          var toInp = block.querySelector('.dest-to-date');
+          var addrInp = block.querySelector('.dest-address');
+          var phoneInp = block.querySelector('.dest-phone');
+          var emailInp = block.querySelector('.dest-email');
+          if (nameInp) nameInp.value = '';
+          if (fromInp) fromInp.value = '';
+          if (toInp) toInp.value = '';
+          if (addrInp) addrInp.value = '';
+          if (phoneInp) phoneInp.value = '';
+          if (emailInp) emailInp.value = '';
+          updateAddDestinationButtonStateStep2();
+          updateDestinationDeleteButtonsVisibilityStep2();
+          return;
+        }
+        var isFirst = block.getAttribute('data-dest-index') === '0';
+        if (isFirst && container && container.children.length > 0) {
+          var secondBlock = container.querySelector('.destination-block');
+          if (secondBlock) {
+            ['dest-name','dest-from-date','dest-to-date','dest-address','dest-phone','dest-email'].forEach(function(cls) {
+              var src = secondBlock.querySelector('.' + cls);
+              var dest = document.getElementById('step2-' + cls);
+              if (src && dest) dest.value = src.value;
+            });
+            var hr = secondBlock.previousElementSibling;
+            if (hr && hr.classList.contains('dest-sep-form')) hr.remove();
+            secondBlock.remove();
+          }
+        } else {
+          var prev = block.previousElementSibling;
+          if (prev && prev.classList.contains('dest-sep-form')) prev.remove();
+          block.remove();
+        }
+        attachDobMask();
+        updateAddDestinationButtonStateStep2();
+        updateDestinationDeleteButtonsVisibilityStep2();
+      });
+    }
+    updateAddDestinationButtonStateStep2();
+    updateDestinationDeleteButtonsVisibilityStep2();
+  }
+
+  function step2BuildContent() {
+    var f = function(id) { var el = document.getElementById(id); return el && el.value ? el.value.trim() : ''; };
+    var firstName = f('step2-first-name');
+    var surname = f('step2-surname');
+    var email = f('step2-email');
+    var mobile = f('step2-mobile');
+    var homeCountry = f('step2-home-country');
+    var additionalInfo = f('step2-additional-info');
+    var escapeHtml = function(s) { var t = (s == null ? '' : s).toString(); return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); };
+    var formatMultiline = function(s) { var text = (s ?? '').toString().trim(); if (!text) return ''; return escapeHtml(text).replace(/\r?\n/g, '<br>'); };
+    var css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}body{font-family:\'Quicksand\',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;overflow-wrap:break-word;word-break:break-word}@media(max-width:480px){body{padding:16px}.container{padding:24px 16px}}@media(min-width:640px){.container{padding:48px 40px;max-width:760px}}.last-updated-block{font-size:0.95rem;font-weight:400;color:#6b7280;text-align:right;line-height:1.4;margin-bottom:12px}h1{font-size:1.5rem;font-weight:700;color:#111;margin-bottom:24px;padding-bottom:16px;border-bottom:3px solid #111}.info{display:flex;flex-direction:column;align-items:flex-start;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}.dest-details{display:flex;flex-direction:column;gap:4px;color:#1a1a1a}.dest-details span:empty{display:none}.dest-details .dest-name-dates-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:0;min-width:0}.dest-details .dest-name-dates-row .dest-name{flex:1 1 0%;min-width:0;padding-right:0.5em}.dest-details .dest-name-dates-row .dest-sep{flex:0 0 auto;white-space:pre;margin:0 0.35em}.dest-details .dest-name-dates-row .dest-from-till{flex:0 1 auto;white-space:nowrap}@media(max-width:560px){.dest-details .dest-name-dates-row{flex-direction:column;align-items:flex-start}.dest-details .dest-name-dates-row .dest-sep{display:none}}hr.dest-sep{margin:1em 0;border:none;border-top:1px solid #e5e7eb}';
+    var destList = getDestinationBlocksDataStep2();
+    var destHtml = destList.length === 0 ? '<span class="value">—</span>' : destList.map(function(d) {
+      var name = escapeHtml((d.name || '').trim());
+      var from = escapeHtml((d.fromDate || '').trim());
+      var to = escapeHtml((d.toDate || '').trim());
+      var hasDates = from || to;
+      var nameDatesRow = '<div class="dest-name-dates-row"><span class="dest-name">' + name + '</span>' + (hasDates ? '<span class="dest-sep">    |    </span><span class="dest-from-till">From <span class="dest-from">' + from + '</span> till <span class="dest-to">' + to + '</span></span>' : '') + '</div>';
+      return '<div class="dest-details">' + nameDatesRow + '<span>' + escapeHtml(d.address || '') + '</span><span>' + escapeHtml(d.phone || '') + '</span><span>' + escapeHtml(d.email || '') + '</span></div>';
+    }).join('<hr class="dest-sep">');
+    var additionalHtml = additionalInfo ? '<span class="value">' + formatMultiline(additionalInfo) + '</span>' : '<span class="value">—</span>';
+    var ml = (mobile || '').replace(/\s/g, '');
+    var mobileHtml = (mobile && mobile.trim()) ? '<a href="tel:' + escapeHtml(ml) + '">' + escapeHtml(String(mobile).trim()) + '</a>' : '—';
+    var homeCountryHtml = (homeCountry && homeCountry.trim()) ? escapeHtml(homeCountry.trim()) : '—';
+    var now = new Date().toISOString();
+    var lastUpdatedData = 'data-timestamp="' + now + '" data-updated-by="user"';
+    var D = window.FORM_DESCRIPTIONS || {};
+    var lbl = function(k) { return (D[k] && D[k].label) ? D[k].label : k; };
+    var fr = { 'section-title': 'Coordonn\u00e9es', 'first-name': 'Pr\u00e9noms', 'surname': 'Nom de famille', 'email': 'Courriel', 'mobile': 'T\u00e9l\u00e9phone', 'home-country': 'Pays de r\u00e9sidence', 'destination-details': 'D\u00e9tails de la destination', 'additional-info': 'Informations suppl\u00e9mentaires' };
+    var zh = { 'section-title': '\u8054\u7cfb\u4fe1\u606f', 'first-name': '\u540d\u5b57', 'surname': '\u59d3\u6c0f', 'email': '\u7535\u5b50\u90ae\u4ef6', 'mobile': '\u7535\u8bdd', 'home-country': '\u5c45\u4f4f\u56fd\u5bb6', 'destination-details': '\u76ee\u7684\u5730\u8be6\u60c5', 'additional-info': '\u9644\u52a0\u4fe1\u606f' };
+    var lblBoth = function(k) { var e = k === 'section-title' ? 'Contact Information' : lbl(k); return e + '<wbr> \u00b7 ' + (fr[k] || '') + ' \u00b7 ' + (zh[k] || ''); };
+    var lastUpdatedBlockHtml = '<div class="last-updated-block"><span class="last-updated-titles">Last updated</span><span class="last-updated-display" ' + lastUpdatedData + '>—</span></div>';
+    var formatTimestampScript = '<script>(function(){function formatTimestamp(isoString,updatedBy){if(!isoString)return "";var d=new Date(isoString);var days=[\'Sunday\',\'Monday\',\'Tuesday\',\'Wednesday\',\'Thursday\',\'Friday\',\'Saturday\'];var months=[\'January\',\'February\',\'March\',\'April\',\'May\',\'June\',\'July\',\'August\',\'September\',\'October\',\'November\',\'December\'];return days[d.getDay()]+\', \'+d.getDate()+\' \'+months[d.getMonth()]+\' \'+d.getFullYear()+\' by \'+(updatedBy===\'admin\'?\'Admin\':\'User\');}document.querySelectorAll(\'.last-updated-display\').forEach(function(el){var ts=el.getAttribute(\'data-timestamp\');var ub=el.getAttribute(\'data-updated-by\');if(ts)el.textContent=formatTimestamp(ts,ub);});})();<\/script>';
+    return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + escapeHtml(firstName + ' ' + surname) + '</title><style>' + css + '</style></head><body><div class="container">' + lastUpdatedBlockHtml + '<h1>' + lblBoth('section-title') + '</h1><div class="info"><span class="label">' + lblBoth('first-name') + '</span><span class="value">' + escapeHtml(firstName) + '</span></div><div class="info"><span class="label">' + lblBoth('surname') + '</span><span class="value">' + escapeHtml(surname) + '</span></div><div class="info"><span class="label">' + lblBoth('email') + '</span><span class="value"><a href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a></span></div><div class="info"><span class="label">' + lblBoth('mobile') + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblBoth('home-country') + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblBoth('destination-details') + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblBoth('additional-info') + '</span>' + additionalHtml + '</div></div>' + formatTimestampScript + '</body></html>';
+  }
+
+  function step2Skip() {
+    sessionStorage.removeItem('signup_contact_slug');
+    sessionStorage.removeItem('signup_contact_sha');
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.remove('hidden');
+    updateProgressBar(4);
+    var emailVerified = sessionStorage.getItem('signup_email_verified') === 'true';
+    buildStep4Summary(emailVerified);
+    document.getElementById('step4-editor-link').href = EDITOR_URL;
+    var username = sessionStorage.getItem('signup_username');
+    var email = sessionStorage.getItem('signup_email') || '';
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var dob = sessionStorage.getItem('signup_dob') || '';
+    try {
+      fetch(API + '/api/signup-success-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, accountEmail: email, firstName, lastName, dob, contactSlug: '' })
+      }).catch(function() {});
+    } catch (e) {}
+  }
+
+  function step2ContinueToStep3() {
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.remove('hidden');
+    updateProgressBar(3);
+    populateStep3Qr();
+  }
+
+  async function step2SubmitContactForm(e) {
+    e.preventDefault();
+    hideAlert('step2-alert');
+    ['error-step2-contact-page-name','error-step2-contact-page-url-slug','error-step2-first-name','error-step2-surname','error-step2-email'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    var nameInp = document.getElementById('step2-contact-page-name');
+    var slugInp = document.getElementById('step2-contact-page-url-slug');
+    var nameTrim = (nameInp && nameInp.value) ? nameInp.value.trim() : '';
+    var slugRaw = (slugInp && slugInp.value) ? slugInp.value.trim() : '';
+    if (!nameTrim) {
+      var nameErr = document.getElementById('error-step2-contact-page-name');
+      if (nameErr) nameErr.textContent = 'Page Name is required.';
+      if (nameInp) nameInp.focus();
+      return;
+    }
+    var slug = (slugRaw === '' || slugRaw.toLowerCase() === 'index') ? 'index' : slugRaw;
+    if (slug.toLowerCase() === 'index') {
+      var slugErr = document.getElementById('error-step2-contact-page-url-slug');
+      if (slugErr) slugErr.textContent = 'Use a different URL slug (e.g. main, contact).';
+      if (slugInp) slugInp.focus();
+      return;
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(slug) || slug.length < 3 || slug.length > 28) {
+      var errEl = document.getElementById('error-step2-contact-page-url-slug');
+      if (errEl) errEl.textContent = 'Page URL must be 3–28 characters (letters, numbers, hyphens, underscores).';
+      if (slugInp) slugInp.focus();
+      return;
+    }
+    var fnInp = document.getElementById('step2-first-name');
+    var snInp = document.getElementById('step2-surname');
+    var emInp = document.getElementById('step2-email');
+    var r = validateGivenNames(fnInp && fnInp.value ? fnInp.value.trim() : '', true);
+    if (!r.valid) {
+      document.getElementById('error-step2-first-name').textContent = r.message;
+      if (fnInp) fnInp.focus();
+      return;
+    }
+    r = validateFamilyName(snInp && snInp.value ? snInp.value.trim() : '', true);
+    if (!r.valid) {
+      document.getElementById('error-step2-surname').textContent = r.message;
+      if (snInp) snInp.focus();
+      return;
+    }
+    r = validateEmailInput(emInp, true);
+    if (!r.valid) {
+      document.getElementById('error-step2-email').textContent = r.message;
+      if (emInp) emInp.focus();
+      return;
+    }
+    var username = sessionStorage.getItem('signup_username');
+    var token = sessionStorage.getItem('signup_token');
+    if (!username || !token) {
+      showAlert('step2-alert', 'Session missing. Please start over from the beginning.', 'error');
+      return;
+    }
+    var content = step2BuildContent();
+    var btn = document.getElementById('step2-save-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...'; }
+    var existingSlug = sessionStorage.getItem('signup_contact_slug');
+    var existingSha = sessionStorage.getItem('signup_contact_sha');
+    var isUpdate = existingSlug && existingSha && slug === existingSlug;
+    try {
+      var res;
+      if (isUpdate) {
+        res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/' + encodeURIComponent(slug), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ content: content, sha: existingSha, contactPageName: nameTrim || undefined })
+        });
+      } else {
+        res = await fetch(API + '/api/page/' + encodeURIComponent(username) + '/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json; charset=utf-8', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ contactpagename: slug, contactPageName: nameTrim || undefined, content: content })
+        });
+      }
+      var data = await res.json();
+      if (res.ok && (data.success || (isUpdate && data.sha))) {
+        if (!isUpdate) sessionStorage.setItem('signup_contact_slug', data.contactpagename || slug);
+        if (data.sha) sessionStorage.setItem('signup_contact_sha', data.sha);
+        step2ContinueToStep3();
+      } else {
+        var errMsg = (data && data.error) || 'Failed to create contact page.';
+        if (data.error && (data.error.indexOf('URL') !== -1 || data.error.indexOf('slug') !== -1 || data.error.indexOf('exists') !== -1)) {
+          document.getElementById('error-step2-contact-page-url-slug').textContent = errMsg;
+          if (slugInp) slugInp.focus();
+        } else if (data.error && data.error.indexOf('Contact Page Name') !== -1) {
+          document.getElementById('error-step2-contact-page-name').textContent = errMsg;
+          if (nameInp) nameInp.focus();
+        } else {
+          showAlert('step2-alert', errMsg, 'error');
+        }
+      }
+    } catch (err) {
+      showAlert('step2-alert', 'Connection error. Please try again.', 'error');
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Contact Page'; }
+  }
+
+  function continueToStep3() {
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.remove('hidden');
+    updateProgressBar(3);
+    populateStep3Qr();
+  }
+
+  function buildStep4Summary(emailVerified) {
+    var username = sessionStorage.getItem('signup_username');
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var email = sessionStorage.getItem('signup_email') || '';
+    var dob = sessionStorage.getItem('signup_dob') || '';
+    var contactSlug = sessionStorage.getItem('signup_contact_slug') || '';
+    var viewUrl = contactSlug
+      ? (PAGES_URL + username + '/' + contactSlug + '.html')
+      : (PAGES_URL + username + '/');
+    var emailBadge = emailVerified
+      ? '<span class="step4-badge step4-badge-verified">Verified</span>'
+      : '<span class="step4-badge step4-badge-not-verified">Not Verified</span>';
+    var profileSection =
+      '<p class="success-heading">Profile details</p>' +
+      '<ul class="step4-detail-list">' +
+      '<li><strong>User Name:</strong> ' + (username || '') + '</li>' +
+      '<li><strong>First Name:</strong> ' + (firstName || '') + '</li>' +
+      '<li><strong>Last Name:</strong> ' + (lastName || '') + '</li>' +
+      '<li><strong>Account Email:</strong> ' + (email || '') + ' ' + emailBadge + '</li>' +
+      '<li><strong>Date of Birth:</strong> ' + (dob || '') + '</li>' +
+      '</ul>';
+    var pageSection = contactSlug
+      ? '<p class="success-heading">Contact Page &amp; QR&apos;s</p>' +
+        '<ul class="step4-detail-list"><li><strong>Page URL:</strong> <a href="' + viewUrl + '" target="_blank" rel="noopener">' + viewUrl + '</a></li></ul>'
+      : '<p class="success-heading">Contact Page &amp; QR&apos;s</p>' +
+        '<ul class="step4-detail-list"><li>—</li><li><i>To be setup later in My Account</i></li></ul>';
+    var nextSteps =
+      '<p class="success-heading">Next steps</p>' +
+      '<p class="text-secondary">Click the &quot;Go to My Account&quot; button below where you can:</p>' +
+      '<ul class="step4-detail-list">' +
+      '<li>Add new or view and edit all your contact pages</li>' +
+      '<li>Generate the QR codes for your Contact Pages (URL and vCard)</li>' +
+      '<li>Edit your profile details including your username</li>' +
+      '<li>Change your login password and reset your security questions</li>' +
+      '</ul>';
+    document.getElementById('step4-summary').innerHTML = profileSection + pageSection + nextSteps;
+  }
+
+  async function continueToStep4() {
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.remove('hidden');
+    updateProgressBar(4);
+    var emailVerified = sessionStorage.getItem('signup_email_verified') === 'true';
+    buildStep4Summary(emailVerified);
+    var username = sessionStorage.getItem('signup_username');
+    var email = sessionStorage.getItem('signup_email') || '';
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var dob = sessionStorage.getItem('signup_dob') || '';
+    var contactSlug = sessionStorage.getItem('signup_contact_slug') || '';
+    document.getElementById('step4-editor-link').href = EDITOR_URL;
+    try {
+      await fetch(API + '/api/signup-success-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, accountEmail: email, firstName, lastName, dob, contactSlug })
+      });
+    } catch (e) {}
+  }
+
+  function skipVerificationToAllSet() {
+    document.getElementById('signup-otp-card').classList.add('hidden');
+    document.getElementById('signup-step2-card').classList.add('hidden');
+    document.getElementById('signup-step3-card').classList.add('hidden');
+    document.getElementById('signup-step4-card').classList.remove('hidden');
+    updateProgressBar(4);
+    buildStep4Summary(false);
+    document.getElementById('step4-editor-link').href = EDITOR_URL;
+    var username = sessionStorage.getItem('signup_username');
+    var email = sessionStorage.getItem('signup_email') || '';
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var dob = sessionStorage.getItem('signup_dob') || '';
+    var contactSlug = sessionStorage.getItem('signup_contact_slug') || '';
+    try {
+      fetch(API + '/api/signup-success-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, accountEmail: email, firstName, lastName, dob, contactSlug })
+      }).catch(function() {});
+    } catch (e) {}
+  }
+
+  (function initStep2Listeners() {
+    var form = document.getElementById('step2-contact-form');
+    if (form) form.addEventListener('submit', step2SubmitContactForm);
+    var skipBtn = document.getElementById('step2-skip-btn');
+    if (skipBtn) skipBtn.addEventListener('click', step2Skip);
+    var toggleHints = document.getElementById('step2-toggle-hints');
+    if (toggleHints) {
+      toggleHints.addEventListener('click', function() {
+        var card = document.getElementById('signup-step2-card');
+        if (!card) return;
+        var hidden = card.classList.toggle('step2-hints-hidden');
+        toggleHints.setAttribute('aria-checked', hidden ? 'false' : 'true');
+      });
+    }
+    var urlAnatomyRow = document.getElementById('step2-contact-page-url-anatomy');
+    var slugInput = document.getElementById('step2-contact-page-url-slug');
+    if (urlAnatomyRow && slugInput) {
+      var row = urlAnatomyRow.querySelector('.url-anatomy-row');
+      function fitSlugSize() {
+        var len = (slugInput.value || '').length;
+        slugInput.size = Math.max(10, Math.min(28, len || 1));
+        checkSlugWrap();
+      }
+      function checkSlugWrap() {
+        if (!row) return;
+        var prefix = row.querySelector('.url-edit-prefix');
+        if (!prefix) return;
+        var inputTop = slugInput.getBoundingClientRect().top;
+        var prefixTop = prefix.getBoundingClientRect().top;
+        row.classList.toggle('url-slug-wrapped', inputTop > prefixTop + 5);
+      }
+      slugInput.addEventListener('input', fitSlugSize);
+      slugInput.addEventListener('focus', fitSlugSize);
+      fitSlugSize();
+      if (typeof ResizeObserver !== 'undefined') {
+        var ro = new ResizeObserver(function() { checkSlugWrap(); });
+        ro.observe(urlAnatomyRow);
+      }
+      window.addEventListener('resize', checkSlugWrap);
+      checkSlugWrap();
+    }
+  })();
+
+  function runStep3DownloadQrOnTemplate() {
+    if (!step3QrData || (!step3QrData.url && !step3QrData.vcard)) return;
+    var useUrl = !document.getElementById('step3-qr-action-url').classList.contains('hidden');
+    var data = useUrl ? step3QrData.url : (step3QrData.vcard || '');
+    if (!data) return;
+    var templateSrc = window.location.origin + '/myaccount/' + encodeURIComponent('QR Template (Card).png');
+    var templateImg = new Image();
+    templateImg.onerror = function() { alert('Could not load the card template image. Please check your connection and try again.'); };
+    templateImg.onload = function() {
+      var tw = templateImg.naturalWidth, th = templateImg.naturalHeight;
+      var refW = 732, refH = 968;
+      var qrRefX = 172, qrRefY = 274;
+      var qrRefW = 281, qrRefH = 279;
+      var qrRefSize = Math.min(qrRefW, qrRefH);
+      var scale = Math.min(tw / refW, th / refH);
+      var qrX = Math.round(qrRefX * (tw / refW));
+      var qrY = Math.round(qrRefY * (th / refH));
+      var qrSize = Math.round(qrRefSize * scale);
+      var pad = 1;
+      var drawX = qrX + pad, drawY = qrY + pad, drawSize = qrSize - 2 * pad;
+      function drawAndDownload(qrImage) {
+        var main = document.createElement('canvas');
+        main.width = tw; main.height = th;
+        var ctx = main.getContext('2d');
+        ctx.drawImage(templateImg, 0, 0);
+        ctx.drawImage(qrImage, drawX, drawY, drawSize, drawSize);
+        try {
+          var a = document.createElement('a');
+          a.download = 'digicon-id-qr-' + (useUrl ? 'url' : 'vcard') + '-template.png';
+          a.href = main.toDataURL('image/png');
+          a.click();
+        } catch (e) { alert('Could not create download. If you use a strict browser or extensions, try allowing this site.'); }
+      }
+      if (window.QRCode) {
+        var qrCanvas = document.createElement('canvas');
+        window.QRCode.toCanvas(qrCanvas, data, { width: drawSize, margin: 0 }, function(err) {
+          if (err) { loadQrFromApi(); return; }
+          drawAndDownload(qrCanvas);
+        });
+      } else { loadQrFromApi(); }
+      function loadQrFromApi() {
+        var qrImg = new Image();
+        qrImg.crossOrigin = 'anonymous';
+        qrImg.onerror = function() { alert('Could not generate QR code. Please check your connection and try again.'); };
+        qrImg.onload = function() { drawAndDownload(qrImg); };
+        qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=' + drawSize + 'x' + drawSize + '&margin=0&data=' + encodeURIComponent(data);
+      }
+    };
+    templateImg.src = templateSrc;
+  }
+
+  function copyStep3QrImageToClipboard(data, btn) {
+    if (!data || !navigator.clipboard || !navigator.clipboard.write) return;
+    var apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&format=png&data=' + encodeURIComponent(data);
+    fetch(apiUrl).then(function(r) { return r.blob(); }).then(function(blob) {
+      return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    }).then(function() {
+      var orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(function() { btn.textContent = orig; }, 2000);
+    }).catch(function() {});
+  }
+
+  (function initStep3QrListeners() {
+    document.querySelectorAll('.step3-qr-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() { switchStep3QrTab(this.getAttribute('data-qr')); });
+    });
+    var copyUrlBtn = document.getElementById('step3-qr-copy-url');
+    if (copyUrlBtn) copyUrlBtn.addEventListener('click', function() {
+      if (!step3QrData.url) return;
+      navigator.clipboard.writeText(step3QrData.url).then(function() {
+        var orig = copyUrlBtn.textContent;
+        copyUrlBtn.textContent = 'Copied!';
+        setTimeout(function() { copyUrlBtn.textContent = orig; }, 2000);
+      });
+    });
+    var copyQrUrlBtn = document.getElementById('step3-qr-copy-qr-url');
+    if (copyQrUrlBtn) copyQrUrlBtn.addEventListener('click', function() {
+      copyStep3QrImageToClipboard(step3QrData.url, copyQrUrlBtn);
+    });
+    var copyQrVcardBtn = document.getElementById('step3-qr-copy-qr-vcard');
+    if (copyQrVcardBtn) copyQrVcardBtn.addEventListener('click', function() {
+      copyStep3QrImageToClipboard(step3QrData.vcard || '', copyQrVcardBtn);
+    });
+    document.querySelectorAll('.step3-qr-download-template-btn').forEach(function(templateBtn) {
+      templateBtn.addEventListener('click', runStep3DownloadQrOnTemplate);
+    });
+  })();
+
+  function updateProgressBar(step) {
+    ['progress-step1','progress-step2','progress-step3','progress-step4'].forEach(function(id, i) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('active','done');
+      if (i + 1 < step) el.classList.add('done');
+      else if (i + 1 === step) el.classList.add('active');
+    });
+  }
+
+  function updateStep1SubmitButton() {
+    var username = document.getElementById('signup-folder').value.trim();
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var storedPw = sessionStorage.getItem('signup_password') || '';
+    var dob = document.getElementById('signup-dob').value.trim();
+    var sq1 = document.getElementById('sq1').value, sq2 = document.getElementById('sq2').value, sq3 = document.getElementById('sq3').value;
+    var a1 = document.getElementById('sq1-answer').value.trim(), a2 = document.getElementById('sq2-answer').value.trim(), a3 = document.getElementById('sq3-answer').value.trim();
+    var consent = document.getElementById('signup-consent').checked;
+    var folderOk = /^[a-zA-Z0-9_-]{3,28}$/.test(username);
+    var namesOk = firstName && lastName && /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(firstName) && /^[a-zA-Z][a-zA-Z\s'\-.]*$/.test(lastName);
+    var pwOk = storedPw.length >= 8;
+    var dobOk = !!normalizeDob(dob);
+    var sqOk = sq1 && sq2 && sq3 && sq1 !== sq2 && sq2 !== sq3 && sq1 !== sq3;
+    var aOk = a1.length >= 4 && a2.length >= 4 && a3.length >= 4;
+    var btn = document.getElementById('signup-step1-btn');
+    if (btn) btn.disabled = !(folderOk && namesOk && pwOk && dobOk && sqOk && aOk && consent);
+  }
+
+  document.getElementById('signup-step0-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideAlert('signup-step0-alert');
+    ['error-signup-email','error-signup-step0-first-name','error-signup-step0-last-name','error-signup-step0-password'].forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    ['signup-email','signup-step0-first-name','signup-step0-last-name','signup-step0-password'].forEach(function(id) { var inp = document.getElementById(id); if (inp) inp.classList.remove('is-invalid'); });
+    var emailVal = document.getElementById('signup-email').value.trim();
+    var r = validateEmailInput(document.getElementById('signup-email'), true);
+    if (!r.valid) { document.getElementById('error-signup-email').textContent = r.message; document.getElementById('signup-email').classList.add('is-invalid'); return; }
+    try {
+      await fetch(API + '/api/check-account-email/' + encodeURIComponent(emailVal));
+    } catch (err) { showAlert('signup-step0-alert', 'Connection error. Please try again.', 'error'); return; }
+    var firstName = document.getElementById('signup-step0-first-name').value.trim();
+    var lastName = document.getElementById('signup-step0-last-name').value.trim();
+    r = validateGivenNames(firstName, true);
+    if (!r.valid) { document.getElementById('error-signup-step0-first-name').textContent = r.message; document.getElementById('signup-step0-first-name').classList.add('is-invalid'); return; }
+    r = validateFamilyName(lastName, true);
+    if (!r.valid) { document.getElementById('error-signup-step0-last-name').textContent = r.message; document.getElementById('signup-step0-last-name').classList.add('is-invalid'); return; }
+    var pw = document.getElementById('signup-step0-password').value;
+    if (pw.length < 8) { document.getElementById('error-signup-step0-password').textContent = 'Password must be at least 8 characters.'; document.getElementById('signup-step0-password').classList.add('is-invalid'); return; }
+    sessionStorage.setItem('signup_email', emailVal);
+    sessionStorage.setItem('signup_first_name', firstName);
+    sessionStorage.setItem('signup_last_name', lastName);
+    sessionStorage.setItem('signup_password', pw);
+    document.getElementById('signup-step0-section').classList.add('hidden');
+    document.getElementById('signup-steps-section').classList.remove('hidden');
+    var twoCol = document.querySelector('.home-two-col');
+    if (twoCol) twoCol.classList.add('signup-steps-active');
+    document.getElementById('step1-email-display').textContent = emailVal;
+    document.getElementById('signup-step1-card').classList.remove('hidden');
+    updateProgressBar(1);
+    document.getElementById('signup-folder').focus();
+  });
+
+  function initStep1Validations() {
+    var folderInp = document.getElementById('signup-folder'), folderErr = document.getElementById('error-signup-folder');
+    if (folderInp && folderErr) {
+      function showErr(m) { folderErr.textContent = m || ''; folderErr.setAttribute('aria-live', 'polite'); folderInp.classList.add('is-invalid'); }
+      function clearErr() { folderErr.textContent = ''; folderErr.removeAttribute('aria-live'); folderInp.classList.remove('is-invalid'); }
+      function checkUsernameAvailability(u, onStart) {
+        if (onStart) folderErr.textContent = 'Checking...';
+        return fetch(API + '/api/check-username/' + encodeURIComponent(u))
+          .then(function(res) { return res.json(); })
+          .then(function(d) {
+            if (d.error) { showErr(d.error); } else { clearErr(); }
+          })
+          .catch(function() { if (folderErr.textContent === 'Checking...') folderErr.textContent = ''; });
+      }
+      folderInp.addEventListener('blur', async function() {
+        var r = validateFolder(this.value);
+        if (!r.valid) { showErr(r.message); return; }
+        var u = this.value.trim().toLowerCase();
+        this.value = u;
+        if (u.length >= 3) await checkUsernameAvailability(u, true);
+        else clearErr();
+      });
+      var usernameCheckTimer;
+      folderInp.addEventListener('input', function() {
+        var r = validateFolder(this.value);
+        if (!r.valid) { showErr(r.message); clearTimeout(usernameCheckTimer); return; }
+        clearErr();
+        var u = this.value.trim().toLowerCase();
+        clearTimeout(usernameCheckTimer);
+        if (u.length >= 3) {
+          usernameCheckTimer = setTimeout(function() { checkUsernameAvailability(u, true); }, 450);
+        }
+      });
+    }
+    var dobInp = document.getElementById('signup-dob'), dobErr = document.getElementById('error-signup-dob');
+    if (dobInp && dobErr) {
+      function showErr(m) { dobErr.textContent = m || ''; dobErr.setAttribute('aria-live', 'polite'); dobInp.classList.add('is-invalid'); }
+      function clearErr() { dobErr.textContent = ''; dobErr.removeAttribute('aria-live'); dobInp.classList.remove('is-invalid'); }
+      dobInp.addEventListener('blur', function() { var r = validateDob(this.value); r.valid ? clearErr() : showErr(r.message); });
+      dobInp.addEventListener('input', function() { if (validateDob(this.value).valid) clearErr(); });
+    }
+    ['sq1-answer','sq2-answer','sq3-answer'].forEach(function(id, idx) {
+      var inp = document.getElementById(id), errId = 'error-' + id, errEl = document.getElementById(errId);
+      if (!inp || !errEl) return;
+      function showErr(m) { errEl.textContent = m || ''; errEl.setAttribute('aria-live', 'polite'); inp.classList.add('is-invalid'); }
+      function clearErr() { errEl.textContent = ''; errEl.removeAttribute('aria-live'); inp.classList.remove('is-invalid'); }
+      inp.addEventListener('blur', function() { var r = validateSecretAnswer(this.value); r.valid ? clearErr() : showErr(r.message); });
+      inp.addEventListener('input', function() { if (validateSecretAnswer(this.value).valid) clearErr(); });
+    });
+  }
+  var step1Form = document.getElementById('signup-step1-form');
+  if (step1Form) {
+    step1Form.addEventListener('input', updateStep1SubmitButton);
+    step1Form.addEventListener('change', updateStep1SubmitButton);
+  }
+  ['sq1','sq2','sq3'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', syncSecretQuestionOptions);
+  });
+  initStep1Validations();
+  attachDobMask();
+  attachUsernameMask();
+  initDestinationRepeaterStep2();
+
+  function showAlert(id, msg, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'alert alert-' + (type || 'info');
+    el.innerHTML = msg;
+    el.style.display = 'block';
+  }
+  function hideAlert(id) {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+  }
+
+  function clearSignupStep1Form() {
+    var form = document.getElementById('signup-step1-form');
+    if (form) form.reset();
+    syncSecretQuestionOptions();
+    ['signup-folder','signup-dob','sq1','sq2','sq3','sq1-answer','sq2-answer','sq3-answer'].forEach(function(id) {
+      var inp = document.getElementById(id);
+      if (inp) inp.classList.remove('is-invalid');
+    });
+    ['error-signup-folder','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = '';
+    });
+    hideAlert('signup-step1-alert');
+    var consent = document.getElementById('signup-consent');
+    if (consent) consent.checked = false;
+    updateStep1SubmitButton();
+  }
+
+  document.getElementById('signup-step1-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideAlert('signup-step1-alert');
+    ['error-signup-folder','error-signup-dob','error-sq1-answer','error-sq2-answer','error-sq3-answer','error-secret-questions','error-signup-consent'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.textContent = '';
+    });
+    ['signup-folder','signup-dob'].forEach(function(id) {
+      var inp = document.getElementById(id); if (inp) inp.classList.remove('is-invalid');
+    });
+
+    var accountEmailVal = sessionStorage.getItem('signup_email') || '';
+    if (!accountEmailVal || !accountEmailVal.includes('@')) { signupStartOver(); return; }
+
+    var firstName = sessionStorage.getItem('signup_first_name') || '';
+    var lastName = sessionStorage.getItem('signup_last_name') || '';
+    var storedPw = sessionStorage.getItem('signup_password') || '';
+    var username = document.getElementById('signup-folder').value.trim().toLowerCase();
+    var r = validateFolder(username);
+    if (!r.valid) {
+      document.getElementById('error-signup-folder').textContent = r.message;
+      document.getElementById('signup-folder').classList.add('is-invalid');
+      document.getElementById('signup-folder').focus();
+      return;
+    }
+    try {
+      var checkRes = await fetch(API + '/api/check-username/' + encodeURIComponent(username));
+      var checkData = await checkRes.json();
+      if (checkData.error) {
+        document.getElementById('error-signup-folder').textContent = checkData.error;
+        document.getElementById('signup-folder').classList.add('is-invalid');
+        document.getElementById('signup-folder').focus();
+        return;
+      }
+    } catch (err) {}
+    if (storedPw.length < 8) { signupStartOver(); return; }
+    var pw = storedPw;
+    var dobRaw = document.getElementById('signup-dob').value.trim();
+    r = validateDob(dobRaw);
+    if (!r.valid) {
+      document.getElementById('error-signup-dob').textContent = r.message;
+      document.getElementById('signup-dob').classList.add('is-invalid');
+      document.getElementById('signup-dob').focus();
+      return;
+    }
+    var dob = normalizeDob(dobRaw);
+
+    const secretQuestions = [
+      { questionId: parseInt(document.getElementById('sq1').value, 10), answer: document.getElementById('sq1-answer').value.trim() },
+      { questionId: parseInt(document.getElementById('sq2').value, 10), answer: document.getElementById('sq2-answer').value.trim() },
+      { questionId: parseInt(document.getElementById('sq3').value, 10), answer: document.getElementById('sq3-answer').value.trim() }
+    ];
+
+    const ids = secretQuestions.map(function(q) { return q.questionId; });
+    if (new Set(ids).size !== 3) {
+      showAlert('signup-step1-alert', 'Please select 3 different security questions.', 'error');
+      document.getElementById('error-secret-questions').textContent = 'Select 3 different questions.';
+      return;
+    }
+    for (var i = 0; i < 3; i++) {
+      var a = validateSecretAnswer(secretQuestions[i].answer);
+      if (!a.valid) {
+        showAlert('signup-step1-alert', 'Security answer ' + (i + 1) + ': ' + a.message, 'error');
+        return;
+      }
+      secretQuestions[i].answer = a.normalized;
+    }
+
+    if (!document.getElementById('signup-consent').checked) {
+      showAlert('signup-step1-alert', 'You must agree to the Terms of Use and Privacy Statement.', 'error');
+      return;
+    }
+
+    var btn = document.getElementById('signup-step1-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Creating...';
+    showAlert('signup-step1-alert', '<span class="spinner"></span> Creating your account...', 'info');
+
+    try {
+      var res = await fetch(API + '/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username,
+          firstName: firstName,
+          surname: lastName,
+          accountEmail: accountEmailVal,
+          contactPageEmail: '',
+          dob: dob,
+          password: pw,
+          secretQuestions: secretQuestions.map(function(q) { return { questionId: q.questionId, answer: q.answer }; })
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showAlert('signup-step1-alert', data.error || 'Failed to create account', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Create My Account';
+        return;
+      }
+
+      sessionStorage.setItem('signup_username', username);
+      if (data.token) {
+        sessionStorage.setItem('signup_token', data.token);
+        sessionStorage.setItem('edit_session', JSON.stringify({ username: username, token: data.token }));
+      }
+      sessionStorage.setItem('signup_first_name', firstName);
+      sessionStorage.setItem('signup_last_name', lastName);
+      sessionStorage.setItem('signup_dob', dob);
+
+      document.getElementById('signup-step1-card').classList.add('hidden');
+      document.getElementById('signup-otp-card').classList.remove('hidden');
+      document.getElementById('otp-email-display').textContent = accountEmailVal;
+      document.getElementById('otp-code-input').value = '';
+      document.getElementById('otp-code-input').focus();
+      hideAlert('otp-alert');
+      document.getElementById('error-otp-code').textContent = '';
+      try {
+        var otpRes = await fetch(API + '/api/otp/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username }) });
+        var otpData = await otpRes.json();
+        showAlert('otp-alert', otpData.sent ? 'Verification code sent. Check your email (and spam/junk).' : (otpData.error || 'Could not send verification email.'), otpData.sent ? 'success' : 'error');
+      } catch (e) {
+        showAlert('otp-alert', 'Could not send verification email. Try Resend code below.', 'error');
+      }
+    } catch (err) {
+      showAlert('signup-step1-alert', 'Connection error. Please try again.', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Create My Account';
+    }
+  });
+
+  if (window.location.hash === '#signup') showSignupForm();
+  </script>
+  <script src="/nav-drawer.js"></script>
+</body>
+</html>

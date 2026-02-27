@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <title>DigiCon iD - How to save to an NFC Tag</title>
+  <meta name="description" content="Step-by-step guide: write your DigiCon iD contact page or vCard to an NFC tag using an NFC app—scan the QR from My Account, no typing required.">
+  <meta property="og:title" content="DigiCon iD - How to save to an NFC Tag">
+  <meta property="og:description" content="Step-by-step guide: write your DigiCon iD contact page or vCard to an NFC tag using an NFC app—scan the QR from My Account, no typing required.">
+  <meta property="og:url" content="https://deem0u.github.io/resources/how-to-save-to-nfc-tag/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DigiCon iD">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="DigiCon iD - How to save to an NFC Tag">
+  <meta name="twitter:description" content="Step-by-step guide: write your DigiCon iD contact page or vCard to an NFC tag using an NFC app—scan the QR from My Account, no typing required.">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .app-nav.tabs { margin-bottom: 0; }
+    .app-nav.tabs .tab { flex: none; text-decoration: none; display: inline-block; }
+    .resource-page main { padding: 2rem 1.5rem; max-width: 720px; margin: 0 auto; }
+    .resource-page h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .resource-page h2 { font-size: 1.25rem; margin: 2rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border); }
+    .resource-page h3 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
+    .resource-page p { color: var(--color-text-secondary); line-height: 1.65; margin-bottom: 1rem; }
+    .resource-page ul, .resource-page ol { color: var(--color-text-secondary); line-height: 1.65; margin-bottom: 1rem; padding-left: 1.5rem; }
+    .resource-page li { margin-bottom: 0.35rem; }
+    .resource-page .lead { font-size: 1.05rem; color: var(--color-text); }
+    .resource-page .step-list { counter-reset: step; list-style: none; padding-left: 0; }
+    .resource-page .step-list li { counter-increment: step; margin-bottom: 1rem; padding-left: 2.5rem; position: relative; }
+    .resource-page .step-list li::before { content: counter(step); position: absolute; left: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--accent-teal); color: var(--white); font-size: 0.85rem; font-weight: 700; line-height: 1.5rem; text-align: center; }
+    .resource-page .callout { padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-teal); background: rgba(26, 197, 176, 0.08); }
+    .resource-page .callout p:last-child { margin-bottom: 0; }
+    .resource-page .app-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+    .resource-page .app-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.6rem; background: var(--grey-100); border-radius: 6px; font-size: 0.85rem; }
+  </style>
+</head>
+<body class="resource-page">
+  <div class="app">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="app-logo">
+          <span class="app-logo-icon app-logo-icon-mascot" aria-hidden="true">
+            <svg viewBox="0 0 160 160" width="96" height="96" fill="none" xmlns="http://www.w3.org/2000/svg" class="app-header-logo-svg">
+              <rect x="40" y="25" width="80" height="110" rx="18" fill="#272932"/>
+              <rect x="48" y="35" width="64" height="88" rx="10" fill="#ffffff"/>
+              <ellipse cx="67" cy="58" rx="10" ry="12" fill="#272932"/>
+              <ellipse cx="93" cy="58" rx="10" ry="12" fill="#272932"/>
+              <ellipse cx="67" cy="58" rx="7" ry="9" fill="#ffffff"/>
+              <ellipse cx="93" cy="58" rx="7" ry="9" fill="#ffffff"/>
+              <circle cx="69" cy="60" r="5" fill="#272932"/>
+              <circle cx="95" cy="60" r="5" fill="#272932"/>
+              <ellipse cx="54" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+              <ellipse cx="106" cy="72" rx="5" ry="4" fill="#e455ae" opacity="0.4"/>
+              <path d="M 68 78 Q 80 90 92 78" stroke="#272932" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <rect x="76" y="20" width="8" height="8" rx="4" fill="#272932"/>
+              <path d="M 40 72 Q 28 68 18 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <path d="M 120 72 Q 132 68 142 60" stroke="#272932" stroke-width="7" fill="none" stroke-linecap="round"/>
+              <circle cx="18" cy="60" r="9" fill="#272932"/>
+              <circle cx="142" cy="60" r="9" fill="#272932"/>
+              <ellipse cx="60" cy="142" rx="13" ry="9" fill="#272932"/>
+              <ellipse cx="100" cy="142" rx="13" ry="9" fill="#272932"/>
+              <rect x="60" y="88" width="40" height="28" rx="4" fill="#272932"/>
+              <rect x="64" y="92" width="8" height="8" rx="1" fill="#ffffff"/>
+              <rect x="88" y="92" width="8" height="8" rx="1" fill="#ffffff"/>
+              <rect x="64" y="104" width="8" height="8" rx="1" fill="#ffffff"/>
+              <rect x="75" y="95" width="4" height="4" fill="#ffffff"/>
+              <rect x="81" y="99" width="4" height="4" fill="#ffffff"/>
+              <rect x="75" y="104" width="4" height="4" fill="#1ac5b0"/>
+              <rect x="81" y="108" width="4" height="4" fill="#ffffff"/>
+              <rect x="88" y="104" width="4" height="4" fill="#ffffff"/>
+            </svg>
+          </span>
+          <span class="app-logo-text-wrap"><span class="digicon-logo app-logo-text">DigiCon <span class="i-dot" aria-hidden="true">ı</span>D</span><span class="app-logo-text-suffix">How to save to an NFC Tag</span></span>
+        </div>
+        <button type="button" class="header-nav-toggle" aria-label="Open menu" aria-expanded="false" id="header-nav-toggle-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="app-header-actions">
+          <nav class="app-nav tabs">
+            <a href="/home/" class="tab">Home</a>
+            <a href="/how-it-works/" class="tab">How It Works</a>
+            <div class="nav-dropdown">
+              <button type="button" class="nav-dropdown-trigger tab active" aria-haspopup="true" aria-expanded="false" id="nav-resources-btn">Resources <span class="nav-dropdown-chevron" aria-hidden="true">▾</span></button>
+              <div class="nav-dropdown-panel" id="nav-resources-menu" role="menu" aria-labelledby="nav-resources-btn">
+                <a href="/resources/guide-to-qr-codes/" role="menuitem" class="nav-dropdown-item">What are QR Codes and NFC Tags</a>
+                <a href="/resources/how-to-save-to-nfc-tag/" role="menuitem" class="nav-dropdown-item">How to save to an NFC Tag</a>
+                <a href="/resources/faq/" role="menuitem" class="nav-dropdown-item">FAQ</a>
+              </div>
+            </div>
+            <a href="https://deem0u.github.io/myaccount/" class="tab">My Account</a>
+            <a href="/contact/" class="tab">Contact</a>
+          </nav>
+          <span class="header-signout-slot" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="header-drawer-backdrop" id="header-drawer-backdrop" aria-hidden="true"></div>
+    </header>
+
+    <main class="app-main">
+      <h1>How to save to an NFC Tag</h1>
+      <p class="lead">This guide walks you through writing your DigiCon iD contact page (or vCard) to an NFC tag using your phone. You don’t have to type anything—scan the QR from My Account inside an NFC app and tap the tag to write it.</p>
+
+      <h2>What you need</h2>
+      <ul>
+        <li>A phone with NFC (most recent Android and iPhone models have it).</li>
+        <li>An NFC tag—sticker, card, or keychain (for both URL and vCard on one tag, use a higher-capacity type like <strong>NTAG216</strong>).</li>
+        <li>An NFC app that can write tags and read QR codes or accept a URL. We recommend <strong>NFC Tools</strong> (wakdev) or <strong>NFC TagWriter by NXP</strong>—both are free on iOS and Android.</li>
+        <li>Your DigiCon iD QR code or contact page URL from <a href="https://deem0u.github.io/myaccount/">My Account</a> (open your contact page, then <strong>QR Codes</strong>).</li>
+      </ul>
+
+      <h2>Step-by-step: write to your tag</h2>
+      <ol class="step-list">
+        <li><strong>Get your QR or URL.</strong> Sign in at <a href="https://deem0u.github.io/myaccount/">My Account</a>, open your contact page, and go to <strong>QR Codes</strong>. You can use the <strong>Contact Page URL</strong> (opens your page in a browser) or the <strong>vCard</strong> (saves you as a contact). Have the QR on screen or copy the URL.</li>
+        <li><strong>Install an NFC app</strong> if you haven’t already—e.g. <strong>NFC Tools</strong> or <strong>NFC TagWriter by NXP</strong> from the App Store or Google Play.</li>
+        <li><strong>Open the app and start a “Write” or “Add record”</strong> flow. Look for an option to add a <strong>URL</strong> or <strong>vCard</strong> (or “Contact”).</li>
+        <li><strong>Scan the QR or paste the URL.</strong> Many apps let you scan a QR code to fill in the URL or vCard automatically—point your phone at the QR shown in My Account. If the app doesn’t support scanning, use <strong>Copy Contact Page URL</strong> (or copy the vCard) in My Account and paste it into the app.</li>
+        <li><strong>Tap your phone to the NFC tag.</strong> Hold the back of your phone against the tag and keep it there until the app says the write succeeded. Avoid moving the phone or tag during the write.</li>
+      </ol>
+
+      <div class="callout" role="note">
+        <p><strong>Tip:</strong> You can write the same URL or vCard to multiple tags—generate once in My Account, then scan or paste in the app and tap each tag in turn.</p>
+      </div>
+
+      <h2>Putting both URL and vCard on one tag</h2>
+      <p>If your app and tag support it, you can store both your contact page URL and your vCard on the same NFC tag. Use a tag with enough capacity (e.g. <strong>NTAG216</strong>). Add one record as a URL and one as a vCard in the app, then write to the tag. How a finder’s phone reacts depends on the device: some may offer to open the link, others to save the contact. For more on this, see <a href="/resources/guide-to-qr-codes/">What are QR Codes and NFC Tags</a>.</p>
+
+      <h2>Troubleshooting</h2>
+      <p><strong>Write failed or “tag too small”:</strong> Your tag may not have enough memory. Use a larger-capacity tag (e.g. NTAG216) or write only the URL or only the vCard.</p>
+      <p><strong>Phone doesn’t detect the tag:</strong> Ensure NFC is turned on in your phone settings. Hold the back of the phone flat against the tag and keep it still for a few seconds. Try moving the tag to different spots on the back of the phone (NFC antenna location varies by model).</p>
+      <p><strong>Finder’s phone doesn’t open the link or contact:</strong> Behaviour varies by device and OS. The contact page URL works in a browser; the vCard is for saving a contact. See <a href="/resources/guide-to-qr-codes/">What are QR Codes and NFC Tags</a> for more on how different phones handle NFC.</p>
+
+      <p>For more on QR codes, NFC, and printing your QR, see <a href="/resources/guide-to-qr-codes/">What are QR Codes and NFC Tags</a>. For account and contact page help, go to <a href="https://deem0u.github.io/myaccount/">My Account</a> or <a href="/resources/faq/">FAQ</a>.</p>
+    </main>
+  </div>
+  <script src="/nav-drawer.js"></script>
+</body>
+</html>

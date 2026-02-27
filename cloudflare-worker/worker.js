@@ -1,0 +1,3963 @@
+/**
+ * Contact Page Editor - Cloudflare Worker Backend
+ * 
+ * Features:
+ * - User edit key management (stored in KV)
+ * - Admin authentication with email-based recovery
+ * - GitHub integration for page updates
+ * 
+ * KV Storage Structure:
+ * - user_password_hash:{username} = hashed password for login
+ * - admin:key = admin password (also used as API key)
+ * - admin:email = admin recovery email
+ * - admin:setup_complete = "true" if setup is done
+ * - admin:password_salt = hex salt for PBKDF2
+ * - admin:password_hash = hex PBKDF2-SHA256 hash
+ * - admin:recovery_code = JSON { recoveryCode, expiresAt }
+ * - admin:reset_token = JSON { token, expiresAt }
+ */
+
+const CONFIG = {
+  owner: 'deem0u',
+  repo: 'deem0u.github.io',
+  branch: 'main'
+};
+
+/** Public API base for contact-page lockdown check (contact pages are static; they fetch this). */
+const PUBLIC_API_BASE = 'https://contact-page-editor.deem0u.workers.dev';
+
+/** Admin dashboard base URL for password reset links. Override with env.ADMIN_BASE_URL. */
+function getAdminBaseUrl(env) {
+  if (env.ADMIN_BASE_URL) return env.ADMIN_BASE_URL.replace(/\/$/, '');
+  return `https://${CONFIG.owner}.github.io/admin`;
+}
+
+const PBKDF2_ITERATIONS = 100000;
+const SALT_BYTES = 16;
+
+function bufferToHex(buf) {
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function hexToBuffer(hex) {
+  const bytes = [];
+  for (let i = 0; i < hex.length; i += 2) bytes.push(parseInt(hex.slice(i, i + 2), 16));
+  return new Uint8Array(bytes);
+}
+
+async function hashAdminPassword(password, saltBytes) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveBits']);
+  const salt = saltBytes instanceof Uint8Array ? saltBytes : hexToBuffer(saltBytes);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, key, 256);
+  return bufferToHex(bits);
+}
+
+async function verifyAdminPassword(password, saltHex, hashHex) {
+  const derived = await hashAdminPassword(password, saltHex);
+  return derived === hashHex;
+}
+
+/** All user accounts and contact pages live under this folder. */
+const USER_PAGES_PREFIX = 'user';
+
+/**
+ * KV key purpose descriptions (for admin UI and reports). Purpose and lastUsed are stored in Cloudflare KV key
+ * metadata (on the key itself). Metadata is only set when we put the key (same write, no extra ops). We read it
+ * from list() responses (no extra get per key).
+ */
+const KV_KEY_PURPOSES = {
+  'account_email:': 'Account email (login & recovery)',
+  'account_email_to_folder:': 'Email → username lookup',
+  'user_password_hash:': 'Login password hash',
+  'user_first_name:': 'Profile first name',
+  'user_last_name:': 'Profile last name',
+  'user_dob:': 'Date of birth (recovery)',
+  'user_recovery:': 'Security questions (recovery)',
+  'user_otp:': 'One-time password (recovery/2FA)',
+  'email_verified:': 'Email verified by user',
+  'email_verified_admin:': 'Email verified by admin',
+  'account_details_sent:': 'Account details email sent flag',
+  'divert_email:': 'Divert form emails for this user',
+  'max_contact_pages:': 'Max contact pages allowed',
+  'push_message:': 'Push notification message',
+  'otp:': 'Email verification OTP (short-lived)',
+  'otp_email_change:': 'OTP for email change (short-lived)',
+  'pending_email_change:': 'Pending email change (short-lived)',
+  'contact_page_name:': 'Contact page display name'
+};
+
+function getKvKeyPurpose(keyName) {
+  if (!keyName || typeof keyName !== 'string') return '';
+  for (const [prefix, purpose] of Object.entries(KV_KEY_PURPOSES)) {
+    if (keyName.startsWith(prefix)) return purpose;
+  }
+  return '';
+}
+
+/** Builds KV metadata object for a key (purpose, lastUsed). Use with put(..., { metadata: buildKvKeyMetadata(keyName) }). */
+function buildKvKeyMetadata(keyName) {
+  return { purpose: getKvKeyPurpose(keyName), lastUsed: new Date().toISOString() };
+}
+
+/** GitHub repo path for a contact page: user/<username>/<contactpagename>.html */
+function pagePath(username, contactpagename) {
+  const name = (contactpagename || 'index').trim() || 'index';
+  return `${USER_PAGES_PREFIX}/${username}/${name}.html`;
+}
+
+/** Public URL for a contact page (e.g. https://deem0u.github.io/user/chriscam/ or .../user/chriscam/work-card.html) */
+function pageUrl(username, contactpagename) {
+  const base = `https://${CONFIG.owner}.github.io/${USER_PAGES_PREFIX}/${username}`;
+  const name = (contactpagename || 'index').trim() || 'index';
+  return name === 'index' ? `${base}/` : `${base}/${name}.html`;
+}
+
+/** Normalize username for API, KV, and GitHub paths: trim and lowercase. */
+function normalizeUsername(u) {
+  return (u || '').trim().toLowerCase();
+}
+
+/** Parse path after /api/page/ into username and optional contactpagename (default 'index'). Username is normalized to lowercase. */
+function parsePagePath(path) {
+  const suffix = path.replace(/^\/api\/page\//, '').replace(/\/$/, '').trim();
+  const parts = suffix.split('/').filter(Boolean);
+  const username = normalizeUsername(parts[0] || '');
+  const contactpagename = (parts[1] && /^[a-zA-Z0-9_-]+$/.test(parts[1])) ? parts[1] : 'index';
+  return { username, contactpagename };
+}
+
+/** Returns the number of contact pages (HTML files) for a user. Used for max-contact-pages limit. */
+async function getContactPageCountForUser(username, env) {
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (!response.ok) return 0;
+  const contents = await response.json();
+  const files = Array.isArray(contents) ? contents : [];
+  const indexHtml = files.find(item => item.type === 'file' && item.name === 'index.html');
+  if (indexHtml && indexHtml.sha) {
+    await migrateUserFolderIndexToGitkeep(username, indexHtml.sha, env);
+  }
+  return files.filter(item => item.type === 'file' && item.name && item.name.endsWith('.html') && item.name !== 'index.html' && item.name !== 'main.html').length;
+}
+
+/** Returns true if the user folder exists on GitHub. */
+async function userFolderExistsOnGitHub(username, env) {
+  if (!env.GITHUB_TOKEN || !username) return false;
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  return response.ok;
+}
+
+/** If user folder contains index.html (old placeholder), rename it to index.gitkeep. Returns true if migration was performed. */
+async function migrateUserFolderIndexToGitkeep(username, indexHtmlSha, env) {
+  if (!env.GITHUB_TOKEN || !username || !indexHtmlSha) return false;
+  const placeholderContent = encodeBase64('# Directory placeholder – contact pages are .html files in this folder (user/username/urlslug). This file is not a contact page.\n');
+  const gitkeepPath = `${USER_PAGES_PREFIX}/${username}/index.gitkeep`;
+  const htmlPath = `${USER_PAGES_PREFIX}/${username}/index.html`;
+  const putRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${gitkeepPath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Rename index.html to index.gitkeep (placeholder convention): ${username}`,
+        content: placeholderContent,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!putRes.ok) return false;
+  const delRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${htmlPath}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Remove index.html (replaced by index.gitkeep): ${username}`,
+        sha: indexHtmlSha,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  return delRes.ok;
+}
+
+/** Delete all KV data for a user (used by delete-user and when cleaning orphaned accounts). */
+async function purgeKvForUser(username, env) {
+  if (!env.EDIT_KEYS_KV) return;
+  const accountEmail = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
+  const u = username.toLowerCase();
+  await env.EDIT_KEYS_KV.delete(`account_email:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_password_hash:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_first_name:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_last_name:${username}`);
+  await env.EDIT_KEYS_KV.delete(`email_verified:${username}`);
+  await env.EDIT_KEYS_KV.delete(`email_verified_admin:${username}`);
+  if (accountEmail && accountEmail.includes('@')) {
+    await env.EDIT_KEYS_KV.delete(`account_email_to_folder:${accountEmail.toLowerCase().trim()}`);
+  }
+  await env.EDIT_KEYS_KV.delete(`user_dob:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_recovery:${username}`);
+  await env.EDIT_KEYS_KV.delete(`account_details_sent:${username}`);
+  await env.EDIT_KEYS_KV.delete(`user_otp:${username}`);
+  await env.EDIT_KEYS_KV.delete(`otp:${username}`);
+  await env.EDIT_KEYS_KV.delete(`push_message:${u}`);
+  await env.EDIT_KEYS_KV.delete(`divert_email:${username}`);
+  await env.EDIT_KEYS_KV.delete(`max_contact_pages:${username}`);
+  await env.EDIT_KEYS_KV.delete(`otp_email_change:${username}`);
+  await env.EDIT_KEYS_KV.delete(`pending_email_change:${username}`);
+  const nameKeys = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+  for (const key of nameKeys.keys) {
+    await env.EDIT_KEYS_KV.delete(key.name);
+  }
+}
+
+const corsHeaders = {
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Edit-Key, X-Admin-Key, Authorization',
+  'Access-Control-Max-Age': '86400',
+};
+
+/** Allowed CORS origins. Default: production GitHub Pages + common localhost ports for local testing. Override with env.ALLOWED_ORIGINS (comma-separated). */
+function getAllowedOrigin(request, env) {
+  const defaultOrigins = 'https://deem0u.github.io,http://localhost:3000,http://localhost:8080,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:8080,http://127.0.0.1:5173';
+  const list = (env.ALLOWED_ORIGINS || defaultOrigins).split(',').map(s => s.trim()).filter(Boolean);
+  const origin = request.headers.get('Origin');
+  if (origin && list.includes(origin)) return origin;
+  return list[0] || 'https://deem0u.github.io';
+}
+
+/** Override response CORS origin with the allowed origin (restricts to allowlist instead of *). */
+function patchCors(response, allowedOrigin) {
+  if (!response || !allowedOrigin) return response;
+  const h = new Headers(response.headers);
+  h.set('Access-Control-Allow-Origin', allowedOrigin);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: h });
+}
+
+/** Rate limit: keyPrefix e.g. 'login', 'otp'; limit = max requests; windowSec = window in seconds. Returns 429 response if over limit, else null. */
+async function checkRateLimit(request, env, keyPrefix, limit, windowSec) {
+  if (env.RATE_LIMIT_DISABLED === '1') return null;
+  if (!env.EDIT_KEYS_KV) return null;
+  const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() || 'unknown';
+  const key = `ratelimit:${keyPrefix}:${ip}`;
+  const now = Date.now();
+  const raw = await env.EDIT_KEYS_KV.get(key);
+  let data = { count: 0, windowStart: now };
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+      if (now - data.windowStart > windowSec * 1000) data = { count: 0, windowStart: now };
+    } catch (_) {}
+  }
+  data.count += 1;
+  if (data.count > limit) {
+    return jsonResponse({ error: 'Too many attempts. Please try again later.' }, 429);
+  }
+  await env.EDIT_KEYS_KV.put(key, JSON.stringify(data), { expirationTtl: windowSec + 60 });
+  return null;
+}
+
+const JWT_EXPIRY_DAYS = 7;
+
+function base64UrlEncode(buffer) {
+  const b64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecode(str) {
+  let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
+async function signJwt(payload, secret) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const enc = new TextEncoder();
+  const headerB64 = base64UrlEncode(enc.encode(JSON.stringify(header)));
+  const payloadB64 = base64UrlEncode(enc.encode(JSON.stringify(payload)));
+  const message = headerB64 + '.' + payloadB64;
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+  return message + '.' + base64UrlEncode(sig);
+}
+
+async function verifyJwt(token, secret) {
+  const parts = (token || '').split('.');
+  if (parts.length !== 3) return null;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  const message = parts[0] + '.' + parts[1];
+  const sigBytes = base64UrlDecode(parts[2]);
+  const valid = await crypto.subtle.verify('HMAC', key, sigBytes, enc.encode(message));
+  if (!valid) return null;
+  const payloadJson = new TextDecoder().decode(base64UrlDecode(parts[1]));
+  const payload = JSON.parse(payloadJson);
+  if (payload.exp && payload.exp * 1000 < Date.now()) return null;
+  return payload;
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    const allowedOrigin = getAllowedOrigin(request, env);
+
+    if (request.method === 'OPTIONS') {
+      return patchCors(new Response(null, { headers: corsHeaders }), allowedOrigin);
+    }
+
+    const url = new URL(request.url);
+    const path = url.pathname.replace(/\/$/, '') || '/';
+
+    let resp;
+    try {
+      // Setup routes
+      if (path === '/api/setup/status') {
+        resp = await handleSetupStatus(env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/setup') {
+        resp = await handleSetup(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+
+      // Recovery route (admin) — rate limited
+      if (request.method === 'POST' && path === '/api/recover') {
+        const rl = await checkRateLimit(request, env, 'recover', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleRecover(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+
+      // Auth check (admin) — rate limited
+      if (request.method === 'POST' && path === '/api/auth') {
+        const rl = await checkRateLimit(request, env, 'login', 10, 60);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleAuth(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      // User auth (Account Email + Password) — rate limited
+      if (request.method === 'POST' && path === '/api/auth/user') {
+        const rl = await checkRateLimit(request, env, 'login', 10, 60);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleAuthUser(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+
+      // Check username availability (no auth)
+      if (request.method === 'GET' && path.startsWith('/api/check-username/')) {
+        const username = path.replace('/api/check-username/', '').replace(/\/$/, '').trim();
+        resp = await handleCheckUsername(username, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path.startsWith('/api/check-account-email/')) {
+        const url2 = new URL(request.url);
+        const email = decodeURIComponent(path.replace('/api/check-account-email/', '').split('?')[0].replace(/\/$/, ''));
+        const exclude = url2.searchParams.get('exclude') || '';
+        resp = await handleCheckAccountEmail(email, exclude, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      // Signup route — rate limited
+      if (request.method === 'POST' && path === '/api/signup') {
+        const rl = await checkRateLimit(request, env, 'signup', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleSignup(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      // OTP for email verification — rate limited
+      if (request.method === 'POST' && path === '/api/otp/send') {
+        const rl = await checkRateLimit(request, env, 'otp', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleOtpSend(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/otp/verify') {
+        const rl = await checkRateLimit(request, env, 'otp', 10, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleOtpVerify(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/signup-success-email') {
+        resp = await handleSignupSuccessEmail(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/contact') {
+        resp = await handleContactForm(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+
+      // User recovery (no auth) — rate limited
+      if (request.method === 'POST' && path === '/api/recovery/check') {
+        const rl = await checkRateLimit(request, env, 'recovery', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleRecoveryCheck(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/recovery/check-by-email') {
+        const rl = await checkRateLimit(request, env, 'recovery', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleRecoveryCheckByEmail(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/recovery/verify') {
+        const rl = await checkRateLimit(request, env, 'recovery', 5, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleRecoveryVerify(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+
+      // Route: POST /api/page - Create new page (admin only)
+      if (request.method === 'POST' && path === '/api/page') {
+        resp = await handleCreatePage(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'DELETE' && path.startsWith('/api/page/')) {
+        const { username, contactpagename } = parsePagePath(path);
+        resp = await handleDeletePage(username, contactpagename, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path.match(/^\/api\/page\/[^/]+\/create$/)) {
+        const username = normalizeUsername(path.replace(/^\/api\/page\//, '').replace(/\/create$/, ''));
+        resp = await handleUserCreatePage(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path.startsWith('/api/page/')) {
+        const { username, contactpagename } = parsePagePath(path);
+        resp = await handleGetPage(username, contactpagename, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path.match(/^\/api\/page\/[^/]+\/rename$/)) {
+        const username = normalizeUsername(path.replace(/^\/api\/page\//, '').replace(/\/rename$/, ''));
+        resp = await handleRenamePage(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path.startsWith('/api/page/')) {
+        const { username, contactpagename } = parsePagePath(path);
+        if (contactpagename === 'create') {
+          resp = await handleUserCreatePage(username, request, env);
+        } else {
+          resp = await handleUpdatePage(username, contactpagename, request, env);
+        }
+        return patchCors(resp, allowedOrigin);
+      }
+
+      // Admin routes
+      if (request.method === 'GET' && path === '/api/pages/summaries') {
+        resp = await handlePageSummaries(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/pages') {
+        resp = await handleListPages(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/session-check') {
+        resp = await handleSessionCheck(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path.startsWith('/api/contact-pages/')) {
+        const username = normalizeUsername(path.replace('/api/contact-pages/', '').replace(/\/$/, ''));
+        resp = await handleListContactPages(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/account-emails') {
+        resp = await handleGetAccountEmails(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/account-profiles') {
+        resp = await handleGetAccountProfiles(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path.startsWith('/api/account-details-sent/')) {
+        const username = normalizeUsername(path.replace('/api/account-details-sent/', '').replace(/\/$/, ''));
+        resp = await handleAccountDetailsSent(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/secrets-status') {
+        resp = await handleSecretsStatus(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/keys') {
+        resp = await handleGetKeys(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path.startsWith('/api/profile/')) {
+        let raw = path.replace('/api/profile/', '').replace(/\/$/, '');
+        try { if (raw) raw = decodeURIComponent(raw); } catch (_) {}
+        const username = normalizeUsername(raw);
+        resp = await handleGetProfile(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'PUT' && path.startsWith('/api/profile/')) {
+        let raw = path.replace('/api/profile/', '').replace(/\/$/, '');
+        try { if (raw) raw = decodeURIComponent(raw); } catch (_) {}
+        const username = normalizeUsername(raw);
+        resp = await handlePutProfile(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/profile/verify-email-change') {
+        resp = await handleVerifyEmailChange(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/profile/cancel-email-change') {
+        resp = await handleCancelEmailChange(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/profile/set-password-after-otp') {
+        resp = await handleSetPasswordAfterOtp(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/profile/verify-password') {
+        resp = await handleVerifyPassword(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/profile/change-password-and-sq') {
+        resp = await handleChangePasswordAndSq(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/profile/rename') {
+        resp = await handleProfileRename(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path.startsWith('/api/secrets/')) {
+        const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
+        let username = raw || '';
+        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
+        resp = await handleGetSecrets(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'PUT' && path.startsWith('/api/secrets/')) {
+        const raw = path.replace('/api/secrets/', '').replace(/\/$/, '');
+        let username = raw || '';
+        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
+        resp = await handlePutSecrets(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/create-user') {
+        resp = await handleAdminCreateUser(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/rename-user') {
+        resp = await handleAdminRenameUser(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/site-status') {
+        resp = await handleGetSiteStatus(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/admin/session') {
+        resp = await handleGetAdminSession(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/admin/site-settings') {
+        resp = await handleGetSiteSettings(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/admin/admin-email') {
+        resp = await handleGetAdminEmail(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'PUT' && path === '/api/admin/admin-email') {
+        resp = await handlePutAdminEmail(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'PUT' && path === '/api/admin/site-settings') {
+        resp = await handlePutSiteSettings(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'PUT' && path === '/api/admin/admin-key') {
+        resp = await handlePutAdminKey(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'PUT' && path === '/api/admin/set-password') {
+        resp = await handlePutAdminPassword(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/verify-otp-set-password') {
+        resp = await handleVerifyOtpSetPassword(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/generate-otp') {
+        resp = await handleAdminGenerateOtp(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/delete-otp') {
+        resp = await handleAdminDeleteOtp(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/secondary-keys') {
+        resp = await handlePostSecondaryKey(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/admin/secondary-keys') {
+        resp = await handleGetSecondaryKeys(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'DELETE' && path.startsWith('/api/admin/secondary-keys/')) {
+        const id = path.replace('/api/admin/secondary-keys/', '').replace(/\/$/, '').trim();
+        resp = await handleDeleteSecondaryKey(id, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'PUT' && path.startsWith('/api/push-message/')) {
+        const raw = path.replace('/api/push-message/', '').replace(/\/$/, '');
+        let username = raw || '';
+        try { if (raw) username = decodeURIComponent(raw); } catch (_) {}
+        resp = await handlePutPushMessage(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/push-message') {
+        resp = await handleGetPushMessage(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'DELETE' && path === '/api/push-message') {
+        resp = await handleDismissPushMessage(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/recover/verify-reset-token') {
+        const rl = await checkRateLimit(request, env, 'recover-reset', 10, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleVerifyResetToken(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/recover/reset-password') {
+        const rl = await checkRateLimit(request, env, 'recover-reset', 10, 600);
+        if (rl) return patchCors(rl, allowedOrigin);
+        resp = await handleResetPasswordWithToken(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/internal/set-admin-credentials') {
+        if (env.SETUP_ROUTE_ENABLED !== 'true') {
+          resp = jsonResponse({ error: 'Not found' }, 404);
+          return patchCors(resp, allowedOrigin);
+        }
+        resp = await handleInternalSetAdminCredentials(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path === '/api/admin/kv-orphans') {
+        resp = await handleGetKvOrphans(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/kv-cleanup') {
+        resp = await handleKvCleanup(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path.startsWith('/api/admin/kv-user-keys')) {
+        const url2 = new URL(request.url);
+        const username = (url2.searchParams.get('username') || '').trim();
+        resp = await handleGetKvUserKeys(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/kv-user-purge') {
+        resp = await handleKvUserPurge(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'GET' && path.startsWith('/api/admin/debug-user/')) {
+        const raw = path.replace('/api/admin/debug-user/', '').replace(/\/$/, '');
+        const username = raw ? decodeURIComponent(raw).trim() : '';
+        resp = await handleDebugUser(username, request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+      if (request.method === 'POST' && path === '/api/admin/purge-user-kv') {
+        resp = await handlePurgeUserKv(request, env);
+        return patchCors(resp, allowedOrigin);
+      }
+
+      resp = jsonResponse({ error: 'Not found' }, 404);
+      return patchCors(resp, allowedOrigin);
+    } catch (error) {
+      const message = env.DEBUG ? error.message : 'An error occurred. Please try again later.';
+      if (!env.DEBUG) console.error(error);
+      resp = jsonResponse({ error: message }, 500);
+      return patchCors(resp, allowedOrigin);
+    }
+  }
+};
+
+function jsonResponse(data, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json', ...extraHeaders }
+  });
+}
+
+function generateKey(length = 24) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let key = '';
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  for (let i = 0; i < length; i++) {
+    key += chars[array[i] % chars.length];
+  }
+  return key;
+}
+
+function generateOtpCode() {
+  const arr = new Uint8Array(6);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, n => (n % 10).toString()).join('');
+}
+
+/** Generate a random one-time password (alphanumeric, 10 chars) for admin-set OTP. */
+function generateOneTimePassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const arr = new Uint8Array(10);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, n => chars[n % chars.length]).join('');
+}
+
+async function hashPassword(plain) {
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await crypto.subtle.importKey('raw', enc.encode(plain), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
+  const hash = btoa(String.fromCharCode(...new Uint8Array(bits)));
+  const saltB64 = btoa(String.fromCharCode(...salt));
+  return saltB64 + '$' + hash;
+}
+
+async function verifyPassword(plain, stored) {
+  const parts = (stored || '').split('$');
+  if (parts.length !== 2) return false;
+  const salt = Uint8Array.from(atob(parts[0]), c => c.charCodeAt(0));
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', enc.encode(plain), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, key, 256);
+  const hash = btoa(String.fromCharCode(...new Uint8Array(bits)));
+  return hash === parts[1];
+}
+
+const EMAIL_RESTRICTION_RECIPIENT = 'deem0u.github.io@gmail.com';
+
+/**
+ * Check if email for this user should be diverted to dev (restriction recipient).
+ * Divert only when explicitly enabled: env EMAIL_SEND_RESTRICTED is 'true' or '1', or KV site:divert_all_global is '1', or KV divert_email:username is '1'.
+ * When EMAIL_SEND_RESTRICTED is unset or 'false', emails go to the intended recipient unless KV overrides (divert all or per-user).
+ */
+async function shouldDivertEmail(env, username) {
+  const restrictEnv = (env.EMAIL_SEND_RESTRICTED || '').toString().toLowerCase();
+  if (restrictEnv === 'true' || restrictEnv === '1') return true;
+  if (!env.EDIT_KEYS_KV) return false;
+  const globalOn = (await env.EDIT_KEYS_KV.get('site:divert_all_global')) === '1';
+  if (globalOn) return true;
+  if (username && (await env.EDIT_KEYS_KV.get('divert_email:' + username)) === '1') return true;
+  return false;
+}
+
+/**
+ * Send email via the relay (Vercel serverless with Nodemailer + Gmail SMTP).
+ * Requires env: EMAIL_RELAY_URL, EMAIL_RELAY_SECRET.
+ * Divert: when shouldDivertEmail(env, opts.username) is true, send to EMAIL_RESTRICTION_RECIPIENT with [DEV] subject.
+ * @param {object} env - Worker env
+ * @param {{ to: string, subject: string, html?: string, text?: string, username?: string }} opts
+ * @returns {{ ok: boolean, error?: string }}
+ */
+async function sendEmail(env, { to, subject, html, text, username }) {
+  const url = env.EMAIL_RELAY_URL;
+  const secret = env.EMAIL_RELAY_SECRET;
+  if (!url || !secret) return { ok: false, error: 'Email not configured' };
+  const restricted = await shouldDivertEmail(env, username);
+  const effectiveTo = restricted ? EMAIL_RESTRICTION_RECIPIENT : (to || '');
+  const effectiveSubject = restricted ? `[DEV] ${subject} (would go to: ${to || '?'})` : subject;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Relay-Secret': secret
+      },
+      body: JSON.stringify({ to: effectiveTo, subject: effectiveSubject, html: html || text, text: text || '' })
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      let errMsg = errText;
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson && typeof errJson.error === 'string') errMsg = errJson.error;
+      } catch (_) {}
+      return { ok: false, error: errMsg };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// ============ Setup & Recovery ============
+
+async function handleSetupStatus(env) {
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ setup_complete: false, error: 'KV not configured' });
+  }
+  const complete = await env.EDIT_KEYS_KV.get('admin:setup_complete');
+  return jsonResponse({ setup_complete: complete === 'true' });
+}
+
+async function handleSetup(request, env) {
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ error: 'KV storage not configured' }, 500);
+  }
+
+  // Check if already set up
+  const existing = await env.EDIT_KEYS_KV.get('admin:setup_complete');
+  if (existing === 'true') {
+    return jsonResponse({ error: 'Setup already complete. Use recovery to reset.' }, 400);
+  }
+
+  const body = await request.json();
+  const { adminKey, adminEmail, password } = body;
+
+  if (!adminKey || adminKey.length < 8) {
+    return jsonResponse({ error: 'Admin key must be at least 8 characters' }, 400);
+  }
+  if (adminEmail && typeof adminEmail === 'string' && adminEmail.includes('@')) {
+    await env.EDIT_KEYS_KV.put('admin:email', adminEmail.toLowerCase());
+  }
+
+  await env.EDIT_KEYS_KV.put('admin:key', adminKey);
+  await env.EDIT_KEYS_KV.put('admin:setup_complete', 'true');
+
+  if (password && typeof password === 'string' && password.length >= 8) {
+    const saltArr = new Uint8Array(SALT_BYTES);
+    crypto.getRandomValues(saltArr);
+    const saltHex = bufferToHex(saltArr);
+    const hashHex = await hashAdminPassword(password, saltArr);
+    await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+    await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  }
+
+  return jsonResponse({ success: true, message: 'Setup complete' });
+}
+
+async function handleRecover(request, env) {
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ error: 'KV storage not configured' }, 500);
+  }
+
+  const body = await request.json();
+  const { email, code } = body;
+
+  if (!email) {
+    return jsonResponse({ error: 'Email required' }, 400);
+  }
+
+  const storedEmail = await env.EDIT_KEYS_KV.get('admin:email');
+  
+  if (!storedEmail) {
+    return jsonResponse({ error: 'No admin email configured' }, 400);
+  }
+
+  if (email.toLowerCase() !== storedEmail.toLowerCase()) {
+    return jsonResponse({ error: 'Email does not match' }, 401);
+  }
+
+  // Step 2: Verify OTP, create reset token, send reset link by email
+  if (code) {
+    const storedData = await env.EDIT_KEYS_KV.get('admin:recovery_code');
+    if (!storedData) {
+      return jsonResponse({ error: 'No recovery code found. Please request a new one.' }, 400);
+    }
+    const { recoveryCode, expiresAt } = JSON.parse(storedData);
+    if (Date.now() > expiresAt) {
+      await env.EDIT_KEYS_KV.delete('admin:recovery_code');
+      return jsonResponse({ error: 'Code expired. Please request a new one.' }, 400);
+    }
+    if (code !== recoveryCode) {
+      return jsonResponse({ error: 'Invalid code. Please check and try again.' }, 401);
+    }
+    await env.EDIT_KEYS_KV.delete('admin:recovery_code');
+
+    const resetToken = bufferToHex(crypto.getRandomValues(new Uint8Array(32)));
+    const resetExpiresAt = Date.now() + (60 * 60 * 1000); // 1 hour
+    await env.EDIT_KEYS_KV.put('admin:reset_token', JSON.stringify({ token: resetToken, expiresAt: resetExpiresAt }));
+
+    const baseUrl = getAdminBaseUrl(env);
+    const resetLink = `${baseUrl}/?reset=${resetToken}`;
+    const subject = 'DigiCon iD - Admin Dashboard - Password Reset Link';
+    const text = `Click the link below to set a new password. The link expires in 1 hour.\n\n${resetLink}\n\nIf you did not request this, please ignore this email.`;
+    const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
+    if (!emailResult.ok) {
+      await env.EDIT_KEYS_KV.delete('admin:reset_token');
+      return jsonResponse({ error: 'Email could not be sent. Use the failsafe: retrieve your admin key from Cloudflare KV — see SETUP-GUIDE.', relayFailed: true }, 503);
+    }
+    return jsonResponse({ success: true, step: 'reset_link_sent', message: 'Check your email for the reset link.' });
+  }
+
+  // Step 1: Generate OTP, store it, send OTP by email
+  const recoveryCode = generateRecoveryCode();
+  const expiresAt = Date.now() + (10 * 60 * 1000); // 10 minutes
+  await env.EDIT_KEYS_KV.put('admin:recovery_code', JSON.stringify({ recoveryCode, expiresAt }));
+
+  const subject = 'DigiCon iD - Admin Dashboard - Recovery Code';
+  const text = `Your 8-digit recovery code is: ${recoveryCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.`;
+  const emailResult = await sendEmail(env, { to: storedEmail, subject, text });
+  if (!emailResult.ok) {
+    await env.EDIT_KEYS_KV.delete('admin:recovery_code');
+    return jsonResponse({ error: 'Email could not be sent. Use the failsafe: retrieve your admin key from Cloudflare KV — see SETUP-GUIDE.', relayFailed: true }, 503);
+  }
+  return jsonResponse({ success: true, step: 'code_sent', message: 'Check your email for the verification code.' });
+}
+
+/** 8-digit recovery code (higher entropy than 6-digit; rate limiting further limits brute force). */
+function generateRecoveryCode() {
+  const array = new Uint8Array(4);
+  crypto.getRandomValues(array);
+  const code = ((array[0] << 24) | (array[1] << 16) | (array[2] << 8) | array[3]) % 100000000;
+  return code.toString().padStart(8, '0');
+}
+
+async function handleAuth(request, env) {
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ error: 'KV storage not configured' }, 500);
+  }
+
+  const body = await request.json();
+  const { adminKey, email, password } = body;
+
+  if (email && password) {
+    const storedEmail = await env.EDIT_KEYS_KV.get('admin:email');
+    if (!storedEmail || email.toLowerCase() !== storedEmail.toLowerCase()) {
+      return jsonResponse({ error: 'Invalid email or password' }, 401);
+    }
+    const saltHex = await env.EDIT_KEYS_KV.get('admin:password_salt');
+    const hashHex = await env.EDIT_KEYS_KV.get('admin:password_hash');
+    if (!saltHex || !hashHex) {
+      return jsonResponse({ error: 'Password login not set up. Use admin key or set password in dashboard.' }, 401);
+    }
+    const valid = await verifyAdminPassword(password, saltHex, hashHex);
+    if (!valid) return jsonResponse({ error: 'Invalid email or password' }, 401);
+    const storedKey = await env.EDIT_KEYS_KV.get('admin:key');
+    return jsonResponse({ success: true, adminKey: storedKey });
+  }
+
+  const storedKey = await env.EDIT_KEYS_KV.get('admin:key');
+  if (!storedKey || adminKey !== storedKey) {
+    return jsonResponse({ error: 'Invalid admin key' }, 401);
+  }
+  return jsonResponse({ success: true });
+}
+
+async function handleAuthUser(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  const secret = env.JWT_SECRET;
+  if (!secret) return jsonResponse({ error: 'Auth not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const accountEmail = (body.accountEmail || '').trim().toLowerCase();
+  const usernameParam = (body.username || '').trim();
+  const password = (body.password || '').trim();
+  if (!password) return jsonResponse({ error: 'Invalid email or password' }, 401);
+  let username = null;
+  if (usernameParam) {
+    username = usernameParam.toLowerCase();
+  } else if (accountEmail && accountEmail.includes('@')) {
+    username = await env.EDIT_KEYS_KV.get(`account_email_to_folder:${accountEmail}`);
+  }
+  if (!username) return jsonResponse({ error: 'Invalid email or password' }, 401);
+
+  // If the user's GitHub folder no longer exists (e.g. account was deleted), purge orphaned KV and reject login
+  if (env.GITHUB_TOKEN) {
+    const folderExists = await userFolderExistsOnGitHub(username, env);
+    if (!folderExists) {
+      await purgeKvForUser(username, env);
+      return jsonResponse({ error: 'Account no longer exists. It may have been deleted.' }, 401);
+    }
+  }
+
+  const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
+  if (storedOtp && storedOtp === password) {
+    const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
+    const token = await signJwt({ username, exp, otpLogin: true }, secret);
+    return jsonResponse({ success: true, username, token, mustSetPassword: true });
+  }
+  const pwHash = await env.EDIT_KEYS_KV.get(`user_password_hash:${username}`);
+  if (!pwHash) {
+    // No password: if folder is gone, treat as deleted account (e.g. GITHUB_TOKEN was missing at top, or API flake)
+    if (env.GITHUB_TOKEN) {
+      const folderExists = await userFolderExistsOnGitHub(username, env);
+      if (!folderExists) {
+        await purgeKvForUser(username, env);
+        return jsonResponse({ error: 'Account no longer exists. It may have been deleted.' }, 401);
+      }
+    }
+    return jsonResponse({ error: 'Account does not have a password. Set one via Set Secrets or sign up.' }, 401);
+  }
+  const valid = await verifyPassword(password, pwHash);
+  if (!valid) return jsonResponse({ error: 'Invalid email or password' }, 401);
+  const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
+  const token = await signJwt({ username, exp }, secret);
+  return jsonResponse({ success: true, username, token });
+}
+// ============ Signup (User-driven page creation) ============
+
+
+async function handleCheckUsername(username, env) {
+  const u = normalizeUsername(username);
+  if (!u || !/^[a-z0-9_-]{3,28}$/.test(u)) {
+    return jsonResponse({ error: 'Invalid username format (letters, numbers, hyphens, underscores only; stored as lowercase)' }, 400);
+  }
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
+  if (reserved.includes(u)) {
+    return jsonResponse({ status: 'ok' });
+  }
+  if (!env.GITHUB_TOKEN) {
+    return jsonResponse({ status: 'ok' });
+  }
+  await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${u}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': 'token ' + env.GITHUB_TOKEN,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  return jsonResponse({ status: 'ok' });
+}
+async function handleCheckAccountEmail(email, excludeFolder, env) {
+  if (!email || !email.includes('@')) {
+    return jsonResponse({ error: 'Invalid email format' }, 400);
+  }
+  const el = email.trim().toLowerCase();
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ status: 'ok' });
+  await env.EDIT_KEYS_KV.get('account_email_to_folder:' + el);
+  return jsonResponse({ status: 'ok' });
+}
+
+async function handleSignup(request, env) {
+  if (!env.EDIT_KEYS_KV || !env.GITHUB_TOKEN) {
+    return jsonResponse({ error: 'Signup not configured' }, 500);
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid request body' }, 400);
+  }
+  const username = (body.username || '').trim().toLowerCase();
+  const firstName = (body.firstName || '').trim();
+  const surname = (body.surname || body.lastName || '').trim();
+  const accountEmail = (body.accountEmail || '').trim();
+  const contactPageEmail = (body.contactPageEmail || '').trim();
+  const dob = (body.dob || '').trim();
+  const secretQuestions = Array.isArray(body.secretQuestions) ? body.secretQuestions : [];
+
+  if (!username || !/^[a-zA-Z0-9_-]{3,28}$/.test(username)) {
+    return jsonResponse({ error: 'Valid username required (3-28 chars, letters, numbers, hyphens, underscores)' }, 400);
+  }
+  if (!accountEmail || !accountEmail.includes('@')) {
+    return jsonResponse({ error: 'Valid account email required' }, 400);
+  }
+  const accountEmailLower = accountEmail.toLowerCase();
+  const existingFolder = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmailLower);
+  if (existingFolder) {
+    return jsonResponse({ error: 'This account email is already in use' }, 409);
+  }
+  const dobNorm = normalizeDob(dob);
+  if (!dobNorm) {
+    return jsonResponse({ error: 'Valid date of birth required (dd/mm/yyyy)' }, 400);
+  }
+  if (secretQuestions.length !== 3) {
+    return jsonResponse({ error: 'Exactly 3 security questions with answers required' }, 400);
+  }
+  const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const ids = secretQuestions.map(q => q.questionId);
+  if (ids.some(id => !validIds.includes(id)) || new Set(ids).size !== 3) {
+    return jsonResponse({ error: 'Select 3 distinct security questions' }, 400);
+  }
+  for (const q of secretQuestions) {
+    const a = (q.answer || '').trim();
+    if (a.length < 4 || a.length > 30) {
+      return jsonResponse({ error: 'Each security answer must be 4-30 characters' }, 400);
+    }
+  }
+
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user', 'styles.css', 'countries-data.js', 'form-descriptions.js'];
+  if (reserved.includes(username)) {
+    return jsonResponse({ error: 'This username is reserved' }, 400);
+  }
+
+  // Username uniqueness: KV (account may exist without a GitHub folder if they skipped contact page)
+  const existingAccount = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
+  if (existingAccount) {
+    return jsonResponse({ error: 'This username is already taken' }, 409);
+  }
+  // If a user folder already exists on GitHub (e.g. from admin create-user or leftover), reject
+  const checkRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (checkRes.ok) {
+    return jsonResponse({ error: 'A page with this username already exists' }, 409);
+  }
+
+  // Create only the user folder in the repo (no .html file = no contact page, no card in My Account).
+  // Placeholder is index.gitkeep so the directory exists; only *.html files are listed as contact pages (public URL: user/username/urlslug).
+  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/index.gitkeep`;
+  const folderPlaceholderContent = encodeBase64('# Directory placeholder – contact pages are .html files in this folder (user/username/urlslug). This file is not a contact page.\n');
+  const createFolderRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${folderPlaceholderPath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Create user folder: ${username} (signup)`,
+        content: folderPlaceholderContent,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!createFolderRes.ok) {
+    const err = await createFolderRes.json();
+    return jsonResponse({ error: err.message || 'Failed to create user folder' }, createFolderRes.status);
+  }
+
+  const password = (body.password || '').trim();
+  if (password.length >= 8) {
+    const pwHash = await hashPassword(password);
+    await env.EDIT_KEYS_KV.put(`user_password_hash:${username}`, pwHash, { metadata: buildKvKeyMetadata(`user_password_hash:${username}`) });
+  }
+  await env.EDIT_KEYS_KV.put(`account_email_to_folder:${accountEmailLower}`, username, { metadata: buildKvKeyMetadata(`account_email_to_folder:${accountEmailLower}`) });
+  await env.EDIT_KEYS_KV.put(`account_email:${username}`, accountEmail, { metadata: buildKvKeyMetadata(`account_email:${username}`) });
+  await env.EDIT_KEYS_KV.put(`user_first_name:${username}`, firstName, { metadata: buildKvKeyMetadata(`user_first_name:${username}`) });
+  await env.EDIT_KEYS_KV.put(`user_last_name:${username}`, surname, { metadata: buildKvKeyMetadata(`user_last_name:${username}`) });
+  await env.EDIT_KEYS_KV.put(`user_dob:${username}`, dobNorm, { metadata: buildKvKeyMetadata(`user_dob:${username}`) });
+  await env.EDIT_KEYS_KV.put(`user_recovery:${username}`, JSON.stringify({
+    dob: dobNorm,
+    secretQuestions: secretQuestions.map(q => ({ questionId: q.questionId, answer: (q.answer || '').trim() }))
+  }), { metadata: buildKvKeyMetadata(`user_recovery:${username}`) });
+
+  const secret = env.JWT_SECRET;
+  const token = secret ? await signJwt({ username, exp: Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400) }, secret) : null;
+  const base = `https://${CONFIG.owner}.github.io`;
+  return jsonResponse({
+    success: true,
+    username,
+    token,
+    viewLink: `${base}/user/${username}/`
+  });
+}
+
+async function handleOtpSend(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const username = (body.username || body.folder || '').trim().toLowerCase();
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  const accountEmail = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
+  if (!accountEmail || !accountEmail.includes('@')) return jsonResponse({ error: 'No account email' }, 400);
+  const code = generateOtpCode();
+  await env.EDIT_KEYS_KV.put(`otp:${username}`, code, { expirationTtl: 600 });
+  const subject = 'DigiCon iD - Your verification code';
+  const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request this, you can ignore this email.`;
+  const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. If you did not request this, you can ignore this email.</p>`;
+  const sent = await sendEmail(env, { to: accountEmail, subject, text, html, username });
+  if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send' }, 500);
+  return jsonResponse({ sent: true });
+}
+
+async function handleOtpVerify(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const username = (body.username || body.folder || '').trim().toLowerCase();
+  const code = (body.code || '').trim().replace(/\D/g, '');
+  if (!username || !code || code.length !== 6) return jsonResponse({ error: 'Invalid username or code' }, 400);
+  const stored = await env.EDIT_KEYS_KV.get(`otp:${username}`);
+  if (!stored || stored !== code) return jsonResponse({ error: 'Invalid or expired code' }, 400);
+  await env.EDIT_KEYS_KV.put(`email_verified:${username}`, '1');
+  await env.EDIT_KEYS_KV.delete(`otp:${username}`);
+  return jsonResponse({ success: true });
+}
+
+async function handleSignupSuccessEmail(request, env) {
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const username = (body.username || body.folder || '').trim();
+  const accountEmail = (body.accountEmail || '').trim();
+  const firstName = (body.firstName || '').trim();
+  const lastName = (body.lastName || body.surname || '').trim();
+  const dob = (body.dob || '').trim();
+  const contactSlug = (body.contactSlug || '').trim();
+  if (!username || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
+  const baseUrl = `https://${CONFIG.owner}.github.io`;
+  const viewLink = contactSlug ? `${baseUrl}/user/${username}/${contactSlug}.html` : `${baseUrl}/user/${username}/`;
+  const editUrl = `${baseUrl}/myaccount/`;
+  const subject = `DigiCon iD - ${username} - Account Details`;
+  const contactPageLine = contactSlug
+    ? `\n\t• Page URL: ${viewLink}`
+    : '\n\t• —\n\t• To be setup later in My Account';
+  const text = `Below are details related to your account you should keep handy.\n\nProfile details\n\t• User Name: ${username}\n\t• First Name: ${firstName}\n\t• Last Name: ${lastName}\n\t• Account Email: ${accountEmail}\n\t• Date of Birth: ${dob}\n\nContact Page & QR's${contactPageLine}\n\nNext steps\nClick the "Go to My Account" button below where you can:\n\t• Add new or view and edit all your contact pages\n\t• Generate the QR codes for your Contact Pages (URL and vCard)\n\t• Edit your profile details including your username\n\t• Change your login password and reset your security questions\n\nIf you did not Sign Up or make these account changes please contact us at deem0u.github.io@gmail.com`;
+  const contactPageHtml = contactSlug
+    ? `<ul><li><strong>Page URL:</strong> <a href="${viewLink}">${viewLink}</a></li></ul>`
+    : `<ul><li>—</li><li><em>To be setup later in My Account</em></li></ul>`;
+  const html = `<div style="font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5; color: #1a1a1a;"><p>Below are details related to your account you should keep handy.</p><p><strong>Profile details</strong></p><ul><li><strong>User Name:</strong> ${escapeHtml(username)}</li><li><strong>First Name:</strong> ${escapeHtml(firstName)}</li><li><strong>Last Name:</strong> ${escapeHtml(lastName)}</li><li><strong>Account Email:</strong> ${escapeHtml(accountEmail)}</li><li><strong>Date of Birth:</strong> ${escapeHtml(dob)}</li></ul><p><strong>Contact Page &amp; QR's</strong></p>${contactPageHtml}<p><strong>Next steps</strong></p><p>Click the &quot;Go to My Account&quot; button below where you can:</p><ul><li>Add new or view and edit all your contact pages</li><li>Generate the QR codes for your Contact Pages (URL and vCard)</li><li>Edit your profile details including your username</li><li>Change your login password and reset your security questions</li></ul><p>If you did not Sign Up or make these account changes please contact us at <a href="mailto:deem0u.github.io@gmail.com">deem0u.github.io@gmail.com</a></p></div>`;
+  const sent = await sendEmail(env, { to: accountEmail, subject, text, html, username });
+  return jsonResponse({ ok: sent.ok, error: sent.error });
+}
+
+/** Contact form recipient (site owner). */
+const CONTACT_FORM_RECIPIENT = 'deem0u.github.io@gmail.com';
+
+function escapeHtml(s) {
+  return (s ?? '').toString()
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/** POST /api/contact - Public. Body: { name, email, enquiryType, message }. Sends email to site owner. */
+async function handleContactForm(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid request' }, 400);
+  }
+  const name = (body.name || '').trim();
+  const email = (body.email || '').trim();
+  const enquiryType = (body.enquiryType || '').trim();
+  const message = (body.message || '').trim();
+
+  if (!name) return jsonResponse({ error: 'Name is required' }, 400);
+  if (!email) return jsonResponse({ error: 'Email is required' }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return jsonResponse({ error: 'Please enter a valid email address' }, 400);
+  if (!enquiryType) return jsonResponse({ error: 'Enquiry type is required' }, 400);
+
+  const subject = `Contact form: ${enquiryType} from ${name}`;
+  const text = `Name: ${name}\nEmail: ${email}\nEnquiry type: ${enquiryType}\n\nMessage:\n${message}`;
+  const html = `<p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> <a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></p><p><strong>Enquiry type:</strong> ${escapeHtml(enquiryType)}</p><p><strong>Message:</strong></p><p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>`;
+
+  const sent = await sendEmail(env, { to: CONTACT_FORM_RECIPIENT, subject, text, html });
+  if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send message' }, 500);
+  return jsonResponse({ success: true });
+}
+
+function normalizeDob(input) {
+  const s = (input || '').trim().replace(/\s+/g, '');
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  const d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+  if (d < 1 || d > 31 || mo < 1 || mo > 12 || y < 1900 || y > 2100) return null;
+  return String(d).padStart(2, '0') + '/' + String(mo).padStart(2, '0') + '/' + y;
+}
+
+function generateContactPageHTML(givenName, familyName, contactEmail, mobile, mobileLink, homeCountry, destName, destAddress, destPhone, destEmail, additionalInfo) {
+  const esc = s => (s ?? '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const em = String.fromCharCode(0x2014);
+  const now = new Date().toISOString();
+  const dName = (destName || '').trim();
+  const dAddr = (destAddress || '').trim();
+  const dPhone = (destPhone || '').trim();
+  const dEmail = (destEmail || '').trim();
+  const hasDest = !!(dName || dAddr || dPhone || dEmail);
+  const destParts = [dName, dAddr, dPhone, dEmail].map(t => '<span>' + (t ? esc(t) : '') + '</span>');
+  const destHtml = hasDest ? '<div class="dest-details">' + destParts.join('') + '</div>' : '<span class="value">' + em + '</span>';
+  const mobileVal = (mobile || '').trim();
+  const mobileHtml = mobileVal ? '<a href="tel:' + esc(mobileLink || mobileVal) + '">' + esc(mobileVal) + '</a>' : em;
+  const homeCountryHtml = (homeCountry || '').trim() ? esc((homeCountry || '').trim()) : em;
+  const formatMultiline = s => {
+    const t = (s ?? '').toString().trim();
+    if (!t) return '';
+    return esc(t).replace(/\r?\n/g, '<br>');
+  };
+  const additionalHtml = additionalInfo ? '<span class="value">' + formatMultiline(additionalInfo) + '</span>' : '<span class="value">' + em + '</span>';
+  const css = '*{box-sizing:border-box;margin:0;padding:0}html{font-size:16px}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.7;color:#1a1a1a;background:#fff;padding:24px;min-height:100vh}.container{max-width:720px;margin:0 auto;padding:32px 24px}.last-updated-block{font-size:0.95rem;color:#6b7280;text-align:right;margin-bottom:12px}.info{display:flex;flex-direction:column;padding:14px 0;border-bottom:1px solid #e5e7eb;gap:6px}.info:last-of-type{border-bottom:none}.label{font-weight:600;color:#374151}.value{color:#1a1a1a;word-break:break-word}a{color:#2563eb}.dest-details{display:flex;flex-direction:column;gap:4px}.dest-details span:empty{display:none}';
+  const titles = 'Last updated \u00b7 Derni\u00e8re mise \u00e0 jour \u00b7 \u6700\u540e\u66f4\u65b0';
+  const sectionTitle = 'Contact Information \u00b7 Coordonn\u00e9es \u00b7 \u8054\u7cfb\u4fe1\u606f';
+  const lblGiven = 'Given Names \u00b7 Pr\u00e9noms \u00b7 \u540d\u5b57';
+  const lblFamily = 'Family Name \u00b7 Nom de famille \u00b7 \u59d3\u6c0f';
+  const lblEmail = 'Email \u00b7 Courriel \u00b7 \u7535\u5b50\u90ae\u4ef6';
+  const lblMobile = 'Contact Number \u00b7 T\u00e9l\u00e9phone \u00b7 \u7535\u8bdd';
+  const lblCountry = 'Home Country \u00b7 Pays de r\u00e9sidence \u00b7 \u5c45\u4f4f\u56fd\u5bb6';
+  const lblDest = 'Destination Details \u00b7 D\u00e9tails de la destination \u00b7 \u76ee\u7684\u5730\u8be6\u60c5';
+  const lblAdditional = 'Additional Information \u00b7 Informations suppl\u00e9mentaires \u00b7 \u9644\u52a0\u4fe1\u606f';
+  const script = '<script>(function(){function f(i,u){if(!i)return"";var d=new Date(i);return d.toLocaleString()+(u?" by "+u:"")}document.querySelectorAll(".last-updated-display").forEach(function(e){var i=e.getAttribute("data-timestamp"),u=e.getAttribute("data-updated-by");if(i)e.textContent=f(i,u)})})();<\/script>';
+  const lockdownOverlay = '<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>';
+  const lockdownScript = '<script>(function(){var api="' + PUBLIC_API_BASE.replace(/"/g, '&quot;') + '";var storage=typeof sessionStorage!=="undefined"?sessionStorage:typeof localStorage!=="undefined"?localStorage:null;var h={"X-Admin-Key":(storage&&storage.getItem("admin_key"))||""};fetch(api+"/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(givenName) + ' ' + esc(familyName) + '</title><style>' + css + '</style></head><body>' + lockdownOverlay + '<div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(givenName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(familyName) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(contactEmail) + '">' + esc(contactEmail) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + lockdownScript + '</body></html>';
+}
+
+// ============ Auth Helpers ============
+
+const ADMIN_SECONDARY_PREFIX = 'admin_secondary:';
+
+async function sha256Hex(str) {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Returns { isAdmin, isPrimaryAdmin }. Secondary keys have isAdmin true but isPrimaryAdmin false. */
+async function getAdminAuth(request, env) {
+  const adminKey = (request.headers.get('X-Admin-Key') || '').trim();
+  if (!adminKey || !env.EDIT_KEYS_KV) return { isAdmin: false, isPrimaryAdmin: false };
+  const storedKey = await env.EDIT_KEYS_KV.get('admin:key');
+  if (storedKey && adminKey === storedKey) return { isAdmin: true, isPrimaryAdmin: true };
+  const hash = await sha256Hex(adminKey);
+  const kvKey = ADMIN_SECONDARY_PREFIX + hash;
+  const raw = await env.EDIT_KEYS_KV.get(kvKey);
+  if (!raw) return { isAdmin: false, isPrimaryAdmin: false };
+  let meta;
+  try { meta = JSON.parse(raw); } catch (_) { await env.EDIT_KEYS_KV.delete(kvKey); return { isAdmin: false, isPrimaryAdmin: false }; }
+  const expiresAt = meta.expiresAt ? new Date(meta.expiresAt).getTime() : null;
+  if (expiresAt !== null && Date.now() > expiresAt) {
+    await env.EDIT_KEYS_KV.delete(kvKey);
+    return { isAdmin: false, isPrimaryAdmin: false };
+  }
+  return { isAdmin: true, isPrimaryAdmin: false };
+}
+
+async function isAdmin(request, env) {
+  const auth = await getAdminAuth(request, env);
+  return auth.isAdmin;
+}
+
+/** True only when X-Admin-Key is the primary admin key (not a secondary key). */
+async function isPrimaryAdmin(request, env) {
+  const auth = await getAdminAuth(request, env);
+  return auth.isPrimaryAdmin;
+}
+
+/** Returns true if user has verified their email (or admin bypass). Used to gate add/edit/delete contact pages. */
+async function requireEmailVerifiedForEdit(username, auth, env) {
+  if (auth.isAdmin) return true;
+  if (!env.EDIT_KEYS_KV) return false;
+  return (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
+}
+
+async function validateAuth(username, request, env) {
+  const adminKey = request.headers.get('X-Admin-Key');
+
+  // Check admin
+  if (adminKey && env.EDIT_KEYS_KV) {
+    const storedAdmin = await env.EDIT_KEYS_KV.get('admin:key');
+    if (storedAdmin && adminKey === storedAdmin) {
+      return { authorized: true, isAdmin: true };
+    }
+  }
+
+  // Check JWT (Bearer token)
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (token && secret) {
+    const payload = await verifyJwt(token, secret);
+    const payloadUser = (payload && payload.username || '').trim();
+    const pathUser = (username || '').trim();
+    const match = payloadUser && pathUser && payloadUser.toLowerCase() === pathUser.toLowerCase();
+    if (payload && match) {
+      if (payload.otpLogin) {
+        return { authorized: false, isAdmin: false };
+      }
+      // User was deleted from Admin Dashboard (folder removed); invalidate session
+      const pathUsername = pathUser.toLowerCase();
+      if (!await userFolderExistsOnGitHub(pathUsername, env)) {
+        return { authorized: false, isAdmin: false, accountDeleted: true };
+      }
+      return { authorized: true, isAdmin: false };
+    }
+  }
+
+  return { authorized: false, isAdmin: false };
+}
+
+/** 401 response when user was deleted (folder no longer exists). Frontend should clear session and show sign-in. */
+function accountDeletedResponse() {
+  return jsonResponse({ error: 'Your account has been deleted. You have been signed out.', code: 'ACCOUNT_DELETED' }, 401);
+}
+
+/** GET /api/session-check - Bearer required. Returns 200 { ok: true } or 401 ACCOUNT_DELETED if user was deleted. Used by frontend to invalidate session when account is deleted while user is logged in. */
+async function handleSessionCheck(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  return jsonResponse({ ok: true });
+}
+
+// ============ Page Routes ============
+
+/**
+ * POST /api/page - Create a new contact page (admin only)
+ */
+async function handleCreatePage(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+
+  const body = await request.json();
+  const usernameRaw = (body.username || body.folder || '').trim();
+  const username = normalizeUsername(usernameRaw);
+  const content = body.content;
+  const accountEmail = body.accountEmail;
+  const firstName = (body.firstName || '').trim();
+  const lastName = (body.lastName || body.surname || '').trim();
+
+  if (!username || !content) {
+    return jsonResponse({ error: 'Missing username or content' }, 400);
+  }
+
+  const accountEmailVal = (accountEmail || '').trim();
+  if (accountEmailVal) {
+    if (!accountEmailVal.includes('@')) {
+      return jsonResponse({ error: 'Valid account email required' }, 400);
+    }
+    const accountEmailLower = accountEmailVal.toLowerCase();
+    if (env.EDIT_KEYS_KV) {
+      const existingFolder = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmailLower);
+      if (existingFolder) {
+        return jsonResponse({ error: 'This account email is already in use' }, 409);
+      }
+    }
+  }
+
+  // Validate username (allow mixed case; stored as lowercase)
+  if (!/^[a-zA-Z0-9_-]{3,28}$/.test(usernameRaw)) {
+    return jsonResponse({ error: 'Invalid username. Use only letters, numbers, hyphens, and underscores (3–28 characters). Stored as lowercase.' }, 400);
+  }
+  if (!/^[a-z0-9_-]{3,28}$/.test(username)) {
+    return jsonResponse({ error: 'Invalid username format' }, 400);
+  }
+
+  // Check reserved names
+  if (['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user', 'styles.css', 'countries-data.js', 'form-descriptions.js'].includes(username)) {
+    return jsonResponse({ error: 'This username is reserved' }, 400);
+  }
+
+  const contactpagename = (body.contactpagename || 'index').trim() || 'index';
+  if (contactpagename.toLowerCase() === 'index') {
+    return jsonResponse({ error: 'Slug "index" is reserved. Use a different URL slug (e.g. main, contact).' }, 400);
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
+    return jsonResponse({ error: 'Invalid contact page name' }, 400);
+  }
+  if (contactpagename.length < 3 || contactpagename.length > 28) {
+    return jsonResponse({ error: 'Contact page URL must be 3–28 characters' }, 400);
+  }
+
+  // Enforce max contact pages per account (0 = unlimited)
+  if (env.EDIT_KEYS_KV) {
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + username);
+    const maxPages = parseInt(maxRaw, 10) || 0;
+    if (maxPages > 0) {
+      const currentCount = await getContactPageCountForUser(username, env);
+      if (currentCount >= maxPages) {
+        return jsonResponse({ error: 'Maximum number of contact pages reached for this account. Delete an existing page to create a new one, or increase the limit in Manage Users.' }, 403);
+      }
+    }
+  }
+
+  // Check if user folder or this contact page already exists
+  const checkResponse = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${pagePath(username, contactpagename)}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+
+  if (checkResponse.ok) {
+    return jsonResponse({ error: 'A page with this name already exists' }, 409);
+  }
+
+  // Create the file at user/<username>/<contactpagename>.html
+  const filePath = pagePath(username, contactpagename);
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Create contact page: ${username}/${contactpagename}`,
+        content: encodeBase64(content),
+        branch: CONFIG.branch
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    return jsonResponse({ error: error.message || 'Failed to create page' }, response.status);
+  }
+
+  const data = await response.json();
+  const contactPageName = (body.contactPageName != null && typeof body.contactPageName === 'string') ? body.contactPageName.trim() : null;
+  const displayName = (contactPageName && contactPageName.length <= 128) ? contactPageName : (contactpagename === 'index' ? 'Main (index)' : contactpagename);
+
+  // Store account email, profile names, and contact page name in KV when provided
+  if (env.EDIT_KEYS_KV) {
+    if (accountEmailVal && accountEmailVal.includes('@')) {
+      const accountEmailLower = accountEmailVal.toLowerCase();
+      await env.EDIT_KEYS_KV.put('account_email:' + username, accountEmailVal);
+      await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmailLower, username);
+    }
+    if (firstName) await env.EDIT_KEYS_KV.put('user_first_name:' + username, firstName);
+    if (lastName) await env.EDIT_KEYS_KV.put('user_last_name:' + username, lastName);
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${username}:${contactpagename}`, displayName);
+  }
+
+  return jsonResponse({
+    success: true,
+    username,
+    contactpagename,
+    contactPageName: displayName,
+    sha: data.content.sha,
+    url: pageUrl(username, contactpagename)
+  });
+}
+
+/**
+ * POST /api/page/{username}/create - Create a new contact page (Bearer, same user only).
+ * Body: { contactpagename, content }. contactpagename is the unique identifier (e.g. work-card, travel-2024).
+ * File stored at user/<username>/<contactpagename>.html; URL follows same path.
+ */
+async function handleUserCreatePage(username, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  // Enforce max contact pages per account (0 = unlimited)
+  if (env.EDIT_KEYS_KV) {
+    const u = (username || '').toLowerCase();
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + u);
+    const maxPages = parseInt(maxRaw, 10) || 0;
+    if (maxPages > 0) {
+      const currentCount = await getContactPageCountForUser(username, env);
+      if (currentCount >= maxPages) {
+        return jsonResponse({ error: 'Maximum number of contact pages reached. Delete an existing page to create a new one.' }, 403);
+      }
+    }
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const contactpagename = (body.contactpagename || '').trim();
+  if (!contactpagename) {
+    return jsonResponse({ error: 'Contact page URL (slug) is required' }, 400);
+  }
+  if (contactpagename.toLowerCase() === 'index') {
+    return jsonResponse({ error: 'Slug "index" is reserved. Use a different URL slug (e.g. main, contact).' }, 400);
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(contactpagename)) {
+    return jsonResponse({ error: 'Contact page URL can only use letters, numbers, hyphens, and underscores' }, 400);
+  }
+  if (contactpagename.length < 3 || contactpagename.length > 28) {
+    return jsonResponse({ error: 'Contact page URL must be 3–28 characters' }, 400);
+  }
+  const contactPageName = (body.contactPageName || '').trim();
+  if (contactPageName && contactPageName.length > 128) {
+    return jsonResponse({ error: 'Contact page name must be 128 characters or less' }, 400);
+  }
+  if (env.EDIT_KEYS_KV && contactPageName) {
+    const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+    for (const key of nameList.keys) {
+      const existing = await env.EDIT_KEYS_KV.get(key.name);
+      if (existing && existing.trim().toLowerCase() === contactPageName.trim().toLowerCase()) {
+        return jsonResponse({ error: 'Another contact page already uses this Contact Page Name' }, 409);
+      }
+    }
+  }
+  const content = body.content;
+  if (typeof content !== 'string') {
+    return jsonResponse({ error: 'Content is required' }, 400);
+  }
+
+  const filePath = pagePath(username, contactpagename);
+  const checkResponse = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+
+  if (checkResponse.ok) {
+    return jsonResponse({ error: 'A contact page with this URL already exists' }, 409);
+  }
+
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Create contact page: ${username}/${contactpagename}`,
+        content: encodeBase64(content),
+        branch: CONFIG.branch
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    return jsonResponse({ error: error.message || 'Failed to create page' }, response.status);
+  }
+
+  const data = await response.json();
+  const displayName = contactPageName || (contactpagename === 'index' ? 'Main (index)' : contactpagename);
+  if (env.EDIT_KEYS_KV) {
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${username}:${contactpagename}`, displayName);
+  }
+  return jsonResponse({
+    success: true,
+    contactpagename,
+    contactPageName: displayName,
+    sha: data.content.sha,
+    url: pageUrl(username, contactpagename)
+  });
+}
+
+/**
+ * DELETE /api/page/{username} - Delete entire user (admin only).
+ * DELETE /api/page/{username}/{contactpagename} - Delete single contact page (Bearer auth, same user, or admin).
+ */
+async function handleDeletePage(username, contactpagename, request, env) {
+  const path = new URL(request.url).pathname.replace(/\/$/, '');
+  const pathAfter = path.replace(/^\/api\/page\//, '').trim();
+  const segments = pathAfter.split('/').filter(Boolean);
+  const isSinglePageDelete = segments.length >= 2;
+
+  if (isSinglePageDelete) {
+    const slug = segments[1];
+    const auth = await validateAuth(username, request, env);
+    if (!auth.authorized) {
+      if (auth.accountDeleted) return accountDeletedResponse();
+      return jsonResponse({ error: 'Unauthorized' }, 401);
+    }
+    const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
+    if (!canEdit) {
+      return jsonResponse({ error: 'Verify your email to delete contact pages.' }, 403);
+    }
+    const filePath = pagePath(username, slug);
+    const getResponse = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
+      {
+        headers: {
+          'Authorization': `token ${env.GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'ContactPageEditor/1.0'
+        }
+      }
+    );
+    if (!getResponse.ok) {
+      return jsonResponse({ error: 'Page not found' }, 404);
+    }
+    const fileData = await getResponse.json();
+    const deleteResponse = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `token ${env.GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'ContactPageEditor/1.0'
+        },
+        body: JSON.stringify({
+          message: `Delete contact page: ${username}/${slug}.html`,
+          sha: fileData.sha,
+          branch: CONFIG.branch
+        })
+      }
+    );
+    if (!deleteResponse.ok) {
+      const err = await deleteResponse.json();
+      return jsonResponse({ error: err.message || 'Failed to delete page' }, deleteResponse.status);
+    }
+    if (env.EDIT_KEYS_KV) {
+      await env.EDIT_KEYS_KV.delete(`contact_page_name:${username}:${slug}`);
+    }
+    return jsonResponse({ success: true, contactpagename: slug, message: 'Contact page deleted' });
+  }
+
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+
+  // List all files under user/username/ (folder may already be deleted on GitHub)
+  const listResponse = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+
+  // Delete every file in the user folder (including index.gitkeep) so the folder is removed from the repo
+  let allFiles = [];
+  if (listResponse.ok) {
+    const files = await listResponse.json();
+    allFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name) : [];
+  }
+
+  for (const file of allFiles) {
+    const filePath = `${USER_PAGES_PREFIX}/${username}/${file.name}`;
+    const deleteResponse = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `token ${env.GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'ContactPageEditor/1.0'
+        },
+        body: JSON.stringify({
+          message: `Delete user: ${username}/${file.name}`,
+          sha: file.sha,
+          branch: CONFIG.branch
+        })
+      }
+    );
+    if (!deleteResponse.ok) {
+      const error = await deleteResponse.json();
+      return jsonResponse({ error: error.message || 'Failed to delete user folder' }, deleteResponse.status);
+    }
+  }
+
+  await purgeKvForUser(username, env);
+
+  return jsonResponse({
+    success: true,
+    username,
+    message: `Page ${username} deleted`
+  });
+}
+
+/**
+ * POST /api/admin/create-user (admin only). Body: { username }.
+ * Creates only the user folder (with index.gitkeep). No .html file, no account KV.
+ * Profile and secrets are set later via Edit Profile / Set Secrets (admin or user via My Account).
+ */
+async function handleAdminCreateUser(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  let body;
+  try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const usernameRaw = (body.username || body.folder || '').trim();
+  const username = normalizeUsername(usernameRaw);
+  if (!username || username.length < 3 || username.length > 28) {
+    return jsonResponse({ error: 'Username must be 3–28 characters' }, 400);
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(usernameRaw)) {
+    return jsonResponse({ error: 'Username: letters, numbers, hyphens, underscores only' }, 400);
+  }
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user', 'styles.css', 'countries-data.js', 'form-descriptions.js'];
+  if (reserved.includes(username)) {
+    return jsonResponse({ error: 'This username is reserved' }, 400);
+  }
+  if (env.EDIT_KEYS_KV) {
+    const existing = await env.EDIT_KEYS_KV.get(`account_email:${username}`);
+    if (existing) {
+      return jsonResponse({ error: 'This username is already taken (account exists)' }, 409);
+    }
+  }
+  const checkRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (checkRes.ok) {
+    return jsonResponse({ error: 'A user folder with this username already exists' }, 409);
+  }
+  const folderPlaceholderPath = `${USER_PAGES_PREFIX}/${username}/index.gitkeep`;
+  const folderPlaceholderContent = encodeBase64('# Directory placeholder – contact pages are .html files in this folder (user/username/urlslug). This file is not a contact page.\n');
+  const createRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${folderPlaceholderPath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Create user folder: ${username} (admin)`,
+        content: folderPlaceholderContent,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!createRes.ok) {
+    const err = await createRes.json();
+    return jsonResponse({ error: err.message || 'Failed to create user folder' }, createRes.status);
+  }
+  return jsonResponse({
+    success: true,
+    username,
+    message: `User folder created. Use Edit Profile and Set Secrets to complete the account, or the user can sign in via My Account once they set a password.`
+  });
+}
+
+/**
+ * POST /api/admin/rename-user (admin only). Body: { oldUsername, newUsername [, firstName, lastName, accountEmail ] }.
+ * Moves account under new username: new GitHub folder, copies all files, migrates all user KV, updates
+ * account_email_to_folder, removes old folder. If firstName, lastName, or accountEmail are provided, they are
+ * applied to the new username so profile changes apply in one request.
+ */
+async function handleAdminRenameUser(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  let body;
+  try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const oldUsername = (body.oldUsername || '').trim().toLowerCase();
+  const newUsername = (body.newUsername || '').trim().toLowerCase();
+  if (!oldUsername || !newUsername) return jsonResponse({ error: 'oldUsername and newUsername required' }, 400);
+  if (oldUsername === newUsername) return jsonResponse({ error: 'New username must be different' }, 400);
+  if (newUsername.length > 28) return jsonResponse({ error: 'New username must be 3-28 characters' }, 400);
+  if (!/^[a-zA-Z0-9_-]{3,28}$/.test(newUsername)) {
+    return jsonResponse({ error: 'New username must be 3-28 characters, letters, numbers, hyphens, underscores' }, 400);
+  }
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
+  if (reserved.includes(newUsername)) return jsonResponse({ error: 'This username is reserved' }, 400);
+
+  if (env.GITHUB_TOKEN) {
+    const existingRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${newUsername}?ref=${CONFIG.branch}`,
+      { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+    );
+    if (existingRes.ok) return jsonResponse({ error: 'A user with this username already exists' }, 409);
+  }
+
+  const listRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${oldUsername}?ref=${CONFIG.branch}`,
+    { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+  );
+  if (!listRes.ok) return jsonResponse({ error: 'User folder not found' }, 404);
+  const files = await listRes.json();
+  const allFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name) : [];
+
+  for (const file of allFiles) {
+    const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
+    const getRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}?ref=${CONFIG.branch}`,
+      { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+    );
+    if (!getRes.ok) return jsonResponse({ error: 'Failed to read file: ' + file.name }, 500);
+    const fileData = await getRes.json();
+    const contentBase64 = fileData.content ? fileData.content.replace(/\n/g, '') : '';
+    const newPath = `${USER_PAGES_PREFIX}/${newUsername}/${file.name}`;
+    const putRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${newPath}`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'ContactPageEditor/1.0' },
+        body: JSON.stringify({ message: `Rename user: ${oldUsername} -> ${newUsername}`, content: contentBase64, branch: CONFIG.branch })
+      }
+    );
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      return jsonResponse({ error: err.message || 'Failed to create file: ' + file.name }, putRes.status);
+    }
+  }
+  for (const file of allFiles) {
+    const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
+    const delRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}`,
+      {
+        method: 'DELETE',
+        headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'ContactPageEditor/1.0' },
+        body: JSON.stringify({ message: `Rename user: remove ${oldUsername}`, sha: file.sha, branch: CONFIG.branch })
+      }
+    );
+    if (!delRes.ok) return jsonResponse({ error: 'Failed to delete old file: ' + file.name }, 500);
+  }
+
+  if (env.EDIT_KEYS_KV) {
+    const kvKeys = [
+      'account_email', 'user_first_name', 'user_last_name', 'user_dob', 'user_recovery', 'user_password_hash',
+      'email_verified', 'email_verified_admin', 'account_details_sent',
+      'divert_email', 'max_contact_pages', 'push_message', 'user_otp', 'otp', 'otp_email_change', 'pending_email_change'
+    ];
+    for (const prefix of kvKeys) {
+      const val = await env.EDIT_KEYS_KV.get(prefix + ':' + oldUsername);
+      if (val != null) {
+        await env.EDIT_KEYS_KV.put(prefix + ':' + newUsername, val);
+        await env.EDIT_KEYS_KV.delete(prefix + ':' + oldUsername);
+      }
+    }
+    const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + newUsername);
+    if (accountEmail && accountEmail.includes('@')) {
+      await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + accountEmail.toLowerCase().trim());
+      await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmail.toLowerCase().trim(), newUsername);
+    }
+    const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${oldUsername}:` });
+    for (const key of nameList.keys) {
+      const slug = key.name.replace(`contact_page_name:${oldUsername}:`, '');
+      const val = await env.EDIT_KEYS_KV.get(key.name);
+      if (val != null) {
+        await env.EDIT_KEYS_KV.put(`contact_page_name:${newUsername}:${slug}`, val);
+        await env.EDIT_KEYS_KV.delete(key.name);
+      }
+    }
+    // Optional: apply first name, last name, account email to new username in same request
+    if (body.firstName !== undefined) await env.EDIT_KEYS_KV.put('user_first_name:' + newUsername, (body.firstName || '').trim());
+    if (body.lastName !== undefined) await env.EDIT_KEYS_KV.put('user_last_name:' + newUsername, (body.lastName || '').trim());
+    if (body.accountEmail !== undefined && typeof body.accountEmail === 'string') {
+      const newEmail = body.accountEmail.trim();
+      if (newEmail.includes('@')) {
+        const oldEmail = await env.EDIT_KEYS_KV.get('account_email:' + newUsername);
+        if (oldEmail) await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldEmail.toLowerCase().trim());
+        await env.EDIT_KEYS_KV.put('account_email:' + newUsername, newEmail);
+        await env.EDIT_KEYS_KV.put('account_email_to_folder:' + newEmail.toLowerCase(), newUsername);
+      }
+    }
+  }
+
+  return jsonResponse({ success: true, oldUsername, newUsername, message: `User renamed to ${newUsername}` });
+}
+
+/** GET /api/site-status - Public. Returns maintenance and lockdown. If X-Admin-Key is valid, returns isAdmin: true and isSecondaryAdmin when applicable. */
+async function handleGetSiteStatus(request, env) {
+  const auth = await getAdminAuth(request, env);
+  if (auth.isAdmin) {
+    return jsonResponse({ maintenanceMode: false, lockdownMode: false, isAdmin: true, isSecondaryAdmin: !auth.isPrimaryAdmin });
+  }
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ maintenanceMode: false, lockdownMode: false, isAdmin: false, isSecondaryAdmin: false });
+  }
+  const maintenance = (await env.EDIT_KEYS_KV.get('site:maintenance')) === '1';
+  const lockdown = (await env.EDIT_KEYS_KV.get('site:lockdown')) === '1';
+  return jsonResponse({ maintenanceMode: maintenance, lockdownMode: lockdown, isAdmin: false, isSecondaryAdmin: false });
+}
+
+/** GET /api/admin/site-settings - Admin only. Returns divert, maintenance, lockdown, per-user divert. */
+async function handleGetSiteSettings(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ divertAllGlobal: false, maintenanceMode: false, lockdownMode: false, divertUsers: {}, maxContactPagesByUser: {} });
+  }
+  const divertAllGlobal = (await env.EDIT_KEYS_KV.get('site:divert_all_global')) === '1';
+  const maintenanceMode = (await env.EDIT_KEYS_KV.get('site:maintenance')) === '1';
+  const lockdownMode = (await env.EDIT_KEYS_KV.get('site:lockdown')) === '1';
+  const divertList = await env.EDIT_KEYS_KV.list({ prefix: 'divert_email:' });
+  const divertUsers = {};
+  for (const key of divertList.keys) {
+    const username = key.name.replace('divert_email:', '');
+    if (username) {
+      const val = await env.EDIT_KEYS_KV.get(key.name);
+      if (val === '1') divertUsers[username] = true;
+    }
+  }
+  const maxPagesList = await env.EDIT_KEYS_KV.list({ prefix: 'max_contact_pages:' });
+  const maxContactPagesByUser = {};
+  for (const key of maxPagesList.keys) {
+    const username = key.name.replace('max_contact_pages:', '');
+    if (username) {
+      const val = await env.EDIT_KEYS_KV.get(key.name);
+      const n = parseInt(val, 10);
+      maxContactPagesByUser[username] = isNaN(n) || n < 0 ? 0 : n;
+    }
+  }
+  return jsonResponse({ divertAllGlobal, maintenanceMode, lockdownMode, divertUsers, maxContactPagesByUser });
+}
+
+/** PUT /api/admin/site-settings - Admin only. Body: { divertAllGlobal?, maintenanceMode?, lockdownMode?, divertUsers? }. */
+async function handlePutSiteSettings(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  if (body.divertAllGlobal === true) await env.EDIT_KEYS_KV.put('site:divert_all_global', '1');
+  else if (body.divertAllGlobal === false) await env.EDIT_KEYS_KV.delete('site:divert_all_global');
+  if (body.maintenanceMode === true) await env.EDIT_KEYS_KV.put('site:maintenance', '1');
+  else if (body.maintenanceMode === false) await env.EDIT_KEYS_KV.delete('site:maintenance');
+  if (body.lockdownMode === true) await env.EDIT_KEYS_KV.put('site:lockdown', '1');
+  else if (body.lockdownMode === false) await env.EDIT_KEYS_KV.delete('site:lockdown');
+  if (body.divertUsers && typeof body.divertUsers === 'object') {
+    for (const [username, on] of Object.entries(body.divertUsers)) {
+      const u = (username || '').trim();
+      if (!u) continue;
+      if (on === true) await env.EDIT_KEYS_KV.put('divert_email:' + u, '1');
+      else await env.EDIT_KEYS_KV.delete('divert_email:' + u);
+    }
+  }
+  if (body.maxContactPagesByUser && typeof body.maxContactPagesByUser === 'object') {
+    for (const [username, num] of Object.entries(body.maxContactPagesByUser)) {
+      const u = (username || '').trim().toLowerCase();
+      if (!u) continue;
+      const n = parseInt(num, 10);
+      const val = (isNaN(n) || n < 0) ? 0 : n;
+      await env.EDIT_KEYS_KV.put('max_contact_pages:' + u, String(val));
+    }
+  }
+  return jsonResponse({ success: true });
+}
+
+/** Returns list of usernames (folder names) that exist in GitHub under user/. A folder counts as valid if it exists as a directory (used for orphan check so keys for existing folders are not marked orphaned). */
+async function getValidUsernamesFromGitHub(env) {
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (!response.ok) return [];
+  const contents = await response.json();
+  const usernames = (Array.isArray(contents) ? contents : [])
+    .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
+    .map(item => item.name);
+  return usernames;
+}
+
+/** Get a user-scoped KV value; tries lowercase key first to reduce reads when keys are stored lowercase. */
+async function getKvUser(env, prefix, uLower, u) {
+  let v = await env.EDIT_KEYS_KV.get(prefix + uLower);
+  if (v != null) return v;
+  const uTrim = (u || '').trim();
+  if (uTrim.toLowerCase() === uLower) return v;
+  return await env.EDIT_KEYS_KV.get(prefix + uTrim);
+}
+
+/** List KV keys by prefix; handles pagination (cursor). Returns array of key names. */
+async function listAllKvKeys(env, prefix) {
+  const out = [];
+  let cursor = undefined;
+  do {
+    const opts = { prefix };
+    if (cursor) opts.cursor = cursor;
+    const list = await env.EDIT_KEYS_KV.list(opts);
+    for (const k of list.keys) out.push(k.name);
+    cursor = list.list_complete ? undefined : list.cursor;
+  } while (cursor);
+  return out;
+}
+
+/** List KV keys by prefix with metadata; handles pagination. Returns array of { name, metadata }. */
+async function listAllKvKeysWithMetadata(env, prefix) {
+  const out = [];
+  let cursor = undefined;
+  do {
+    const opts = { prefix };
+    if (cursor) opts.cursor = cursor;
+    const list = await env.EDIT_KEYS_KV.list(opts);
+    for (const k of list.keys) out.push({ name: k.name, metadata: k.metadata || null });
+    cursor = list.list_complete ? undefined : list.cursor;
+  } while (cursor);
+  return out;
+}
+
+/** Collects orphaned KV keys (user no longer in GitHub) and expired admin temp keys. Returns { orphanedKeys, expiredTemp, validUsernamesCount, githubUnavailable? }. */
+async function collectKvOrphans(env) {
+  const validUsernames = await getValidUsernamesFromGitHub(env);
+  const validSet = new Set(validUsernames.map(x => (x || '').toLowerCase()));
+  const orphanedKeys = [];
+
+  // Do NOT mark any user keys as orphaned when GitHub returned no users (API failure, bad token, wrong repo/branch).
+  // Otherwise we would treat every user key as orphaned and cleanup would wipe all First Name, Last Name, and Secrets.
+  const haveValidUsers = validUsernames.length > 0;
+
+  if (haveValidUsers) {
+    const userPrefixes = [
+      'account_email:',
+      'user_password_hash:',
+      'user_first_name:',
+      'user_last_name:',
+      'user_dob:',
+      'user_recovery:',
+      'user_otp:',
+      'email_verified:',
+      'email_verified_admin:',
+      'account_details_sent:',
+      'divert_email:',
+      'max_contact_pages:',
+      'otp_email_change:',
+      'pending_email_change:',
+      'otp:',
+      'push_message:'
+    ];
+    for (const prefix of userPrefixes) {
+      const keys = await listAllKvKeys(env, prefix);
+      for (const name of keys) {
+        const username = (name.slice(prefix.length).split(':')[0] || '').toLowerCase();
+        if (!validSet.has(username)) orphanedKeys.push(name);
+      }
+    }
+
+    const contactPrefix = 'contact_page_name:';
+    const contactKeys = await listAllKvKeys(env, contactPrefix);
+    for (const name of contactKeys) {
+      const after = name.slice(contactPrefix.length);
+      const username = (after.split(':')[0] || '').toLowerCase();
+      if (!validSet.has(username)) orphanedKeys.push(name);
+    }
+
+    const emailToFolderPrefix = 'account_email_to_folder:';
+    const emailToFolderKeys = await listAllKvKeys(env, emailToFolderPrefix);
+    for (const name of emailToFolderKeys) {
+      const email = name.slice(emailToFolderPrefix.length);
+      const rawUsername = (await env.EDIT_KEYS_KV.get(name) || '').trim();
+      const usernameLower = rawUsername.toLowerCase();
+      if (!rawUsername || !validSet.has(usernameLower)) {
+        orphanedKeys.push(name);
+      } else {
+        // Use raw username for KV key (keys are stored with actual folder casing)
+        const currentEmail = await env.EDIT_KEYS_KV.get('account_email:' + rawUsername);
+        if ((currentEmail || '').toLowerCase() !== email.toLowerCase()) orphanedKeys.push(name);
+      }
+    }
+  }
+
+  const expiredTemp = [];
+  const recoveryRaw = await env.EDIT_KEYS_KV.get('admin:recovery_code');
+  if (recoveryRaw) {
+    try {
+      const { expiresAt } = JSON.parse(recoveryRaw);
+      if (expiresAt && Date.now() > expiresAt) expiredTemp.push('admin:recovery_code');
+    } catch (_) {}
+  }
+  const resetRaw = await env.EDIT_KEYS_KV.get('admin:reset_token');
+  if (resetRaw) {
+    try {
+      const { expiresAt } = JSON.parse(resetRaw);
+      if (expiresAt && Date.now() > expiresAt) expiredTemp.push('admin:reset_token');
+    } catch (_) {}
+  }
+
+  return {
+    orphanedKeys,
+    expiredTemp,
+    validUsernamesCount: validUsernames.length,
+    ...(haveValidUsers ? {} : { githubUnavailable: true })
+  };
+}
+
+/** GET /api/admin/kv-orphans - Admin only. Returns orphaned and expired temp KV keys. keys[] has { name, type: 'orphan'|'expired' } for select/deselect in UI. */
+async function handleGetKvOrphans(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  const data = await collectKvOrphans(env);
+  const keys = [
+    ...(data.orphanedKeys || []).map(name => ({ name, type: 'orphan' })),
+    ...(data.expiredTemp || []).map(name => ({ name, type: 'expired' }))
+  ];
+  return jsonResponse({
+    ...data,
+    keys,
+    summary: { orphaned: data.orphanedKeys.length, expiredTemp: data.expiredTemp.length }
+  });
+}
+
+/** POST /api/admin/kv-cleanup - Admin only. Body: { dryRun?: boolean, keys?: string[] }. If keys provided, only those (must be in orphaned/expired). Else deletes all. Returns { deleted, deletedKeys }. */
+async function handleKvCleanup(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { body = {}; }
+  const dryRun = body.dryRun === true;
+  const data = await collectKvOrphans(env);
+  const allowedSet = new Set([...(data.orphanedKeys || []), ...(data.expiredTemp || [])]);
+  const requested = Array.isArray(body.keys) ? body.keys : null;
+  const toDelete = requested === null
+    ? [...(data.orphanedKeys || []), ...(data.expiredTemp || [])]
+    : requested.filter(k => allowedSet.has(k));
+  if (!dryRun && toDelete.length > 0) {
+    for (const key of toDelete) {
+      await env.EDIT_KEYS_KV.delete(key);
+    }
+  }
+  return jsonResponse({
+    deleted: toDelete.length,
+    deletedKeys: toDelete,
+    dryRun
+  });
+}
+
+/** Collects all KV key names that belong to the given username or any "old" username (same account email, e.g. pre-rename). Returns { keys: [ { name, orphaned, username, purpose, status, lastUsed } ], validUsernamesCount }. purpose/lastUsed come from key metadata (Cloudflare KV metadata on the key) or fallback to getKvKeyPurpose; status = 'active' | 'orphaned'. */
+async function collectKvUserKeys(env, username) {
+  const u = username.trim().toLowerCase();
+  const validUsernames = await getValidUsernamesFromGitHub(env);
+  const validSet = new Set(validUsernames.map(x => (x || '').toLowerCase()));
+  const accountEmail = (await getKvUser(env, 'account_email:', u, u) || '').trim().toLowerCase();
+  const sameEmailUsernames = new Set([u]);
+  if (accountEmail) {
+    const accountEmailKeys = await listAllKvKeys(env, 'account_email:');
+    for (const name of accountEmailKeys) {
+      if (name.startsWith('account_email_to_folder:')) continue;
+      const suffix = (name.slice('account_email:'.length).split(':')[0] || '').trim().toLowerCase();
+      if (!suffix) continue;
+      const val = await env.EDIT_KEYS_KV.get(name);
+      if ((val || '').trim().toLowerCase() === accountEmail) sameEmailUsernames.add(suffix);
+    }
+  }
+  const keyEntries = [];
+  const seen = new Set();
+  const add = (name, suffixLower, keyMeta) => {
+    if (seen.has(name)) return;
+    seen.add(name);
+    keyEntries.push({ name, orphaned: !validSet.has(suffixLower), username: suffixLower, metadata: keyMeta || null });
+  };
+  const prefixes = [
+    'account_email:', 'user_password_hash:', 'user_first_name:', 'user_last_name:', 'user_dob:', 'user_recovery:',
+    'user_otp:', 'email_verified:', 'email_verified_admin:', 'account_details_sent:',
+    'divert_email:', 'max_contact_pages:', 'otp_email_change:', 'pending_email_change:'
+  ];
+  for (const prefix of prefixes) {
+    const keysWithMeta = await listAllKvKeysWithMetadata(env, prefix);
+    for (const { name, metadata } of keysWithMeta) {
+      const suffix = (name.slice(prefix.length).split(':')[0] || '').trim().toLowerCase();
+      if (sameEmailUsernames.has(suffix)) add(name, suffix, metadata);
+    }
+  }
+  for (const sameU of sameEmailUsernames) {
+    const contactKeysWithMeta = await listAllKvKeysWithMetadata(env, 'contact_page_name:' + sameU + ':');
+    for (const { name, metadata } of contactKeysWithMeta) add(name, sameU, metadata);
+  }
+  const toFolderKeysWithMeta = await listAllKvKeysWithMetadata(env, 'account_email_to_folder:');
+  for (const { name, metadata } of toFolderKeysWithMeta) {
+    const folder = (await env.EDIT_KEYS_KV.get(name) || '').trim().toLowerCase();
+    if (sameEmailUsernames.has(folder)) add(name, folder, metadata);
+  }
+  const enriched = [];
+  for (const k of keyEntries) {
+    const meta = k.metadata && typeof k.metadata === 'object' ? k.metadata : null;
+    const purpose = (meta && meta.purpose) || getKvKeyPurpose(k.name);
+    const status = k.orphaned ? 'orphaned' : 'active';
+    const lastUsed = (meta && meta.lastUsed) || null;
+    enriched.push({ name: k.name, orphaned: k.orphaned, username: k.username, purpose, status, lastUsed });
+  }
+  return { keys: enriched, validUsernamesCount: validUsernames.length };
+}
+
+/** GET /api/admin/kv-user-keys?username=X - Admin only. Returns { keys: [ { name, orphaned, username } ], validUsernamesCount }. */
+async function handleGetKvUserKeys(username, request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  const { keys, validUsernamesCount } = await collectKvUserKeys(env, username);
+  return jsonResponse({ keys, validUsernamesCount });
+}
+
+/** POST /api/admin/kv-user-purge - Admin only. Body: { username, keys: string[], dryRun?: boolean }. Deletes the listed keys (must belong to user). */
+async function handleKvUserPurge(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { body = {}; }
+  const username = (body.username || '').trim();
+  const keysToDelete = Array.isArray(body.keys) ? body.keys : [];
+  const dryRun = body.dryRun === true;
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  const { keys: keyList } = await collectKvUserKeys(env, username);
+  const allowedSet = new Set(keyList.map(k => k.name));
+  const toDelete = keysToDelete.filter(k => allowedSet.has(k));
+  if (!dryRun && toDelete.length > 0) {
+    for (const key of toDelete) await env.EDIT_KEYS_KV.delete(key);
+  }
+  return jsonResponse({ deleted: toDelete.length, deletedKeys: toDelete, dryRun });
+}
+
+/** GET /api/admin/session - Admin only. Returns { isSecondaryAdmin } so dashboard can hide Administrator area for secondary keys. */
+async function handleGetAdminSession(request, env) {
+  const auth = await getAdminAuth(request, env);
+  if (!auth.isAdmin) return jsonResponse({ error: 'Admin access required' }, 401);
+  return jsonResponse({ isSecondaryAdmin: !auth.isPrimaryAdmin });
+}
+
+/** GET /api/admin/admin-email - Primary admin only. Returns { email, passwordSet }. */
+async function handleGetAdminEmail(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ email: null, passwordSet: false });
+  const email = await env.EDIT_KEYS_KV.get('admin:email');
+  const hash = await env.EDIT_KEYS_KV.get('admin:password_hash');
+  return jsonResponse({ email: email || null, passwordSet: !!hash });
+}
+
+/** POST /api/internal/set-admin-credentials - Secret auth only (X-Setup-Secret or Authorization: Bearer). Not public-facing. Body: { email?, password?, adminKey? }. Requires env.ADMIN_SETUP_SECRET (min 32 chars for security). */
+async function handleInternalSetAdminCredentials(request, env) {
+  const secret = env.ADMIN_SETUP_SECRET;
+  if (!secret) return jsonResponse({ error: 'Not configured' }, 501);
+  if (secret.length < 32) return jsonResponse({ error: 'ADMIN_SETUP_SECRET must be at least 32 characters. Set it in Cloudflare Workers → Secrets to a long random value.' }, 501);
+  const headerSecret = request.headers.get('X-Setup-Secret');
+  const bearer = request.headers.get('Authorization');
+  const token = (bearer && bearer.startsWith('Bearer ')) ? bearer.slice(7) : null;
+  if (!headerSecret && !token) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const provided = (headerSecret || token || '').trim();
+  if (provided !== secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const email = (body.email != null && body.email !== '') ? String(body.email).trim().toLowerCase() : null;
+  const password = typeof body.password === 'string' ? body.password : null;
+  const newAdminKey = (body.adminKey != null && body.adminKey !== '') ? String(body.adminKey).trim() : null;
+  if (!email && !password && !newAdminKey) return jsonResponse({ error: 'Provide at least one of email, password, adminKey' }, 400);
+  if (email && !email.includes('@')) return jsonResponse({ error: 'Valid email required' }, 400);
+  if (password && password.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  if (newAdminKey && newAdminKey.length < 8) return jsonResponse({ error: 'adminKey must be at least 8 characters' }, 400);
+  if (email) await env.EDIT_KEYS_KV.put('admin:email', email);
+  if (password) {
+    const saltArr = new Uint8Array(SALT_BYTES);
+    crypto.getRandomValues(saltArr);
+    const saltHex = bufferToHex(saltArr);
+    const hashHex = await hashAdminPassword(password, saltArr);
+    await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+    await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  }
+  if (newAdminKey) await env.EDIT_KEYS_KV.put('admin:key', newAdminKey);
+  return jsonResponse({ success: true, updated: [ email && 'email', password && 'password', newAdminKey && 'adminKey' ].filter(Boolean) });
+}
+
+/** PUT /api/admin/admin-email - Primary admin only. Body: { email }. Sets or updates admin email. */
+async function handlePutAdminEmail(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const email = (body.email || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) return jsonResponse({ error: 'Valid email required' }, 400);
+  await env.EDIT_KEYS_KV.put('admin:email', email);
+  return jsonResponse({ success: true, email });
+}
+
+/** PUT /api/admin/admin-key - Primary admin only. Body: { newAdminKey }. */
+async function handlePutAdminKey(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const newKey = (body.newAdminKey || '').trim();
+  if (newKey.length < 8) return jsonResponse({ error: 'Admin key must be at least 8 characters' }, 400);
+  await env.EDIT_KEYS_KV.put('admin:key', newKey);
+  return jsonResponse({ success: true });
+}
+
+/** Generate a random key string (64 hex chars). */
+function generateSecondaryKey() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** POST /api/admin/secondary-keys - Primary admin only. Body: { expiresInDays?: number }. Creates a secondary admin key (returned once); stored as hash in KV. */
+async function handlePostSecondaryKey(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { body = {}; }
+  const expiresInDays = typeof body.expiresInDays === 'number' && body.expiresInDays > 0 ? Math.floor(body.expiresInDays) : null;
+  const key = generateSecondaryKey();
+  const hash = await sha256Hex(key);
+  const createdAt = new Date().toISOString();
+  const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString() : null;
+  await env.EDIT_KEYS_KV.put(ADMIN_SECONDARY_PREFIX + hash, JSON.stringify({ createdAt, expiresAt }));
+  return jsonResponse({ key, id: hash, createdAt, expiresAt });
+}
+
+/** GET /api/admin/secondary-keys - Primary admin only. Returns list of secondary keys (id, createdAt, expiresAt; no actual key). Expired entries are removed. */
+async function handleGetSecondaryKeys(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ keys: [] });
+  const list = await env.EDIT_KEYS_KV.list({ prefix: ADMIN_SECONDARY_PREFIX });
+  const keys = [];
+  const now = Date.now();
+  for (const k of list.keys) {
+    const id = k.name.replace(ADMIN_SECONDARY_PREFIX, '');
+    const raw = await env.EDIT_KEYS_KV.get(k.name);
+    if (!raw) continue;
+    let meta;
+    try { meta = JSON.parse(raw); } catch (_) { await env.EDIT_KEYS_KV.delete(k.name); continue; }
+    const expiresAt = meta.expiresAt ? new Date(meta.expiresAt).getTime() : null;
+    if (expiresAt !== null && now > expiresAt) {
+      await env.EDIT_KEYS_KV.delete(k.name);
+      continue;
+    }
+    keys.push({ id, createdAt: meta.createdAt || null, expiresAt: meta.expiresAt || null });
+  }
+  return jsonResponse({ keys });
+}
+
+/** DELETE /api/admin/secondary-keys/:id - Primary admin only. Revokes the secondary key. */
+async function handleDeleteSecondaryKey(id, request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  if (!id || !/^[a-f0-9]{64}$/.test(id)) return jsonResponse({ error: 'Invalid key id' }, 400);
+  await env.EDIT_KEYS_KV.delete(ADMIN_SECONDARY_PREFIX + id);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/admin/verify-otp-set-password - Primary admin only. Body: { otp, newPassword }. Verifies admin:recovery_code then sets password. */
+async function handleVerifyOtpSetPassword(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const otp = (body.otp || '').trim();
+  const newPassword = body.newPassword;
+  if (!otp) return jsonResponse({ error: 'Code required' }, 400);
+  if (typeof newPassword !== 'string' || newPassword.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  const storedData = await env.EDIT_KEYS_KV.get('admin:recovery_code');
+  if (!storedData) return jsonResponse({ error: 'No recovery code found. Request a new one.' }, 400);
+  const { recoveryCode, expiresAt } = JSON.parse(storedData);
+  if (Date.now() > expiresAt) {
+    await env.EDIT_KEYS_KV.delete('admin:recovery_code');
+    return jsonResponse({ error: 'Code expired. Request a new one.' }, 400);
+  }
+  if (otp !== recoveryCode) return jsonResponse({ error: 'Invalid code.' }, 401);
+  await env.EDIT_KEYS_KV.delete('admin:recovery_code');
+  const saltArr = new Uint8Array(SALT_BYTES);
+  crypto.getRandomValues(saltArr);
+  const saltHex = bufferToHex(saltArr);
+  const hashHex = await hashAdminPassword(newPassword, saltArr);
+  await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+  await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  return jsonResponse({ success: true });
+}
+
+/** PUT /api/admin/set-password - Primary admin only. Body: { password }. */
+async function handlePutAdminPassword(request, env) {
+  if (!await isPrimaryAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const password = body.password;
+  if (typeof password !== 'string' || password.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  const saltArr = new Uint8Array(SALT_BYTES);
+  crypto.getRandomValues(saltArr);
+  const saltHex = bufferToHex(saltArr);
+  const hashHex = await hashAdminPassword(password, saltArr);
+  await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+  await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/admin/generate-otp - Admin only. Body: { username }. Generates OTP, stores user_otp:username (no TTL), emails if account email set. Returns { otp }. */
+async function handleAdminGenerateOtp(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const username = (body.username || '').trim();
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  const otp = generateOneTimePassword();
+  await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
+  const accountEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
+  if (accountEmail && accountEmail.includes('@')) {
+    const subject = 'DigiCon iD - Your one-time password';
+    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.`;
+    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please get in touch via the Contact page.</p>`;
+    await sendEmail(env, { to: accountEmail, subject, text, html, username });
+  }
+  return jsonResponse({ otp });
+}
+
+/** POST /api/admin/delete-otp - Admin only. Body: { username }. Deletes user_otp:username. */
+async function handleAdminDeleteOtp(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const username = (body.username || '').trim();
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  await env.EDIT_KEYS_KV.delete('user_otp:' + username);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/recover/verify-reset-token - No auth. Body: { token }. */
+async function handleVerifyResetToken(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ valid: false }, 400); }
+  const token = (body.token || '').trim();
+  if (!token) return jsonResponse({ valid: false }, 400);
+  const stored = await env.EDIT_KEYS_KV.get('admin:reset_token');
+  if (!stored) return jsonResponse({ valid: false }, 400);
+  const { token: storedToken, expiresAt } = JSON.parse(stored);
+  if (storedToken !== token || Date.now() > expiresAt) return jsonResponse({ valid: false }, 400);
+  return jsonResponse({ valid: true });
+}
+
+/** POST /api/recover/reset-password - No auth. Body: { token, newPassword }. */
+async function handleResetPasswordWithToken(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const token = (body.token || '').trim();
+  const newPassword = body.newPassword;
+  if (!token) return jsonResponse({ error: 'Token required' }, 400);
+  if (typeof newPassword !== 'string' || newPassword.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  const stored = await env.EDIT_KEYS_KV.get('admin:reset_token');
+  if (!stored) return jsonResponse({ error: 'Invalid or expired reset link' }, 400);
+  const { token: storedToken, expiresAt } = JSON.parse(stored);
+  if (storedToken !== token || Date.now() > expiresAt) {
+    await env.EDIT_KEYS_KV.delete('admin:reset_token');
+    return jsonResponse({ error: 'Invalid or expired reset link' }, 400);
+  }
+  const saltArr = new Uint8Array(SALT_BYTES);
+  crypto.getRandomValues(saltArr);
+  const saltHex = bufferToHex(saltArr);
+  const hashHex = await hashAdminPassword(newPassword, saltArr);
+  await env.EDIT_KEYS_KV.put('admin:password_salt', saltHex);
+  await env.EDIT_KEYS_KV.put('admin:password_hash', hashHex);
+  await env.EDIT_KEYS_KV.delete('admin:reset_token');
+  return jsonResponse({ success: true });
+}
+
+async function handleGetPage(username, contactpagename, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  const filePath = pagePath(username, contactpagename);
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+
+  if (!response.ok) {
+    return jsonResponse({ error: 'Page not found' }, 404);
+  }
+
+  const data = await response.json();
+  const content = decodeBase64(data.content);
+  let contactPageName = null;
+  if (env.EDIT_KEYS_KV) {
+    contactPageName = await env.EDIT_KEYS_KV.get(`contact_page_name:${username}:${contactpagename}`);
+  }
+  if (!contactPageName) contactPageName = contactpagename === 'index' ? 'Main (index)' : contactpagename;
+
+  return jsonResponse({ content, sha: data.sha, username, contactpagename, contactPageName });
+}
+
+async function handleUpdatePage(username, contactpagename, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
+  if (!canEdit) {
+    return jsonResponse({ error: 'Verify your email to edit contact pages.' }, 403);
+  }
+
+  const body = await request.json();
+  const { content, sha, contactPageName } = body;
+
+  if (!content || !sha) {
+    return jsonResponse({ error: 'Missing content or sha' }, 400);
+  }
+
+  const contactPageNameTrim = (contactPageName != null && typeof contactPageName === 'string') ? contactPageName.trim() : null;
+  if (contactPageNameTrim && contactPageNameTrim.length > 128) {
+    return jsonResponse({ error: 'Contact page name must be 128 characters or less' }, 400);
+  }
+  if (env.EDIT_KEYS_KV && contactPageNameTrim) {
+    const currentKey = `contact_page_name:${username}:${contactpagename}`;
+    const currentStoredName = await env.EDIT_KEYS_KV.get(currentKey);
+    if (currentStoredName != null && currentStoredName.trim().toLowerCase() === contactPageNameTrim.toLowerCase()) {
+      // Unchanged display name for this page: allow save without duplicate check
+    } else {
+      const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+      for (const key of nameList.keys) {
+        const slugForKey = key.name.replace(`contact_page_name:${username}:`, '');
+        if (slugForKey.toLowerCase() === contactpagename.toLowerCase()) continue; // current page: allow same name
+        const existing = await env.EDIT_KEYS_KV.get(key.name);
+        if (existing && existing.trim().toLowerCase() === contactPageNameTrim.toLowerCase()) {
+          return jsonResponse({ error: 'Another contact page already uses this Contact Page Name' }, 409);
+        }
+      }
+    }
+  }
+
+  const filePath = pagePath(username, contactpagename);
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Update contact: ${username}${auth.isAdmin ? ' (admin)' : ''}`,
+        content: encodeBase64(content),
+        sha,
+        branch: CONFIG.branch
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    return jsonResponse({ error: error.message || 'GitHub error' }, response.status);
+  }
+
+  const data = await response.json();
+  if (env.EDIT_KEYS_KV && contactPageNameTrim !== null) {
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${username}:${contactpagename}`, contactPageNameTrim || (contactpagename === 'index' ? 'Main (index)' : contactpagename));
+  }
+  return jsonResponse({
+    success: true,
+    sha: data.content.sha,
+    url: pageUrl(username, contactpagename)
+  });
+}
+
+/**
+ * POST /api/page/{username}/rename - Rename (change slug of) a contact page. Bearer, same user.
+ * Body: { oldContactpagename, newContactpagename, content, contactPageName, sha }.
+ */
+async function handleRenamePage(username, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  const canEdit = await requireEmailVerifiedForEdit(username, auth, env);
+  if (!canEdit) {
+    return jsonResponse({ error: 'Verify your email to edit contact pages.' }, 403);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  const oldSlug = (body.oldContactpagename || '').trim() || 'index';
+  const newSlugRaw = (body.newContactpagename || '').trim();
+  const newSlug = (newSlugRaw === '' || newSlugRaw.toLowerCase() === 'index') ? 'index' : newSlugRaw;
+
+  if (oldSlug === newSlug) {
+    return jsonResponse({ error: 'New URL is the same as current' }, 400);
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(newSlug)) {
+    return jsonResponse({ error: 'Page URL can only use letters, numbers, hyphens, and underscores' }, 400);
+  }
+  if (newSlug.length < 2 || newSlug.length > 64) {
+    return jsonResponse({ error: 'Page URL must be 2–64 characters' }, 400);
+  }
+
+  const contactPageNameTrim = (body.contactPageName != null && typeof body.contactPageName === 'string') ? body.contactPageName.trim() : null;
+  if (contactPageNameTrim && contactPageNameTrim.length > 128) {
+    return jsonResponse({ error: 'Contact page name must be 128 characters or less' }, 400);
+  }
+  if (env.EDIT_KEYS_KV && contactPageNameTrim) {
+    const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${username}:` });
+    for (const key of nameList.keys) {
+      const slugForKey = key.name.replace(`contact_page_name:${username}:`, '');
+      if (slugForKey.toLowerCase() === oldSlug.toLowerCase() || slugForKey.toLowerCase() === newSlug.toLowerCase()) continue; // skip current (old) and target (new) page: allow same name
+      const existing = await env.EDIT_KEYS_KV.get(key.name);
+      if (existing && existing.trim().toLowerCase() === contactPageNameTrim.toLowerCase()) {
+        return jsonResponse({ error: 'Another contact page already uses this Contact Page Name' }, 409);
+      }
+    }
+  }
+
+  const content = body.content;
+  const sha = body.sha;
+  if (typeof content !== 'string' || !sha) {
+    return jsonResponse({ error: 'Content and sha are required' }, 400);
+  }
+
+  const oldPath = pagePath(username, oldSlug);
+  const newPath = pagePath(username, newSlug);
+
+  const checkNew = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${newPath}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (checkNew.ok) {
+    return jsonResponse({ error: 'A contact page with this URL already exists' }, 409);
+  }
+
+  const createRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${newPath}`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Rename contact page: ${username}/${oldSlug} -> ${newSlug}`,
+        content: encodeBase64(content),
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!createRes.ok) {
+    const err = await createRes.json();
+    return jsonResponse({ error: err.message || 'Failed to create new page' }, createRes.status);
+  }
+  const createData = await createRes.json();
+
+  const deleteRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      },
+      body: JSON.stringify({
+        message: `Rename: remove old ${username}/${oldSlug}.html`,
+        sha,
+        branch: CONFIG.branch
+      })
+    }
+  );
+  if (!deleteRes.ok) {
+    const err = await deleteRes.json();
+    return jsonResponse({ error: err.message || 'Failed to remove old page' }, deleteRes.status);
+  }
+
+  if (env.EDIT_KEYS_KV) {
+    await env.EDIT_KEYS_KV.delete(`contact_page_name:${username}:${oldSlug}`);
+    const displayName = contactPageNameTrim || (newSlug === 'index' ? 'Main (index)' : newSlug);
+    await env.EDIT_KEYS_KV.put(`contact_page_name:${username}:${newSlug}`, displayName);
+  }
+
+  return jsonResponse({
+    success: true,
+    contactpagename: newSlug,
+    sha: createData.content && createData.content.sha ? createData.content.sha : null,
+    url: pageUrl(username, newSlug)
+  });
+}
+
+// ============ Admin Routes ============
+
+async function handleListPages(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+
+  if (!response.ok) {
+    const errBody = await response.json().catch(() => ({}));
+    const msg = errBody.message || errBody.error || response.statusText || 'GitHub error';
+    return jsonResponse({ error: `GitHub (${response.status}): ${msg}` }, 500);
+  }
+
+  const contents = await response.json();
+  const usernames = (Array.isArray(contents) ? contents : [])
+    .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
+    .map(item => item.name);
+
+  // Include all user folders (even with only index.gitkeep, no contact pages yet)
+  return jsonResponse({ pages: usernames });
+}
+
+/** GET /api/pages/summaries - List pages plus minimal summary per page (givenName, familyName, contactEmail, lastUpdated, updatedBy). Admin only. */
+async function handlePageSummaries(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  const listRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (!listRes.ok) {
+    const errBody = await listRes.json().catch(() => ({}));
+    const msg = errBody.message || errBody.error || listRes.statusText || 'GitHub error';
+    return jsonResponse({ error: `GitHub (${listRes.status}): ${msg}` }, 500);
+  }
+  const contents = await listRes.json();
+  const usernames = (Array.isArray(contents) ? contents : [])
+    .filter(item => item.type === 'dir' && item.name && !item.name.startsWith('.'))
+    .map(item => item.name);
+
+  const pages = [];
+  const summaries = {};
+  const authHeaders = {
+    'Authorization': `token ${env.GITHUB_TOKEN}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'ContactPageEditor/1.0'
+  };
+
+  const contactPageCountByUser = {};
+
+  const fetchSummary = async (username) => {
+    try {
+      const dirRes = await fetch(
+        `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${username}?ref=${CONFIG.branch}`,
+        { headers: authHeaders }
+      );
+      if (!dirRes.ok) {
+        contactPageCountByUser[username] = 0;
+        return { username, summary: null, contactPageCount: 0 };
+      }
+      const dirContents = await dirRes.json();
+      const files = Array.isArray(dirContents) ? dirContents : [];
+      const indexHtml = files.find(f => f.type === 'file' && f.name === 'index.html');
+      if (indexHtml && indexHtml.sha) {
+        await migrateUserFolderIndexToGitkeep(username, indexHtml.sha, env);
+      }
+      const htmlFiles = files.filter(f => f.name && f.name.endsWith('.html') && f.name !== 'index.html' && f.name !== 'main.html');
+      const contactPageCount = htmlFiles.length;
+      contactPageCountByUser[username] = contactPageCount;
+      if (contactPageCount === 0) return { username, summary: null, contactPageCount: 0 };
+      const fileToFetch = htmlFiles[0];
+      const filePath = `${USER_PAGES_PREFIX}/${username}/${fileToFetch.name}`;
+      const fileRes = await fetch(
+        `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${filePath}?ref=${CONFIG.branch}`,
+        { headers: authHeaders }
+      );
+      if (!fileRes.ok) return { username, summary: null, contactPageCount };
+      const fileData = await fileRes.json();
+      const html = decodeBase64(fileData.content);
+      const summary = extractSummaryFromHtml(html);
+      return { username, summary, contactPageCount };
+    } catch (e) {
+      contactPageCountByUser[username] = 0;
+      return { username, summary: null, contactPageCount: 0 };
+    }
+  };
+
+  const results = await Promise.all(usernames.map(fetchSummary));
+  for (const r of results) {
+    if (!r) continue;
+    pages.push(r.username);
+    summaries[r.username] = r.summary || { givenName: '', familyName: '', contactEmail: '', lastUpdated: null, updatedBy: null };
+  }
+
+  return jsonResponse({ pages, summaries, contactPageCountByUser });
+}
+
+/** GET /api/contact-pages/:username - List contact page names for a user (admin or same user via Bearer). Username normalized to lowercase. */
+async function handleListContactPages(username, request, env) {
+  const u = normalizeUsername(username);
+  const auth = await validateAuth(u, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: auth.isAdmin ? 'Admin access required' : 'Unauthorized' }, 401);
+  }
+  if (!u || !/^[a-z0-9_-]+$/.test(u)) {
+    return jsonResponse({ error: 'Invalid username' }, 400);
+  }
+  let maxContactPages = 0;
+  if (env.EDIT_KEYS_KV) {
+    const maxRaw = await env.EDIT_KEYS_KV.get('max_contact_pages:' + u);
+    maxContactPages = parseInt(maxRaw, 10) || 0;
+  }
+  const response = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${u}?ref=${CONFIG.branch}`,
+    {
+      headers: {
+        'Authorization': `token ${env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'ContactPageEditor/1.0'
+      }
+    }
+  );
+  if (!response.ok) {
+    if (response.status === 404) {
+      return jsonResponse({ contactPages: [], maxContactPages, currentCount: 0, canCreate: maxContactPages === 0 });
+    }
+    const errBody = await response.json().catch(() => ({}));
+    const msg = errBody.message || errBody.error || response.statusText || 'GitHub error';
+    return jsonResponse({ error: `GitHub (${response.status}): ${msg}` }, 500);
+  }
+  const contents = await response.json();
+  const files = Array.isArray(contents) ? contents : [];
+  const indexHtml = files.find(item => item.type === 'file' && item.name === 'index.html');
+  if (indexHtml && indexHtml.sha) {
+    await migrateUserFolderIndexToGitkeep(u, indexHtml.sha, env);
+  }
+  const slugs = files
+    .filter(item => item.type === 'file' && item.name && item.name.endsWith('.html') && item.name !== 'index.html' && item.name !== 'main.html')
+    .map(item => item.name.replace(/\.html$/i, ''))
+    .filter(slug => slug !== 'index' && slug !== 'main');
+  const contactPages = [];
+  for (const slug of slugs) {
+    const name = env.EDIT_KEYS_KV
+      ? (await env.EDIT_KEYS_KV.get(`contact_page_name:${u}:${slug}`)) || slug
+      : slug;
+    contactPages.push({ slug, name });
+  }
+  const currentCount = slugs.length;
+  const canCreate = maxContactPages === 0 || currentCount < maxContactPages;
+  return jsonResponse({ contactPages, maxContactPages, currentCount, canCreate });
+}
+
+async function handleGetAccountEmails(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ accountEmails: {}, accountDetailsSent: {}, emailVerification: {} });
+  }
+  const keyNames = await listAllKvKeys(env, 'account_email:');
+  const accountEmails = {};
+  const originalSuffixByLower = {};
+  for (const keyName of keyNames) {
+    if (keyName.startsWith('account_email_to_folder:')) continue;
+    const username = keyName.replace('account_email:', '');
+    const value = await env.EDIT_KEYS_KV.get(keyName);
+    if (value && username) {
+      const keyLower = (username || '').trim().toLowerCase();
+      accountEmails[keyLower] = value;
+      originalSuffixByLower[keyLower] = username;
+    }
+  }
+  const toFolderKeys = await listAllKvKeys(env, 'account_email_to_folder:');
+  for (const keyName of toFolderKeys) {
+    const email = keyName.replace('account_email_to_folder:', '').trim();
+    const username = await env.EDIT_KEYS_KV.get(keyName);
+    if (email && email.includes('@') && username) {
+      const uLower = (username || '').trim().toLowerCase();
+      if (!accountEmails[uLower]) {
+        accountEmails[uLower] = email;
+        if (!originalSuffixByLower[uLower]) originalSuffixByLower[uLower] = username;
+      }
+    }
+  }
+  const sentKeyNames = await listAllKvKeys(env, 'account_details_sent:');
+  const accountDetailsSent = {};
+  for (const keyName of sentKeyNames) {
+    const username = keyName.replace('account_details_sent:', '');
+    if (username) accountDetailsSent[username.toLowerCase()] = true;
+  }
+  const emailVerification = {};
+  for (const keyLower of Object.keys(accountEmails)) {
+    const orig = originalSuffixByLower[keyLower] || keyLower;
+    const byAdmin = (await getKvUser(env, 'email_verified_admin:', keyLower, orig)) === '1';
+    const byUser = (await getKvUser(env, 'email_verified:', keyLower, orig)) === '1';
+    emailVerification[keyLower] = byAdmin ? 'admin' : byUser ? 'user' : null;
+  }
+  return jsonResponse(
+    { accountEmails, accountDetailsSent, emailVerification },
+    200,
+    { 'Cache-Control': 'no-store' }
+  );
+}
+
+async function handleGetAccountProfiles(request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const usernames = Array.isArray(body.usernames) ? body.usernames : [];
+  const profiles = {};
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ profiles });
+  const lowerToOriginal = {};
+  const addSuffix = (keyName, prefix) => {
+    const suffix = keyName.replace(prefix, '');
+    if (suffix) {
+      const key = suffix.trim().toLowerCase();
+      lowerToOriginal[key] = suffix;
+    }
+  };
+  const firstNamesKeys = await listAllKvKeys(env, 'user_first_name:');
+  for (const keyName of firstNamesKeys) addSuffix(keyName, 'user_first_name:');
+  const lastNamesKeys = await listAllKvKeys(env, 'user_last_name:');
+  for (const keyName of lastNamesKeys) addSuffix(keyName, 'user_last_name:');
+  const accountEmailKeys = await listAllKvKeys(env, 'account_email:');
+  for (const keyName of accountEmailKeys) {
+    if (!keyName.startsWith('account_email_to_folder:')) addSuffix(keyName, 'account_email:');
+  }
+  for (const username of usernames) {
+    const u = (username || '').trim();
+    const uLower = u.toLowerCase();
+    const canonical = lowerToOriginal[uLower] || u;
+    const firstName = (await getKvUser(env, 'user_first_name:', uLower, canonical)) || '';
+    const lastName = (await getKvUser(env, 'user_last_name:', uLower, canonical)) || '';
+    const accountEmail = (await getKvUser(env, 'account_email:', uLower, canonical)) || '';
+    profiles[username] = { firstName, lastName, accountEmail };
+  }
+  return jsonResponse({ profiles });
+}
+
+async function handleDebugUser(username, request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Admin access required' }, 401);
+  if (!username) return jsonResponse({ error: 'Username required' }, 400);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ debug: { username, message: 'KV not configured' } });
+  const u = username.trim();
+  const uLower = u.toLowerCase();
+  const accountEmailFromKey = await getKvUser(env, 'account_email:', uLower, u);
+  const firstName = await getKvUser(env, 'user_first_name:', uLower, u);
+  const lastName = await getKvUser(env, 'user_last_name:', uLower, u);
+  const toFolderKeys = await listAllKvKeys(env, 'account_email_to_folder:');
+  const toFolderEntries = [];
+  for (const keyName of toFolderKeys) {
+    const email = keyName.replace('account_email_to_folder:', '').trim();
+    const folder = await env.EDIT_KEYS_KV.get(keyName);
+    const folderTrimmed = (folder || '').trim();
+    const folderLower = folderTrimmed.toLowerCase();
+    if (folderTrimmed === u || folderTrimmed === uLower || folderLower === uLower) {
+      toFolderEntries.push({ email, folder: folderTrimmed });
+    }
+  }
+  const allAccountEmailKeys = await listAllKvKeys(env, 'account_email:');
+  const matchingAccountEmailKeys = allAccountEmailKeys.filter((keyName) => {
+    if (keyName.startsWith('account_email_to_folder:')) return false;
+    const suffix = keyName.replace('account_email:', '');
+    return suffix.trim().toLowerCase() === uLower;
+  });
+  const resolvedEmail = accountEmailFromKey || (toFolderEntries.length ? toFolderEntries[0].email : null);
+  const passwordSet = !!(await getKvUser(env, 'user_password_hash:', uLower, u));
+  const otpSet = !!(await getKvUser(env, 'user_otp:', uLower, u));
+  const emailVerified = (await getKvUser(env, 'email_verified:', uLower, u)) === '1';
+  const emailVerifiedAdmin = (await getKvUser(env, 'email_verified_admin:', uLower, u)) === '1';
+  const maxContactPages = await getKvUser(env, 'max_contact_pages:', uLower, u);
+  const divertEmail = (await getKvUser(env, 'divert_email:', uLower, u)) === '1';
+  const accountDetailsSent = (await getKvUser(env, 'account_details_sent:', uLower, u)) === '1';
+  const dobSet = !!(await getKvUser(env, 'user_dob:', uLower, u));
+  const recoveryRaw = await getKvUser(env, 'user_recovery:', uLower, u);
+  let recoverySqCount = 0;
+  if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); recoverySqCount = Array.isArray(r.secretQuestions) ? r.secretQuestions.length : 0; } catch (_) {} }
+  const contactNameKeys = await listAllKvKeys(env, 'contact_page_name:' + uLower + ':');
+  const validUsernames = await getValidUsernamesFromGitHub(env);
+  const validSet = new Set(validUsernames.map(x => x.toLowerCase()));
+  const inGitHub = validSet.has(uLower);
+  return jsonResponse({
+    debug: {
+      username: u,
+      usernameLower: uLower,
+      inGitHub,
+      accountEmailFromKey: accountEmailFromKey || null,
+      accountEmailFromToFolder: toFolderEntries.length ? toFolderEntries[0].email : null,
+      resolvedEmail: resolvedEmail || null,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      passwordSet,
+      otpSet,
+      emailVerified,
+      emailVerifiedAdmin,
+      maxContactPages: maxContactPages != null ? maxContactPages : null,
+      divertEmail,
+      accountDetailsSent,
+      dobSet,
+      recoverySqCount,
+      contactPageKeysCount: contactNameKeys.length,
+      toFolderEntries,
+      matchingAccountEmailKeys
+    }
+  });
+}
+
+/**
+ * POST /api/admin/purge-user-kv (admin only). Body: { username, dryRun?: boolean }.
+ * Deletes all KV data for the given username. Use when the user folder was deleted (e.g. on GitHub)
+ * but KV was not cleaned, so the username still appears as an account (e.g. login says "no password").
+ * Does not touch GitHub. dryRun: true returns wouldDeleteCount and keys without deleting.
+ */
+async function handlePurgeUserKv(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid request body' }, 400);
+  }
+  const usernameRaw = (body.username || '').trim();
+  const username = normalizeUsername(usernameRaw);
+  if (!username || username.length < 2) {
+    return jsonResponse({ error: 'Username required (2+ characters)' }, 400);
+  }
+  if (usernameRaw && !/^[a-zA-Z0-9_-]+$/.test(usernameRaw)) {
+    return jsonResponse({ error: 'Username: letters, numbers, hyphens, underscores only' }, 400);
+  }
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ error: 'KV not configured' }, 500);
+  }
+  const dryRun = body.dryRun === true;
+  if (dryRun) {
+    const { keys } = await collectKvUserKeys(env, username);
+    return jsonResponse({
+      dryRun: true,
+      username,
+      wouldDeleteCount: keys.length,
+      keys: keys.map(k => k.name)
+    });
+  }
+  await purgeKvForUser(username, env);
+  return jsonResponse({
+    success: true,
+    username,
+    message: 'User KV data purged. This username is no longer an account.'
+  });
+}
+
+async function handleSecretsStatus(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid request body' }, 400);
+  }
+  const usernames = Array.isArray(body.usernames) ? body.usernames : [];
+  const statuses = {};
+  if (!env.EDIT_KEYS_KV) {
+    for (const f of usernames) statuses[f] = { hasAccountEmail: false, hasDob: false, hasSecretQuestions: false, secretsComplete: false };
+    return jsonResponse({ statuses });
+  }
+  const lowerToOriginal = {};
+  const accountEmailKeys = await listAllKvKeys(env, 'account_email:');
+  for (const keyName of accountEmailKeys) {
+    if (!keyName.startsWith('account_email_to_folder:')) {
+      const suffix = keyName.replace('account_email:', '');
+      if (suffix) lowerToOriginal[suffix.toLowerCase()] = suffix;
+    }
+  }
+  for (const username of usernames) {
+    const u = (username || '').trim();
+    const uLower = u.toLowerCase();
+    const canonical = lowerToOriginal[uLower] || u;
+    const accountEmail = await getKvUser(env, 'account_email:', uLower, canonical);
+    const dob = await getKvUser(env, 'user_dob:', uLower, canonical);
+    const recoveryRaw = await getKvUser(env, 'user_recovery:', uLower, canonical);
+    let secretQuestions = [];
+    if (recoveryRaw) {
+      try {
+        const r = JSON.parse(recoveryRaw);
+        secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : [];
+      } catch (_) {}
+    }
+    const hasAccountEmail = !!(accountEmail && accountEmail.includes('@'));
+    const hasDob = !!(dob && dob.trim());
+    const hasSecretQuestions = secretQuestions.length === 3 && secretQuestions.every(q => q && q.questionId && (q.answer || '').trim().length >= 4);
+    const secretsComplete = hasAccountEmail && hasDob && hasSecretQuestions;
+    statuses[username] = { hasAccountEmail, hasDob, hasSecretQuestions, secretsComplete };
+  }
+  return jsonResponse({ statuses });
+}
+
+async function handleGetKeys(request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+
+  if (!env.EDIT_KEYS_KV) {
+    return jsonResponse({ editKeys: {} });
+  }
+
+  const list = await env.EDIT_KEYS_KV.list({ prefix: 'user_password_hash:' });
+  const editKeys = {};
+  for (const key of list.keys) {
+    const username = key.name.replace('user_password_hash:', '');
+    if (!username) continue;
+    editKeys[username] = '1';
+  }
+  return jsonResponse({ editKeys });
+}
+
+async function handleAccountDetailsSent(username, request, env) {
+  if (!await isAdmin(request, env)) {
+    return jsonResponse({ error: 'Admin access required' }, 401);
+  }
+  if (!username || !env.EDIT_KEYS_KV) {
+    return jsonResponse({ error: 'Invalid request' }, 400);
+  }
+  await env.EDIT_KEYS_KV.put(`account_details_sent:${username}`, '1');
+  return jsonResponse({ success: true });
+}
+
+async function handleRecoveryCheck(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const username = (body.username || '').trim().toLowerCase();
+  const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const genericMessage = 'If an account exists and is eligible for recovery, you will receive an email after completing the next steps.';
+  if (!username || username.length < 3 || username.length > 28) {
+    return jsonResponse({ message: genericMessage, recoveryQuestionId: validIds[Math.floor(Math.random() * validIds.length)] });
+  }
+  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
+  const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+  const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
+  const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+  let secretQuestions = [];
+  if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : []; } catch (_) {} }
+  const hasAccountEmail = !!(accountEmail && accountEmail.includes('@'));
+  const hasDob = !!(dob && dob.trim());
+  const hasSecretQuestions = secretQuestions.length === 3 && secretQuestions.every(q => q && q.questionId && (q.answer || '').trim().length >= 4);
+  const canRecover = !!pwHash && hasAccountEmail && hasDob && hasSecretQuestions;
+  const qIds = canRecover ? secretQuestions.map(q => q.questionId).filter(Boolean) : validIds;
+  const recoveryQuestionId = qIds.length ? qIds[Math.floor(Math.random() * qIds.length)] : validIds[0];
+  return jsonResponse({ message: genericMessage, recoveryQuestionId });
+}
+
+async function handleRecoveryCheckByEmail(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  const accountEmail = (body.accountEmail || '').trim().toLowerCase();
+  const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const genericMessage = 'If an account exists and is eligible for recovery, you will receive an email after completing the next steps.';
+  if (!accountEmail || !accountEmail.includes('@')) {
+    const two = validIds.slice().sort(() => Math.random() - 0.5).slice(0, 2);
+    return jsonResponse({ message: genericMessage, recoveryQuestionIds: two });
+  }
+  const username = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmail);
+  const pwHash = username ? await env.EDIT_KEYS_KV.get('user_password_hash:' + username) : null;
+  const storedEmail = username ? await env.EDIT_KEYS_KV.get('account_email:' + username) : null;
+  const dob = username ? await env.EDIT_KEYS_KV.get('user_dob:' + username) : null;
+  const recoveryRaw = username ? await env.EDIT_KEYS_KV.get('user_recovery:' + username) : null;
+  let secretQuestions = [];
+  if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : []; } catch (_) {} }
+  const hasAccountEmail = !!(storedEmail && storedEmail.includes('@'));
+  const hasDob = !!(dob && dob.trim());
+  const hasSecretQuestions = secretQuestions.length === 3 && secretQuestions.every(q => q && q.questionId && (q.answer || '').trim().length >= 4);
+  const canRecover = !!username && !!pwHash && hasAccountEmail && hasDob && hasSecretQuestions;
+  const qIds = canRecover ? secretQuestions.map(q => q.questionId).filter(Boolean) : validIds;
+  const two = qIds.length >= 2
+    ? qIds.slice().sort(() => Math.random() - 0.5).slice(0, 2)
+    : validIds.slice().sort(() => Math.random() - 0.5).slice(0, 2);
+  return jsonResponse({ message: genericMessage, recoveryQuestionIds: two });
+}
+async function handleRecoveryVerify(request, env) {
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request' }, 400); }
+  let username = (body.username || '').trim().toLowerCase();
+  const accountEmail = (body.accountEmail || '').trim().toLowerCase();
+  const dobRaw = (body.dob || '').trim();
+  const questionIds = body.questionIds;
+  const answers = body.answers;
+  const questionId = body.questionId != null ? parseInt(body.questionId, 10) : null;
+  const answer = (body.answer || '').trim();
+
+  if (questionIds && Array.isArray(questionIds) && answers && Array.isArray(answers)) {
+    if (questionIds.length !== 2 || answers.length !== 2) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+    if (!accountEmail || !accountEmail.includes('@') || !dobRaw) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+    username = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmail);
+    if (!username) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+    const dobNorm = normalizeDob(dobRaw);
+    if (!dobNorm) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+    const storedDob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
+    if (!storedDob || storedDob.trim() !== dobNorm) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+    const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+    let secretQuestions = []; if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : []; } catch (_) {} }
+    for (let i = 0; i < 2; i++) {
+      const qid = parseInt(questionIds[i], 10);
+      const ans = (answers[i] || '').trim();
+      const q = secretQuestions.find(x => x && String(x.questionId) === String(qid));
+      if (!q || (q.answer || '').trim().toLowerCase() !== ans.toLowerCase()) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+    }
+    await env.EDIT_KEYS_KV.delete('account_details_sent:' + username);
+    const otp = generateOneTimePassword();
+    await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
+    const toEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
+    if (toEmail && toEmail.includes('@')) {
+      const subject = 'DigiCon iD - Your one-time password';
+      const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.`;
+      const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please get in touch via the Contact page.</p>`;
+      await sendEmail(env, { to: toEmail, subject, text, html, username });
+    }
+    return jsonResponse({ success: true, username });
+  }
+
+  if (!username || !accountEmail || !dobRaw || !questionId || !answer) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+  const dobNorm = normalizeDob(dobRaw);
+  if (!dobNorm) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+  const storedAccountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+  const storedDob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
+  const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+  if (!storedAccountEmail || storedAccountEmail.toLowerCase() !== accountEmail) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+  if (!storedDob || storedDob.trim() !== dobNorm) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+  let secretQuestions = []; if (recoveryRaw) { try { const r = JSON.parse(recoveryRaw); secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : []; } catch (_) {} }
+  const q = secretQuestions.find(x => x && String(x.questionId) === String(questionId));
+  if (!q || (q.answer || '').trim().toLowerCase() !== answer.toLowerCase()) return jsonResponse({ error: 'Recovery verification failed' }, 401);
+  await env.EDIT_KEYS_KV.delete('account_details_sent:' + username);
+  const otp = generateOneTimePassword();
+  await env.EDIT_KEYS_KV.put('user_otp:' + username, otp);
+  const toEmail = (await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
+  if (toEmail && toEmail.includes('@')) {
+    const subject = 'DigiCon iD - Your one-time password';
+    const text = `Your one-time sign-in password is: ${otp}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.`;
+    const html = `<p>Your one-time sign-in password is: <strong>${otp}</strong></p><p>Use this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please get in touch via the Contact page.</p>`;
+    await sendEmail(env, { to: toEmail, subject, text, html, username });
+  }
+  return jsonResponse({ success: true, username });
+}
+
+async function handleGetProfile(username, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  const u = (username || '').trim();
+  const uLower = u.toLowerCase();
+  const firstName = await getKvUser(env, 'user_first_name:', uLower, u);
+  const lastName = await getKvUser(env, 'user_last_name:', uLower, u);
+  const accountEmail = await getKvUser(env, 'account_email:', uLower, u);
+  const emailVerified = (await getKvUser(env, 'email_verified:', uLower, u)) === '1';
+  const dob = await getKvUser(env, 'user_dob:', uLower, u);
+  const dobMasked = (dob && dob.length >= 4) ? '**/**/' + dob.slice(-4) : '';
+  let easterEggEligible = false;
+  const recoveryRaw = await getKvUser(env, 'user_recovery:', uLower, u);
+  if (recoveryRaw) {
+    try {
+      const r = JSON.parse(recoveryRaw);
+      const sq = Array.isArray(r.secretQuestions) ? r.secretQuestions : [];
+      easterEggEligible = sq.some(q => {
+        if (!q || (q.questionId !== 10 && q.questionId !== '10')) return false;
+        const a = (q.answer || '').trim().toLowerCase().replace(/^\s*the\s+/, '');
+        return a === 'martian';
+      });
+    } catch (_) {}
+  }
+  const profile = {
+    username: u || '',
+    firstName: firstName || '',
+    lastName: lastName || '',
+    accountEmail: accountEmail || '',
+    emailVerified,
+    dob: dob || '',
+    dobMasked
+  };
+  if (easterEggEligible) profile.easterEggEligible = true;
+  return jsonResponse(profile);
+}
+
+async function handlePutProfile(username, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const firstName = (body.firstName || '').trim();
+  const lastName = (body.lastName || body.surname || '').trim();
+  const accountEmail = (body.accountEmail || '').trim();
+  if (accountEmail && !accountEmail.includes('@')) return jsonResponse({ error: 'Valid account email required' }, 400);
+  if (accountEmail) {
+    const accountEmailLower = accountEmail.toLowerCase();
+    const existingFolder = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmailLower);
+    if (existingFolder && existingFolder !== username) return jsonResponse({ error: 'This account email is already in use' }, 409);
+  }
+  // Persist first/last name even when empty so clearing the fields in UI is saved
+  if (body.firstName !== undefined) await env.EDIT_KEYS_KV.put('user_first_name:' + username, firstName);
+  if (body.lastName !== undefined) await env.EDIT_KEYS_KV.put('user_last_name:' + username, lastName);
+  const oldAccountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+  const oldEmailNorm = (oldAccountEmail || '').trim().toLowerCase();
+  const newEmailNorm = accountEmail ? accountEmail.trim().toLowerCase() : '';
+
+  if (accountEmail && newEmailNorm !== oldEmailNorm) {
+    // Persist new email and unverified state first (before sending OTP). If user abandons verification,
+    // cancel-email-change only clears OTP/pending; GET profile and sign-in must already see the new email.
+    if (oldAccountEmail) await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldAccountEmail.toLowerCase());
+    await env.EDIT_KEYS_KV.put('account_email:' + username, accountEmail);
+    await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmail.toLowerCase(), username);
+    await env.EDIT_KEYS_KV.delete('email_verified:' + username);
+    const code = generateOtpCode();
+    await env.EDIT_KEYS_KV.put('otp_email_change:' + username, code, { expirationTtl: 600 });
+    await env.EDIT_KEYS_KV.put('pending_email_change:' + username, JSON.stringify({ newEmail: accountEmail.trim() }), { expirationTtl: 600 });
+    const subject = 'DigiCon iD - Verify your new email';
+    const text = `Your 6-digit verification code is: ${code}\n\nThis code expires in 10 minutes. Use it in MyAccount to complete your email change.\n\nIf you did not request this, please sign in and change your password.`;
+    const html = `<p>Your 6-digit verification code is: <strong>${code}</strong></p><p>This code expires in 10 minutes. Use it in MyAccount to complete your email change.</p><p>If you did not request this, please sign in and change your password.</p>`;
+    const sent = await sendEmail(env, { to: accountEmail.trim(), subject, text, html, username });
+    if (!sent.ok) return jsonResponse({ error: sent.error || 'Failed to send verification code' }, 500);
+    return jsonResponse({ success: true, otpSent: true, message: 'Verification code sent to your new email.' });
+  }
+
+  if (accountEmail) {
+    if (oldAccountEmail) await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldAccountEmail.toLowerCase());
+    await env.EDIT_KEYS_KV.put('account_email:' + username, accountEmail);
+    await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmail.toLowerCase(), username);
+    if (!oldAccountEmail || oldAccountEmail.toLowerCase() !== accountEmail.toLowerCase()) {
+      await env.EDIT_KEYS_KV.delete('email_verified:' + username);
+    }
+  }
+  return jsonResponse({ success: true });
+}
+
+async function handleVerifyEmailChange(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const code = (body.code || '').trim().replace(/\D/g, '');
+  if (code.length !== 6) return jsonResponse({ error: 'Invalid code' }, 400);
+  const stored = await env.EDIT_KEYS_KV.get('otp_email_change:' + username);
+  if (!stored || stored !== code) return jsonResponse({ error: 'Invalid or expired code' }, 400);
+  const pendingRaw = await env.EDIT_KEYS_KV.get('pending_email_change:' + username);
+  if (!pendingRaw) return jsonResponse({ error: 'No pending email change' }, 400);
+  let newEmail;
+  try { newEmail = JSON.parse(pendingRaw).newEmail; } catch (_) { return jsonResponse({ error: 'Invalid pending data' }, 400); }
+  if (!newEmail || !newEmail.includes('@')) return jsonResponse({ error: 'Invalid email' }, 400);
+  const oldAccountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+  if (oldAccountEmail) await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldAccountEmail.toLowerCase().trim());
+  await env.EDIT_KEYS_KV.put('account_email:' + username, newEmail);
+  await env.EDIT_KEYS_KV.put('account_email_to_folder:' + newEmail.trim().toLowerCase(), username);
+  await env.EDIT_KEYS_KV.put('email_verified:' + username, '1');
+  await env.EDIT_KEYS_KV.delete('otp_email_change:' + username);
+  await env.EDIT_KEYS_KV.delete('pending_email_change:' + username);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/profile/cancel-email-change - Bearer required. Clears pending email change and OTP only.
+ * Do NOT modify account_email or account_email_to_folder - the new email was already stored in PUT profile
+ * before the OTP was sent; leaving it unverified so the user can sign in with the new email and verify later. */
+async function handleCancelEmailChange(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  await env.EDIT_KEYS_KV.delete('otp_email_change:' + username);
+  await env.EDIT_KEYS_KV.delete('pending_email_change:' + username);
+  return jsonResponse({ success: true });
+}
+
+/** PUT /api/push-message/:username - Admin only. Body: { html }. Appends a banner message for the user (with timestamp); shown on My Account until they dismiss all. */
+async function handlePutPushMessage(username, request, env) {
+  if (!await isAdmin(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!env.EDIT_KEYS_KV) return jsonResponse({ error: 'KV not configured' }, 500);
+  const u = (username || '').trim();
+  if (!u) return jsonResponse({ error: 'Username required' }, 400);
+  const uLower = u.toLowerCase();
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const html = typeof body.html === 'string' ? body.html.trim() : '';
+  if (!html) return jsonResponse({ error: 'Message content required' }, 400);
+  const key = 'push_message:' + uLower;
+  let list = [];
+  try {
+    const raw = await env.EDIT_KEYS_KV.get(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) list = parsed;
+      else list = [{ html: raw, at: 0 }];
+    }
+  } catch (_) {}
+  list.push({ html, at: Date.now() });
+  await env.EDIT_KEYS_KV.put(key, JSON.stringify(list));
+  return jsonResponse({ success: true });
+}
+
+/** GET /api/push-message - Bearer required. Returns the current user's push messages (array of { html, at }) if any. */
+async function handleGetPushMessage(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ messages: [] });
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ messages: [] });
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  const raw = await env.EDIT_KEYS_KV.get('push_message:' + username);
+  let messages = [];
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) messages = parsed;
+      else messages = [{ html: raw, at: 0 }];
+    } catch (_) {
+      messages = [{ html: raw, at: 0 }];
+    }
+  }
+  return jsonResponse({ messages });
+}
+
+/** DELETE /api/push-message - Bearer required. Dismisses all push messages for the current user (clears from KV). */
+async function handleDismissPushMessage(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ success: true });
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  await env.EDIT_KEYS_KV.delete('push_message:' + username);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/profile/set-password-after-otp - Bearer required. Body: { newPassword }. User must have logged in with OTP (user_otp:username existed). Sets permanent password and deletes OTP. */
+async function handleSetPasswordAfterOtp(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
+  if (!storedOtp) return jsonResponse({ error: 'No one-time password in use. Sign in with your password or request a new OTP.' }, 400);
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const newPassword = (body.newPassword || '').trim();
+  if (newPassword.length < 8) return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  const pwHash = await hashPassword(newPassword);
+  await env.EDIT_KEYS_KV.put('user_password_hash:' + username, pwHash);
+  await env.EDIT_KEYS_KV.delete('user_otp:' + username);
+  const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
+  const newToken = await signJwt({ username, exp }, secret);
+  return jsonResponse({ success: true, token: newToken });
+}
+
+/** POST /api/profile/verify-password - Bearer required. Body: { currentPassword }. Verifies current password only; returns { success: true } or 401. */
+async function handleVerifyPassword(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const currentPassword = (body.currentPassword || '').trim();
+  if (!currentPassword) return jsonResponse({ error: 'Current password required' }, 400);
+  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
+  if (!pwHash) return jsonResponse({ error: 'No password set for this account' }, 400);
+  const valid = await verifyPassword(currentPassword, pwHash);
+  if (!valid) return jsonResponse({ error: 'Current password is incorrect' }, 401);
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/profile/change-password-and-sq - Bearer required. Body: { currentPassword, newPassword?, secretQuestions?, dob? }. Verifies current password then updates password, date of birth, and/or security questions. */
+async function handleChangePasswordAndSq(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const username = (payload.username || '').trim().toLowerCase();
+  if (!username || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(username, env)) return accountDeletedResponse();
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const currentPassword = (body.currentPassword || '').trim();
+  if (!currentPassword) return jsonResponse({ error: 'Current password required' }, 400);
+  const pwHash = await env.EDIT_KEYS_KV.get('user_password_hash:' + username);
+  if (!pwHash) return jsonResponse({ error: 'No password set for this account' }, 400);
+  const valid = await verifyPassword(currentPassword, pwHash);
+  if (!valid) return jsonResponse({ error: 'Current password is incorrect' }, 401);
+  const newPassword = (body.newPassword || '').trim();
+  const secretQuestions = Array.isArray(body.secretQuestions) ? body.secretQuestions : [];
+  const dobRaw = (body.dob || '').trim();
+  const dobNorm = dobRaw ? normalizeDob(dobRaw) : null;
+  if (dobRaw && !dobNorm) return jsonResponse({ error: 'Valid date of birth required (dd/mm/yyyy)' }, 400);
+  const hasNewPwd = newPassword.length >= 8;
+  const hasSq = secretQuestions.length === 3 && secretQuestions.every(q => q && q.questionId && (q.answer || '').trim().length >= 4);
+  const hasDob = !!dobNorm;
+  if (!hasNewPwd && !hasSq && !hasDob) return jsonResponse({ error: 'Enter a new password (and confirm), and/or Date of Birth, and/or 3 security questions with answers' }, 400);
+  if (newPassword.length > 0 && newPassword.length < 8) return jsonResponse({ error: 'New password must be at least 8 characters' }, 400);
+  if (secretQuestions.length > 0) {
+    const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const ids = secretQuestions.map(q => q.questionId);
+    if (secretQuestions.length !== 3 || ids.some(id => !validIds.includes(id)) || new Set(ids).size !== 3) {
+      return jsonResponse({ error: 'Exactly 3 distinct security questions required' }, 400);
+    }
+    for (const q of secretQuestions) {
+      const a = (q.answer || '').trim();
+      if (a.length < 4 || a.length > 30) return jsonResponse({ error: 'Each security answer must be 4-30 characters' }, 400);
+    }
+  }
+  if (newPassword.length >= 8) {
+    const newHash = await hashPassword(newPassword);
+    await env.EDIT_KEYS_KV.put('user_password_hash:' + username, newHash);
+  }
+  if (dobNorm) {
+    await env.EDIT_KEYS_KV.put('user_dob:' + username, dobNorm);
+  }
+  let currentDob = dobNorm || (await env.EDIT_KEYS_KV.get('user_dob:' + username)) || '';
+  if (secretQuestions.length === 3) {
+    const existing = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+    const dobForRecovery = currentDob || (existing ? (JSON.parse(existing).dob || '') : '') || '';
+    await env.EDIT_KEYS_KV.put('user_recovery:' + username, JSON.stringify({
+      dob: dobForRecovery,
+      secretQuestions: secretQuestions.map(q => ({ questionId: q.questionId, answer: (q.answer || '').trim() }))
+    }));
+  }
+  return jsonResponse({ success: true });
+}
+
+/** POST /api/profile/rename - Bearer required. Body: { newUsername [, firstName, lastName ] }. Moves account under new username; all KV migrated. If firstName/lastName provided, applied to new username so profile changes apply in one request. Returns new JWT. */
+async function handleProfileRename(request, env) {
+  const authHeader = request.headers.get('Authorization');
+  const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+  const secret = env.JWT_SECRET;
+  if (!token || !secret) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const payload = await verifyJwt(token, secret);
+  if (!payload || !payload.username) return jsonResponse({ error: 'Invalid or expired session' }, 401);
+  const oldUsername = (payload.username || '').trim().toLowerCase();
+  if (!oldUsername || !env.EDIT_KEYS_KV) return jsonResponse({ error: 'Invalid request' }, 400);
+  if (!await userFolderExistsOnGitHub(oldUsername, env)) return accountDeletedResponse();
+  let body; try { body = await request.json(); } catch (_) { return jsonResponse({ error: 'Invalid request body' }, 400); }
+  const newUsername = (body.newUsername || '').trim().toLowerCase();
+  if (!newUsername || newUsername.length < 3) return jsonResponse({ error: 'New username required (3-28 characters)' }, 400);
+  if (newUsername.length > 28) return jsonResponse({ error: 'New username must be 3-28 characters' }, 400);
+  if (!/^[a-zA-Z0-9_-]{3,28}$/.test(newUsername)) return jsonResponse({ error: 'Username must be 3-28 characters, letters, numbers, hyphens, underscores' }, 400);
+  const reserved = ['admin', 'edit', 'signup', 'home', 'add', 'terms-and-privacy', 'user'];
+  if (reserved.includes(newUsername)) return jsonResponse({ error: 'This username is reserved' }, 400);
+  if (oldUsername === newUsername) return jsonResponse({ error: 'New username must be different' }, 400);
+  if (!env.GITHUB_TOKEN) return jsonResponse({ error: 'Rename not available' }, 503);
+  {
+    const existingRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${newUsername}?ref=${CONFIG.branch}`,
+      { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+    );
+    if (existingRes.ok) return jsonResponse({ error: 'A user with this username already exists' }, 409);
+  }
+  const listRes = await fetch(
+    `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${USER_PAGES_PREFIX}/${oldUsername}?ref=${CONFIG.branch}`,
+    { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+  );
+  if (!listRes.ok) return jsonResponse({ error: 'User folder not found' }, 404);
+  const files = await listRes.json();
+  const allFiles = Array.isArray(files) ? files.filter(f => f.type === 'file' && f.name) : [];
+  for (const file of allFiles) {
+    const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
+    const getRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}?ref=${CONFIG.branch}`,
+      { headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'ContactPageEditor/1.0' } }
+    );
+    if (!getRes.ok) return jsonResponse({ error: 'Failed to read file: ' + file.name }, 500);
+    const fileData = await getRes.json();
+    const contentBase64 = fileData.content ? fileData.content.replace(/\n/g, '') : '';
+    const newPath = `${USER_PAGES_PREFIX}/${newUsername}/${file.name}`;
+    const putRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${newPath}`,
+      {
+        method: 'PUT',
+        headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'ContactPageEditor/1.0' },
+        body: JSON.stringify({ message: `Rename user: ${oldUsername} -> ${newUsername}`, content: contentBase64, branch: CONFIG.branch })
+      }
+    );
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      return jsonResponse({ error: err.message || 'Failed to create file: ' + file.name }, putRes.status);
+    }
+  }
+  for (const file of allFiles) {
+    const oldPath = `${USER_PAGES_PREFIX}/${oldUsername}/${file.name}`;
+    const delRes = await fetch(
+      `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${oldPath}`,
+      {
+        method: 'DELETE',
+        headers: { 'Authorization': 'token ' + env.GITHUB_TOKEN, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'User-Agent': 'ContactPageEditor/1.0' },
+        body: JSON.stringify({ message: `Rename user: remove ${oldUsername}`, sha: file.sha, branch: CONFIG.branch })
+      }
+    );
+    if (!delRes.ok) return jsonResponse({ error: 'Failed to delete old file: ' + file.name }, 500);
+  }
+  const kvKeys = [
+    'account_email', 'user_first_name', 'user_last_name', 'user_dob', 'user_recovery', 'user_password_hash',
+    'email_verified', 'email_verified_admin', 'account_details_sent',
+    'divert_email', 'max_contact_pages', 'push_message', 'user_otp', 'otp', 'otp_email_change', 'pending_email_change'
+  ];
+  for (const prefix of kvKeys) {
+    const val = await env.EDIT_KEYS_KV.get(prefix + ':' + oldUsername);
+    if (val != null) {
+      await env.EDIT_KEYS_KV.put(prefix + ':' + newUsername, val);
+      await env.EDIT_KEYS_KV.delete(prefix + ':' + oldUsername);
+    }
+  }
+  const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + newUsername);
+  if (accountEmail && accountEmail.includes('@')) {
+    await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + accountEmail.toLowerCase().trim());
+    await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmail.toLowerCase().trim(), newUsername);
+  }
+  const nameList = await env.EDIT_KEYS_KV.list({ prefix: `contact_page_name:${oldUsername}:` });
+  for (const key of nameList.keys) {
+    const slug = key.name.replace(`contact_page_name:${oldUsername}:`, '');
+    const val = await env.EDIT_KEYS_KV.get(key.name);
+    if (val != null) {
+      await env.EDIT_KEYS_KV.put(`contact_page_name:${newUsername}:${slug}`, val);
+      await env.EDIT_KEYS_KV.delete(key.name);
+    }
+  }
+  // Optional: apply first name, last name to new username in same request (account email stays in PUT profile for OTP flow)
+  if (body.firstName !== undefined) await env.EDIT_KEYS_KV.put('user_first_name:' + newUsername, (body.firstName || '').trim());
+  if (body.lastName !== undefined) await env.EDIT_KEYS_KV.put('user_last_name:' + newUsername, (body.lastName || '').trim());
+  const exp = Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400);
+  const newToken = await signJwt({ username: newUsername, exp }, secret);
+  return jsonResponse({ success: true, token: newToken, username: newUsername });
+}
+
+async function handleGetSecrets(username, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  if (!username || !env.EDIT_KEYS_KV) {
+    return jsonResponse({ error: 'Invalid request' }, 400);
+  }
+  const accountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+  const dob = await env.EDIT_KEYS_KV.get('user_dob:' + username);
+  const recoveryRaw = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+  const byAdmin = (await env.EDIT_KEYS_KV.get('email_verified_admin:' + username)) === '1';
+  const byUser = (await env.EDIT_KEYS_KV.get('email_verified:' + username)) === '1';
+  const emailVerification = byAdmin ? 'admin' : byUser ? 'user' : null;
+  const passwordSet = !!(await env.EDIT_KEYS_KV.get('user_password_hash:' + username));
+  const storedOtp = await env.EDIT_KEYS_KV.get('user_otp:' + username);
+  const otpSet = !!storedOtp;
+  let secretQuestions = [];
+  if (recoveryRaw) {
+    try {
+      const r = JSON.parse(recoveryRaw);
+      secretQuestions = Array.isArray(r.secretQuestions) ? r.secretQuestions : [];
+    } catch (_) {}
+  }
+  const payload = { accountEmail: accountEmail || '', dob: dob || '', secretQuestions, emailVerified: byUser || byAdmin, emailVerification, passwordSet, otpSet };
+  if (auth.isAdmin && storedOtp) {
+    payload.otp = storedOtp;
+    console.log('Admin OTP read', username);
+  }
+  return jsonResponse(payload);
+}
+
+async function handlePutSecrets(username, request, env) {
+  const auth = await validateAuth(username, request, env);
+  if (!auth.authorized) {
+    if (auth.accountDeleted) return accountDeletedResponse();
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  if (!username || !env.EDIT_KEYS_KV) {
+    return jsonResponse({ error: 'Invalid request' }, 400);
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch (_) {
+    return jsonResponse({ error: 'Invalid request body' }, 400);
+  }
+  const accountEmail = (body.accountEmail || '').trim();
+  const password = (body.password || '').trim();
+  const dobRaw = (body.dob || '').trim();
+  const secretQuestions = Array.isArray(body.secretQuestions) ? body.secretQuestions : [];
+
+  if (password && password.length < 8) {
+    return jsonResponse({ error: 'Password must be at least 8 characters' }, 400);
+  }
+  if (accountEmail && !accountEmail.includes('@')) {
+    return jsonResponse({ error: 'Valid account email required' }, 400);
+  }
+  if (accountEmail) {
+    const accountEmailLower = accountEmail.toLowerCase();
+    const existingFolder = await env.EDIT_KEYS_KV.get('account_email_to_folder:' + accountEmailLower);
+    if (existingFolder && existingFolder !== username) {
+      return jsonResponse({ error: 'This account email is already in use' }, 409);
+    }
+  }
+  const dobNorm = dobRaw ? normalizeDob(dobRaw) : null;
+  if (dobRaw && !dobNorm) {
+    return jsonResponse({ error: 'Valid date of birth required (dd/mm/yyyy)' }, 400);
+  }
+  if (secretQuestions.length > 0) {
+    const validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const ids = secretQuestions.map(q => q.questionId);
+    if (secretQuestions.length !== 3 || ids.some(id => !validIds.includes(id)) || new Set(ids).size !== 3) {
+      return jsonResponse({ error: 'Exactly 3 distinct security questions required' }, 400);
+    }
+    for (const q of secretQuestions) {
+      const a = (q.answer || '').trim();
+      if (a.length < 4 || a.length > 30) {
+        return jsonResponse({ error: 'Each security answer must be 4-30 characters' }, 400);
+      }
+    }
+  }
+
+  const oldAccountEmail = await env.EDIT_KEYS_KV.get('account_email:' + username);
+  if (oldAccountEmail) {
+    await env.EDIT_KEYS_KV.delete('account_email_to_folder:' + oldAccountEmail.toLowerCase());
+  }
+  if (accountEmail) {
+    await env.EDIT_KEYS_KV.put('account_email:' + username, accountEmail);
+    await env.EDIT_KEYS_KV.put('account_email_to_folder:' + accountEmail.toLowerCase(), username);
+  } else if (oldAccountEmail) {
+    await env.EDIT_KEYS_KV.delete('account_email:' + username);
+  }
+  if (dobNorm) {
+    await env.EDIT_KEYS_KV.put('user_dob:' + username, dobNorm);
+  } else {
+    await env.EDIT_KEYS_KV.delete('user_dob:' + username);
+  }
+  if (secretQuestions.length === 3) {
+    const existing = await env.EDIT_KEYS_KV.get('user_recovery:' + username);
+    let dobForRecovery = dobNorm || (existing ? (JSON.parse(existing).dob || '') : '') || (await env.EDIT_KEYS_KV.get('user_dob:' + username)) || '';
+    await env.EDIT_KEYS_KV.put('user_recovery:' + username, JSON.stringify({
+      dob: dobForRecovery,
+      secretQuestions: secretQuestions.map(q => ({ questionId: q.questionId, answer: (q.answer || '').trim() }))
+    }));
+  } else {
+    await env.EDIT_KEYS_KV.delete('user_recovery:' + username);
+  }
+  const otpPlain = (body.otp || '').trim();
+  if (otpPlain && auth.isAdmin) {
+    await env.EDIT_KEYS_KV.put('user_otp:' + username, otpPlain);
+    const accountEmailToSend = (body.accountEmail || accountEmail || await env.EDIT_KEYS_KV.get('account_email:' + username) || '').trim();
+    if (accountEmailToSend && accountEmailToSend.includes('@')) {
+      const subject = 'DigiCon iD - Your one-time password';
+      const text = `Your one-time sign-in password is: ${otpPlain}\n\nUse this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.\n\nIf you did not request this, please get in touch via the Contact page.`;
+      const html = `<p>Your one-time sign-in password is: <strong>${otpPlain}</strong></p><p>Use this to sign in at MyAccount (with your Account Email or User Name). You will then be asked to set a new permanent password.</p><p>If you did not request this, please get in touch via the Contact page.</p>`;
+      await sendEmail(env, { to: accountEmailToSend, subject, text, html, username });
+    }
+  } else if (password) {
+    const pwHash = await hashPassword(password);
+    await env.EDIT_KEYS_KV.put('user_password_hash:' + username, pwHash);
+    if (auth.isAdmin) await env.EDIT_KEYS_KV.delete('user_otp:' + username);
+  }
+  if (auth.isAdmin && typeof body.emailVerified === 'boolean') {
+    if (body.emailVerified) {
+      await env.EDIT_KEYS_KV.put('email_verified:' + username, '1');
+      await env.EDIT_KEYS_KV.put('email_verified_admin:' + username, '1');
+    } else {
+      await env.EDIT_KEYS_KV.delete('email_verified:' + username);
+      await env.EDIT_KEYS_KV.delete('email_verified_admin:' + username);
+    }
+  }
+  return jsonResponse({ success: true });
+}
+
+// ============ Utilities ============
+
+function encodeBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function decodeBase64(base64) {
+  const binary = atob(base64.replace(/\n/g, ''));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+/** Extract display fields from contact page HTML. Keep in sync with admin extractInfo(). */
+function extractSummaryFromHtml(html) {
+  const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const g = (label) => {
+    const re = new RegExp(`<span class="label">${esc(label)}[^<]*</span><span class="value">([^<]+)</span>`);
+    const m = html.match(re);
+    if (!m) return '';
+    const v = (m[1] || '').trim();
+    return (v === '?' || !v) ? '' : v;
+  };
+  const em = html.match(/href="mailto:([^"]+)"/);
+  const contactEmail = em ? em[1] : '';
+  const dataTimestampMatch = html.match(/data-timestamp="([^"]+)"/);
+  const dataUpdatedByMatch = html.match(/data-updated-by="([^"]+)"/);
+  let lastUpdated = null;
+  let updatedBy = null;
+  if (dataTimestampMatch && dataUpdatedByMatch) {
+    lastUpdated = dataTimestampMatch[1];
+    updatedBy = dataUpdatedByMatch[1];
+  } else {
+    const lastUpdatedText = g('Last Updated') || g('Last updated');
+    if (lastUpdatedText) {
+      const byMatch = lastUpdatedText.match(/ by (Admin|User)$/);
+      if (byMatch) {
+        updatedBy = byMatch[1].toLowerCase();
+        lastUpdated = null;
+      }
+    }
+  }
+  return {
+    givenName: g('Given Names') || g('Name'),
+    familyName: g('Family Name') || g('Surname'),
+    contactEmail: contactEmail || '',
+    lastUpdated,
+    updatedBy
+  };
+}

@@ -1,0 +1,45 @@
+---
+description: Digital Luggage Tags workspace layout, repo structure, and recent changes
+alwaysApply: true
+---
+
+# Digital Luggage Tags — Workspace Context
+
+## Workspace layout
+
+The workspace root **is** the GitHub Pages repo (deem0u.github.io). Live at https://deem0u.github.io/
+
+- **`admin/index.html`** — Admin dashboard (manage users, keys, edit any page)
+- **`myaccount/index.html`** — User portal (sign in, edit contact page, profile, recovery)
+- **`styles.css`** — Shared styles for admin and myaccount
+- **`user/<username>/<contactpagename>.html`** — Per-user contact pages (e.g. `user/danielmounnarath/index.html`)
+- **`cloudflare-worker/`** — API backend (Worker + wrangler). Deploy to Cloudflare Workers.
+- **`release/`** — Packaged deployable artifacts (`digital-luggage-tags-artifacts.zip`)
+- **`SETUP-GUIDE.md`** — Setup, daily usage, troubleshooting
+- **`linky-mascot.html`** — **Linky Mascot Suite** (SVG asset reference). Contains 10 full-size mascot variants (Brand, Sign Up, Maintenance, Terms & Privacy, Contact, MyAccount, Admin, Error/404, Loading, Success), 10 mini-icon versions, and brand colour palette. Use for header icons, empty states, error/loading/success screens. Full SVGs: viewBox 160×160; minis: viewBox 80×80. Colours: body #272932, screen #ffffff, cheeks #e455ae; accents teal/cyan/yellow/pink/purple. Extract SVG code from this file when adding or changing mascot assets.
+
+## Recent modifications (repository)
+
+- **Additional Information (optional)** — New free-text field on all contact forms:
+  - Admin: New User form and Edit Contact form (`admin/index.html`)
+  - Self-service: Edit form (`myaccount/index.html`)
+  - Live contact page: New row after "Destination Details" (EN: "Additional Information", ZH: "补充信息"). Uses `.form-textarea`, `.form-label-optional`, existing CSS.
+- **Admin Dashboard** — Recovery cluster on its own row; Contact Page cluster has a searchable dropdown for contact cards per user; Worker `GET /api/contact-pages/:username` lists pages for a user.
+- **Secrets / Account Setup Incomplete** — “Secrets” are only complete when account email, DOB, and 3 security questions are all set. They can be set from **Set Secrets in MyAccount** or the **Set Secrets modal in the Admin Dashboard**.
+- **SETUP-GUIDE.md** — Updated with Additional Information feature, editing notes, and deploy file list.
+- **Artifacts** — `release/digital-luggage-tags-artifacts.zip` includes SETUP-GUIDE, worker, wrangler, styles, admin and edit HTML.
+
+## Deploy mapping
+
+| Local path | Deploy target |
+|------------|---------------|
+| `admin/index.html` | `deem0u.github.io` repo → `admin/index.html` |
+| `myaccount/index.html` | `myaccount/index.html` |
+| `edit/index.html` | Redirect only: sends `/edit/` → `/myaccount/` (precaution for old links) |
+| `styles.css` | `styles.css` |
+| `cloudflare-worker/worker.js` | Cloudflare Worker `contact-page-editor` |
+
+## Git and push
+
+- **Pull:** From workspace root: `git pull`.
+- **Push:** From workspace root: `git push`. The workspace root and the remote are the same repo (deem0u.github.io).
