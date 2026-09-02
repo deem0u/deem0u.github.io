@@ -4,8 +4,8 @@
  * and the body section of success messages on Home and Edit pages.
  */
 (function() {
-  const PAGES_URL = 'https://deem0u.github.io/user/';
-  const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
+  const PAGES_URL = 'https://digiconid.danielmounnarath.com/user/';
+  const EDITOR_URL = 'https://digiconid.danielmounnarath.com/myaccount/';
 
   function getViewLink(username) {
     return PAGES_URL + (username || '') + '/';

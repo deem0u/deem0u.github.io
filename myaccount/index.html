@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="/canonical-host.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>DigiCon iD - MyAccount</title>
   <meta name="description" content="Sign in to MyAccount to manage your DigiCon iD profile, contact pages, and QR codes. Edit details, generate QR or vCard, and update anytime.">
   <meta property="og:title" content="DigiCon iD - MyAccount">
   <meta property="og:description" content="Sign in to MyAccount to manage your DigiCon iD profile, contact pages, and QR codes. Edit details, generate QR or vCard, and update anytime.">
-  <meta property="og:url" content="https://deem0u.github.io/myaccount/">
+  <meta property="og:url" content="https://digiconid.danielmounnarath.com/myaccount/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="DigiCon iD">
   <meta name="twitter:card" content="summary">
@@ -348,7 +349,7 @@
                 <a href="/resources/faq/" role="menuitem" class="nav-dropdown-item">FAQ</a>
               </div>
             </div>
-            <a href="https://deem0u.github.io/myaccount/" class="tab active">My Account</a>
+            <a href="https://digiconid.danielmounnarath.com/myaccount/" class="tab active">My Account</a>
             <a href="/contact/" class="tab">Contact</a>
           </nav>
           <span class="header-signout-slot"><button id="signout-btn" class="btn btn-ghost btn-sm hidden" onclick="signOut()">Sign Out</button></span>
@@ -489,7 +490,7 @@
             <div id="recovery-success-details" class="edit-recovery-success-details"></div>
             <div class="edit-recovery-success-action">
               <div id="recovery-success-buttons-wrap" class="edit-recovery-success-buttons">
-                <a id="recovery-signin-btn" href="https://deem0u.github.io/myaccount/" class="btn btn-primary">Go to Sign In</a>
+                <a id="recovery-signin-btn" href="https://digiconid.danielmounnarath.com/myaccount/" class="btn btn-primary">Go to Sign In</a>
               </div>
             </div>
           </div>
@@ -617,7 +618,7 @@
               <div class="editor-view-url-block editor-view-header">
                 <div class="form-label">Page URL</div>
                 <div class="editor-view-url-anatomy" id="view-contact-page-url-anatomy">
-                  <div class="editor-view-url-line" id="view-contact-page-url-line"><span class="url-part url-base" id="view-contact-page-url-base">https://deem0u.github.io/user/</span><span class="url-segment-wrap url-username-wrap"><span class="url-part url-username url-username-view" id="view-contact-page-url-username-part"></span><span class="url-anatomy-label url-username-label" aria-hidden="true">USER NAME</span></span><span class="url-part url-slash" id="view-contact-page-url-slash">/</span><span class="url-segment-wrap url-slug-wrap"><span class="url-part url-slug url-slug-view" id="view-contact-page-url-slug-part"></span><span class="url-anatomy-label url-slug-label" aria-hidden="true">URL SLUG</span></span></div>
+                  <div class="editor-view-url-line" id="view-contact-page-url-line"><span class="url-part url-base" id="view-contact-page-url-base">https://digiconid.danielmounnarath.com/user/</span><span class="url-segment-wrap url-username-wrap"><span class="url-part url-username url-username-view" id="view-contact-page-url-username-part"></span><span class="url-anatomy-label url-username-label" aria-hidden="true">USER NAME</span></span><span class="url-part url-slash" id="view-contact-page-url-slash">/</span><span class="url-segment-wrap url-slug-wrap"><span class="url-part url-slug url-slug-view" id="view-contact-page-url-slug-part"></span><span class="url-anatomy-label url-slug-label" aria-hidden="true">URL SLUG</span></span></div>
                 </div>
               </div>
               <div class="form-row">
@@ -685,7 +686,7 @@
                 <label class="form-label" for="contact-page-url-slug">Page URL <span class="form-required">*</span></label>
                 <div class="editor-view-url-anatomy editor-edit-url-anatomy" id="edit-contact-page-url-anatomy">
                   <div class="editor-edit-url-row editor-edit-url-row-line">
-                    <span class="url-edit-prefix editor-view-url-line"><span class="url-part url-base" aria-hidden="true">https://deem0u.github.io/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span>
+                    <span class="url-edit-prefix editor-view-url-line"><span class="url-part url-base" aria-hidden="true">https://digiconid.danielmounnarath.com/user/</span><span class="url-part url-username url-username-edit" id="contact-page-url-username">—</span><span class="url-part url-slash" aria-hidden="true">/</span></span>
                     <input type="text" id="contact-page-url-slug" class="form-input url-part url-slug-input" placeholder="e.g. mypage" pattern="^[a-zA-Z0-9_-]{3,28}$" minlength="3" maxlength="28" autocomplete="off" title="Contact Page URL" required>
                   </div>
                   <div id="contact-page-slug-warning" class="contact-page-slug-warning contact-page-slug-warning-full-width hidden" role="alert">Changes to the slug will change this page's URL. Any existing QR codes and NFC tags pointing to the current URL will need to be regenerated, reprinted, or rewritten.</div>
@@ -930,8 +931,8 @@ const API = 'https://contact-page-editor.deem0u.workers.dev';
 let username = null, token = null, currentSha = null, currentContactpagename = 'index';
 let isCreateMode = false;
 var formSnapshot = null;
-const PAGES_URL = 'https://deem0u.github.io/user/';
-const EDITOR_URL = 'https://deem0u.github.io/myaccount/';
+const PAGES_URL = 'https://digiconid.danielmounnarath.com/user/';
+const EDITOR_URL = 'https://digiconid.danielmounnarath.com/myaccount/';
 const RECOVERY_SQ_OPTIONS = {1:'What is your mothers maiden name?',2:'What is the name of the educational institution which you have obtained your highest level of qualification?',3:'What is the name of your first pet?',4:'What is the make and model of your first car?',5:'What is a date that is most memorable to you?',6:'What suburb were you born in?',7:'What was the name of the business or company you first worked for?',8:'Where was your first major travel destination?',9:'What is your favourite sports team?',10:'What is a word that Chris cannot correctly pronounce? \uD83E\uDD5A'};
   function setSqLabelContent(el, qId) {
     var text = RECOVERY_SQ_OPTIONS[qId] || 'Security Question';
@@ -4386,6 +4387,7 @@ function generateHTML() {
 <meta name="format-detection" content="telephone=yes">
 <meta name="theme-color" content="#ffffff">
 <title>Contact - ${firstName} ${surname}</title>
+<script src="/canonical-host.js"></script>
 <style>${css}</style>
 </head>
 <body>

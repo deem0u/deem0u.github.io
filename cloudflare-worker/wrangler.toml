@@ -8,6 +8,8 @@ id = "6cb625208ddb4313b95972ca16693098"
 
 [vars]
 EMAIL_RELAY_URL = "https://deem0u-github-io.vercel.app/api/send"
+PUBLIC_SITE_URL = "https://digiconid.danielmounnarath.com"
+ALLOWED_ORIGINS = "https://digiconid.danielmounnarath.com,https://deem0u.github.io,http://localhost:3000,http://localhost:8080,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:8080,http://127.0.0.1:5173"
 
 # Required secrets (set via Cloudflare dashboard):
 # GITHUB_TOKEN - Your GitHub Personal Access Token with 'repo' scope
@@ -20,6 +22,8 @@ EMAIL_RELAY_URL = "https://deem0u-github-io.vercel.app/api/send"
 # EMAIL_RELAY_SECRET - Same value as RELAY_SECRET in Vercel
 # EMAIL_SEND_RESTRICTED - Set to 'true' or '1' to divert all emails to deem0u.github.io@gmail.com (unset or 'false' = send to real recipient)
 # Optional (security remediations):
-# ALLOWED_ORIGINS - Comma-separated CORS origins. Default includes production + localhost (3000, 8080, 5173). Set to override the full list.
+# ALLOWED_ORIGINS - Comma-separated CORS origins. Default includes https://digiconid.danielmounnarath.com, https://deem0u.github.io, and localhost (3000, 8080, 5173). Set to override the full list.
+# PUBLIC_SITE_URL - Public DigiCon origin used in emails and contact-page links. Default: https://digiconid.danielmounnarath.com
+# ADMIN_BASE_URL - Admin dashboard base used in password-reset emails. Default: PUBLIC_SITE_URL/admin
 # RATE_LIMIT_DISABLED - Set to '1' to disable rate limiting (e.g. for local testing).
 # DEBUG - Set to '1' to expose real error.message in 500 responses (do not use in production).

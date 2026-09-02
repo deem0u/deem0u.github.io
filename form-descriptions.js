@@ -12,7 +12,7 @@
 window.FORM_DESCRIPTIONS = {
   'folder': {
     label: 'User Name',
-    hint: 'This will be used in the URL for your contact information page. Eg. The User Name john-smith will have the URL deem0u.github.io/<strong>john-smith</strong>/'
+    hint: 'This will be used in the URL for your contact information page. Eg. The User Name john-smith will have the URL digiconid.danielmounnarath.com/user/<strong>john-smith</strong>/'
   },
   'first-name': {
     label: 'Given Names',

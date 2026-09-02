@@ -23,13 +23,22 @@ const CONFIG = {
   branch: 'main'
 };
 
+/** Public site origin for DigiCon iD (custom domain). GitHub Pages still hosts the files. */
+const SITE_PUBLIC_ORIGIN = 'https://digiconid.danielmounnarath.com';
+const SITE_GITHUB_ORIGIN = `https://${CONFIG.owner}.github.io`;
+
+function getPublicSiteBase(env) {
+  const fromEnv = env && env.PUBLIC_SITE_URL;
+  return (fromEnv || SITE_PUBLIC_ORIGIN).replace(/\/$/, '');
+}
+
 /** Public API base for contact-page lockdown check (contact pages are static; they fetch this). */
 const PUBLIC_API_BASE = 'https://contact-page-editor.deem0u.workers.dev';
 
 /** Admin dashboard base URL for password reset links. Override with env.ADMIN_BASE_URL. */
 function getAdminBaseUrl(env) {
   if (env.ADMIN_BASE_URL) return env.ADMIN_BASE_URL.replace(/\/$/, '');
-  return `https://${CONFIG.owner}.github.io/admin`;
+  return `${getPublicSiteBase(env)}/admin`;
 }
 
 const PBKDF2_ITERATIONS = 100000;
@@ -105,9 +114,9 @@ function pagePath(username, contactpagename) {
   return `${USER_PAGES_PREFIX}/${username}/${name}.html`;
 }
 
-/** Public URL for a contact page (e.g. https://deem0u.github.io/user/chriscam/ or .../user/chriscam/work-card.html) */
+/** Public URL for a contact page (e.g. https://digiconid.danielmounnarath.com/user/chriscam/ or .../user/chriscam/work-card.html) */
 function pageUrl(username, contactpagename) {
-  const base = `https://${CONFIG.owner}.github.io/${USER_PAGES_PREFIX}/${username}`;
+  const base = `${SITE_PUBLIC_ORIGIN}/${USER_PAGES_PREFIX}/${username}`;
   const name = (contactpagename || 'index').trim() || 'index';
   return name === 'index' ? `${base}/` : `${base}/${name}.html`;
 }
@@ -246,11 +255,11 @@ const corsHeaders = {
 
 /** Allowed CORS origins. Default: production GitHub Pages + common localhost ports for local testing. Override with env.ALLOWED_ORIGINS (comma-separated). */
 function getAllowedOrigin(request, env) {
-  const defaultOrigins = 'https://deem0u.github.io,http://localhost:3000,http://localhost:8080,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:8080,http://127.0.0.1:5173';
+  const defaultOrigins = `${SITE_PUBLIC_ORIGIN},${SITE_GITHUB_ORIGIN},http://localhost:3000,http://localhost:8080,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:8080,http://127.0.0.1:5173`;
   const list = (env.ALLOWED_ORIGINS || defaultOrigins).split(',').map(s => s.trim()).filter(Boolean);
   const origin = request.headers.get('Origin');
   if (origin && list.includes(origin)) return origin;
-  return list[0] || 'https://deem0u.github.io';
+  return list[0] || SITE_PUBLIC_ORIGIN;
 }
 
 /** Override response CORS origin with the allowed origin (restricts to allowlist instead of *). */
@@ -1163,7 +1172,7 @@ async function handleSignup(request, env) {
 
   const secret = env.JWT_SECRET;
   const token = secret ? await signJwt({ username, exp: Math.floor(Date.now() / 1000) + (JWT_EXPIRY_DAYS * 86400) }, secret) : null;
-  const base = `https://${CONFIG.owner}.github.io`;
+  const base = getPublicSiteBase(env);
   return jsonResponse({
     success: true,
     username,
@@ -1211,7 +1220,7 @@ async function handleSignupSuccessEmail(request, env) {
   const dob = (body.dob || '').trim();
   const contactSlug = (body.contactSlug || '').trim();
   if (!username || !accountEmail) return jsonResponse({ error: 'Missing required fields' }, 400);
-  const baseUrl = `https://${CONFIG.owner}.github.io`;
+  const baseUrl = getPublicSiteBase(env);
   const viewLink = contactSlug ? `${baseUrl}/user/${username}/${contactSlug}.html` : `${baseUrl}/user/${username}/`;
   const editUrl = `${baseUrl}/myaccount/`;
   const subject = `DigiCon iD - ${username} - Account Details`;
@@ -1304,7 +1313,7 @@ function generateContactPageHTML(givenName, familyName, contactEmail, mobile, mo
   const script = '<script>(function(){function f(i,u){if(!i)return"";var d=new Date(i);return d.toLocaleString()+(u?" by "+u:"")}document.querySelectorAll(".last-updated-display").forEach(function(e){var i=e.getAttribute("data-timestamp"),u=e.getAttribute("data-updated-by");if(i)e.textContent=f(i,u)})})();<\/script>';
   const lockdownOverlay = '<div id="site-lockdown-overlay" style="display:none;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;"><h1 style="font-size:1.5rem;margin-bottom:0.5rem;">Site temporarily unavailable</h1><p style="color:#666;">Please try again later.</p></div>';
   const lockdownScript = '<script>(function(){var api="' + PUBLIC_API_BASE.replace(/"/g, '&quot;') + '";var storage=typeof sessionStorage!=="undefined"?sessionStorage:typeof localStorage!=="undefined"?localStorage:null;var h={"X-Admin-Key":(storage&&storage.getItem("admin_key"))||""};fetch(api+"/api/site-status",{headers:h}).then(function(r){return r.json()}).then(function(d){if(!d.isAdmin&&d.lockdownMode){var o=document.getElementById("site-lockdown-overlay");var c=document.querySelector(".container");if(o){o.style.display="flex"}if(c){c.style.display="none"}}}).catch(function(){})})();<\/script>';
-  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(givenName) + ' ' + esc(familyName) + '</title><style>' + css + '</style></head><body>' + lockdownOverlay + '<div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(givenName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(familyName) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(contactEmail) + '">' + esc(contactEmail) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + lockdownScript + '</body></html>';
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Contact - ' + esc(givenName) + ' ' + esc(familyName) + '</title><script src="/canonical-host.js"></script><style>' + css + '</style></head><body>' + lockdownOverlay + '<div class="container"><div class="last-updated-block"><span class="last-updated-titles">' + titles + '</span><span class="last-updated-display" data-timestamp="' + now + '" data-updated-by="user">' + em + '</span></div><h1>' + sectionTitle + '</h1><div class="info"><span class="label">' + lblGiven + '</span><span class="value">' + esc(givenName) + '</span></div><div class="info"><span class="label">' + lblFamily + '</span><span class="value">' + esc(familyName) + '</span></div><div class="info"><span class="label">' + lblEmail + '</span><span class="value"><a href="mailto:' + esc(contactEmail) + '">' + esc(contactEmail) + '</a></span></div><div class="info"><span class="label">' + lblMobile + '</span><span class="value">' + mobileHtml + '</span></div><div class="info"><span class="label">' + lblCountry + '</span><span class="value">' + homeCountryHtml + '</span></div><div class="info"><span class="label">' + lblDest + '</span>' + destHtml + '</div><div class="info additional-info"><span class="label">' + lblAdditional + '</span>' + additionalHtml + '</div></div>' + script + lockdownScript + '</body></html>';
 }
 
 // ============ Auth Helpers ============

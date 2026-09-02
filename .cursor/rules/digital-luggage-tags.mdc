@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Workspace layout
 
-The workspace root **is** the GitHub Pages repo (deem0u.github.io). Live at https://deem0u.github.io/
+The workspace root **is** the GitHub Pages repo (deem0u.github.io). DigiCon iD public site: https://digiconid.danielmounnarath.com/ (still hosted on this repo). GitHub origin https://deem0u.github.io/ is shared with other projects (e.g. Marama at /marama/readme.html).
 
 - **`admin/index.html`** — Admin dashboard (manage users, keys, edit any page)
 - **`myaccount/index.html`** — User portal (sign in, edit contact page, profile, recovery)
