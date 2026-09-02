@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marama – Helpful Information</title>
+  <style>
+    /* ---- Reset & base ---- */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: #f8f8f8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- Skip link (a11y) ---- */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: #1a1a1a;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 100;
+      border-radius: 0.25rem;
+      transition: top 0.2s;
+    }
+    .skip-link:focus {
+      top: 0.5rem;
+      outline: 2px solid #1a1a1a;
+      outline-offset: 2px;
+    }
+
+    /* ---- Layout ---- */
+    .page {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 0 1rem 3rem;
+      min-height: 100vh;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      padding: 1.25rem 0;
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* ---- Burger drawer navigation ---- */
+    .burger-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 0.5rem;
+      margin-right: 0.25rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      color: #1a1a1a;
+    }
+    .burger-btn:focus {
+      outline: 2px solid #1a1a1a;
+      outline-offset: 2px;
+    }
+    .burger-icon {
+      width: 1.25rem;
+      height: 1rem;
+      display: grid;
+      align-content: center;
+      gap: 0.25rem;
+    }
+    .burger-icon span {
+      display: block;
+      height: 2px;
+      width: 100%;
+      background: #1a1a1a;
+      border-radius: 2px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .header-brand {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 20;
+    }
+    .drawer-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: min(22rem, 88vw);
+      background: #fff;
+      border-right: 1px solid #eee;
+      transform: translateX(-110%);
+      transition: transform 0.2s ease;
+      z-index: 30;
+      padding: 1rem 1rem 1.25rem;
+      overflow: auto;
+    }
+    .drawer.open {
+      transform: translateX(0);
+    }
+    .drawer-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .drawer-close {
+      appearance: none;
+      border: 1px solid #eee;
+      background: #fff;
+      color: #1a1a1a;
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      cursor: pointer;
+    }
+    .drawer-close:focus {
+      outline: 2px solid #1a1a1a;
+      outline-offset: 2px;
+    }
+    .drawer nav ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    .drawer a {
+      color: #1a1a1a;
+      text-decoration: none;
+      display: inline-block;
+      padding: 0.45rem 0.6rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+    }
+    .drawer a:hover,
+    .drawer a:focus {
+      background: #1a1a1a;
+      color: #fff;
+      outline: none;
+    }
+    .drawer .drawer-primary {
+      margin: 0;
+      padding: 0;
+    }
+    .drawer .drawer-primary > li {
+      margin-bottom: 0.5rem;
+    }
+    .drawer .drawer-sublist {
+      margin: 0.35rem 0 0.25rem 0;
+      padding-left: 0.75rem;
+      border-left: 2px solid #f0f0f0;
+    }
+    .drawer .drawer-sublist li {
+      margin-bottom: 0.2rem;
+    }
+    .drawer .drawer-sublist a {
+      font-weight: 500;
+      padding: 0.35rem 0.55rem;
+    }
+
+    /* ---- Navigation (mobile-first) ---- */
+    .nav {
+      padding: 0.75rem 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .nav-list {
+      display: flex;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      min-width: min-content;
+    }
+    .nav-list a {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      min-height: 2.75rem;
+      line-height: 1.75rem;
+      color: #1a1a1a;
+      text-decoration: none;
+      background: #eee;
+      border-radius: 2rem;
+      white-space: nowrap;
+      font-weight: 500;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-list a:hover,
+    .nav-list a:focus {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .nav-list a:focus {
+      outline: 2px solid #1a1a1a;
+      outline-offset: 2px;
+    }
+
+    /* ---- Main content ---- */
+    main {
+      padding-top: 1rem;
+    }
+    section {
+      margin-bottom: 2rem;
+      background: #fff;
+      border-radius: 0.5rem;
+      padding: 1.25rem 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    section:target,
+    .anchor:target {
+      scroll-margin-top: 6rem;
+    }
+    section h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    section p {
+      margin: 0 0 0.75rem;
+    }
+    section p:last-child {
+      margin-bottom: 0;
+    }
+
+    .subsection {
+      margin: 1rem 0 1.25rem;
+      padding-top: 0.25rem;
+    }
+    .subsection h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    /* ---- Images ---- */
+    .figure {
+      margin: 1rem 0;
+    }
+    .figure img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 0.375rem;
+      background: #eee;
+    }
+    .figure .caption {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: #555;
+    }
+    .figure .caption code {
+      font-size: 0.8125rem;
+      background: #eee;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.2rem;
+    }
+
+    /* ---- FAQ-style blocks (optional) ---- */
+    .faq-item {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid #eee;
+    }
+    .faq-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .faq-item h3 {
+      margin: 0 0 0.35rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .faq-item p {
+      margin: 0;
+      font-size: 0.9375rem;
+    }
+
+    /* ---- Lists ---- */
+    ul, ol {
+      margin: 0 0 0.75rem;
+      padding-left: 1.25rem;
+    }
+    li {
+      margin-bottom: 0.25rem;
+    }
+
+    /* ---- Strong emphasis ---- */
+    .highlight {
+      background: #fef3c7;
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.2rem;
+    }
+
+    /* ---- Wider viewport ---- */
+    @media (min-width: 640px) {
+      .page { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .header h1 { font-size: 1.75rem; }
+      section { padding: 1.5rem 1.25rem; }
+      section h2 { font-size: 1.375rem; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <div class="page">
+    <header class="header">
+      <div class="header-row">
+        <button
+          class="burger-btn"
+          id="drawerToggle"
+          aria-controls="sectionDrawer"
+          aria-expanded="false"
+          aria-label="Open section menu"
+          type="button"
+        >
+          <div class="burger-icon" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+        </button>
+        <div class="header-brand">
+          <h1>Marama – Guest information</h1>
+        </div>
+        <div aria-hidden="true" style="width: 2.25rem;"></div>
+      </div>
+    </header>
+
+    <div class="drawer-overlay" id="drawerOverlay" tabindex="-1" aria-hidden="true"></div>
+    <aside class="drawer" id="sectionDrawer" aria-hidden="true" tabindex="-1">
+      <div class="drawer-title">
+        <strong>Sections</strong>
+        <button class="drawer-close" id="drawerClose" type="button" aria-label="Close section menu">Close</button>
+      </div>
+      <nav aria-label="Jump to a section">
+        <ul class="drawer-primary">
+          <li>
+            <a href="#house-information">House Information</a>
+            <ul class="drawer-sublist">
+              <li><a href="#internet-and-wifi">Internet &amp; Wifi</a></li>
+              <li><a href="#utilities">Utilities (Gas, Electricity &amp; Water)</a></li>
+              <li><a href="#bin-collection-and-waste">Bin Collection &amp; Waste</a></li>
+              <li><a href="#trusted-neighbours">Trusted Neighbours</a></li>
+              <li><a href="#store-room">Store Room</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#emergency-and-safety">Emergency &amp; Safety</a>
+            <ul class="drawer-sublist">
+              <li><a href="#telephone-landline">Telephone/Landline</a></li>
+              <li><a href="#fire-blanket">Fire Blanket</a></li>
+              <li><a href="#first-aid">First Aid</a></li>
+              <li><a href="#lighting-torch-and-candles">Lighting – Torch &amp; Candles</a></li>
+              <li><a href="#weapons">Weapons</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#heating-and-cooling">Heating &amp; Cooling</a>
+            <ul class="drawer-sublist">
+              <li><a href="#evaporative-cooling-mode">Evaporative Cooling Mode</a></li>
+              <li><a href="#air-conditioner-mode">Air conditioner Mode</a></li>
+              <li><a href="#heating-mode">Heating Mode</a></li>
+              <li><a href="#other-fans-and-heaters">Dyson &amp; De'Longhi</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#pets">Pets</a>
+            <ul class="drawer-sublist">
+              <li><a href="#pet-safety">Pet safety</a></li>
+              <li><a href="#food-and-feeding-schedule">Food &amp; Feeding Schedule</a></li>
+              <li><a href="#cleaning-and-litterbox">Cleaning &amp; Litterbox</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#appliances">Appliances</a>
+            <ul class="drawer-sublist">
+              <li><a href="#washing-machine">Washing Machine</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#doors-keys-and-garage">Doors, Keys and Garage</a>
+            <ul class="drawer-sublist">
+              <li><a href="#garage">Garage</a></li>
+              <li><a href="#spare-keys-smart-lock-box">Spare Keys – Smart Lock Box</a></li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main id="main">
+      <section id="house-information" class="anchor" aria-labelledby="house-information-heading">
+        <h2 id="house-information-heading">House Information</h2>
+
+        <div class="subsection anchor" id="internet-and-wifi">
+          <h3 id="internet-and-wifi-heading">Internet &amp; Wifi</h3>
+          <ol>
+            <li>The Telstra modem is located on top of the utility cabinet outside the bathroom.</li>
+            <li>The Wifi name/SSID is <strong>TelstraD3AA32</strong> and <strong>TelstraD3AA32</strong>.</li>
+            <li>The password to connect to the Wifi is located on a sticker on the front of the modem: <strong>6xt8f4z39t</strong></li>
+            <li>
+              The LED indicator will help you figure out if there’s connectivity issues:
+              <ol>
+                <li>Green (Solid) = Connection Good (NBN)</li>
+                <li>Blue (Solid) = Connection Good (4G backup)</li>
+                <li>Orange = Attempting connection</li>
+                <li>Red = No connection (Likely service issue/fault)</li>
+              </ol>
+            </li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="utilities">
+          <h3 id="utilities-heading">Utilities (Gas, Electricity &amp; Water)</h3>
+          <ol>
+            <li>Gas shut-off valve is at the gas meter at the front of the house, to the right just below the master bedroom window. Pull the lever to close position to shut off gas to the house.</li>
+            <li>Electrical switchboard is on the front porch and is fitted with safety switches. Power can be switched off at mains by flipping the switches to off position.</li>
+            <li>Water mains shut-off is at the water meter at the front of the house on the garden bed next to the tap. Turn the spindle all the way close to shut off mains water from flowing into the house.</li>
+            <li>Plumbing and Gas: <strong>Doherty Plumbing Solutions</strong> - <strong>03 9877 5775</strong></li>
+            <li>Electrician: <strong>Tony Dinh @ DND Electrical</strong> - <strong>0468 999 399</strong></li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="bin-collection-and-waste">
+          <h3 id="bin-collection-and-waste-heading">Bin Collection &amp; Waste</h3>
+          <ol>
+            <li>Bins are collected weekly with the recycling and organics alternating each week.</li>
+            <li>Bin nights are on Wednesday night for emptying on Thursday.</li>
+            <li>Next bin night will be on Wednesday 1st April – <strong>Red</strong> (General Waste) and <strong>Green</strong> (Organic).</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="trusted-neighbours">
+          <h3 id="trusted-neighbours-heading">Trusted Neighbours</h3>
+          <ol>
+            <li><strong>73 Holland Road</strong> – Rob &amp; Susan – Australian couple with adult children living at home and a dog. Rob owns his own earthworks company and employs his son.</li>
+            <li><strong>2 Marama Street</strong> – Hiew &amp; Lan – Vietnamese couple. Hiew works for Metro/Connex and his daughter and son in law and granddaughter live with them. They are friends with Rob and Susan.</li>
+            <li><strong>1 Marama Street</strong> – Owen – Chinese guy that lives with a friend. Speak little English but is friendly.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="store-room">
+          <h3 id="store-room-heading">Store Room</h3>
+          <ol>
+            <li>Everything you need is in the house however if you run out, the storeroom is where everything is kept.</li>
+            <li>The door doesn’t have a lock and just needs a bit of force to open and close because it catches and scrapes along the floor.</li>
+            <li>Be sure to keep closed to minimise birds, possums, bugs from finding their way in.</li>
+            <li>
+              In here you will find:
+              <ol>
+                <li>Insecticide/insect sprays.</li>
+                <li>A backup battery pack (MagSafe/USB-C) to charge your phone or provide power to the Smart Lockbox in case the batteries die.</li>
+                <li>Bin liners, toilet paper, paper towels, zip lock bags, facial tissues, serviettes.</li>
+                <li>Laundry detergent, bleach, various cleaning chemicals, soaps, shampoo, body wash.</li>
+                <li>
+                  You will also find a variety of food items:
+                  <ol>
+                    <li>Common cooking ingredients: Oils, sauces, condiments, seasonings, bouillon cubes, curry paste, pasta, rice, noodles.</li>
+                    <li>Sauces/Condiments: chilli sauce/oil, fish sauce, soy sauce, oyster sauce, tobasco, American mustard, pasta sauce/paste, bechamel.</li>
+                    <li>Canned goods: Tuna cans, spam, canned fruit, condensed milk.</li>
+                    <li>Breakfast items: Vegemite, Jam, Peanut Butter, long life milk (full cream / oat), oats, coffee.</li>
+                    <li>Beverages: bottled water, apple juice, coconut water, soft drinks, sparking water, alcohol.</li>
+                    <li>Pet items: Cat litter, cat food.</li>
+                  </ol>
+                </li>
+              </ol>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="emergency-and-safety" class="anchor" aria-labelledby="emergency-and-safety-heading">
+        <h2 id="emergency-and-safety-heading">Emergency &amp; Safety</h2>
+
+        <div class="subsection anchor" id="telephone-landline">
+          <h3 id="telephone-landline-heading">Telephone/Landline</h3>
+          <ol>
+            <li>Located on top of the utility cabinet outside the bathroom next to the modem, the secondary handset is located in the living room cabinet next to the medicine fridge/bottle steriliser box.</li>
+            <li>Landline phone is operational however you shouldn’t be receiving calls since we have no provided the number to anyone.</li>
+            <li>Occasionally a Bot from Telstra calls it to advise of any planned maintenance on their network that will impact services.</li>
+            <li>If there’s an issue with the Telstra Service or NBN, the phone will not work. Use your mobile instead.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="fire-blanket">
+          <h3 id="fire-blanket-heading">Fire Blanket</h3>
+          <ol>
+            <li>Located above the kitchen bin opposite to the stove and measures 1.2m by 1.8m; large enough to wrap an adult and small child and smother a fire on a small bench.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="first-aid">
+          <h3 id="first-aid-heading">First Aid</h3>
+          <ol>
+            <li>Panadol, Zyrtec (Antihistamines), Cold/Flu medication, Bandages, banaids, anticeptics are in the utility cupboard outside the bathroom.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="lighting-torch-and-candles">
+          <h3 id="lighting-torch-and-candles-heading">Lighting – Torch &amp; Candles</h3>
+          <ol>
+            <li>Torch and a spare battery for it is located on the key shelf next to fridge, they can be recharged via USB-C.</li>
+            <li>Tea light candles are in living room cabinet that’s under the medicine fridge and bottle steriliser. Lighters are in the right bench drawers under the air fryer.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="weapons">
+          <h3 id="weapons-heading">Weapons</h3>
+          <ol>
+            <li>There’s a folding knife on the key shelf next to fridge.</li>
+            <li>Metal baseball bat behind the master bedroom door, there’s also another one in the shed to your right under the light switches just as you walk in.</li>
+            <li>There’s also axe on the bottle shelf under the window.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="heating-and-cooling" class="anchor" aria-labelledby="heating-and-cooling-heading">
+        <h2 id="heating-and-cooling-heading">Heating &amp; Cooling</h2>
+
+        <div class="subsection anchor" id="evaporative-cooling-mode">
+          <h3 id="evaporative-cooling-mode-heading">Evaporative Cooling Mode</h3>
+          <ol>
+            <li>Useful for humid/muggy/mildly warm days (28 degrees to about 34 degrees).</li>
+            <li>
+              Press the “Mode” button on the remote until <strong>“DRY”</strong> or 🌢 is displayed.
+              Adjust the Fan speed and Temp up/down to your liking (some units might default the Fan Speed to Auto).
+              You can also adjust “Temp - Up/Down” - Ideal is 22 to 24 degrees.
+            </li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="air-conditioner-mode">
+          <h3 id="air-conditioner-mode-heading">Air conditioner Mode</h3>
+          <ol>
+            <li>Useful if you need rapid cooling or if it’s dry hot days (hotter than 33 degrees).</li>
+            <li>Press the “Mode” button on the remote until <strong>“COOL”</strong> or ❄ is displayed, Adjust the Fan speed and Temp up/down to your liking - Ideal is 22 to 24 degrees.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="heating-mode">
+          <h3 id="heating-mode-heading">Heating Mode</h3>
+          <ol>
+            <li>If you need warm air and rapid heating of the room.</li>
+            <li>Press the “Mode” button on the remote until <strong>“HEAT”</strong> or ☼ is displayed. Adjust the Fan speed and Temp up/down to your liking - Ideal is 24 to 26 degrees.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="other-fans-and-heaters">
+          <h3 id="other-fans-and-heaters-heading">Dyson &amp; De'Longhi</h3>
+          <ol>
+            <li>There’s also a Dyson Tower Fan in the main bedroom and a De’Longhi Tower Heater in the bathroom.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="pets" class="anchor" aria-labelledby="pets-heading">
+        <h2 id="pets-heading">Pets</h2>
+
+        <div class="subsection anchor" id="pet-safety">
+          <h3 id="pet-safety-heading">Pet safety</h3>
+          <ol>
+            <li>Laundry is a strictly no pet zone, make sure you stay vigilant when going in and out as they will follow you in.</li>
+            <li>Keep laundry door closed at all times, especially if you need to go out the back door.</li>
+            <li>
+              When entering the front door always check and open the door slightly to prevent cats from escaping.
+              It usually helps to crack open the door a bit and stick a foot in to block their path while shooing them away from the door.
+            </li>
+            <li>Mango is the one to be extra vigilant as she loves to run out the front door if opened too wide and you are not blocking her path.</li>
+            <li>Mango will usually jump from the porch and go towards the right side of the house towards the flower bed – best to move quickly and calmly to pick her up before she wanders too far.</li>
+            <li>The cats are wearing AirTags on their collars in case they do escape.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="food-and-feeding-schedule">
+          <h3 id="food-and-feeding-schedule-heading">Food &amp; Feeding Schedule</h3>
+          <ol>
+            <li>Canned Wetfood is kept in the laundry shelf – 1 can feeds the cats for 2 days (See below table).</li>
+            <li>Dry food is kept in the hopper of their food dispenser. If the dispenser runs low on dry food a Red LED will appear on the front of the unit.</li>
+            <li>You can top it up using the bag of dry food is kept in the tub that’s in the laundry. There’s more in the storeroom if you run out.</li>
+            <li>Mango will sometimes try open the lid on top of the dispenser, keep an ear out.</li>
+            <li>
+              Pudding camps and rushes the first feeder to dispense food. To prevent Pudding from eating both portions,
+              Mango’s feeder (next to the fridge) dispenses 1 min after Puddings.
+            </li>
+          </ol>
+
+          <div class="faq-item" style="margin-top: 1rem;">
+            <h3 style="margin-top: 0;">Feeding schedule</h3>
+            <div style="overflow-x:auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left; border-bottom: 2px solid #eee; padding: 0.5rem 0.25rem;">When</th>
+                    <th style="text-align:left; border-bottom: 2px solid #eee; padding: 0.5rem 0.25rem;">What</th>
+                    <th style="text-align:left; border-bottom: 2px solid #eee; padding: 0.5rem 0.25rem;">How much?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">5:40 am</td>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">Dry Food</td>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">Auto Dispensed – 12 grams (½ a handful)</td>
+                  </tr>
+                  <tr>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">12:00 pm</td>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">
+                      <del>Wet Food</del><br>
+                      Dry Food
+                    </td>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">
+                      <del>Manual Feed – 1/4 of a can between 2 (split the 1/4 into halves so that each cat gets 1/8 of the can)</del><br>
+                      I will schedule an additional feed of Dry Food for their 12:00pm so you don’t have to worry about manually feeding them Wet Food.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">6:00 pm</td>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">Wet Food</td>
+                    <td style="border-bottom: 1px solid #f0f0f0; padding: 0.5rem 0.25rem;">
+                      Manual Feed – 1/4 of a can between 2 (split the 1/4 into halves so that each cat gets 1/8 of the can)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 0.5rem 0.25rem;">9:10 pm</td>
+                    <td style="padding: 0.5rem 0.25rem;">Dry Food</td>
+                    <td style="padding: 0.5rem 0.25rem;">Auto Dispensed – 12 grams (½ a handful)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection anchor" id="cleaning-and-litterbox">
+          <h3 id="cleaning-and-litterbox-heading">Cleaning &amp; Litterbox</h3>
+          <ol>
+            <li>Food bowls are to be cleaned with warm water and detergent before every meal.</li>
+            <li>Water bowls should be emptied washed with warm water and detergent and refilled with cold tap water every 2 days.</li>
+            <li>Litter tray needs to be emptied and relined with white bin liner every bin night.</li>
+            <li>Litter box needs to be topped up with clean litter to the max indicator every bin night.</li>
+            <li>To relevel the litter box double press the OK button on the front of the unit.</li>
+            <li>
+              You can also use the other button to cycle through the functions.
+              <ul style="margin-top: 0.4rem;">
+                <li><strong>Clean</strong> will sift the clumped litter and poo into the tray and keep the clean litter in the barrel (This automatically happens at set times during the day) but you can also manually trigger these cleans any time.</li>
+                <li><strong>Relevel</strong> will make the bed of litter flat which is useful if the cats have dug around or you’ve topped the up the litter with nm.</li>
+                <li><strong>Reset</strong> will reset the barrel in instances where it the safety stop mechanism kicks in - This usually happens when the cat approaches the unit mid operation and triggers the sensors.</li>
+              </ul>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="appliances" class="anchor" aria-labelledby="appliances-heading">
+        <h2 id="appliances-heading">Appliances</h2>
+
+        <div class="subsection anchor" id="washing-machine">
+          <h3 id="washing-machine-heading">Washing Machine</h3>
+          <ol>
+            <li>Washing machine is topped up with liquid detergent and is automatically dispensed.</li>
+            <li>Detergents are located under the laundry sink if you need to top up.</li>
+            <li>Powdered detergent and Vanish are located in the cupboard under the laundry sink if you want to manually soak clothing prior to washing.</li>
+            <li>
+              Recommended preset cleaning programmes are:
+              <ol>
+                <li>Synthetic Wash and Synthetic Dry for normal wash.</li>
+                <li>Quick Wash for lightly soiled clothing.</li>
+              </ol>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="doors-keys-and-garage" class="anchor" aria-labelledby="doors-keys-and-garage-heading">
+        <h2 id="doors-keys-and-garage-heading">Doors, Keys and Garage</h2>
+
+        <div class="subsection anchor" id="garage">
+          <h3 id="garage-heading">Garage</h3>
+          <ol>
+            <li>The garage can be opened with the button that has the red sticker on it located in the laundry, press once to open, press again when open to close.</li>
+            <li>There’s another switch at the front door – First button to open, Second button to close.</li>
+            <li>If these switches fail, you can press the Up button or Down button on the roller door.</li>
+            <li>To place the garage in manual mode, pull the red cord until it clicks and releases the door. The roller door can then be lifted up manually.</li>
+            <li>To reengage the roller for use in Automatic mode, pull the Green cord until it locks.</li>
+            <li>In the Tuya App you should be able to use the App to open the garage.</li>
+          </ol>
+        </div>
+
+        <div class="subsection anchor" id="spare-keys-smart-lock-box">
+          <h3 id="spare-keys-smart-lock-box-heading">Spare Keys – Smart Lock Box</h3>
+          <ol>
+            <li>Inside the smart lock box is spare keys to open the front door if you ever find yourself locked out of the house.</li>
+            <li>To access the lock box enter the PIN you’ve chosen followed by the tick.</li>
+            <li>Emergency access to lock box if it runs out of batteries is to use the battery pack in the garage to power it and open it normally with your PIN.</li>
+          </ol>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const toggle = document.getElementById('drawerToggle');
+        const closeBtn = document.getElementById('drawerClose');
+        const drawer = document.getElementById('sectionDrawer');
+        const overlay = document.getElementById('drawerOverlay');
+        if (!toggle || !closeBtn || !drawer || !overlay) return;
+
+        const setOpen = function (open) {
+          drawer.classList.toggle('open', open);
+          overlay.classList.toggle('open', open);
+          drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+          if (open) {
+            const firstLink = drawer.querySelector('a[href^="#"]');
+            if (firstLink) firstLink.focus();
+          } else {
+            toggle.focus();
+          }
+        };
+
+        toggle.addEventListener('click', function () {
+          const open = toggle.getAttribute('aria-expanded') !== 'true';
+          setOpen(open);
+        });
+        closeBtn.addEventListener('click', function () {
+          setOpen(false);
+        });
+        overlay.addEventListener('click', function () {
+          setOpen(false);
+        });
+
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') setOpen(false);
+        });
+
+        drawer.querySelectorAll('a[href^="#"]').forEach(function (a) {
+          a.addEventListener('click', function () {
+            setOpen(false);
+          });
+        });
+      })();
+    </script>
+  </div>
+</body>
+</html>
+
