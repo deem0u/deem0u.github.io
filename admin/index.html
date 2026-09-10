@@ -64,7 +64,7 @@
       <div class="header-drawer-backdrop" id="header-drawer-backdrop" aria-hidden="true"></div>
     </header>
 
-    <main id="screen-loading" class="app-centered" aria-live="polite" style="padding:2rem;text-align:center;color:var(--color-text-secondary);">
+    <main id="screen-loading" class="app-centered hidden" aria-live="polite" style="padding:2rem;text-align:center;color:var(--color-text-secondary);">
       <span class="spinner"></span> Loading…
     </main>
     <main id="screen-setup" class="app-centered hidden">
@@ -95,7 +95,7 @@
       </div>
     </main>
 
-    <main id="screen-login" class="app-centered hidden">
+    <main id="screen-login" class="app-centered">
       <div class="auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Sign In</h1>
@@ -3698,7 +3698,7 @@ function generatePageHTML(givenName, familyName, contactEmail, mobile, mobileLin
 <meta name="format-detection" content="telephone=yes">
 <meta name="theme-color" content="#ffffff">
 <title>Contact - ${givenName} ${familyName}</title>
-<script src="/canonical-host.js"></script>
+<script src="/canonical-host.js"><\/script>
 <style>${css}</style>
 </head>
 <body>
